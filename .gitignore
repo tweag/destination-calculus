@@ -389,3 +389,4 @@ TSWLatexianTemp*
 **/.directory
 *.pdf
 .direnv
+*-ott.tex
