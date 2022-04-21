@@ -1,0 +1,126 @@
+% minimal + latex + comments
+metavar metavariable, x ::=
+  {{ tex \textcolor{blue}{[[metavariable]]} }}
+
+% indexvar index, i ::=
+%   {{ tex \textcolor{red}{[[index]]} }}
+
+grammar
+term, t, u :: 't_' ::=                                               {{ com term }}
+  | x                                       ::   :: Var      {{ com variable }}
+  | ()                                      ::   :: Unit     {{ com unit }}
+  | { \ x :. A -> t}                                ::   :: Lam      {{ com lambda abstraction }}
+  | ( t u )                                     ::   :: App      {{ com application }}
+  | case t of { () -> u }                  ::   :: PatU     {{ com pattern-matching on unit }}
+  | case t of { ( x1 , x2 ) -> u }            ::   :: PatP     {{ com pattern-matching on product }}
+  | case t of { 1 . x1 -> u1 , 2 . x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
+  | alloc t                                   ::   :: Alloc    {{ com allocate data }}
+  | fillLeaf u t                            ::   :: FillL    {{ com fill terminal-type destination }}
+  | fillLeft t                          ::   :: FillV1   {{ com transform sum-type destination into destination of first variant }}
+  | fillRight t                          ::   :: FillV2   {{ com transform sum-type destination into destination of second variant }}
+  | fillPair t                              ::   :: FillP    {{ com transform product-type destination into a product of destinations }}
+%  | ( t )                                   :: S :: Paren
+  | t [ x := u ]                             :: M :: Sub
+
+type, A, B :: 'T_' ::=
+  | 1 :: :: One {{ com unit type }}
+  | P :: :: Prim {{ com primitive type }}
+  | A * B :: :: Prod {{ com product type }}
+  | A + B :: :: Sum {{ com sum type }}
+  | A --o B :: :: LinArr {{ com linear function type }}
+  | < A > :: :: Dest {{ tex \lfloor [[A]] \rfloor }} {{ com destination type }}
+
+context, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'G_' ::= {{ com typing context }}
+  | empty                            ::   :: empty
+  | x : A                        ::    :: var
+  | G µ D                            ::    :: pair
+
+terminals :: 'terminals_' ::=
+  | \                                      ::   :: lambda   {{ tex \lambda }}
+  | ->                                     ::   :: to       {{ tex \mapsto }}
+  | * :: :: prod {{ tex \otimes }}
+  | + :: :: sum {{ tex \oplus }}
+  | --o :: :: linarr {{ tex \multimap }}
+  | := :: :: with {{ tex := }}
+  | |- :: :: turnstile {{ tex \vdash }}
+  | µ :: :: dunion {{ tex \sqcup }}
+  | ':.' :: :: hastype {{ tex {:} }}
+  | ; :: :: lseq {{ tex \,;\, }}
+  | /\ :: :: intersection {{ tex \cap }}
+  | empty :: :: empty {{ tex \emptyset }}
+
+defns
+Jctx :: '' ::=
+
+defn
+G /\ D = empty :: :: Jctxd :: Jctxd_ {{ com $[[G]]$ and $[[D]]$ are disjoint typing contexts }} by
+
+defns
+Jtype :: '' ::=
+
+defn
+G |- t : A :: :: Jtypec :: Jtypec_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given typing context $[[G]]$ }} by
+
+--------------- :: Var
+x : A |- x : A
+
+---------------- :: Unit
+empty |- () : 1
+
+
+G µ x : A |- t : B
+----------------------- :: Lam
+G |- {\x:.A -> t} : A --o B
+
+G |- t : A --o B
+D |- u : A
+G /\ D = empty
+----------------- :: App
+G µ D |- (t u) : B
+
+G |- t : 1
+D |- u : A
+G /\ D = empty
+----------------------------------------- :: PatU
+G µ D |- case t of { () -> u } : A
+
+G |- t : A1 * A2
+D µ x1 : A1 µ x2 : A2 |- u : B
+G /\ D = empty
+------------------------------------------------------- :: PatP
+G µ D |- case t of {(x1, x2) -> u} : B
+
+G |- t : A1 + A2
+D µ x1 : A1 |- u1 : B
+D µ x2 : A2 |- u2 : B
+G /\ D = empty
+--------------------------------------- :: PatS
+G µ D |- case t of { 1 . x1 -> u1 , 2 . x2 -> u2 } : B
+
+G |- t : <A> --o 1
+------------------- :: Alloc
+G |- alloc t : A
+
+G |- t : <A>
+D |- u : A
+G /\ D = empty
+----------------- :: FillL
+G µ D |- fillLeaf u t : 1
+
+G |- t : <A + B>
+----------------------- :: FillV1
+G |- fillLeft t : <A>
+
+G |- t : <A + B>
+----------------------------- :: FillV2
+G |- fillRight t : <B>
+
+G |- t : <A * B>
+-------------------------------- :: FillP
+G |- fillPair t : <A> * <B>
+
+G µ x : A |- t : B
+D |- u : A
+G /\ D = empty
+----------------------- :: Sub
+G µ D |- t[x := u] : B

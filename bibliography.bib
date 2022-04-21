@@ -1,0 +1,190 @@
+@article{compact-regions,
+author = {Yang, Edward Z. and Campagna, Giovanni and A\u{g}acan, \"{O}mer S. and El-Hassany, Ahmed and Kulkarni, Abhishek and Newton, Ryan R.},
+title = {Efficient Communication and Collection with Compact Normal Forms},
+year = {2015},
+issue_date = {September 2015},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {50},
+number = {9},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/2858949.2784735},
+doi = {10.1145/2858949.2784735},
+abstract = { In distributed applications, the transmission of non-contiguous data structures is
+greatly slowed down by the need to serialize them into a buffer before sending. We
+describe Compact Normal Forms, an API that allows programmers to explicitly place
+immutable heap objects into regions, which can both be accessed like ordinary data
+as well as efficiently transmitted over the network. The process of placing objects
+into compact regions (essentially a copy) is faster than any serializer and can be
+amortized over a series of functional updates to the data structure in question. We
+implement this scheme in the Glasgow Haskell Compiler and show that even with the
+space expansion attendant with memory-oriented data structure representations, we
+achieve between x2 and x4 speedups on fast local networks with sufficiently large
+data structures. },
+journal = {SIGPLAN Not.},
+month = aug,
+pages = {362–374},
+numpages = {13},
+keywords = {Regions, Serialization, Message Passing}
+}
+
+@online{linear-haskell-proposal,
+ author = {Spiwack, Arnaud},
+ title = {Linear types proposal for GHC},
+ url = {https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst},
+}
+
+@online{unlifted-datatypes-proposal,
+ author = {Graf, Sebastian},
+ title = {Unlifted Datatypes},
+ url = {https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0265-unlifted-datatypes.rst},
+}
+
+@online{memory-pooling,
+ author = {Marti, Vicent},
+ title = {A new Protocol Buffers generator for Go},
+ url = {https://vitess.io/blog/2021-06-03-a-new-protobuf-generator-for-go/#memory-pooling-in-vtprotobuf},
+}
+
+@online{dps-blog-post,
+ author = {Spiwack, Arnaud},
+ title = {Pure destination-passing style in Linear Haskell},
+ url = {https://www.tweag.io/blog/2020-11-11-linear-dps/},
+}
+
+@software{linear-base,
+ author = {Tweag},
+ title = {linear-base},
+ url = {https://github.com/tweag/linear-base/},
+ repository = {https://github.com/tweag/linear-base/},
+}
+
+@software{ocaml,
+ title = {Ocaml},
+ url = {https://ocaml.org/},
+}
+
+@software{ghc,
+ title = {GHC},
+ url = {https://www.haskell.org/ghc/},
+}
+
+@inproceedings{f-dps,
+author = {Shaikhha, Amir and Fitzgibbon, Andrew and Peyton Jones, Simon and Vytiniotis, Dimitrios},
+title = {Destination-Passing Style for Efficient Memory Management},
+year = {2017},
+isbn = {9781450351812},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3122948.3122949},
+doi = {10.1145/3122948.3122949},
+abstract = { We show how to compile high-level functional array-processing programs, drawn from
+image processing and machine learning, into C code that runs as fast as hand-written
+C. The key idea is to transform the program to destination-passing style, which in
+turn enables a highly-efficient stack-like memory allocation discipline. },
+booktitle = {Proceedings of the 6th ACM SIGPLAN International Workshop on Functional High-Performance Computing},
+pages = {12–23},
+numpages = {12},
+keywords = {Destination-Passing Style, Array Programming},
+location = {Oxford, UK},
+series = {FHPC 2017}
+}
+
+@book{gc-handbook,
+  title={The garbage collection handbook: the art of automatic memory management},
+  author={Jones, Richard and Hosking, Antony and Moss, Eliot},
+  year={2016},
+  publisher={CRC Press},
+  isbn={9781315388014},
+}
+
+@inproceedings{linear-functions-as-holes,
+author = {Minamide, Yasuhiko},
+title = {A Functional Representation of Data Structures with a Hole},
+year = {1998},
+isbn = {0897919793},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/268946.268953},
+doi = {10.1145/268946.268953},
+abstract = {Data structures with a hole, in other words data structures with an uninitialized
+field, are useful to write efficient programs: they enable us to construct functional
+data structures flexibly and write functions such as append and map as tail recursive
+functions. In this paper we present an approach to introducing data structures with
+a hole into call-by-value functional programming languages like ML. Data structures
+with a hole are formalized as a new form of λ-abstraction called hole abstraction.
+The novel features of hole abstraction are that expressions inside hole abstraction
+are evaluated and application is implemented by destructive update of a hole. We present
+a simply typed call-by-value λ-calculus extended with hole abstractions. Then we show
+a compilation method of hole abstraction and prove correctness of the compilation.},
+booktitle = {Proceedings of the 25th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {75–84},
+numpages = {10},
+location = {San Diego, California, USA},
+series = {POPL '98}
+}
+
+@article{linear-haskell,
+ author = {Bernardy, Jean-Philippe and Boespflug, Mathieu and Newton, Ryan R. and Peyton Jones, Simon and Spiwack, Arnaud},
+ title = {Linear Haskell: Practical Linearity in a Higher-order Polymorphic Language},
+ journal = {Proc. ACM Program. Lang.},
+ issue_date = {January 2018},
+ volume = {2},
+ number = {POPL},
+ month = dec,
+ year = {2017},
+ issn = {2475-1421},
+ pages = {5:1--5:29},
+ articleno = {5},
+ numpages = {29},
+ url = {http://doi.acm.org/10.1145/3158093},
+ doi = {10.1145/3158093},
+ acmid = {3158093},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {GHC, Haskell, laziness, linear logic, linear types, polymorphism, typestate},
+}
+
+@article{linear-logic,
+title = {Linear logic},
+journal = {Theoretical Computer Science},
+volume = {50},
+number = {1},
+pages = {1-101},
+year = {1987},
+issn = {0304-3975},
+doi = {https://doi.org/10.1016/0304-3975(87)90045-4},
+url = {https://www.sciencedirect.com/science/article/pii/0304397587900454},
+author = {Jean-Yves Girard},
+abstract = {The familiar connective of negation is broken into two operations: linear negation which is the purely negative part of negation and the modality “of course” which has the meaning of a reaffirmation. Following this basic discovery, a completely new approach to the whole area between constructive logics and programmation is initiated.}
+}
+
+@InProceedings{recycle-array,
+author="Leshchinskiy, Roman",
+editor="Gill, Andy
+and Swift, Terrance",
+title="Recycle Your Arrays! ",
+booktitle="Practical Aspects of Declarative Languages",
+year="2009",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="209--223",
+abstract="Purely functional arrays are notoriously difficult to implement and use efficiently due to the absence of destructive updates and the resultant frequent copying. Deforestation frameworks such as stream fusion achieve signficant improvements here but fail for a number of important operations which can nevertheless benefit from elimination of temporaries. To mitigate this problem, we extend stream fusion with support for in-place execution of array operations. This optimisation, which we call recycling, is easy to implement and can significantly reduce array allocation and copying in purely functional array algorithms.",
+isbn="978-3-540-92995-6"
+}
+
+@inproceedings{shortcut-fusion,
+author = {Gill, Andrew and Launchbury, John and Peyton Jones, Simon L.},
+title = {A Short Cut to Deforestation},
+year = {1993},
+isbn = {089791595X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/165180.165214},
+doi = {10.1145/165180.165214},
+booktitle = {Proceedings of the Conference on Functional Programming Languages and Computer Architecture},
+pages = {223–232},
+numpages = {10},
+location = {Copenhagen, Denmark},
+series = {FPCA '93}
+}
