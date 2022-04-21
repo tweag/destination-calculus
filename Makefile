@@ -49,5 +49,5 @@ watch: $(DOCNAME).tex
 clean:
 	latexmk -CA
 
-destination-calculus-def.tex: destination-calculus-def.ott
-	ott -i destination-calculus-def.ott -o destination-calculus-def.tex
+%-ott.tex: %-ott.ott
+	ott -i $< -o $@
