@@ -1,6 +1,26 @@
 % minimal + latex + comments
+
+embed
+{{ tex-preamble
+\usepackage[dvipsnames]{xcolor}
+\usepackage{abraces}
+\usepackage{mathptmx}
+\renewcommand{\mytab}{
+\hspace{0.7cm}
+}
+\definecolor{mvcolor}{RGB}{119, 24, 201}
+\definecolor{tycolor}{RGB}{26, 87, 186}
+\definecolor{ntcolor}{RGB}{105, 105, 105}
+\renewcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
+}
+\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
+\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
+\renewcommand{\ottkw}[1]{\mathsf{#1} }
+\renewcommand{\ottcons}[1]{\mathsf{#1} }
+}}
+
 metavar metavariable, x, y, z, uf, f, l, dl, dh, dt ::=
-  {{ tex \textcolor{blue}{[[metavariable]]} }}
+  {{ tex \ottmv{[[metavariable]]} }}
 
 % indexvar index, i ::=
 %   {{ tex \textcolor{red}{[[index]]} }}
@@ -9,26 +29,26 @@ grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | x                                       ::   :: Var      {{ com variable }}
   | ()                                      ::   :: Unit     {{ com unit }}
-  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda [[x]]{:}[[A]].\,[[t]] }}
+  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}.\,[[t]]\}}
   | t u                                     ::   :: App      {{ com application }}
   | t ; u                  ::   :: PatU     {{ com pattern-matching / consumption of unit }}
-  | case t of { ( x1 , x2 ) -> u }            ::   :: PatP     {{ com pattern-matching on product }}
-  | case t of { 1 . x1 -> u1 , 2 . x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
+  | case t of { 1. x1 -> u1 , 2. x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
+  | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
   | case t of { Nil -> u1 , Cons x1 x2 -> u2 } :: :: PatL {{ com pattern-matching on list }}
   | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
   | alloc t                                   ::   :: Alloc    {{ com allocate data }}
-  | fillLeaf u t                            ::   :: FillL    {{ com fill terminal-type destination }}
-  | fillLeft t                          ::   :: FillV1   {{ com transform sum-type destination into destination of first variant }}
-  | fillRight t                          ::   :: FillV2   {{ com transform sum-type destination into destination of second variant }}
-  | fillPair t                              ::   :: FillP    {{ com transform product-type destination into a product of destinations }}
-  | fillNil t                               ::   :: FillNil {{ com fill list destination with nil }}
-  | fillCons t                             ::  :: FillCons {{ com fill list destination with cons }}
+  | fillLeaf u t                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex \ottkw{fill}_{\ottcons{\bullet} }\,[[u]]~[[t]] }}
+  | fillLeft t                          ::   :: FillV1   {{ com transform sum-type destination into destination of first variant }} {{ tex \ottkw{fill}_{\ottcons{1.} }\,[[t]] }}
+  | fillRight t                          ::   :: FillV2   {{ com transform sum-type destination into destination of second variant }} {{ tex \ottkw{fill}_{\ottcons{2.} }\,[[t]] }}
+  | fillPair t                              ::   :: FillP    {{ com transform product-type destination into a product of destinations }} {{ tex \ottkw{fill}_{\ottcons{\langle\rangle} }\,[[t]] }}
+  | fillNil t                               ::   :: FillNil {{ com fill list destination with nil }} {{ tex \ottkw{fill}_{ [[Nil]] }\,[[t]] }}
+  | fillCons t                             ::  :: FillCons {{ com fill list destination with cons }} {{ tex \ottkw{fill}_{ [[Cons]] }\,[[t]] }}
   | Ur t :: :: Exp {{ com exponential }}
   | ( t )                                   :: S :: Paren
   | b sp t b spe :: S :: BreakSpacing1
   | b sp t :: S :: BreakSpacing2
   | t [ x := u ]                             :: M :: Sub
-  | t [ x |> x' ]                            :: M :: Alpha
+%  | t [ x |> x' ]                            :: M :: Alpha
   | foldl t1 t2 t3 :: :: FoldL {{ com TODO: remove }}
 
 spacing, sp :: 'S_' ::=
@@ -47,16 +67,16 @@ spacinge, spe :: 'Se_' ::=
   | ssssse :: :: space5e {{ tex \mytab\mytab\mytab\mytab\mytab }}
   | sssssse :: :: space6e {{ tex \mytab\mytab\mytab\mytab\mytab\mytab }}
 
-type, A, B :: 'T_' ::=
-  | 1 :: :: One {{ com unit type }}
+type, A, B :: 'T_' ::= {{ tex \ottty{[[type]]} }}
+  | 1 :: :: One {{ com unit type }} {{ tex \ottty{1} }}
 %  | P :: :: Prim {{ com primitive type }}
   | A * B :: :: Prod {{ com product type }}
   | A + B :: :: Sum {{ com sum type }}
   | A --o B :: :: LinArr {{ com linear function type }}
-  | < A > :: :: Dest {{ tex \langle [[A]] \rangle }} {{ com destination type }}
-  | [ A ] :: :: List {{ com list type }}
-  | ! A :: :: Exp {{ com exponential }}
-  | ( A )  :: S :: Paren
+  | | A | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[A]] \rfloor} }}
+  | [ A ] :: :: List {{ com list type }} {{ tex \ottty{[[A]]^\star } }}
+  | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
+  | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
 
 context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }} :: 'G_' ::= {{ com typing context }}
   | empty                            ::   :: empty
@@ -65,9 +85,9 @@ context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }} :: 'G_' ::= {{
 
 terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
-  | * :: :: prod {{ tex \otimes }}
-  | + :: :: sum {{ tex \oplus }}
-  | --o :: :: linarr {{ tex \multimap }}
+  | * :: :: prod {{ tex \ottty{\otimes} }}
+  | + :: :: sum {{ tex \ottty{\oplus} }}
+  | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | := :: :: with {{ tex := }}
   | |- :: :: turnstile {{ tex \vdash }}
   | µ :: :: dunion {{ tex \sqcup }}
@@ -79,11 +99,15 @@ terminals :: 'terminals_' ::=
   | != :: :: neq {{ tex \neq }}
   | in :: :: in {{ tex \in }}
   | notin :: :: notin {{ tex \notin }}
-  | subto :: :: subto {{ tex \underset{[:=]}{\rightarrow} }}
+%   | subto :: :: subto {{ tex \underset{[:=]}{\rightarrow} }}
   | b :: :: linebreak {{ tex \\ }}
-  | s :: :: align {{ tex \phantom{aaaa} }}
-  % | be :: :: linebreakend {{ tex \\ }}
-  % | se :: :: alignend {{ tex \phantom{aaaa} }}
+  | < :: :: langle {{ tex \ottcons{\langle} }}
+  | > :: :: rangle {{ tex \ottcons{\rangle} }}
+  | '1.' :: :: v1 {{ tex \ottcons{1.} }}
+  | '2.' :: :: v2 {{ tex \ottcons{2.} }}
+  | Nil :: :: nil {{ tex \ottcons{Nil} }}
+  | Cons :: :: cons {{ tex \ottcons{Cons} }}
+  | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
 
 defns
 JMvar :: '' ::=
@@ -139,14 +163,14 @@ U ; G |- t : A1 * A2
 U ; D µ { x1 : A1 } µ { x2 : A2 } |- u : B
 names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatP
-U ; G µ D |- case t of {(x1, x2) -> u} : B
+U ; G µ D |- case t of {<x1, x2> -> u} : B
 
 U ; G |- t : A1 + A2
 U ; D µ { x1 : A1 } |- u1 : B
 U ; D µ { x2 : A2 } |- u2 : B
 names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatS
-U ; G µ D |- case t of { 1 . x1 -> u1 , 2 . x2 -> u2 } : B
+U ; G µ D |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
 
 U ; G |- t : [A]
 U ; D |- u1 : B
@@ -161,35 +185,35 @@ names( G ) /\ names( D ) = empty
 ----------------------------------------- :: PatE
 U ; G µ D |- case t of { Ur x -> u } : B
 
-U ; G |- t : <A> --o 1
+U ; G |- t : |A| --o 1
 ------------------- :: Alloc
 U ; G |- alloc t : A
 
-U ; G |- t : <A>
+U ; G |- t : |A|
 U ; D |- u : A
 names( G ) /\ names( D ) = empty
 --------------------------------- :: FillL
 U ; G µ D |- fillLeaf u t : 1
 
-U ; G |- t : <A + B>
+U ; G |- t : |A + B|
 ----------------------- :: FillV1
-U ; G |- fillLeft t : <A>
+U ; G |- fillLeft t : |A|
 
-U ; G |- t : <A + B>
+U ; G |- t : |A + B|
 ----------------------------- :: FillV2
-U ; G |- fillRight t : <B>
+U ; G |- fillRight t : |B|
 
-U ; G |- t : <A * B>
+U ; G |- t : |A * B|
 -------------------------------- :: FillP
-U ; G |- fillPair t : <A> * <B>
+U ; G |- fillPair t : |A| * |B|
 
-U ; G |- t : <[A]>
+U ; G |- t : |[A]|
 -------------------------------- :: FillNil
 U ; G |- fillNil t : 1
 
-U ; G |- t : <[A]>
+U ; G |- t : |[A]|
 ---------------------------- :: FillCons
-U ; G |- fillCons t : <A * [A]>
+U ; G |- fillCons t : |A * [A]|
 
 U ; empty |- t : A
 ----------------------- :: Exp
@@ -206,6 +230,36 @@ Jop :: '' ::=
 
 defn
 t --> t' :: :: reduce :: Jop_ {{ com $[[t]]$ reduces to $[[t']]$ }} by
+
+embed
+{{ tex
+Let's implement $\ottkw{map}$ using $\ottkw{foldl}$ !
+
+\[\begin{array}{l}
+\ottkw{map} \overset{def}{=} [[
+  b s \uf: !(A --o B). \l: [A]. \dl: |[B]|.
+  b ss fillNil (
+  b sss foldl
+  b ssss (case uf of { Ur f -> Ur (
+  b sssss \dl: |[B]|. \x: A. case fillPair (fillCons dl) of {<dh, dt> -> fillLeaf (f x) dh ; dt}
+  b sssse )})
+  b ssss dl
+  b ssss l
+  b sse )
+]]
+\end{array}\]
+}}
+
+
+parsing
+t_Lam <= t_Sub
+% t_Lam <= t_Alpha
+t_PatU <= t_FillL
+t_PatU <= t_FillV1
+t_PatU <= t_FillV2
+t_PatU <= t_FillP
+t_PatU <= t_FillNil
+t_PatU <= t_FillCons
 
 % defns
 % Jsub :: '' ::=
@@ -247,7 +301,7 @@ t --> t' :: :: reduce :: Jop_ {{ com $[[t]]$ reduces to $[[t']]$ }} by
 % (t1 ; t2)[x := u] subto t1[x := u] ; t2[x := u]
 
 % -------------------------------------------------------------------------------------- :: PatP
-% (case t of {(y1, y2) -> t'})[x := u] subto case t[x := u] of {(y1, y2) -> t'[x := u]}
+% (case t of {(y1, y2) -> t'})[x := u] subto case t[x := u] of {<y1, y2> -> t'[x := u]}
 
 % -------------------------------------------------------------------------------------------------------------- :: PatS
 % (case t of {1.y1 -> t1, 2.y2 -> t2})[x := u] subto case t[x := u] of {1.y1 -> t1[x := u], 2.y2 -> t2[x := u]}
@@ -275,35 +329,3 @@ t --> t' :: :: reduce :: Jop_ {{ com $[[t]]$ reduces to $[[t']]$ }} by
 
 % ----------------------------------------------- :: FillCons
 % (fillCons t)[x := u] subto fillCons t[x := u]
-
-embed
-{{ tex
-
-\renewcommand{\mytab}{
-\hspace{0.7cm}
-}
-}}
-
-embed
-{{ tex
-Let's implement map using foldl !
-
-\[\begin{array}{l}
-\textrm{map} \underset{def}{=} [[
-  b s \uf: !(A --o B). \l: [A]. \dl: <[B]>.
-  b ss fillNil (
-  b sss foldl
-  b ssss (case uf of { Ur f -> Ur (
-  b sssss \dl: <[B]>. \x: A. case fillPair (fillCons dl) of {(dh, dt) -> fillLeaf (f x) dh ; dt}
-  b sssse )})
-  b ssss dl
-  b ssss l
-  b sse )
-]]
-\end{array}\]
-}}
-
-
-parsing
-t_Lam <= t_Sub
-t_Lam <= t_Alpha

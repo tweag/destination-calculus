@@ -20,6 +20,10 @@ pkgs.mkShell
           bussproofs
           supertabular
           geometry
+          ulem
+          mathtools
+          abraces
+          # mathptmx
           # minted
           # minted fvextra catchfile xstring kvoptions fancyvrb
           # upquote float ifplatform pdftexcmds etoolbox
