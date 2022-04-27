@@ -5,18 +5,32 @@ embed
 \usepackage[dvipsnames]{xcolor}
 \usepackage{abraces}
 \usepackage{mathptmx}
-\renewcommand{\mytab}{
-\hspace{0.7cm}
-}
 \definecolor{mvcolor}{RGB}{119, 24, 201}
 \definecolor{tycolor}{RGB}{26, 87, 186}
 \definecolor{ntcolor}{RGB}{105, 105, 105}
-\renewcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
-}
+\definecolor{spcolor}{RGB}{5, 115, 12}
+\newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
 \renewcommand{\ottkw}[1]{\mathsf{#1} }
-\renewcommand{\ottcons}[1]{\mathsf{#1} }
+\newcommand{\ottcons}[1]{\mathsf{#1} }
+\newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
+\newcommand{\defeq}{\overset{\mathsf{def} }{=} }
+\def\mynewline{\ottsp{\backslash\!n} }
+\def\myspace#1{\myrepeat{#1}{\ottsp{\langle indent \rangle} } }
+\makeatletter
+\newcount\my@repeat@count
+\newcommand{\myrepeat}[2]{%
+  \begingroup
+  \my@repeat@count=\z@
+  \@whilenum\my@repeat@count<#1\do{#2\advance\my@repeat@count\@ne}%
+  \endgroup
+}
+\makeatother
+\def\togglespaces{
+\def\mynewline{\\}
+\def\myspace##1{\myrepeat{##1}{\hspace{0.7cm} } }
+}
 }}
 
 metavar metavariable, x, y, z, uf, f, l, dl, dh, dt ::=
@@ -49,23 +63,23 @@ term, t, u :: 't_' ::=                                               {{ com term
   | b sp t :: S :: BreakSpacing2
   | t [ x := u ]                             :: M :: Sub
 %  | t [ x |> x' ]                            :: M :: Alpha
-  | foldl t1 t2 t3 :: :: FoldL {{ com TODO: remove }}
+  | foldl t1 t2 t3 :: :: FoldL {{ com Built-in foldl function }}
 
-spacing, sp :: 'S_' ::=
-  | s :: :: space1 {{ tex \mytab }}
-  | ss :: :: space2 {{ tex \mytab\mytab }}
-  | sss :: :: space3 {{ tex \mytab\mytab\mytab }}
-  | ssss :: :: space4 {{ tex \mytab\mytab\mytab\mytab }}
-  | sssss :: :: space5 {{ tex \mytab\mytab\mytab\mytab\mytab }}
-  | ssssss :: :: space6 {{ tex \mytab\mytab\mytab\mytab\mytab\mytab }}
+spacing, sp :: 'S_' ::= {{ tex \ottsp{[[spacing]]} }}
+  | s :: :: space1 {{ tex \myspace{1} }}
+  | ss :: :: space2 {{ tex \myspace{2} }}
+  | sss :: :: space3 {{ tex \myspace{3} }}
+  | ssss :: :: space4 {{ tex \myspace{4} }}
+  | sssss :: :: space5 {{ tex \myspace{5} }}
+  | ssssss :: :: space6 {{ tex \myspace{6} }}
 
-spacinge, spe :: 'Se_' ::=
-  | se :: :: space1e {{ tex \mytab }}
-  | sse :: :: space2e {{ tex \mytab\mytab }}
-  | ssse :: :: space3e {{ tex \mytab\mytab\mytab }}
-  | sssse :: :: space4e {{ tex \mytab\mytab\mytab\mytab }}
-  | ssssse :: :: space5e {{ tex \mytab\mytab\mytab\mytab\mytab }}
-  | sssssse :: :: space6e {{ tex \mytab\mytab\mytab\mytab\mytab\mytab }}
+spacing_end, spe :: 'Se_' ::= {{ tex \ottsp{[[spacing_end]]} }}
+  | se :: :: space1e {{ tex \myspace{1} }}
+  | sse :: :: space2e {{ tex \myspace{2} }}
+  | ssse :: :: space3e {{ tex \myspace{3} }}
+  | sssse :: :: space4e {{ tex \myspace{4} }}
+  | ssssse :: :: space5e {{ tex \myspace{5} }}
+  | sssssse :: :: space6e {{ tex \myspace{6} }}
 
 type, A, B :: 'T_' ::= {{ tex \ottty{[[type]]} }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{1} }}
@@ -79,9 +93,9 @@ type, A, B :: 'T_' ::= {{ tex \ottty{[[type]]} }}
   | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
 
 context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }} :: 'G_' ::= {{ com typing context }}
-  | empty                            ::   :: empty
-  | { x : A }                        ::    :: var {{ com variable $[[x]]$ has type $[[A]]$ and must be consumed once }}
-  | G µ D                            ::    :: pair
+  | empty    ::   :: empty
+  | { x : A } ::    :: var {{ com variable $[[x]]$ has type $[[A]]$ and must be consumed once }}
+  | G µ D    ::    :: pair
 
 terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
@@ -100,7 +114,7 @@ terminals :: 'terminals_' ::=
   | in :: :: in {{ tex \in }}
   | notin :: :: notin {{ tex \notin }}
 %   | subto :: :: subto {{ tex \underset{[:=]}{\rightarrow} }}
-  | b :: :: linebreak {{ tex \\ }}
+  | b :: :: linebreak {{ tex \mynewline }}
   | < :: :: langle {{ tex \ottcons{\langle} }}
   | > :: :: rangle {{ tex \ottcons{\rangle} }}
   | '1.' :: :: v1 {{ tex \ottcons{1.} }}
@@ -233,10 +247,12 @@ t --> t' :: :: reduce :: Jop_ {{ com $[[t]]$ reduces to $[[t']]$ }} by
 
 embed
 {{ tex
+\togglespaces
+
 Let's implement $\ottkw{map}$ using $\ottkw{foldl}$ !
 
 \[\begin{array}{l}
-\ottkw{map} \overset{def}{=} [[
+\ottkw{map} \defeq [[
   b s \uf: !(A --o B). \l: [A]. \dl: |[B]|.
   b ss fillNil (
   b sss foldl

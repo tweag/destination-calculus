@@ -23,6 +23,8 @@ pkgs.mkShell
           ulem
           mathtools
           abraces
+          times
+          rsfs
           # mathptmx
           # minted
           # minted fvextra catchfile xstring kvoptions fancyvrb
