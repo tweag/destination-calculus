@@ -134,8 +134,8 @@ terminals :: 'terminals_' ::=
 defns
 JMvar :: '' ::=
 
-defn
-x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$ and $[[y]]$ stands for different variables }} by
+% defn
+% x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$ and $[[y]]$ stands for different variables }} by
 
 defn
 x notin free ( t ) :: :: JMVarNFree :: JMVar_ {{ com $[[x]]$ is not a free variable in $[[t]]$ }} by
@@ -287,6 +287,41 @@ t --> t'
 ------------------------------------------------------------------------------------- :: UnderPatL
 case t of {Ur x -> u} --> case t' of {Ur x -> u}
 
+t --> t'
+---------------------------- :: UnderAlloc
+alloc A t --> alloc A t'
+
+---------------------------------------------- :: Alloc
+alloc A (\d0:|A|. t) --> t <> # d0 : A § { d0:|A| } § [ d0 := alloc A ] #
+
+t --> t'
+--------------------------------------- :: UnderMemCtx
+t <> # d0 : A § H § I # --> t' <> # d0 : A § H § I #
+
+t --> t'
+------------------------------- :: UnderFillL
+fillLeaf t --> fillLeaf t'
+
+--------------------------------------------------------------------------- :: FillL
+fillLeaf v d <> # d0 : A § H µ { d : |B| } § I # --> 1 <> # d0 : A § H § I ++ [d <- v] #
+
+----------------------------------------------------------------------------------------------------------------------- :: FillV1
+fillLeft d <> # d0 : A § H µ { d : |B1 + B2| } § I # --> # d0 : A § H µ {d': |B1|} § I ++ [ d' := alloc B1 ; d <- 1. d' ] #
+
+------------------------------------------------------------------------------------------------------------------------ :: FillV2
+fillRight d <> # d0 : A § H µ { d : |B1 + B2| } § I # --> # d0 : A § H µ {d': |B2|} § I ++ [ d' := alloc B2 ; d <- 2. d' ] #
+
+----------------------------------------------- :: FillP
+fillPair dl dr { t } d <> # d0 : A § H µ { d : |B1 * B2| } § I # --> t <> # d0 : A § H µ { dl : |B1| } µ { dr : |B2| } § I ++ [ dl := alloc B1 ; dr := alloc B2 ; d <- <dl, dr> ] #
+
+----------------------------------------------- :: FillNil
+fillNil d <> # d0 : A § H µ { d : |[B]| } § I # --> 1 <> # d0 : A § H § I ++ [ d <- Nil ] #
+
+----------------------------------------------------- :: FillCons
+fillCons dh dt { t } d <> # d0 : A § H µ { d : |[B]| } § I # --> t <> # d0 : A § H µ { dh: |B| } µ { dt: |[B]| } § I ++ [ dh := alloc B ; dt := alloc [B] ; d <- dh :: dt ]
+
+----------------------------------------------------------- :: FinishAlloc
+1 <> # d0 : A § {} § I # --> execAndReturn I d0
 
 embed
 {{ tex
