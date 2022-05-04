@@ -42,6 +42,7 @@ metavar metavariable, x, y, z, uf, f, l, d, dl, dr, dh, dt ::=
 grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | x                                       ::   :: Var      {{ com variable }}
+  | v :: :: Unreducible {{ com unreducible value [TODO] }}
   | ()                                      ::   :: Unit     {{ com unit }}
   | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}.\,[[t]] }}
   | t u                                    ::   :: App      {{ com application }}
@@ -64,10 +65,35 @@ term, t, u :: 't_' ::=                                               {{ com term
   | b sp t :: S :: BreakSpacing2
 %  | t b spe :: S :: BreakSpacing3
   | t [ x := u ]                             :: M :: Sub
+  | t <> M :: M :: MemCtx
+  | execAndReturn I d0 :: M :: ExecImp
 %  | t [ x |> x' ]                            :: M :: Alpha
   | foldl t1 t2 t3 :: :: FoldL {{ com Built-in foldl function }}
 
-pointer, p :: 'p_' ::= {{ com mutable references }}
+val, v :: 'v_' ::= {{ com unreducible value }}
+
+memory_context, M :: 'm_' ::= {{ com memory context }}
+  | # d0 : A § H § I # :: :: MemCtx
+
+I :: 'i_' ::= {{ com imperative statements }} {{ tex \mathbb{[[I]]} }}
+  | [ Y ] :: :: List
+  | I1 ++ I2 :: :: Concat
+
+imperative_stmts_inner, Y :: 'y_' ::=
+  | d := alloc A :: :: Alloc
+  | d <- v :: :: Affect
+  | d <- 1. d' :: :: V1
+  | d <- 2. d' :: :: V2
+  | d <- < dl , dr > :: :: Pair
+  | d <- Nil :: :: Nil
+  | d <- dh Cons dt :: :: Cons
+  | Y ; d := alloc A :: :: Alloc'
+  | Y ; d <- v :: :: Affect'
+  | Y ; d <- 1. d' :: :: V1'
+  | Y ; d <- 2. d' :: :: V2'
+  | Y ; d <- < dl , dr > :: :: Pair'
+  | Y ; d <- Nil :: :: Nil'
+  | Y ; d <- dh Cons dt :: :: Cons'
 
 spacing, sp :: 'S_' ::= {{ tex \ottsp{[[spacing]]} }}
   | s :: :: space1 {{ tex \myspace{1} }}
@@ -96,7 +122,7 @@ type, A, B :: 'T_' ::= {{ tex \ottty{[[type]]} }}
   | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
   | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
 
-context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }} :: 'G_' ::= {{ com typing context }}
+context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }}, H :: 'G_' ::= {{ com typing context }}
   | empty    ::   :: empty
   | { x : A } ::    :: var {{ com variable $[[x]]$ has type $[[A]]$ and must be consumed once }}
   | G µ D    ::    :: pair
@@ -126,6 +152,11 @@ terminals :: 'terminals_' ::=
   | Nil :: :: nil {{ tex \ottcons{Nil} }}
   | Cons :: :: cons {{ tex {:}\!{:} }}
   | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
+  | ++ :: :: concat {{ tex {\small{+}\mspace{-6mu}{+} } }}
+  | <> :: :: against {{ tex \diamond }}
+  | <- :: :: affect {{ tex \leftarrow }}
+  | § :: :: sep {{ tex ~|~ }}
+  | # :: :: sep' {{ tex \,\Big|\, }}
   % | dl :: :: dl
   % | dr :: :: dr
   % | dh :: :: dh
@@ -303,25 +334,25 @@ t --> t'
 fillLeaf t --> fillLeaf t'
 
 --------------------------------------------------------------------------- :: FillL
-fillLeaf v d <> # d0 : A § H µ { d : |B| } § I # --> 1 <> # d0 : A § H § I ++ [d <- v] #
+((fillLeaf v) d) <> # d0 : A § H µ { d : |B| } § I # --> () <> # d0 : A § H § I ++ [d <- v] #
 
 ----------------------------------------------------------------------------------------------------------------------- :: FillV1
-fillLeft d <> # d0 : A § H µ { d : |B1 + B2| } § I # --> # d0 : A § H µ {d': |B1|} § I ++ [ d' := alloc B1 ; d <- 1. d' ] #
+t (fillLeft d) <> # d0 : A § H µ { d : |B1 + B2| } § I # --> t <> # d0 : A § H µ {d': |B1|} § I ++ [ d' := alloc B1 ; d <- 1. d' ] #
 
 ------------------------------------------------------------------------------------------------------------------------ :: FillV2
-fillRight d <> # d0 : A § H µ { d : |B1 + B2| } § I # --> # d0 : A § H µ {d': |B2|} § I ++ [ d' := alloc B2 ; d <- 2. d' ] #
+t (fillRight d) <> # d0 : A § H µ { d : |B1 + B2| } § I # --> t <> # d0 : A § H µ {d': |B2|} § I ++ [ d' := alloc B2 ; d <- 2. d' ] #
 
 ----------------------------------------------- :: FillP
 fillPair dl dr { t } d <> # d0 : A § H µ { d : |B1 * B2| } § I # --> t <> # d0 : A § H µ { dl : |B1| } µ { dr : |B2| } § I ++ [ dl := alloc B1 ; dr := alloc B2 ; d <- <dl, dr> ] #
 
 ----------------------------------------------- :: FillNil
-fillNil d <> # d0 : A § H µ { d : |[B]| } § I # --> 1 <> # d0 : A § H § I ++ [ d <- Nil ] #
+fillNil d <> # d0 : A § H µ { d : |[B]| } § I # --> () <> # d0 : A § H § I ++ [ d <- Nil ] #
 
 ----------------------------------------------------- :: FillCons
-fillCons dh dt { t } d <> # d0 : A § H µ { d : |[B]| } § I # --> t <> # d0 : A § H µ { dh: |B| } µ { dt: |[B]| } § I ++ [ dh := alloc B ; dt := alloc [B] ; d <- dh :: dt ]
+fillCons dh dt { t } d <> # d0 : A § H µ { d : |[B]| } § I # --> t <> # d0 : A § H µ { dh: |B| } µ { dt: |[B]| } § I ++ [ dh := alloc B ; dt := alloc [B] ; d <- dh Cons dt ] #
 
 ----------------------------------------------------------- :: FinishAlloc
-1 <> # d0 : A § {} § I # --> execAndReturn I d0
+() <> # d0 : A § empty § I # --> execAndReturn I d0
 
 embed
 {{ tex
@@ -358,6 +389,12 @@ t_PatU <= t_FillL
 t_PatU <= t_FillV1
 t_PatU <= t_FillV2
 t_PatU <= t_FillNil
+% t_MemCtx <= t_FillL
+% t_MemCtx <= t_FillV1
+% t_MemCtx <= t_FillV2
+% t_MemCtx <= t_FillNil
+% t_MemCtx <= t_FillP
+% t_MemCtx <= t_FillCons
 
 
 % defns
