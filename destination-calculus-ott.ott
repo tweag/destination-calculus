@@ -42,7 +42,7 @@ metavar metavariable, x, xs, y, z, uf, f, d, dl, dr, dh, dt, l ::=
 grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | x                                       ::   :: Var      {{ com variable }}
-  | v :: :: Val {{ com unreducible value [TODO] }}
+  | v :: :: Val {{ com value }}
   | t u                                    ::   :: App      {{ com application }}
   | t ; u                   ::   :: PatU     {{ com pattern-matching on unit }}
   | case t of { 1. x1 -> u1 , 2. x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
@@ -53,10 +53,9 @@ term, t, u :: 't_' ::=                                               {{ com term
   | t |> fillLeaf u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{\ottkw{\bullet} }\,[[u]] }}
   | t |> fillLeft                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{\ottcons{1.} } }}
   | t |> fillRight                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{\ottcons{2.} } }}
-  | t |> fillPair dl dr { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{\langle [[dl]] , [[dr]] \rangle}\,\left\{[[u]]\right\} }}
+  | t |> fillPair dl dr { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{\langle [[dl]] , [[dr]] \rangle}.\,[[u]] }}
   | t |> fillNil                               ::   :: FillNil {{ com fill list destination with nil }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{[[Nil]]} }}
-  | t |> fillCons dh dt { u }                             ::  :: FillCons {{ com fill list destination with cons }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{[[dh]] [[Cons]] [[dt]]}\,\left\{[[u]]\right\} }}
-  | Ur t :: :: Exp {{ com exponential }}
+  | t |> fillCons dh dt { u }                             ::  :: FillCons {{ com fill list destination with cons }} {{ tex [[t]]\,\triangleright\,\ottkw{fill}_{[[dh]] [[Cons]] [[dt]]}.\,[[u]] }}
   | ( t )                                   :: S :: Paren
   | b sp t b spe :: S :: BreakSpacing1
   | b sp t :: S :: BreakSpacing2
@@ -77,6 +76,7 @@ var_subs :: 'vss_' ::= {{ com variable substitutions }}
 val, v :: 'v_' ::= {{ com unreducible value }}
   | ()                                      ::   :: Unit     {{ com unit }}
   | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}.\,[[t]] }}
+  | Ur t :: :: Exp {{ com exponential }}
   | * l :: M :: Deref
 
 label_stmt, s :: 's_' ::= {{ com label statement }}
@@ -136,6 +136,10 @@ spacing_end, spe :: 'spe_' ::= {{ tex \ottsp{[[spacing_end]]} }}
   | ssssse :: :: space5e {{ tex \myspace{5} }}
   | sssssse :: :: space6e {{ tex \myspace{6} }}
 
+judg :: 'judg_' ::=
+  | H ; U ; G |- t : A ::  :: Jtype
+  | H | t --> H' | t' ::  :: Jop
+
 terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
   | * :: :: prod {{ tex \star }}
@@ -189,104 +193,104 @@ defns
 Jtype :: '' ::=
 
 defn
-U ; G |- t : A :: :: Jtypec :: Jtype_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+H ; U ; G |- t : A :: :: Jtypec :: Jtype_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap context $[[H]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
 
 --------------- :: Id
-U ; { x : A } |- x : A
+H ; U ; { x : A } |- x : A
 
 --------------- :: Id'
-U µ { x : A} ; empty |- x : A
+H ; U µ { x : A} ; empty |- x : A
 
 ---------------- :: Unit
-U ; empty |- () : 1
+H ; U ; empty |- () : 1
 
 
-U ; G µ { x : A } |- t : B
+H ; U ; G µ { x : A } |- t : B
 ----------------------- :: Lam
-U ; G |- \x:A.t : A --o B
+H ; U ; G |- \x:A.t : A --o B
 
-U ; G |- t : A --o B
-U ; D |- u : A
+H ; U ; G |- t : A --o B
+H ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 --------------------------------- :: App
-U ; G µ D |- t u : B
+H ; U ; G µ D |- t u : B
 
-U ; G |- t : 1
-U ; D |- u : A
+H ; U ; G |- t : 1
+H ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 ----------------------------------------- :: PatU
-U ; G µ D |- t ; u : A
+H ; U ; G µ D |- t ; u : A
 %U ; G µ D |- case t of { () -> u } : A
 
-U ; G |- t : A1 * A2
-U ; D µ { x1 : A1 , x2 : A2 } |- u : B
+H ; U ; G |- t : A1 * A2
+H ; U ; D µ { x1 : A1 , x2 : A2 } |- u : B
 names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatP
-U ; G µ D |- case t of {<x1, x2> -> u} : B
+H ; U ; G µ D |- case t of {<x1, x2> -> u} : B
 
-U ; G |- t : A1 + A2
-U ; D µ { x1 : A1 } |- u1 : B
-U ; D µ { x2 : A2 } |- u2 : B
+H ; U ; G |- t : A1 + A2
+H ; U ; D µ { x1 : A1 } |- u1 : B
+H ; U ; D µ { x2 : A2 } |- u2 : B
 names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatS
-U ; G µ D |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
+H ; U ; G µ D |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
 
-U ; G |- t : [A]
-U ; D |- u1 : B
-U ; D µ { x1 : A , x2 : [A] } |- u2 : B
+H ; U ; G |- t : [A]
+H ; U ; D |- u1 : B
+H ; U ; D µ { x1 : A , x2 : [A] } |- u2 : B
 names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatL
-U ; G µ D |- case t of { Nil -> u1 , x1 Cons x2 -> u2 } : B
+H ; U ; G µ D |- case t of { Nil -> u1 , x1 Cons x2 -> u2 } : B
 
-U ; G |- t : !A
-U µ { x : A } ; D |- u: B
+H ; U ; G |- t : !A
+H ; U µ { x : A } ; D |- u: B
 names( G ) /\ names( D ) = empty
 ----------------------------------------- :: PatE
-U ; G µ D |- case t of { Ur x -> u } : B
+H ; U ; G µ D |- case t of { Ur x -> u } : B
 
-U ; G µ { d : |A| } |- t : 1
+H ; U ; G µ { d : |A| } |- t : 1
 ------------------------------ :: Alloc
-U ; G |- alloc d A { t } : A
+H ; U ; G |- alloc d A { t } : A
 
-U ; G |- t : |A|
-U ; D |- u : A
+H ; U ; G |- t : |A|
+H ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 ----------------------------------- :: FillL
-U ; G µ D |- t |> fillLeaf u : 1
+H ; U ; G µ D |- t |> fillLeaf u : 1
 
-U ; G |- t : |A1 + A2|
+H ; U ; G |- t : |A1 + A2|
 ----------------------------------------- :: FillV1
-U ; G |- t |> fillLeft : |A1|
+H ; U ; G |- t |> fillLeft : |A1|
 
-U ; G |- t : |A1 + A2|
+H ; U ; G |- t : |A1 + A2|
 ----------------------------------------- :: FillV2
-U ; G |- t |> fillRight : |A2|
+H ; U ; G |- t |> fillRight : |A2|
 
-U ; G |- t : |A1 * A2|
-U ; D µ { dl : |A1| , dr : |A2| } |- u : B
+H ; U ; G |- t : |A1 * A2|
+H ; U ; D µ { dl : |A1| , dr : |A2| } |- u : B
 names( G ) /\ names( D ) = empty
 ----------------------------------------------:: FillP
-U ; G µ D |- t |> fillPair dl dr { u } : B
+H ; U ; G µ D |- t |> fillPair dl dr { u } : B
 
-U ; G |- t : |[A]|
+H ; U ; G |- t : |[A]|
 ----------------------------------- :: FillNil
-U ; G |- t |> fillNil : 1
+H ; U ; G |- t |> fillNil : 1
 
-U ; G |- t : |[A]|
-U ; D µ { dh : |A| , dt : |[A]| } |- u : B
+H ; U ; G |- t : |[A]|
+H ; U ; D µ { dh : |A| , dt : |[A]| } |- u : B
 names( G ) /\ names( D ) = empty
 ---------------------------------------------------------------- :: FillCons
-U ; G µ D |- t |> fillCons dh dt { u } : B
+H ; U ; G µ D |- t |> fillCons dh dt { u } : B
 
-U ; empty |- t : A
+H ; U ; empty |- t : A
 ----------------------- :: Exp
-U ; empty |- Ur t : !A
+H ; U ; empty |- Ur t : !A
 
-U ; G µ { x : A } |- t : B
-U ; D |- u : A
+H ; U ; G µ { x : A } |- t : B
+H ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 --------------------------------- :: Sub
-U ; G µ D |- t[x := u] : B
+H ; U ; G µ D |- t[x := u] : B
 
 defns
 Jop :: '' ::=
@@ -296,7 +300,7 @@ H | t --> H' | t' :: :: reduce :: Jop_ {{ com $[[t]]$ reduces to $[[t']]$, with 
 
 H | t --> H' | t'
 ------------------- :: UnderApp
-H | t u --> H | t' u
+H | t u --> H' | t' u
 
 ---------------------------- :: App
 H | (\x:A.t) u --> H | t[x := u]
@@ -366,6 +370,99 @@ H µ { l .> null } | l |> fillCons l1 l2 { t } --> H µ { l .> l1 Cons l2 , l1 .
 
 embed
 {{ tex
+
+\textbf{Theorem: Progress}
+
+\newcommand{\Jtype}[1]{\textsc{Jtype\_#1} }
+\newcommand{\Jop}[1]{\textsc{Jop\_#1} }
+\newcommand{\TODO}[1]{\textcolor{red}{$\langle$TODO: #1$\rangle$} }
+\newcommand{\is}{\overset{\mathit{is} }{=} }
+
+Suppose $[[t]]$ is a closed, well-typed term (that is, $[[ H ; empty ; empty |- t : A ]]$). Then $[[t]]$ is a value or there are $[[t']]$ and $[[H']]$ such as $[[ H | t --> H' | t' ]]$.
+
+Let's focus on the last derivation of the typing tree of $[[t]]$:
+
+\begin{itemize}
+
+
+\item It can be neither \Jtype{Id} nor \Jtype{Id'}, because no variable can type with both typing contexts being empty.
+
+\item If it's \Jtype{Unit}, then $[[t]]$ is a value.
+\item If it's \Jtype{Lam}, then $[[t]]$ is a value.
+
+\item If it's \Jtype{App}, then there are $[[t']]$, $[[u]]$ such as $[[t]] \is [[t' u]]$. In addition, there is a type $[[B]]$ such as $[[H ; empty ; empty |- t' : B --o A]].
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be neither $[[()]]$ nor $[[Ur t'']]$ ;
+    \item if $[[t']] \is [[\ x:B. t'']]$, then $[[t' u]]$ can be reduced via \Jop{App} ;
+    \item otherwise, $[[t']]$ is of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderApp}.
+
+\item If it's \Jtype{PatU}, then there are $[[t']]$, $[[u]]$ such as $[[t]] \is [[t' ; u]]$ and $[[H ; empty ; empty |- t' : 1]]$.
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be neither $[[\ x:B. t'']]$ nor $[[Ur t'']]$.
+    \item if $[[t']] \is [[()]]$, then $[[t' ; u]]$ can be reduced via \Jop{PatU} ;
+    \item otherwise, $[[t']]$ is of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatU}.
+
+\item If it's \Jtype{PatP}, then there are $[[t']]$, $[[u]]$, $[[x1]]$, $[[x2]]$, $[[B1]]$, $[[B2]]$ such as $[[t]] \is [[case t' of { <x1, x2> -> u }]]$ and $[[H ; empty ; empty |- t' : B1 * B2]]$.
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
+    \item so t' must of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatP}.
+
+\item If it's \Jtype{PatS}, then there are $[[t']]$, $[[u1]]$, $[[u2]]$, $[[x1]]$, $[[x2]]$, $[[B1]]$, $[[B2]]$ such as $[[t]] \is [[case t' of { 1. x1 -> u1, 2. x2 -> u2 }]]$ and $[[H ; empty ; empty |- t' : B1 + B2]]$.
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
+    \item so t' must of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatS}.
+
+\item If it's \Jtype{PatL}, then there are $[[t']]$, $[[u1]]$, $[[u2]]$, $[[x1]]$, $[[x2]]$, $[[B]]$ such as $[[t]] \is [[case t' of { Nil -> u1, x1 Cons x2 -> u2 }]]$ and $[[H ; empty ; empty |- t' : [B] ]]$.
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
+    \item so t' must of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatL}.
+
+\item If it's \Jtype{PatE}, then there are $[[t']]$, $[[u]]$, $[[x]]$, $[[B]]$ such as $[[t]] \is [[case t' of { Ur x -> u }]]$ and $[[H ; empty ; empty |- t' : !B ]]$.
+
+Either $[[t']]$ is a value, in which case:
+
+\begin{itemize}
+    \item $[[t']]$ can be neither $[[()]]$ nor $[[\ x:B'. t'']]$ ;
+    \item 
+    \item so t' must of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
+\end{itemize}
+
+or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatE}.
+
+\end{itemize}
+
+\bigskip
+\bigskip
 \togglespaces
 
 Let's implement $\ottkw{map}$ using $\ottkw{foldl}$ !
