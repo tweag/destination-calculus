@@ -4,6 +4,8 @@ embed
 {{ tex-preamble
 \usepackage[dvipsnames]{xcolor}
 \usepackage{abraces}
+\usepackage{amsmath}
+\usepackage{graphicx}
 %\usepackage{mathptmx}
 \definecolor{mvcolor}{RGB}{119, 24, 201}
 \definecolor{tycolor}{RGB}{26, 87, 186}
@@ -28,6 +30,15 @@ embed
   \@whilenum\my@repeat@count<#1\do{#2\advance\my@repeat@count\@ne}%
   \endgroup
 }
+\newcommand{\ostar}{\mathbin{\mathpalette\make@circled{\!\!\star}\!\! } }
+\newcommand{\make@circled}[2]{%
+  \ooalign{$\m@th#1\smallbigcirc{#1}$\cr\hidewidth$\m@th#1#2$\hidewidth\cr}%
+}
+\newcommand{\smallbigcirc}[1]{%
+  \vcenter{\hbox{\scalebox{0.7}{$\m@th#1\bigcirc$}
+}
+}%
+}
 \makeatother
 \def\togglespaces{
 \def\mynewline{\\}
@@ -36,9 +47,11 @@ embed
 \let\heaparrow\hookrightarrow
 \newcommand{\consarrow}{\overset{c}{\rightharpoonup} }
 % deactivate underbrace
-% \renewcommand{\aunderbrace}[2][]{#2}
+ \renewcommand{\aunderbrace}[2][]{#2}
 
 }}
+
+%TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
 
 metavar metavariable, x, xs, y, z, uf, f, d ::=
   {{ tex \ottmv{[[metavariable]]} }}
@@ -56,18 +69,18 @@ term, t, u :: 't_' ::=                                               {{ com term
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
   | case t of { Nil -> u1 , x1 Cons x2 -> u2 } :: :: PatL {{ com pattern-matching on list }}
   | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
-  | alloc d A { t }                                   ::   :: Alloc    {{ com allocate data }} {{ tex \ottkw{alloc}_{[[d]] \hookrightarrow [[A]]}\,\left\{[[t]]\right\} }}
+  | alloc d A { t }                                   ::   :: Alloc    {{ com allocate data }} {{ tex \underset{\ottty{\lfloor[[A]]\rfloor \rightarrow [[A]]} }{\ottkw{alloc}~[[d]]}\,\textbf{.}\,[[t]] }}
   | t |> fillLeaf u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleleft\,[[u]] }}
   | t |> fillLeft d' { u }                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{1.} [[d']]~;~[[u]] }}
   | t |> fillRight d' { u }                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{2.} [[d']]~;~[[u]] }}
   | t |> fillPair d1 d2 { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleleft\,\langle [[d1]] , [[d2]] \rangle~;~[[u]] }}
   | t |> fillNil                               ::   :: FillNil {{ com fill list destination with nil }} {{ tex [[t]]\,\triangleleft\,[[Nil]] }}
   | t |> fillCons d1 d2 { u }                             ::  :: FillCons {{ com fill list destination with cons }} {{ tex [[t]]\,\triangleleft\,[[d1]] [[Cons]] [[d2]]~;~[[u]] }}
+  | * l :: :: Deref {{ com note: $\ottlb{\star l}$ is not a part of the user syntax }}
   | ( t )                                   :: S :: Paren
   | b sp t b spe :: S :: BreakSpacing1
   | b sp t :: S :: BreakSpacing2
 %  | t b spe :: S :: BreakSpacing3
-  | l                                       :: M :: Label {{ com note: $[[l]]$ is not a part of the user syntax }}
   | t [ var_subs ]                             :: M :: Sub
 %  | t [ x |> x' ]                            :: M :: Alpha
   | foldl t1 t2 t3 :: :: FoldL {{ com TODO: hide }}
@@ -81,9 +94,10 @@ var_subs :: 'vss_' ::= {{ com variable substitutions }}
 
 val, v :: 'v_' ::= {{ com unreducible value }}
   | ()                                      ::   :: Unit     {{ com unit }}
-  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}.\,[[t]] }}
+  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}\textbf{.}\,[[t]] }}
   | Ur t :: :: Exp {{ com exponential }}
-  | * l :: M :: Deref {{ com note: $\ottlb{\star l}$ is not a part of the user syntax }}
+  | ° l :: :: DerefVal {{ com note: $\ottlb{\ostar l}$ is not a part of the user syntax }}
+  | l                                       :: :: Label {{ com note: $[[l]]$ is not a part of the user syntax }}
 
 label, l :: 'l_' ::= {{ com label }} {{ tex \ottlb{[[label]]} }}
 
@@ -168,7 +182,8 @@ judg :: 'judg_' ::=
 
 terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
-  | * :: :: prod {{ tex \ottlb{\star} }}
+  | * :: :: deref {{ tex \ottlb{\star} }}
+  | ° :: :: valderef {{ tex \ottlb{\ostar} }}
   | + :: :: sum {{ tex \ottty{\oplus} }}
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | := :: :: with {{ tex := }}
@@ -348,8 +363,14 @@ P ; U ; empty |- t : A
 ----------------------- :: Exp
 P ; U ; empty |- Ur t : !A
 
+------------------------------------- :: LabelAsDest
+P µ { l : A } ; U ; empty |- l : |A|
+
 ------------------------------------ :: Deref
 P µ { l : A } ; U ; empty |- *l : A
+
+------------------------------------ :: DerefVal
+P µ { l : A } ; U ; empty |- °l : A
 
 defn
 C : Abar >> A :: :: JtypeC :: JtypeC_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
@@ -390,35 +411,38 @@ H | t ; u --> H' | t' ; u
 --------------------- :: PatU
 H | () ; u --> H | u
 
----------------------------------- :: Deref
-H µ { l .> v } | *l --> H | v
+---------------------------------- :: DerefVal
+H µ { l .> v } | *l --> H µ { l .> v } | v
+
+---------------------------------- :: DerefConstructor
+H µ { l .> C lbar } | *l --> H µ { l .> C lbar } | °l
 
 H | t --> H' | t'
 ------------------------------------------------------------------------------- :: UnderPatS
 H | case t of {1. x1 -> u1, 2. x2 -> u2} --> H' | case t' of {1. x1 -> u1, 2. x2 -> u2}
 
 ----------------------------------------- :: PatSV1
-H µ { l .> 1. l' } | case *l of {1. x1 -> u1, 2. x2 -> u2} --> H µ { l .> 1. l' } | u1[x1 := *l']
+H µ { l .> 1. l' } | case °l of {1. x1 -> u1, 2. x2 -> u2} --> H µ { l .> 1. l' } | u1[x1 := *l']
 
 ----------------------------------------- :: PatSV2
-H µ { l .> 2. l' } | case *l of {1. x1 -> u1, 2. x2 -> u2} --> H µ { l .> 2. l' } | u2[x2 := *l']
+H µ { l .> 2. l' } | case °l of {1. x1 -> u1, 2. x2 -> u2} --> H µ { l .> 2. l' } | u2[x2 := *l']
 
 H | t --> H' | t'
 ----------------------------------------------------------------------------- :: UnderPatP
 H | case t of {<x1,x2> -> u} --> H' | case t' of {<x1,x2> -> u}
 
 -------------------------------------------------------------------------------- :: PatP
-H µ { l .> <l1, l2> } | case *l of {<x1,x2> -> u} --> H µ { l .> <l1, l2> } | u[x1 := *l1, x2 := *l2]
+H µ { l .> <l1, l2> } | case °l of {<x1,x2> -> u} --> H µ { l .> <l1, l2> } | u[x1 := *l1, x2 := *l2]
 
 H | t --> H' | t'
 ------------------------------------------------------------------------------------- :: UnderPatL
 H | case t of {Nil -> u1, x1 Cons x2 -> u2} --> H' | case t' of {Nil -> u1, x1 Cons x2 -> u2}
 
 ----------------------------------------------------------------------- :: PatLNil
-H µ { l .> Nil } | case *l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> Nil } | u1
+H µ { l .> Nil } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> Nil } | u1
 
 ----------------------------------------------------------------------- :: PatLCons
-H µ { l .> l1 Cons l2 } | case *l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> l1 Cons l2 } | u2[x1 := *l1, x2 := *l2]
+H µ { l .> l1 Cons l2 } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> l1 Cons l2 } | u2[x1 := *l1, x2 := *l2]
 
 H | t --> H' | t'
 ------------------------------------------------------------------------------------- :: UnderPatE
