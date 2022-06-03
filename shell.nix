@@ -25,6 +25,7 @@ pkgs.mkShell
           abraces
           times
           rsfs
+          enumitem
           # mathptmx
           # minted
           # minted fvextra catchfile xstring kvoptions fancyvrb

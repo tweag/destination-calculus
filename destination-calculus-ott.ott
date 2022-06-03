@@ -6,6 +6,8 @@ embed
 \usepackage{abraces}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{amsthm}
+\usepackage{enumitem}
 %\usepackage{mathptmx}
 \definecolor{mvcolor}{RGB}{119, 24, 201}
 \definecolor{tycolor}{RGB}{26, 87, 186}
@@ -48,7 +50,12 @@ embed
 \newcommand{\consarrow}{\overset{c}{\rightharpoonup} }
 % deactivate underbrace
  \renewcommand{\aunderbrace}[2][]{#2}
-
+\theoremstyle{definition}
+\newtheorem{lem}{Lemma}
+\newcommand{\JtypeT}[1]{\textsc{JtypeT\_#1} }
+\newcommand{\JtypeHT}[1]{\textsc{JtypeHT\_#1} }
+\newcommand{\JtypeH}[1]{\textsc{JtypeH\_#1} }
+\newcommand{\Jop}[1]{\textsc{Jop\_#1} }
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -167,18 +174,23 @@ spacing_end, spe :: 'spe_' ::= {{ tex \ottsp{[[spacing_end]]} }}
   | sssssse :: :: space6e {{ tex \myspace{6} }}
 
 heap_constructor, C :: 'hcons_' ::= {{ tex \ottcons{[[heap_constructor]]} }}
-  | 1. :: :: V1
-  | 2. :: :: V2
+  | ( 1. ) :: :: V1
+  | ( 2. ) :: :: V2
   | ( < , > ) :: :: Pair
-  | Nil :: :: Nil
-  | ( '::' ) :: :: Cons
+  | ( Nil ) :: :: Nil
+  | ( Cons ) :: :: Cons
 
 judg :: 'judg_' ::=
   | P ; U ; G |- H :: :: JtypeH
   | P ; U ; G |- H | t : A :: :: JtypeHT
   | P ; U ; G |- t : A ::  :: JtypeT
   | C : Abar >> A :: :: JtypeC
+  | A is B :: :: JeqType
+  | t is u :: :: JeqTerm
   | H | t --> H' | t' ::  :: Jop
+  | type_affect in G :: :: JctxIn
+  | label_stmt in H :: :: JheapIn
+  | names ( G ) /\ names ( D ) = empty :: :: JctxClash
 
 terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
@@ -204,7 +216,7 @@ terminals :: 'terminals_' ::=
   | 1. :: :: v1 {{ tex \ottcons{1.} }}
   | 2. :: :: v2 {{ tex \ottcons{2.} }}
   | Nil :: :: nil {{ tex \ottcons{Nil} }}
-  | Cons :: :: cons {{ tex {:}\!{:} }}
+  | Cons :: :: cons {{ tex {:}{:} }}
   | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
 %  | ++ :: :: concat {{ tex {\small{+}\mspace{-6mu}{+} } }}
 %  | <- :: :: affect {{ tex \leftarrow }}
@@ -212,24 +224,42 @@ terminals :: 'terminals_' ::=
   | '|' :: :: against {{ tex \,|\, }}
   | null :: :: null {{ tex \oslash }}
   | >> :: :: consarrow {{ tex \ottty{\consarrow} }}
+  | is :: :: is {{ tex = }}
 
-defns
-JMvar :: '' ::=
+% defns
+% JMvar :: '' ::=
+
+% % defn
+% % x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$ and $[[y]]$ stands for different variables }} by
 
 % defn
-% x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$ and $[[y]]$ stands for different variables }} by
+% x notin free ( t ) :: :: JmvarNFree :: JmvarNFree_ {{ com $[[x]]$ is not a free variable in $[[t]]$ }} by
 
-defn
-x notin free ( t ) :: :: JMVarNFree :: JMVar_ {{ com $[[x]]$ is not a free variable in $[[t]]$ }} by
-
-defn
-x in free ( t ) :: :: JMVarFree :: JMVar_ {{ com $[[x]]$ is a free variable used in $[[t]]$ }} by
+% defn
+% x in free ( t ) :: :: JmvarFree :: JmvarFree_ {{ com $[[x]]$ is a free variable used in $[[t]]$ }} by
 
 defns
 Jctx :: '' ::=
 
 defn
-names ( G ) /\ names ( D ) = empty :: :: Jctxd :: Jctx_ {{ com $[[G]]$ and $[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+names ( G ) /\ names ( D ) = empty :: :: JctxClash :: JctxClash_ {{ com $[[G]]$ and $[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+
+defn
+type_affect in G :: :: JctxIn :: JcxtIn_ by
+
+defns
+Jheap :: '' ::=
+
+defn
+label_stmt in H :: :: JheapIn :: JheapIn_ by
+
+defns
+Jeq :: '' ::=
+
+defn
+A is B :: :: JeqType :: JeqType_ by
+defn
+t is u :: :: JeqTerm :: JeqTerm_ by
 
 defns
 Jtype :: '' ::=
@@ -376,19 +406,19 @@ defn
 C : Abar >> A :: :: JtypeC :: JtypeC_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
 
 -------------------  :: V1
-1. : A >> A + B
+(1.) : A >> A + B
 
 ----------------------- :: V2
-2. : B >> A + B
+(2.) : B >> A + B
 
 --------------------------- :: Pair
 (<,>) : A B >> A * B
 
 ------------------------ :: Nil
-Nil : none >> [A]
+(Nil) : none >> [A]
 
 ------------------------- :: Cons
-(::) : A [A] >> [A]
+(Cons) : A [A] >> [A]
 
 defns
 Jop :: '' ::=
@@ -503,114 +533,73 @@ H µ { l .> null } | l |> fillCons d1 d2 { t } --> H µ { l .> l1 Cons l2 , l1 .
 embed
 {{ tex
 
-% \textbf{Definition: Heap typing}
+\begin{lem}[Canonical forms]
+Let $[[v]]$ be a value such that $[[P ; U ; G |- H | v : A]]$.
 
-% We say that $[[H]]$ is a well-typed heap given typing contexts $[[P]], [[U]], [[G]]$ and we write $[[P ; U ; G |- H]]$ if:
-% \begin{itemize}
-%   \item $\mathsf{labels}([[H]]) = \mathsf{labels}([[P]])$
-%   \item $\forall ([[l]] \heaparrow \ottcons{C\,} \bar{[[l]]}) \in [[H]],\quad \bar{[[l]]}:\bar{[[A]]} \in [[P]] ~\land~ [[C : Abar >> A]] ~\land~ [[l : A]] \in [[P]]$
-%   \item $\forall ([[l]] \heaparrow [[null]]) \in [[H]],\quad \exists [[A]].~~[[l : A]] \in [[P]]$
-%   \item $\forall ([[l]] \heaparrow [[v]]) \in [[H]],\quad [[P ; U ; G |- v : A]] ~\land~ [[l : A]] \in [[P]]$
-% \end{itemize}
+\begin{itemize}
 
-% \textbf{Theorem: Progress}
+\item If $[[A is 1]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
+\item $[[v]]$ can be $[[()]]$ (\JtypeT{Unit})
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : 1 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> 1]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\end{itemize}
+So $[[P ; U ; G |- H | v : 1]] \implies [[v is ()]]$
 
-% \newcommand{\JtypeT}[1]{\textsc{JtypeT\_#1} }
-% \newcommand{\Jop}[1]{\textsc{Jop\_#1} }
-% \newcommand{\TODO}[1]{\textcolor{red}{$\langle$TODO: #1$\rangle$} }
-% \newcommand{\is}{\overset{\mathit{is} }{=} }
+\item If $[[A is B1 * B2]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 * B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 * B2]]$ (by application of \JtypeH{Constructor}). There is only one such $[[C]]$: $[[(<,>)]]$. In addition, we should have $[[l .> <l1, l2> in H]]$ (still from \JtypeH{Constructor}).
+\end{itemize}
+So $[[P ; U ; G |- H | v : B1 * B2]] \implies [[v is °l]] \quad\land\quad [[l .> <l1, l2> in H]]$
 
-% Suppose $[[t]]$ is a closed, well-typed term (that is, $[[ P ; empty ; empty |- t : A ]]$). Then $[[t]]$ is a value or there are $[[t']]$ and $[[H']]$ such as $[[ H | t --> H' | t' ]]$.
+\item If $[[A is B1 + B2]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(1.)]]$ and $[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \JtypeH{Constructor}).
+\end{itemize}
+So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] \quad\land\quad \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$
 
-% Let's focus on the last derivation of the typing tree of $[[t]]$:
+\item If $[[A is B1 --o B2]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
+\item $[[v]]$ can be $[[\x:B1.t]]$ (\JtypeT{Lam})
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 --o B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 --o B2]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\end{itemize}
+So $[[P ; U ; G |- H | v : B1 --o B2]] \implies [[v is \x:B1.t]]$
 
-% \begin{itemize}
+\item If $[[A is |B|]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[Ur t]]$ (Inversion lemma).
+\item $[[v]]$ can be $[[l]]$ (\JtypeT{LabelAsDest}), in which case $[[l : A in P]]$.
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : |B| in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> |B|]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\end{itemize}
+So $[[P ; U ; G |- H | v : |B|]] \implies [[v is l]]$
 
+\item If $[[A is [B] ]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(Nil)]]$ and $[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \JtypeH{Constructor}).
+\end{itemize}
+So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] \quad\land\quad \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$
 
-% \item It can be neither \JtypeT{Id} nor \JtypeT{Id'}, because no variable can type with both typing contexts being empty.
+\item If $[[A is !B ]]$:
+\begin{itemize}
+\item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[l]]$ (Inversion lemma).
+\item $[[v]]$ can be $[[Ur t]]$ (\JtypeT{Exp}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> !B]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\end{itemize}
+So $[[P ; U ; G |- H | v : !B ]] \implies [[v is Ur t]]$
 
-% \item If it's \JtypeT{Unit}, then $[[t]]$ is a value.
-% \item If it's \JtypeT{Lam}, then $[[t]]$ is a value.
-% \item If it's \JtypeT{Exp}, then $[[t]]$ is a value.
+\end{itemize}
+\end{lem}
 
-% \item If it's \JtypeT{App}, then there are $[[t']]$, $[[u]]$ such as $[[t]] \is [[t' u]]$. In addition, there is a type $[[B]]$ such as $[[P ; empty ; empty |- t' : B --o A]].
+\bigskip
+\bigskip
 
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be neither $[[()]]$ nor $[[Ur t'']]$ ;
-%     \item if $[[t']] \is [[\ x:B. t'']]$, then $[[t' u]]$ can be reduced via \Jop{App} ;
-%     \item otherwise, $[[t']]$ is of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderApp}.
-
-% \item If it's \JtypeT{PatU}, then there are $[[t']]$, $[[u]]$ such as $[[t]] \is [[t' ; u]]$ and $[[P ; empty ; empty |- t' : 1]]$.
-
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be neither $[[\ x:B. t'']]$ nor $[[Ur t'']]$.
-%     \item if $[[t']] \is [[()]]$, then $[[t' ; u]]$ can be reduced via \Jop{PatU} ;
-%     \item otherwise, $[[t']]$ is of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatU}.
-
-% \item If it's \JtypeT{PatP}, then there are $[[t']]$, $[[u]]$, $[[x1]]$, $[[x2]]$, $[[B1]]$, $[[B2]]$ such as $[[t]] \is [[case t' of { <x1, x2> -> u }]]$ and $[[P ; empty ; empty |- t' : B1 * B2]]$.
-
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
-%     \item so $[[t']]$ must be of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatP}.
-
-% \item If it's \JtypeT{PatS}, then there are $[[t']]$, $[[u1]]$, $[[u2]]$, $[[x1]]$, $[[x2]]$, $[[B1]]$, $[[B2]]$ such as $[[t]] \is [[case t' of { 1. x1 -> u1, 2. x2 -> u2 }]]$ and $[[P ; empty ; empty |- t' : B1 + B2]]$.
-
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
-%     \item so $[[t']]$ must be of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatS}.
-
-% \item If it's \JtypeT{PatL}, then there are $[[t']]$, $[[u1]]$, $[[u2]]$, $[[x1]]$, $[[x2]]$, $[[B]]$ such as $[[t]] \is [[case t' of { Nil -> u1, x1 Cons x2 -> u2 }]]$ and $[[P ; empty ; empty |- t' : [B] ]]$.
-
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be none of $[[()]]$, $[[\ x:B'. t'']]$ or $[[Ur t'']]$.
-%     \item so $[[t']]$ must be of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatL}.
-
-% \item If it's \JtypeT{PatE}, then there are $[[t']]$, $[[u]]$, $[[x]]$, $[[B]]$ such as $[[t]] \is [[case t' of { Ur x -> u }]]$ and $[[P ; empty ; empty |- t' : !B ]]$.
-
-% Either $[[t']]$ is a value, in which case:
-
-% \begin{itemize}
-%     \item $[[t']]$ can be neither $[[()]]$ nor $[[\ x:B'. t'']]$ ;
-%     \item if $[[t']] \is [[Ur t'']]$, then we can apply \Jop{PatE} ;
-%     \item otherwise $[[t']]$ must be of the form $[[*l]]$ and then \TODO{Pointer lemma} says that $[[t]]$ can be reduced.
-% \end{itemize}
-
-% or $[[t']]$ can be reduced, in which case we can apply \Jop{UnderPatE}.
-
-% \end{itemize}
-
-% \bigskip
-% \bigskip
 \togglespaces
 
 Let's implement $\ottkw{map}$ using $\ottkw{foldl}$ !
-
-
 
 \[\begin{array}{l}
 \ottkw{map} \defeq [[
@@ -631,3 +620,5 @@ parsing
 v_Lam <= t_Sub
 t_PatU <= t_App
 t_PatU <= t_FillL
+judg_JheapIn <= s_V1
+hcons_V1 <= terminals_v1
