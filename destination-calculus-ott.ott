@@ -52,10 +52,14 @@ embed
  \renewcommand{\aunderbrace}[2][]{#2}
 \theoremstyle{definition}
 \newtheorem{lem}{Lemma}
-\newcommand{\JtypeT}[1]{\textsc{JtypeT\_#1} }
-\newcommand{\JtypeHT}[1]{\textsc{JtypeHT\_#1} }
-\newcommand{\JtypeH}[1]{\textsc{JtypeH\_#1} }
-\newcommand{\Jop}[1]{\textsc{Jop\_#1} }
+\newcommand{\JtypeT}[1]{\textsc{JtypeT\_#1}%
+}
+\newcommand{\JtypeHT}[1]{\textsc{JtypeHT\_#1}%
+}
+\newcommand{\JtypeH}[1]{\textsc{JtypeH\_#1}%
+}
+\newcommand{\Jop}[1]{\textsc{Jop\_#1}%
+}
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -187,6 +191,7 @@ judg :: 'judg_' ::=
   | C : Abar >> A :: :: JtypeC
   | A is B :: :: JeqType
   | t is u :: :: JeqTerm
+  | G is D :: :: JeqContext
   | H | t --> H' | t' ::  :: Jop
   | type_affect in G :: :: JctxIn
   | label_stmt in H :: :: JheapIn
@@ -230,7 +235,7 @@ terminals :: 'terminals_' ::=
 % JMvar :: '' ::=
 
 % % defn
-% % x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$ and $[[y]]$ stands for different variables }} by
+% % x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$~~and~~$[[y]]$ stands for different variables }} by
 
 % defn
 % x notin free ( t ) :: :: JmvarNFree :: JmvarNFree_ {{ com $[[x]]$ is not a free variable in $[[t]]$ }} by
@@ -242,7 +247,7 @@ defns
 Jctx :: '' ::=
 
 defn
-names ( G ) /\ names ( D ) = empty :: :: JctxClash :: JctxClash_ {{ com $[[G]]$ and $[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+names ( G ) /\ names ( D ) = empty :: :: JctxClash :: JctxClash_ {{ com $[[G]]$~~and~~$[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
 
 defn
 type_affect in G :: :: JctxIn :: JcxtIn_ by
@@ -260,6 +265,8 @@ defn
 A is B :: :: JeqType :: JeqType_ by
 defn
 t is u :: :: JeqTerm :: JeqTerm_ by
+defn
+G is D :: :: JeqContext :: JeqContext_ by
 
 defns
 Jtype :: '' ::=
@@ -307,6 +314,18 @@ P ; U µ { x : A} ; empty |- x : A
 ---------------- :: Unit
 P ; U ; empty |- () : 1
 
+P ; U ; empty |- t : A
+----------------------- :: Exp
+P ; U ; empty |- Ur t : !A
+
+------------------------------------- :: LabelAsDest
+P µ { l : A } ; U ; empty |- l : |A|
+
+------------------------------------ :: Deref
+P µ { l : A } ; U ; empty |- *l : A
+
+------------------------------------ :: DerefVal
+P µ { l : A } ; U ; empty |- °l : A
 
 P ; U ; G µ { x : A } |- t : B
 ----------------------- :: Lam
@@ -388,19 +407,6 @@ P ; U ; D µ { d1 : |A| , d2 : |[A]| } |- u : B
 names( G ) /\ names( D ) = empty
 ---------------------------------------------------------------- :: FillCons
 P ; U ; G µ D |- t |> fillCons d1 d2 { u } : B
-
-P ; U ; empty |- t : A
------------------------ :: Exp
-P ; U ; empty |- Ur t : !A
-
-------------------------------------- :: LabelAsDest
-P µ { l : A } ; U ; empty |- l : |A|
-
------------------------------------- :: Deref
-P µ { l : A } ; U ; empty |- *l : A
-
------------------------------------- :: DerefVal
-P µ { l : A } ; U ; empty |- °l : A
 
 defn
 C : Abar >> A :: :: JtypeC :: JtypeC_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
@@ -534,7 +540,23 @@ embed
 {{ tex
 
 \begin{lem}[Canonical forms]
+
 Let $[[v]]$ be a value such that $[[P ; U ; G |- H | v : A]]$.
+
+\begin{tabular}{ll}
+Type & Value \\
+$[[A is 1]]$ & $[[v is ()]]$ \\
+$[[A is B1 * B2]]$ & $[[v is °l]] ~~\land~~ [[l .> <l1, l2> in H]]$ \\
+$[[A is B1 + B2]]$ & $[[v is °l]] ~~\land~~ \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$ \\
+$[[A is B1 --o B2]]$ & $[[v is \x:B1.t]]$ \\
+$[[A is |B|]]$ & $[[v is l]]$ \\
+$[[A is [B] ]]$ & $[[v is °l]] ~~\land~~ \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$ \\
+$[[A is !B ]]$ & $[[v is Ur t]]$\\
+\end{tabular}
+
+\bigskip
+
+\noindent\textit{Proof:}
 
 \begin{itemize}
 
@@ -551,14 +573,14 @@ So $[[P ; U ; G |- H | v : 1]] \implies [[v is ()]]$
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
 \item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 * B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 * B2]]$ (by application of \JtypeH{Constructor}). There is only one such $[[C]]$: $[[(<,>)]]$. In addition, we should have $[[l .> <l1, l2> in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
-So $[[P ; U ; G |- H | v : B1 * B2]] \implies [[v is °l]] \quad\land\quad [[l .> <l1, l2> in H]]$
+So $[[P ; U ; G |- H | v : B1 * B2]] \implies [[v is °l]] ~~\land~~ [[l .> <l1, l2> in H]]$
 
 \item If $[[A is B1 + B2]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(1.)]]$ and $[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \JtypeH{Constructor}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(1.)]]$~~and~~$[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
-So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] \quad\land\quad \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$
+So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] ~~\land~~ \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$
 
 \item If $[[A is B1 --o B2]]$:
 \begin{itemize}
@@ -579,9 +601,9 @@ So $[[P ; U ; G |- H | v : |B|]] \implies [[v is l]]$
 \item If $[[A is [B] ]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(Nil)]]$ and $[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \JtypeH{Constructor}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(Nil)]]$~~and~~$[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
-So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] \quad\land\quad \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$
+So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] ~~\land~~ \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$
 
 \item If $[[A is !B ]]$:
 \begin{itemize}
@@ -594,12 +616,45 @@ So $[[P ; U ; G |- H | v : !B ]] \implies [[v is Ur t]]$
 \end{itemize}
 \end{lem}
 
-\bigskip
+\begin{lem}[Inversion of the typing relation]\phantom{nl}
+
+\begin{itemize}
+\item If $[[P ; U ; G |- x : A]]$, then either $[[G is {x : A}]]$ or $[[x : A in U]]~\land~[[G is empty]]$ (\JtypeT{Id} and \JtypeT{Id'})
+\item If $[[P ; U ; G |- () : A]]$, then $[[G is empty]]$~~and~~$[[A is 1]]$ (\JtypeT{Unit})
+\item If $[[P ; U ; G |- Ur t : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is !B]]$~~and~~$[[P ; U ; empty |- t : B]]$ (\JtypeT{Exp})
+\item If $[[P ; U ; G |- l : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is |B|]]$~~and~~$[[l : B in P]]$ (\JtypeT{LabelAsDest})
+\item If $[[P ; U ; G |- *l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\JtypeT{Deref})
+\item If $[[P ; U ; G |- °l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\JtypeT{DerefVal})
+\item If $[[P ; U ; G |- \x:B1.t:A]]$, then there is some type $[[B2]]$ such that $[[A is B1 --o B2]]$~~and~~$[[P ; U ; G µ {x:B1} |- t : B2]]$ (\JtypeT{Lam})
+\item If $[[P ; U ; G |- t u : A]]$, then there are some type $[[B]]$ and contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B --o A]]$,~~~$[[P ; U ; D2 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{App})
+\item If $[[P ; U ; G |- t ; u : A]]$ then there are some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : 1]]$,~~~$[[P ; U ; D2 |- u : A]]$, and $[[G is D1 µ D2]]$ (\JtypeT{PatU})
+\item If $[[P ; U ; G |- case t of { <x1, x2> -> u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B1 * B2]]$,~~~$[[P ; U ; D2 µ { x1 : B1, x2 : B2 } |- u : A]]$ and , and $[[G is D1 µ D2]]$ (\JtypeT{PatP})
+\item If $[[P ; U ; G |- case t of { 1.x1 -> u1, 2.x2 -> u2 } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B1 + B2]]$,~~~$[[P ; U ; D2 µ { x1 : B1 } |- u1 : A]]$,~~~$[[P ; U ; D2 µ { x2 : B2 } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{PatS})
+\item If $[[P ; U ; G |- case t of { Nil -> u1, x1 Cons x2 -> u2 } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : [B] ]]$,~~~$[[P ; U ; D2 |- u1 : A]]$,~~~$[[P ; U ; D2 µ { x1 : B, x2 : [B] } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{PatL})
+\item If $[[P ; U ; G |- case t of { Ur x -> u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : !B]]$,~~~$[[P ; U µ {x : B} ; D2 |- u : A]]$ and and $[[G is D1 µ D2]]$ (\JtypeT{PatE})
+\item If $[[P ; U ; G |- t |> fillLeaf u : A]]$ then $[[A is 1]]$ and there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B|]]$,~~~$[[P ; U ; D2 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{FillL})
+\item If $[[P ; U ; G |- t |> fillLeft d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 + B2|]]$,~~~$[[P ; U ; D2 µ { d' : |B1| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{FillV1})
+\item If $[[P ; U ; G |- t |> fillRight d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 + B2|]]$,~~~$[[P ; U ; D2 µ { d' : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{FillV2})
+\item If $[[P ; U ; G |- t |> fillPair d1 d2 { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 * B2|]]$,~~~$[[P ; U ; D2 µ { d1 : |B1|, d2 : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{FillP})
+\item If $[[P ; U ; G |- t |> fillNil : A]]$ then $[[A is 1]]$ and there is some type $[[B]]$ such that $[[P ; U ; G |- t : |[B]| ]]$ (\JtypeT{FillNil})
+\item If $[[P ; U ; G |- t |> fillCons d1 d2 { u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |[B]|]]$,~~~$[[P ; U ; D2 µ { d1 : |B|, d2 : |[B]| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{FillP})
+
+\end{itemize}
+
 \bigskip
 
+\noindent\textit{Proof:}
+
+\smallskip
+
+Immediate from the definition of the typing relation.
+
+\end{lem}
+
+\bigskip
 \togglespaces
 
-Let's implement $\ottkw{map}$ using $\ottkw{foldl}$ !
+\noindent\textbf{Example 1 :} implementation of $\ottkw{map}$ with $\ottkw{foldl}$
 
 \[\begin{array}{l}
 \ottkw{map} \defeq [[
