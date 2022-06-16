@@ -52,6 +52,7 @@ embed
  \renewcommand{\aunderbrace}[2][]{#2}
 \theoremstyle{definition}
 \newtheorem{lem}{Lemma}
+\newtheorem{defi}{Definition}
 \newcommand{\JtypeT}[1]{\textsc{JtypeT\_#1}%
 }
 \newcommand{\JtypeHT}[1]{\textsc{JtypeHT\_#1}%
@@ -321,11 +322,11 @@ P ; U ; empty |- Ur t : !A
 ------------------------------------- :: LabelAsDest
 P µ { l : A } ; U ; empty |- l : |A|
 
------------------------------------- :: Deref
-P µ { l : A } ; U ; empty |- *l : A
-
 ------------------------------------ :: DerefVal
 P µ { l : A } ; U ; empty |- °l : A
+
+------------------------------------ :: Deref
+P µ { l : A } ; U ; empty |- *l : A
 
 P ; U ; G µ { x : A } |- t : B
 ----------------------- :: Lam
@@ -539,9 +540,13 @@ H µ { l .> null } | l |> fillCons d1 d2 { t } --> H µ { l .> l1 Cons l2 , l1 .
 embed
 {{ tex
 
+\begin{defi}[Pointer-less term]
+A term $[[t]]$ is said "pointer-less" if neither itself nor one of its subterms are one of $[[l]]$, $[[*l]]$ or $[[°l]]$.
+\end{defi}
+
 \begin{lem}[Canonical forms]
 
-Let $[[v]]$ be a value such that $[[P ; U ; G |- H | v : A]]$.
+Let $[[v]]$ be a value such that $[[H0]] | [[t0]] \overset{n}{\longrightarrow} [[H]] | [[v]]$ and $[[P ; U ; G |- H | v : A]]$ for some \emph{pointer-less} term $[[t0]]$.
 
 \begin{tabular}{ll}
 Type & Value \\
@@ -559,26 +564,25 @@ $[[A is !B ]]$ & $[[v is Ur t]]$\\
 \noindent\textit{Proof:}
 
 \begin{itemize}
-
 \item If $[[A is 1]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
 \item $[[v]]$ can be $[[()]]$ (\JtypeT{Unit})
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : 1 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> 1]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : 1 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> 1]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
 \end{itemize}
 So $[[P ; U ; G |- H | v : 1]] \implies [[v is ()]]$
 
 \item If $[[A is B1 * B2]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 * B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 * B2]]$ (by application of \JtypeH{Constructor}). There is only one such $[[C]]$: $[[(<,>)]]$. In addition, we should have $[[l .> <l1, l2> in H]]$ (still from \JtypeH{Constructor}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 * B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 * B2]]$ (by application of \JtypeH{Constructor}). There is only one such $[[C]]$: $[[(<,>)]]$. In addition, we should have $[[l .> <l1, l2> in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
 So $[[P ; U ; G |- H | v : B1 * B2]] \implies [[v is °l]] ~~\land~~ [[l .> <l1, l2> in H]]$
 
 \item If $[[A is B1 + B2]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(1.)]]$~~and~~$[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \JtypeH{Constructor}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(1.)]]$~~and~~$[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
 So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] ~~\land~~ \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$
 
@@ -586,7 +590,7 @@ So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] ~~\land~~ \left([[l .
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
 \item $[[v]]$ can be $[[\x:B1.t]]$ (\JtypeT{Lam})
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 --o B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 --o B2]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 --o B2 in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 --o B2]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
 \end{itemize}
 So $[[P ; U ; G |- H | v : B1 --o B2]] \implies [[v is \x:B1.t]]$
 
@@ -594,14 +598,14 @@ So $[[P ; U ; G |- H | v : B1 --o B2]] \implies [[v is \x:B1.t]]$
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[Ur t]]$ (Inversion lemma).
 \item $[[v]]$ can be $[[l]]$ (\JtypeT{LabelAsDest}), in which case $[[l : A in P]]$.
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : |B| in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> |B|]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : |B| in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> |B|]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
 \end{itemize}
 So $[[P ; U ; G |- H | v : |B|]] \implies [[v is l]]$
 
 \item If $[[A is [B] ]]$:
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(Nil)]]$~~and~~$[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \JtypeH{Constructor}).
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \JtypeH{Constructor}). There are two constructors matching this criterion: $[[(Nil)]]$~~and~~$[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \JtypeH{Constructor}).
 \end{itemize}
 So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] ~~\land~~ \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$
 
@@ -609,7 +613,7 @@ So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] ~~\land~~ \left([[l .> N
 \begin{itemize}
 \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[l]]$ (Inversion lemma).
 \item $[[v]]$ can be $[[Ur t]]$ (\JtypeT{Exp}).
-\item Let $[[v is °l]]$. Because $[[°l]]$ is not part of the user syntax, it would have been produced by either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> !B]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
+\item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \Jop{DerefVal} or \Jop{DerefConstructor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \Jop{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \JtypeH{Constructor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \JtypeT{DerefVal}, so we need a heap constructor $[[C : Abar >> !B]]$ (by application of \JtypeH{Constructor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
 \end{itemize}
 So $[[P ; U ; G |- H | v : !B ]] \implies [[v is Ur t]]$
 
@@ -623,8 +627,8 @@ So $[[P ; U ; G |- H | v : !B ]] \implies [[v is Ur t]]$
 \item If $[[P ; U ; G |- () : A]]$, then $[[G is empty]]$~~and~~$[[A is 1]]$ (\JtypeT{Unit})
 \item If $[[P ; U ; G |- Ur t : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is !B]]$~~and~~$[[P ; U ; empty |- t : B]]$ (\JtypeT{Exp})
 \item If $[[P ; U ; G |- l : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is |B|]]$~~and~~$[[l : B in P]]$ (\JtypeT{LabelAsDest})
-\item If $[[P ; U ; G |- *l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\JtypeT{Deref})
 \item If $[[P ; U ; G |- °l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\JtypeT{DerefVal})
+\item If $[[P ; U ; G |- *l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\JtypeT{Deref})
 \item If $[[P ; U ; G |- \x:B1.t:A]]$, then there is some type $[[B2]]$ such that $[[A is B1 --o B2]]$~~and~~$[[P ; U ; G µ {x:B1} |- t : B2]]$ (\JtypeT{Lam})
 \item If $[[P ; U ; G |- t u : A]]$, then there are some type $[[B]]$ and contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B --o A]]$,~~~$[[P ; U ; D2 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\JtypeT{App})
 \item If $[[P ; U ; G |- t ; u : A]]$ then there are some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : 1]]$,~~~$[[P ; U ; D2 |- u : A]]$, and $[[G is D1 µ D2]]$ (\JtypeT{PatU})
