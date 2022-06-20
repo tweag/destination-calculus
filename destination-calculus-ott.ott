@@ -137,7 +137,7 @@ type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
 %  | P :: :: Prim {{ com primitive type }}
   | A * B :: :: Prod {{ com product type }} {{ tex \ottty{[[A]] \otimes [[B]]} }}
   | A + B :: :: Sum {{ com sum type }}
-  | A --o B :: :: LinArr {{ com linear function type }}
+  | A --o B (P1 |--| P2) :: :: LinArr {{ com linear function type }}
   | | A | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[A]] \rfloor} }}
   | [ A ] :: :: List {{ com list type }} {{ tex \ottty{[[A]]^\star } }}
   | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
@@ -186,9 +186,8 @@ heap_constructor, C :: 'hcons_' ::= {{ tex \ottcons{[[heap_constructor]]} }}
   | ( Cons ) :: :: Cons
 
 judg :: 'judg_' ::=
-  | P ; U ; G |- H :: :: JtypeH
-  | P ; U ; G |- H | t : A :: :: JtypeHT
-  | P ; U ; G |- t : A ::  :: JtypeT
+  | U ; G . P |- H :: :: JtypeH
+  | U ; G . P |- t : A -| P' ::  :: JtypeT
   | C : Abar >> A :: :: JtypeC
   | A is B :: :: JeqType
   | t is u :: :: JeqTerm
@@ -196,6 +195,7 @@ judg :: 'judg_' ::=
   | H | t --> H' | t' ::  :: Jop
   | type_affect in G :: :: JctxIn
   | label_stmt in H :: :: JheapIn
+  | names ( G ) = names ( D ) :: :: JctxEq
   | names ( G ) /\ names ( D ) = empty :: :: JctxClash
 
 terminals :: 'terminals_' ::=
@@ -203,9 +203,11 @@ terminals :: 'terminals_' ::=
   | * :: :: deref {{ tex \ottlb{\star} }}
   | ° :: :: valderef {{ tex \ottlb{\ostar} }}
   | + :: :: sum {{ tex \ottty{\oplus} }}
-  | --o :: :: linarr {{ tex \ottty{\multimap} }}
+%  | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | := :: :: with {{ tex := }}
   | |- :: :: turnstile {{ tex \vdash }}
+  | -| :: :: invturnstile {{ tex \dashv }}
+  | |--| :: :: hctxev {{ tex \vdash\dashv }}
   | µ :: :: dunion {{ tex \sqcup }}
   | ; :: :: lseq {{ tex ~;~ }}
   | /\ :: :: intersection {{ tex \cap }}
@@ -249,6 +251,10 @@ Jctx :: '' ::=
 
 defn
 names ( G ) /\ names ( D ) = empty :: :: JctxClash :: JctxClash_ {{ com $[[G]]$~~and~~$[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+defn
+names ( G ) = names ( D ) :: :: JctxEq :: JctxEq_ {{ com $[[G]]$~~and~~$[[D]]$ share the exact same set of variable names or labels }} by
+defn
+names ( G ) includedin names ( D ) :: :: JctxIncl :: JctxIncl_ {{ com  }}
 
 defn
 type_affect in G :: :: JctxIn :: JcxtIn_ by
@@ -273,62 +279,60 @@ defns
 Jtype :: '' ::=
 
 defn
-P ; U ; G |- H :: :: JtypeH :: JtypeH_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+U ; G . P |- H :: :: JtypeH :: JtypeH_ {{ com $[[H]]$ is a well-typed heap given unrestricted typing context $[[U]]$, linear typing context $[[G]]$ and heap typing context $[[P]]$ }} by
 
-P1 ; U ; G |- H1
-P2 ; U ; D |- H2
+U ; G . P1 |- H1
+U ; D . P2 |- H2
 names(P1) /\ names(P2) = empty
 names(G) /\ names(D) = empty
 ------------------ :: Union
-P1 µ P2 ; U ; G µ D |- H1 µ H2
+U ; G µ D . P1 µ P2 |- H1 µ H2
 
 C : Abar >> A
-P µ { l bar : A bar } ; U ; G |- H
+U ; G . P µ { l bar : A bar } |- H
 ------------------ :: Constructor
-P µ { l bar : A bar, l : A } ; U ; G |- H µ { l .> C lbar }
+U ; G . P µ { l bar : A bar, l : A } |- H µ { l .> C lbar }
 
 ------------------- :: Null
-{ l : A } ; U ; empty |- { l .> null }
+U ; empty . { l : |A| } |- { l .> null }
 
 P ; U ; G |- v : A
 ------------------- :: Val
-P µ { l : A } ; U ; G |- H µ { l .> v }
+U ; G . P µ { l : A } |- H µ { l .> v }
 
 defn
-P ; U ; G |- H | t : A :: :: JtypeHT :: JTypeHT_ by
-
-P ; U ; G |- H
-P ; U ; D |- t : A
-names(G) /\ names(D) = empty
--------------------------------- :: Def
-P ; U ; G |- H | t : A
-
-defn
-P ; U ; G |- t : A :: :: JtypeT :: JtypeT_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+U ; G . P |- t : A -| P' :: :: JtypeT :: JtypeT_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given unrestricted typing context $[[U]]$ and linear typing context $[[G]]$. $[[t]]$ takes an input heap context $[[P]]$ and produces an output heap context $[[P']]$ }} by
 
 --------------- :: Id
-P ; U ; { x : A } |- x : A
+U ; { x : A } . P |- x : A -| P
 
 --------------- :: Id'
-P ; U µ { x : A} ; empty |- x : A
+U µ { x : A} ; empty . P |- x : A -| P
 
 ---------------- :: Unit
-P ; U ; empty |- () : 1
+U ; empty . P |- () : 1 -| P
 
-P ; U ; empty |- t : A
+% TODO: should we allow Ur to take a term which mutates heap context? I don't think so
+U ; empty . P |- t : A -| P
 ----------------------- :: Exp
-P ; U ; empty |- Ur t : !A
+U ; empty . P |- Ur t : !A -| P
 
 ------------------------------------- :: LabelAsDest
-P µ { l : A } ; U ; empty |- l : |A|
-
------------------------------------- :: DerefVal
-P µ { l : A } ; U ; empty |- °l : A
+U ; empty . P µ { l : |A| } |- l : |A| -| P µ { l : |A| }
 
 ------------------------------------ :: Deref
-P µ { l : A } ; U ; empty |- *l : A
+U ; empty . P µ { l : A } |- *l : A -| P µ { l : A }
 
-P ; U ; G µ { x : A } |- t : B
+------------------------------------ :: DerefVal
+U ; empty . P µ { l : A } |- °l : A -| P µ { l : A }
+
+% Idea: the body of the function can either add something to the heap, or mutate existing labels
+% the mutation of existing labels can only be done once (because )
+
+% TODO: destinations lives in linear context, filled labels live in heap context
+% no null pointer in heap context
+names(P1) = names(P2)
+U ; G µ { x : A } . P1 |- t : B -| P2 µ P3
 ----------------------- :: Lam
 P ; U ; G |- \x:A.t : A --o B
 
