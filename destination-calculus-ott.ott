@@ -7,6 +7,7 @@
 % TODO
 % H > Phi
 % sem grand pas
+% trouver comment empêcher de remplir une dest avec bullet ou dest
 
 embed
 {{ tex-preamble
@@ -69,6 +70,7 @@ embed
 }
 \newcommand{\SemMut}[1]{\textsc{SemMut\_#1}%
 }
+\newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -82,29 +84,29 @@ metavar metavariable, x, xs, y, uf, f, d ::=
 grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | x                                       ::   :: Var      {{ com variable }}
-  | z :: :: Val {{ com value }}
+  | v :: :: Val {{ com value }}
   | t u                                    ::   :: App      {{ com application }}
-  | t ; u                   ::   :: PatU     {{ com pattern-matching on unit }}
+  | t ; u :: :: WithEff {{ com effect execution }}
+  | case t of { () -> u }                   ::   :: PatU     {{ com pattern-matching on unit }}
   | case t of { 1. x1 -> u1 , 2. x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
 % | case t of { Nil -> u1 , x1 Cons x2 -> u2 } :: :: PatL {{ com pattern-matching on list }}
   | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
   | case t of { roll R x -> u } :: :: PatR {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{ \underset{[[R]] }{\ottkw{roll} }~[[x]] \mapsto [[u]] \} }} {{ com unroll for recursive types }}
   | alloc d A { t }                                   ::   :: Alloc    {{ com allocate data }} {{ tex \underset{\ottty{[[A]]} }{\ottkw{alloc}~[[d]]}\,\textbf{.}\,[[t]] }}
+  | fillUnit t :: :: FillU {{ com fill destination with unit }} {{ tex [[t]]\,\triangleleft\,\ottcons{()} }}
   | fillLeaf t u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleleft\,[[u]] }}
-  | fillLeft t d' { u }                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{1.} [[d']]\,\textbf{.}\,[[u]] }}
-  | fillRight t d' { u }                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{2.} [[d']]\,\textbf{.}\,[[u]] }}
+  | fillLeft t d { u }                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{1.} [[d]]\,\textbf{.}\,[[u]] }}
+  | fillRight t d { u }                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{2.} [[d]]\,\textbf{.}\,[[u]] }}
   | fillPair t d1 d2 { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleleft\,\langle [[d1]] , [[d2]] \rangle\,\textbf{.}\,[[u]] }}
-% | fillNil t                               ::   :: FillNil {{ com fill list destination with nil }} {{ tex [[t]]\,\triangleleft\,[[Nil]] }}
-% | fillCons t d1 d2 { u }                             ::  :: FillCons {{ com fill list destination with cons }} {{ tex [[t]]\,\triangleleft\,[[d1]] [[Cons]] [[d2]]\,\textbf{.}\,[[u]] }}
-  | * l :: :: Deref {{ com note: $\ottlb{\star l}$ is not a part of the user syntax }}
+  | fillUr t d { u } :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]\,\triangleleft\,\ottcons{Ur}~[[d]]\,\textbf{.}\,[[u]] }}
+  | fillRoll R t d { u } :: :: FillR {{ com fill destination with recursive type }} {{ tex [[t]]\,\triangleleft\,\underset{[[R]]}{\ottcons{roll} }~[[d]]\,\textbf{.}\,[[u]] }}
+  | * l :: :: Deref {{ com \TODO{remove (only there for SemMut)} }}
   | ( t )                                   :: S :: Paren
-  | b sp t b spe :: S :: BreakSpacing1
-  | b sp t :: S :: BreakSpacing2
+  % | b sp t b spe :: S :: BreakSpacing1
+  % | b sp t :: S :: BreakSpacing2
 %  | t b spe :: S :: BreakSpacing3
   | t [ var_subs ]                             :: M :: Sub
-%  | t [ x |> x' ]                            :: M :: Alpha
-%  | rolll t1 t2 t3 :: :: RollL {{ com TODO: hide }}
 
 var_sub, vs :: 'vs_' ::= {{ com variable substitution }}
   | x := t :: :: VarSub
@@ -113,43 +115,39 @@ var_subs :: 'vss_' ::= {{ com variable substitutions }}
   | vs :: :: Single
   | vs , var_subs :: :: Multiple
 
-data_val, v :: 'v_' ::= {{ com data value }}
-  | ()                                      ::   :: Unit     {{ com unit }}
-  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}\textbf{.}\,[[t]] }}
-  | Ur t :: :: Exp {{ com exponential }}
-  | roll R t :: :: Roll {{ tex \underset{[[R]] }{\ottkw{roll} }~[[t]] }} {{ com roll for recursive types }}
-
-val, z :: 'z_' ::= {{ com unreducible value }}
-  | v :: :: DataVal
-  | l @ | A |                                       :: :: Label {{ com note: $[[l]]$ is not a part of the user syntax }} {{ tex {\scriptsize\vcenter{\offinterlineskip      \ialign{##\cr$\,\,\,[[l]]$\cr\noalign{\kern0.5pt}$\ottty{\lfloor[[A]]\rfloor}$\cr} } } }}
+heap_val, h :: 'hv_' ::=
+  | ()                                      ::   :: U
   | 1. l :: :: V1
   | 2. l :: :: V2
   | < l1 , l2 > :: :: P
-  | C lbar :: M :: Generic {{ tex [[C]] \ottlb{\bar{l} } }}
+  | Ur l :: :: E
+  | roll R l :: :: R {{ tex \underset{[[R]] }{\ottkw{roll} }~[[l]] }}
+  | C lbar :: M :: Generic {{ tex [[C]] \ottlb{\bar{l} } }} {{ com generic for all the cases above }}
+
+val, v :: 'v_' ::= {{ com unreducible value }}
+  | o :: :: NoEff {{ com no-effect effect. \textcolor{red}{Not part of the user syntax} }}
+  | l @ | A |                                       :: :: LDest {{ com allocated destination. \textcolor{red}{Not part of the user syntax} }} {{ tex {\scriptsize\vcenter{\offinterlineskip      \ialign{##\cr$\,\,\,[[l]]$\cr\noalign{\kern0.5pt}$\ottty{\lfloor[[A]]\rfloor}$\cr} } } }}
+  | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}\textbf{.}\,[[t]] }}
+  | h :: :: HeapVal {{ com heap value }}
 
 label, l :: 'l_' ::= {{ com label }} {{ tex \ottlb{[[label]]} }}
 
 label_stmt, s :: 's_' ::= {{ com label statement }}
   | l .> v :: :: Val
-  | l .> 1. l' :: :: V1
-  | l .> 2. l' :: :: V2
-  | l .> < l1 , l2 > :: :: P
-% | l .> Nil :: :: Nil
-% | l .> l1 Cons l2 :: :: Cons
   | l .> null :: :: Null
-  | l .> C lbar :: M :: Generic {{ tex [[l]] \heaparrow [[C]] \ottlb{\bar{l} } }} {{ com TODO: hide. $[[l]] \heaparrow [[C]] \ottlb{\bar{l} }$ is an alias for any heap constructor }}
-  | l .> __ :: M :: In
+  | l bar .> vbar :: M :: Generic {{ tex \ottlb{\bar{[[l]]} } \heaparrow \ottnt{\bar{v} } }} {{ com generic for multiple occurences }}
 
 label_stmts :: 'ss_' ::= {{ com label statements }}
   | s :: :: Single
   | s , label_stmts :: :: Multiple
 
-heap_context, H {{ tex \mathbb{H} }} :: 'h_' ::= {{ com label statements }}
+heap_context, H {{ tex \mathbb{H} }} :: 'hc_' ::= {{ com label statements }}
   | empty :: :: Empty
   | { label_stmts } :: :: Stmts
   | H1 µ H2 :: :: Union
 
 type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
+  | _!_ :: :: Bottom {{ com bottom type }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
   | R :: :: Rec {{ com recursive type bound to a name }}
 %  | P :: :: Prim {{ com primitive type }}
@@ -157,20 +155,20 @@ type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
   | A + B :: :: Sum {{ com sum type }}
   | A --o B :: :: LinArr {{ com linear function type }}
   | | A | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[A]] \rfloor} }}
-%  | [ A ] :: :: List {{ com list type }} {{ tex \ottty{[[A]]^\star } }}
   | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
   | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
   | W [ r := A ] :: M :: Sub {{ tex [[W]][ \ottmv{r} [[:=]] \ottty{[[A]]} ] }}
 
 type_with_hole, W :: 'twh_' ::= {{ tex \ottty{[[type_with_hole]]} }}
+  | _!_ :: :: Bottom {{ com bottom type }}
   | r :: :: Hole {{ com type hole in recursive definition }} {{ tex \ottmv{[[r]]} }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
   | R :: :: Rec {{ com recursive type bound to a name }}
+%  | P :: :: Prim {{ com primitive type }}
   | W1 * W2 :: :: Prod {{ com product type }} {{ tex \ottty{[[W1]] \otimes [[W2]]} }}
   | W1 + W2 :: :: Sum {{ com sum type }}
   | W1 --o W2 :: :: LinArr {{ com linear function type }}
   | | W | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[W]] \rfloor} }}
-%  | [ W ] :: :: List {{ com list type }} {{ tex \ottty{[[W]]^\star } }}
   | ! W :: :: Exp {{ com exponential }} {{ tex \ottty{![[W]]} }}
   | ( W )  :: S :: Paren {{ tex \ottty{([[W]])} }}
 
@@ -182,19 +180,19 @@ rec_type_def :: 'rtd_' ::=
 type_affect, ta :: 'ta_' ::= {{ com type affectation }}
   | x : A ::  :: Var {{ com var }}
   | l : A :: :: Label {{ com label }}
-  | l bar : A bar :: :: LabelBar {{ tex \ottlb{\bar{[[l]]} } : \ottty{\bar{[[A]]} } }} {{ com labels }}
+  | l bar : A bar :: :: GenericLabel {{ tex \ottlb{\bar{[[l]]} } : \ottty{\bar{[[A]]} } }} {{ com generic for multiple occurences }}
 
 type_affects :: 'tas_' ::= {{ com type affectations }}
   | ta :: :: Single
   | ta , type_affects :: :: Multiple
 
-typing_context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }}, P {{ tex \Phi }} :: 'G_' ::= {{ com typing context }}
+typing_context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }}, P {{ tex \Phi }} :: 'tc_' ::= {{ com typing context }}
   | empty    ::   :: Empty
   | { type_affects } ::    :: Var
   | G µ D    ::    :: Union
 
 types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
-  | none :: :: None {{ tex \ottty{\bullet} }} {{ com empty type list }}
+  | none :: :: None {{ tex \ottty{\cdot} }} {{ com empty type list }}
   | A :: :: Single
   | A types :: :: Multiple {{ tex [[A]]~~[[types]] }}
 
@@ -215,14 +213,17 @@ types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
 %   | sssssse :: :: space6e {{ tex \myspace{6} }}
 
 heap_constructor, C :: 'hcons_' ::= {{ tex \ottcons{[[heap_constructor]]} }}
-  | ( 1. ) :: :: V1
-  | ( 2. ) :: :: V2
-  | ( < , > ) :: :: Pair
+  | { () } :: :: U
+  | { 1. } :: :: V1
+  | { 2. } :: :: V2
+  | { < , > } :: :: P
+  | { Ur } :: :: E
+  | { roll R } :: :: R
   % | ( Nil ) :: :: Nil
   % | ( Cons ) :: :: Cons
 
 judg :: 'judg_' ::=
-  | P ; U ; G |- H :: :: TyHeap
+  | P |- H :: :: TyHeap
   | P ; U ; G |- H | t : A :: :: TyCommand
   | P ; U ; G |- t : A ::  :: TyTerm
   | C : Abar >> A :: :: TyCtor
@@ -235,6 +236,7 @@ judg :: 'judg_' ::=
   | names ( G ) /\ names ( D ) = empty :: :: CtxClash
 
 terminals :: 'terminals_' ::=
+  | () :: :: unit {{ tex \ottcons{()} }}
   | ->                                     ::   :: to       {{ tex \mapsto }}
   | * :: :: deref {{ tex \ottlb{\star} }}
   | ° :: :: valderef {{ tex \ottlb{\ostar} }}
@@ -251,37 +253,22 @@ terminals :: 'terminals_' ::=
   | != :: :: neq {{ tex \neq }}
   | in :: :: in {{ tex \in }}
   | notin :: :: notin {{ tex \notin }}
-%   | subto :: :: subto {{ tex \underset{[:=]}{\rightarrow} }}
   | b :: :: linebreak {{ tex \mynewline }}
   | < :: :: langle {{ tex \ottcons{\langle} }}
   | > :: :: rangle {{ tex \ottcons{\rangle} }}
   | 1. :: :: v1 {{ tex \ottcons{1.} }}
   | 2. :: :: v2 {{ tex \ottcons{2.} }}
-% | Nil :: :: nil {{ tex \ottcons{Nil} }}
-% | Cons :: :: cons {{ tex {:}{:} }}
   | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
-%  | ++ :: :: concat {{ tex {\small{+}\mspace{-6mu}{+} } }}
-%  | <- :: :: affect {{ tex \leftarrow }}
   | .> :: :: pointsto {{ tex \heaparrow }}
   | '|' :: :: against {{ tex \,|\, }}
   | null :: :: null {{ tex \oslash }}
-  | >> :: :: consarrow {{ tex \ottty{\consarrow} }}
+  | >> :: :: consarrow {{ tex ~\ottty{\consarrow}~ }}
   | is :: :: is {{ tex = }}
   | !! :: :: downto {{ tex ~~\Downarrow~~ }}
   | __ :: :: heapany {{ tex ... }}
   | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
-
-% defns
-% JMvar :: '' ::=
-
-% % defn
-% % x != y :: :: JMVarNeq :: JMVar_ {{ com $[[x]]$~~and~~$[[y]]$ stands for different variables }} by
-
-% defn
-% x notin free ( t ) :: :: JmvarNFree :: JmvarNFree_ {{ com $[[x]]$ is not a free variable in $[[t]]$ }} by
-
-% defn
-% x in free ( t ) :: :: JmvarFree :: JmvarFree_ {{ com $[[x]]$ is a free variable used in $[[t]]$ }} by
+  | _!_ :: :: bottom {{ tex \bot }}
+  | o :: :: bullet {{ tex \bullet }}
 
 defns
 Ctx :: '' ::=
@@ -315,38 +302,50 @@ defn
 R =fix rec_type_def :: :: TyRec :: TyRec_ by
 
 defn
-P ; U ; G |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+P |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
 
-P1 ; U ; G |- H1
-P2 ; U ; D |- H2
+P1 |- H1
+P2 |- H2
 names(P1) /\ names(P2) = empty
-names(G) /\ names(D) = empty
 ------------------ :: Union
-P1 µ P2 ; U ; G µ D |- H1 µ H2
+P1 µ P2 |- H1 µ H2
+
+P ; U ; G |- \ x : A . t : A --o B
+------------------- :: Lam
+P µ { l : A --o B } |- H µ { l .> \x:A.t }
 
 C : Abar >> A
-P µ { l bar : A bar } ; U ; G |- H
------------------- :: Ctor
-P µ { l bar : A bar, l : A } ; U ; G |- H µ { l .> C lbar }
+P µ { l bar : A bar } |- H µ { l bar .> vbar }
+------------------ :: HeapVal
+P µ { l bar : A bar, l : A } |- H µ { l .> C lbar, l bar .> vbar }
 
-------------------- :: Null
-{ l : A } ; U ; empty |- { l .> null }
-
-P ; U ; G |- v : A
-------------------- :: Val
-P µ { l : A } ; U ; G |- H µ { l .> v }
+----------- :: Enlarge {{ com \TODO{remove, needed for empty labels in SemMut} }}
+empty |- H
 
 defn
 P ; U ; G |- H | t : A :: :: TyCommand :: TyCommand_ by
 
-P ; U ; G |- H
-P ; U ; D |- t : A
-names(G) /\ names(D) = empty
+P |- H
+P ; U ; G |- t : A
 -------------------------------- :: Def
 P ; U ; G |- H | t : A
 
 defn
 P ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+
+------------------------ :: NoEff
+P ; U ; empty |- o : _!_
+
+------------------------------------- :: LDest {{ com \TODO{we should have either l : A in P or l not in names(P)} }}
+P ; U ; empty |- l@|A| : |A|
+
+P ; U ; G µ { x : A } |- t : B
+----------------------- :: Lam
+P ; U ; G |- \x:A.t : A --o B
+
+C : Abar >> A
+------------------------------------ :: HeapVal
+P µ { l bar : A bar } ; U ; empty |- C lbar : A
 
 --------------- :: Id
 P ; U ; { x : A } |- x : A
@@ -354,32 +353,8 @@ P ; U ; { x : A } |- x : A
 --------------- :: Id'
 P ; U µ { x : A} ; empty |- x : A
 
----------------- :: Unit
-P ; U ; empty |- () : 1
-
-P ; U ; empty |- t : A
------------------------ :: Exp
-P ; U ; empty |- Ur t : !A
-
-% TODO: we should have either l : A in P or l not in names(P)
-------------------------------------- :: LabelAsDest
-P ; U ; empty |- l@|A| : |A|
-
 ------------------------------------ :: Deref
 P µ { l : A } ; U ; empty |- *l : A
-
-C : Abar >> A
------------------------------------- :: Ctor
-P µ { l bar : A bar } ; U ; empty |- C lbar : A
-
-R =fix µ r. W
-P ; U ; G |- t : W[r := R]
------------------------------ :: Roll
-P ; U ; G |- roll R t : R
-
-P ; U ; G µ { x : A } |- t : B
------------------------ :: Lam
-P ; U ; G |- \x:A.t : A --o B
 
 P ; U ; G |- t : A --o B
 P ; U ; D |- u : A
@@ -387,18 +362,17 @@ names( G ) /\ names( D ) = empty
 --------------------------------- :: App
 P ; U ; G µ D |- t u : B
 
+P ; U ; G |- t : _!_
+P ; U ; D |- u : B
+names( G ) /\ names( D ) = empty
+--------------------------------- :: WithEff
+P ; U ; G µ D |- t ; u : B
+
 P ; U ; G |- t : 1
 P ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 ----------------------------------------- :: PatU
-P ; U ; G µ D |- t ; u : A
-%U ; G µ D |- case t of { () -> u } : A
-
-P ; U ; G |- t : A1 * A2
-P ; U ; D µ { x1 : A1 , x2 : A2 } |- u : B
-names( G ) /\ names( D ) = empty
-------------------------------------------------------- :: PatP
-P ; U ; G µ D |- case t of {<x1, x2> -> u} : B
+P ; U ; G µ D |- case t of { () -> u } : A
 
 P ; U ; G |- t : A1 + A2
 P ; U ; D µ { x1 : A1 } |- u1 : B
@@ -407,12 +381,11 @@ names( G ) /\ names( D ) = empty
 ------------------------------------------------------- :: PatS
 P ; U ; G µ D |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
 
-% P ; U ; G |- t : [A]
-% P ; U ; D |- u1 : B
-% P ; U ; D µ { x1 : A , x2 : [A] } |- u2 : B
-% names( G ) /\ names( D ) = empty
-% ------------------------------------------------------- :: PatL
-% P ; U ; G µ D |- case t of { Nil -> u1 , x1 Cons x2 -> u2 } : B
+P ; U ; G |- t : A1 * A2
+P ; U ; D µ { x1 : A1 , x2 : A2 } |- u : B
+names( G ) /\ names( D ) = empty
+------------------------------------------------------- :: PatP
+P ; U ; G µ D |- case t of {<x1, x2> -> u} : B
 
 P ; U ; G |- t : !A
 P ; U µ { x : A } ; D |- u: B
@@ -427,15 +400,19 @@ names( G ) /\ names( D ) = empty
 ----------------------------- :: PatR
 P ; U ; G µ D |- case t of { roll R x -> u } : B
 
-P ; U ; G µ { d : |A| } |- t : 1
------------------------------- :: Alloc
+P ; U ; G µ { d : |A| } |- t : _!_
+------------------------------ :: Alloc {{ com  \TODO{add guard for LDest and NoEff} }}
 P ; U ; G |- alloc d A { t } : A
+
+P ; U ; G |- t : |1|
+----------------------- :: FillU
+P ; U ; G |- fillUnit t : _!_
 
 P ; U ; G |- t : |A|
 P ; U ; D |- u : A
 names( G ) /\ names( D ) = empty
 ----------------------------------- :: FillL
-P ; U ; G µ D |- fillLeaf t u : 1
+P ; U ; G µ D |- fillLeaf t u : _!_
 
 P ; U ; G |- t : |A1 + A2|
 P ; U ; D µ { d' : |A1| } |- u : B
@@ -455,33 +432,39 @@ names( G ) /\ names( D ) = empty
 ----------------------------------------------:: FillP
 P ; U ; G µ D |- fillPair t d1 d2 { u } : B
 
-% P ; U ; G |- t : |[A]|
-% ----------------------------------- :: FillNil
-% P ; U ; G |- fillNil t : 1
+P ; U ; G |- t : |!A|
+P ; U ; empty µ { d : |A| } |- u : B
+----------------------------------- :: FillE
+P ; U ; G |- fillUr t d { u } : B
 
-% P ; U ; G |- t : |[A]|
-% P ; U ; D µ { d1 : |A| , d2 : |[A]| } |- u : B
-% names( G ) /\ names( D ) = empty
-% ---------------------------------------------------------------- :: FillCons
-% P ; U ; G µ D |- fillCons t d1 d2 { u } : B
+R =fix µ r. W
+P ; U ; G |- t : |R|
+P ; U ; D µ { d : |W[r := R]| } |- u : B
+names( G ) /\ names( D ) = empty
+---------------------------------------------------------------- :: FillR
+P ; U ; G µ D |- fillRoll R t d { u } : B
 
 defn
 C : Abar >> A :: :: TyCtor :: TyCtor_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
 
+---------------- :: U
+{ () } : none >> 1
+
 -------------------  :: V1
-(1.) : A >> A + B
+{ 1. } : A >> A + B
 
 ----------------------- :: V2
-(2.) : B >> A + B
+{ 2. } : B >> A + B
 
---------------------------- :: Pair
-(<,>) : A B >> A * B
+--------------------------- :: P
+{ <,> } : A B >> A * B
 
-% ------------------------ :: Nil
-% (Nil) : none >> [A]
+--------------- :: E
+{ Ur } : A >> !A
 
-% ------------------------- :: Cons
-% (Cons) : A [A] >> [A]
+R =fix µ r. W
+---------------------- :: R
+{ roll R } : W[r := R] >> R
 
 defns
 Sem :: '' ::=
@@ -496,60 +479,66 @@ H | t u --> H' | t' u
 ---------------------------- :: App
 H | (\x:A.t) u --> H | t[x := u]
 
-H | t --> H' | t'
---------------------------------------------- :: uPatU
-H | t ; u --> H' | t' ; u
-%case t of {() -> u} --> case t' of {() -> u}
+---------------------------------- :: dLam
+H µ { l .> \x:A.t } | *l --> H µ { l .> \x:A.t } | \x:A.t
 
---------------------- :: PatU
-H | () ; u --> H | u
-
----------------------------------- :: DerefVal
-H µ { l .> v } | *l --> H µ { l .> v } | v
-
----------------------------------- :: DerefCtor
+---------------------------------- :: dHeapVal
 H µ { l .> C lbar } | *l --> H µ { l .> C lbar } | C lbar
 
 H | t --> H' | t'
-------------------------------------------------------------------------------- :: uPatS
+--------------------------------------------- :: uPatU
+H | case t of { () -> u } --> H' | case t' of { () -> u }
+
+--------------------- :: PatU
+H | case () of { () -> u } --> H | u
+
+H | t --> H' | t'
+------------------------------------------------------------------------------- :: uPatV12
 H | case t of {1. x1 -> u1, 2. x2 -> u2} --> H' | case t' of {1. x1 -> u1, 2. x2 -> u2}
 
------------------------------------------ :: PatSV1
-H | case 1. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u1[x1 := *l]
+----------------------------------------- :: PatV1
+H µ { l .> v } | case 1. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u1[x1 := v]
 
------------------------------------------ :: PatSV2
-H | case 2. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u2[x2 := *l]
+----------------------------------------- :: PatV2
+H µ { l .> v } | case 2. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u2[x2 := v]
 
 H | t --> H' | t'
 ----------------------------------------------------------------------------- :: uPatP
 H | case t of {<x1,x2> -> u} --> H' | case t' of {<x1,x2> -> u}
 
 -------------------------------------------------------------------------------- :: PatP
-H | case <l1, l2> of {<x1,x2> -> u} --> H | u[x1 := *l1, x2 := *l2]
-
-% H | t --> H' | t'
-% ------------------------------------------------------------------------------------- :: uPatL
-% H | case t of {Nil -> u1, x1 Cons x2 -> u2} --> H' | case t' of {Nil -> u1, x1 Cons x2 -> u2}
-
-% ----------------------------------------------------------------------- :: PatLNil
-% H µ { l .> Nil } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> Nil } | u1
-
-% ----------------------------------------------------------------------- :: PatLCons
-% H µ { l .> l1 Cons l2 } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> l1 Cons l2 } | u2[x1 := *l1, x2 := *l2]
+H µ { l1 .> v1, l2 .> v2 } | case <l1, l2> of {<x1,x2> -> u} --> H | u[x1 := v1, x2 := v2]
 
 H | t --> H' | t'
 ------------------------------------------------------------------------------------- :: uPatE
 H | case t of {Ur x -> u} --> H' | case t' of {Ur x -> u}
 
 ----------------------------------------------------- :: PatE
-H | case Ur t of { Ur x -> u } --> H | u[x := t]
+H µ { l .> v } | case Ur l of { Ur x -> u } --> H | u[x := v]
 
 H | t --> H' | t'
 ------------------------------------------------------ :: uPatR
 H | case t of { roll R x -> u} --> H' | case t' of { roll R x -> u}
 
 ------------------------------------------------------ :: PatR
-H | case roll R t of { roll R x -> u } --> H | u[x := t]
+H µ { l .> v } | case roll R l of { roll R x -> u } --> H | u[x := v]
+
+H | t --> H' | t'
+------------------------------------------------------ :: uWithEff
+H | t ; u --> H' | t' ; u
+
+------------------------------------------------------ :: WithEff
+H | o ; u --> H | u
+
+--------------------------------------------------- :: Alloc
+H | alloc d A { t } --> H µ { l .> null } | t[d := l@|A|] ; *l
+
+H | t --> H' | t'
+------------------------------------- :: uFillU
+H | fillUnit t --> H' | fillUnit t'
+
+------------------------------------------------------------ :: FillU
+H µ { l .> null } | fillUnit l@|1| --> H µ { l .> () } | o
 
 H | t --> H' | t'
 ------------------------------------- :: uFillL
@@ -559,177 +548,79 @@ H | t --> H' | t'
 ------------------------------------- :: uFillL'
 H | fillLeaf l@|A| t --> H' | fillLeaf l@|A| t'
 
+------------------------------------------------------------ :: FillLLam
+H µ { l .> null } | fillLeaf l@|A| \x:A.t --> H µ { l .> \x:A.t } | o
+
+------------------------------------------------------------ :: FillLHeapVal
+H µ { l .> null } | fillLeaf l@|A| C lbar --> H µ { l .> C lbar } | o
+
 H | t --> H' | t'
 ------------------------------------- :: uFillV1
-H | fillLeft t d' {u} --> H' | fillLeft t' d' {u}
+H | fillLeft t d {u} --> H' | fillLeft t' d {u}
+
+------------------------------------------------------------ :: FillV1
+H µ { l .> null } | fillLeft l@|A1+A2| d { t } --> H µ { l .> 1. l', l' .> null } | t[d := l'@|A1|]
 
 H | t --> H' | t'
 ------------------------------------- :: uFillV2
-H | fillRight t d' {u} --> H' | fillRight t' d' {u}
+H | fillRight t d {u} --> H' | fillRight t' d {u}
+
+------------------------------------------------------------ :: FillV2
+H µ { l .> null } | fillRight l@|A1+A2| d { t } --> H µ { l .> 2. l', l' .> null } | t[d := l'@|A2|]
 
 H | t --> H' | t'
 ------------------------------------- :: uFillP
 H | fillPair t d1 d2 {u} --> H' | fillPair t' d1 d2 {u}
 
-% H | t --> H' | t'
-% ------------------------------------- :: uFillNil
-% H | fillNil t --> H' | fillNil t'
-
-% H | t --> H' | t'
-% ------------------------------------- :: uFillCons
-% H | fillCons t d1 d2 {u} --> H' | fillCons t' d1 d2 {u}
-
---------------------------------------------------- :: Alloc
-H | alloc d A { t } --> H µ { l .> null } | t[d := l@|A|] ; *l
-
------------------------------------------------------------- :: FillLV
-H µ { l .> null } | fillLeaf l@|A| v --> H µ { l .> v } | ()
-
------------------------------------------------------------- :: FillLCtor
-H µ { l .> null } | fillLeaf l@|A| C lbar --> H µ { l .> C lbar } | ()
-
------------------------------------------------------------- :: FillV1
-H µ { l .> null } | fillLeft l@|A1+A2| d' { t } --> H µ { l .> 1. l', l' .> null } | t[d' := l'@|A1|]
-
------------------------------------------------------------- :: FillV2
-H µ { l .> null } | fillRight l@|A1+A2| d' { t } --> H µ { l .> 2. l', l' .> null } | t[d' := l'@|A2|]
-
 ----------------------------------------------- :: FillP
 H µ { l .> null } | fillPair l@|A1*A2| d1 d2 { t } --> H µ { l .> <l1, l2> , l1 .> null, l2 .> null } | t[d1 := l1@|A1|, d2 := l2@|A2|]
 
-% ----------------------------------------------- :: FillNil
-% H µ { l .> null } | fillNil l --> H µ { l .> Nil } | ()
+H | t --> H' | t'
+---------------------------------------- :: uFillE
+H | fillUr t d {u} --> H' | fillUr t' d {u}
 
-% ----------------------------------------------------- :: FillCons
-% H µ { l .> null } | fillCons l d1 d2 { t } --> H µ { l .> l1 Cons l2 , l1 .> null, l2 .> null } | t[d1 := l1, d2 := l2]
+---------------------------------------- :: FillE
+H µ { l .> null } | fillUr l@|!A| d { t } --> H µ { l .> Ur l', l' .> null } | t[d := l'@|A|]
+
+H | t --> H' | t'
+---------------------------------------- :: uFillR
+H | fillRoll R t d {u} --> H' | fillRoll R t' d {u}
+
+R =fix µ r. W
+---------------------------------------- :: FillR
+H µ { l .> null } | fillRoll R l@|R| d { t } --> H µ { l .> roll R l', l' .> null } | t[d := l'@|W[r := R]|]
 
 defn
 H | t !! H' | t' :: :: ReduceImm :: SemImm_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
 
---------------------------- :: Roll
-H | roll R t !! H | t
 
-H | t !! H' | t'
-------------------- :: uApp
-H | t u !! H' | t' u
-
----------------------------- :: App
-H | (\x:A.t) u !! H | t[x := u]
-
-H | t !! H' | t'
---------------------------------------------- :: uPatU
-H | t ; u !! H' | t' ; u
-%case t of {() -> u} --> case t' of {() -> u}
-
---------------------- :: PatU
-H | () ; u !! H | u
-
----------------------------------- :: DerefVal
-H µ { l .> v } | *l !! H µ { l .> v } | v
-
----------------------------------- :: DerefCtor
-H µ { l .> C lbar } | *l !! H µ { l .> C lbar } | C lbar
-
-H | t !! H' | t'
-------------------------------------------------------------------------------- :: uPatS
-H | case t of {1. x1 -> u1, 2. x2 -> u2} !! H' | case t' of {1. x1 -> u1, 2. x2 -> u2}
-
------------------------------------------ :: PatSV1
-H | case 1. l of {1. x1 -> u1, 2. x2 -> u2} !! H | u1[x1 := *l]
-
------------------------------------------ :: PatSV2
-H | case 2. l of {1. x1 -> u1, 2. x2 -> u2} !! H | u2[x2 := *l]
-
-H | t !! H' | t'
------------------------------------------------------------------------------ :: uPatP
-H | case t of {<x1,x2> -> u} !! H' | case t' of {<x1,x2> -> u}
-
--------------------------------------------------------------------------------- :: PatP
-H | case <l1, l2> of {<x1,x2> -> u} !! H | u[x1 := *l1, x2 := *l2]
-
-% H | t --> H' | t'
-% ------------------------------------------------------------------------------------- :: uPatL
-% H | case t of {Nil -> u1, x1 Cons x2 -> u2} --> H' | case t' of {Nil -> u1, x1 Cons x2 -> u2}
-
-% ----------------------------------------------------------------------- :: PatLNil
-% H µ { l .> Nil } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> Nil } | u1
-
-% ----------------------------------------------------------------------- :: PatLCons
-% H µ { l .> l1 Cons l2 } | case °l of {Nil -> u1, x1 Cons x2 -> u2} --> H µ { l .> l1 Cons l2 } | u2[x1 := *l1, x2 := *l2]
-
-H | t !! H' | t'
-------------------------------------------------------------------------------------- :: uPatE
-H | case t of {Ur x -> u} !! H' | case t' of {Ur x -> u}
-
------------------------------------------------------ :: PatE
-H | case Ur t of { Ur x -> u } !! H | u[x := t]
-
-H | t !! H' | t'
------------------------------------------------------- :: uPatR
-H | case t of { roll R x -> u} !! H' | case t' of { roll R x -> u}
-
------------------------------------------------------- :: PatR
-H | case roll R t of { roll R x -> u } !! H | u[x := t]
-
-H | t !! H' | t'
-------------------------------------- :: uFillL
-H | fillLeaf t u !! H' | fillLeaf t' u
-
-H | t !! H' | t'
-------------------------------------- :: uFillL'
-H | fillLeaf l@|A| t !! H' | fillLeaf l@|A| t'
-
-H | t !! H' | t'
-------------------------------------- :: uFillV1
-H | fillLeft t d' {u} !! H' | fillLeft t' d' {u}
-
-H | t !! H' | t'
-------------------------------------- :: uFillV2
-H | fillRight t d' {u} !! H' | fillRight t' d' {u}
-
-H | t !! H' | t'
-------------------------------------- :: uFillP
-H | fillPair t d1 d2 {u} !! H' | fillPair t' d1 d2 {u}
-
-% H | t --> H' | t'
-% ------------------------------------- :: uFillNil
-% H | fillNil t --> H' | fillNil t'
-
-% H | t --> H' | t'
-% ------------------------------------- :: uFillCons
-% H | fillCons t d1 d2 {u} --> H' | fillCons t' d1 d2 {u}
 
 %---------------------------------------------------------------------------
-% TODO: changes under this line
+% changes under this line
 %---------------------------------------------------------------------------
 
-H | t[d := l@|A|] !! H' µ { l .> __ } | ()
---------------------------------------------------- :: Alloc  {{ com ~~\textnormal{\itshape --- Changes start from there ---} }}
-H | alloc d A { t } !! H' µ { l .> __ } | *l
+% H | t[d := l@|A|] !! H' µ { l .> __ } | ()
+% --------------------------------------------------- :: Alloc
+% H | alloc d A { t } !! H' µ { l .> __ } | *l
 
------------------------------------------------------------- :: FillLV
-H | fillLeaf l@|A| v !! H µ { l .> v } | ()
+% ------------------------------------------------------------ :: FillLLam
+% H | fillLeaf l@|A| v !! H µ { l .> v } | ()
 
------------------------------------------------------------- :: FillLCtor
-H | fillLeaf l@|A| C lbar !! H µ { l .> C lbar } | ()
+% ------------------------------------------------------------ :: FillLHeapVal
+% H | fillLeaf l@|A| C lbar !! H µ { l .> C lbar } | ()
 
-H | t[d' := l'@|A1|] !! H' µ { l' .> __ } | ()
------------------------------------------------------------- :: FillV1
-H | fillLeft l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 1. l' } | ()
+% H | t[d' := l'@|A1|] !! H' µ { l' .> __ } | ()
+% ------------------------------------------------------------ :: FillV1
+% H | fillLeft l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 1. l' } | ()
 
-H | t[d' := l'@|A2|] !! H' µ { l' .> __ } | ()
------------------------------------------------------------- :: FillV2
-H | fillRight l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 2. l' } | ()
+% H | t[d' := l'@|A2|] !! H' µ { l' .> __ } | ()
+% ------------------------------------------------------------ :: FillV2
+% H | fillRight l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 2. l' } | ()
 
-H | t[d1 := l1@|A1|, d2 := l2@|A2|] !! H' µ { l1 .> __, l2 .> __ } | ()
------------------------------------------------ :: FillP
-H | fillPair l@|A1*A2| d1 d2 { t } !! H' µ { l1 .> __, l2 .> __ , l .> <l1, l2> } | ()
+% H | t[d1 := l1@|A1|, d2 := l2@|A2|] !! H' µ { l1 .> __, l2 .> __ } | ()
+% ----------------------------------------------- :: FillP
+% H | fillPair l@|A1*A2| d1 d2 { t } !! H' µ { l1 .> __, l2 .> __ , l .> <l1, l2> } | ()
 
-% ----------------------------------------------- :: FillNil
-% H µ { l .> null } | fillNil l --> H µ { l .> Nil } | ()
-
-% ----------------------------------------------------- :: FillCons
-% H µ { l .> null } | fillCons l d1 d2 { t } --> H µ { l .> l1 Cons l2 , l1 .> null, l2 .> null } | t[d1 := l1, d2 := l2]
 
 % embed
 % {{ tex
@@ -873,5 +764,5 @@ parsing
 v_Lam <= t_Sub
 t_PatU <= t_App
 t_PatU <= t_FillL
-judg_HeapIn <= s_V1
+judg_HeapIn <= s_Val
 hcons_V1 <= terminals_v1
