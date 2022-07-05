@@ -605,9 +605,10 @@ H | \x:A.t !! H | \x:A.t
 H | C lbar !! H | C lbar
 
 H0 | t !! H1 | \x:A.t'
-H1 | t'[x := u] !! H2 | v2
+H1 | u !! H2 | v2
+H2 | t'[x := v2] !! H3 | v3
 ---------------------------- :: App
-H0 | t u !! H2 | v2
+H0 | t u !! H3 | v3
 
 H0 | t !! H1 | ()
 H1 | u !! H2 | v2
