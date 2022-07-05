@@ -5,8 +5,6 @@
 % le remplacer par bottom créé une assymétrie entre fillUnit et fillPair
 
 % TODO
-% H > Phi
-% sem grand pas
 % trouver comment empêcher de remplir une dest avec bullet ou dest
 
 embed
@@ -71,6 +69,7 @@ embed
 \newcommand{\SemMut}[1]{\textsc{SemMut\_#1}%
 }
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
+\newcommand{\remark}[1]{~\textnormal{\itshape #1} }
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -593,34 +592,101 @@ H µ { l .> null } | fillRoll R l@|R| d { t } --> H µ { l .> roll R l', l' .> n
 defn
 H | t !! H' | t' :: :: ReduceImm :: SemImm_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
 
+------------------- :: NoEff {{ com \remark{(value)} }}
+H | o !! H | o
 
+------------------- :: LDest {{ com \remark{(value)} }}
+H | l@|A| !! H | l@|A|
 
-%---------------------------------------------------------------------------
-% changes under this line
-%---------------------------------------------------------------------------
+------------------- :: Lam {{ com \remark{(value)} }}
+H | \x:A.t !! H | \x:A.t
 
-% H | t[d := l@|A|] !! H' µ { l .> __ } | ()
-% --------------------------------------------------- :: Alloc
-% H | alloc d A { t } !! H' µ { l .> __ } | *l
+-------------------- :: HeapVal {{ com \remark{(value)} }}
+H | C lbar !! H | C lbar
 
-% ------------------------------------------------------------ :: FillLLam
-% H | fillLeaf l@|A| v !! H µ { l .> v } | ()
+H0 | t !! H1 | \x:A.t'
+H1 | t'[x := u] !! H2 | v2
+---------------------------- :: App
+H0 | t u !! H2 | v2
 
-% ------------------------------------------------------------ :: FillLHeapVal
-% H | fillLeaf l@|A| C lbar !! H µ { l .> C lbar } | ()
+H0 | t !! H1 | ()
+H1 | u !! H2 | v2
+--------------------------------------------- :: PatU
+H0 | case t of { () -> u } !! H2 | v2
 
-% H | t[d' := l'@|A1|] !! H' µ { l' .> __ } | ()
-% ------------------------------------------------------------ :: FillV1
-% H | fillLeft l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 1. l' } | ()
+H0 | t !! H1 µ { l .> v1 } | 1. l
+H1 µ { l .> v1 } | u1[x1 := v] !! H2 | v2
+----------------------------------------- :: PatV1
+H0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 | v2
 
-% H | t[d' := l'@|A2|] !! H' µ { l' .> __ } | ()
-% ------------------------------------------------------------ :: FillV2
-% H | fillRight l@|A1+A2| d' { t } !! H' µ { l' .> __ , l .> 2. l' } | ()
+H0 | t !! H1 µ { l .> v1 } | 2. l
+H1 µ { l .> v1 } | u2[x2 := v] !! H2 | v2
+----------------------------------------- :: PatV2
+H0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 | v2
 
-% H | t[d1 := l1@|A1|, d2 := l2@|A2|] !! H' µ { l1 .> __, l2 .> __ } | ()
-% ----------------------------------------------- :: FillP
-% H | fillPair l@|A1*A2| d1 d2 { t } !! H' µ { l1 .> __, l2 .> __ , l .> <l1, l2> } | ()
+H0 | t !! H1 µ { l1 .> v11, l2 .> v12 } | <l1, l2>
+H1 µ { l1 .> v11, l2 .> v12 } | u[x1 := v1, x2 := v2] !! H2 | v2
+-------------------------------------------------------------------------------- :: PatP
+H0 | case t of {<x1,x2> -> u} !! H2 | v2
 
+H0 | t !! H1 µ { l .> v1 } | Ur l
+H1 µ { l .> v1 } | u[x := v1] !! H2 | v2
+----------------------------------------------------- :: PatE
+H0 | case t of { Ur x -> u } !! H2 | v2
+
+H0 | t !! H1 µ { l .> v1 } | roll R l
+H1 µ { l .> v1 } | u[x := v1] !! H2 | v2
+------------------------------------------------------ :: PatR
+H0 | case t of { roll R x -> u } !! H2 | v2
+
+H0 | t !! H1 | o
+H1 | u !! H2 | v2
+------------------------------------------------------ :: WithEff
+H0 | t ; u !! H2 | v2
+
+H0 | t[d := l@|A|] !! H1 µ { l .> v1 } | o
+--------------------------------------------------- :: Alloc
+H0 | alloc d A { t } !! H1 µ { l .> v1 } | v1
+
+H0 | t !! H1 | l@|1|
+---------------------------- :: FillU
+H0 | fillUnit t !! H1 µ { l .> () } | o
+
+H0 | t !! H1 | l@|A --o B|
+H1 | u !! H2 | \x:A.t
+------------------------------------------------------------ :: FillLLam {{ com \remark{block on NoEff/LDest} }}
+H0 | fillLeaf t u !! H2 µ { l .> \x:A.t } | o
+
+H0 | t !! H1 | l@|A|
+H1 | u !! H2 | C lbar
+------------------------------------------------------------ :: FillLHeapVal {{ com \remark{block on NoEff/LDest} }}
+H0 | fillLeaf t u !! H2 µ { l .> C lbar } | o
+
+H0 | t !! H1 | l@|A + B|
+H1 | u[d := l'@|A|] !! H2 µ { l' .> v1 } | v2
+------------------------------------------------------------ :: FillV1
+H0 | fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } | v2
+
+H0 | t !! H1 | l@|A + B|
+H1 | u[d := l'@|B|] !! H2 µ { l' .> v1 } | v2
+------------------------------------------------------------ :: FillV2
+H0 | fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } | v2
+
+H0 | t !! H1 | l@|A * B|
+H1 | u[d1 := l1@|A|, d2 := l2@|B|] !! H2 µ { l1 .> v11, l2 .> v12 } | v2
+--------------------------------------------------------------- :: FillP
+H0 | fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } | v2
+
+H0 | t !! H1 | l@|!A|
+H1 | u[d := l'@|A|] !! H2 µ { l' .> v1 } | v2
+--------------------------------------------------- :: FillE
+H0 | fillUr t d { u } !! H2 µ { l .> Ur l', l' .> v1 } | v2
+
+R =fix µr.W
+H0 | t !! H1 | l@|R|
+H1 | u[d := l'@|W[r := R]|] !! H2 µ { l' .> v1 } | v2
+--------------------------------------------------- :: FillR
+H0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } | v2
 
 % embed
 % {{ tex
