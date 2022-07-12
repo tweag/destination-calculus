@@ -100,7 +100,7 @@ term, t, u :: 't_' ::=                                               {{ com term
   | fillPair t d1 d2 { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleleft\,\langle [[d1]] , [[d2]] \rangle\,\textbf{.}\,[[u]] }}
   | fillUr t d { u } :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]\,\triangleleft\,\ottcons{Ur}~[[d]]\,\textbf{.}\,[[u]] }}
   | fillRoll R t d { u } :: :: FillR {{ com fill destination with recursive type }} {{ tex [[t]]\,\triangleleft\,\underset{[[R]]}{\ottcons{roll} }~[[d]]\,\textbf{.}\,[[u]] }}
-  | * l :: :: Deref {{ com \TODO{remove (only there for SemMut)} }}
+%  | * l :: :: Deref {{ com \TODO{remove (only there for SemMut)} }}
   | ( t )                                   :: S :: Paren
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
@@ -124,12 +124,12 @@ heap_val, h :: 'hv_' ::=
   | C lbar :: M :: Generic {{ tex [[C]] \ottlb{\bar{l} } }} {{ com generic for all the cases above }}
 
 val, v :: 'v_' ::= {{ com unreducible value }}
-  | o :: :: NoEff {{ com no-effect effect. \textcolor{red}{Not part of the user syntax} }}
-  | l @ | A |                                       :: :: LDest {{ com allocated destination. \textcolor{red}{Not part of the user syntax} }} {{ tex {\scriptsize\vcenter{\offinterlineskip      \ialign{##\cr$\,\,\,[[l]]$\cr\noalign{\kern0.5pt}$\ottty{\lfloor[[A]]\rfloor}$\cr} } } }}
+  | o :: :: NoEff {{ com no-effect effect }}
+  | l @ | A |                                       :: :: LDest {{ com address of an allocated memory area }} {{ tex {\scriptsize\vcenter{\offinterlineskip      \ialign{##\cr$\,\,\,[[l]]$\cr\noalign{\kern0.5pt}$\ottty{\lfloor[[A]]\rfloor}$\cr} } } }}
   | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}\textbf{.}\,[[t]] }}
   | h :: :: HeapVal {{ com heap value }}
 
-label, l :: 'l_' ::= {{ com label }} {{ tex \ottlb{[[label]]} }}
+label, l :: 'l_' ::= {{ com memory address }} {{ tex \ottlb{[[label]]} }}
 
 label_stmt, s :: 's_' ::= {{ com label statement }}
   | l .> v :: :: Val
@@ -229,7 +229,8 @@ judg :: 'judg_' ::=
   | A is B :: :: EqType
   | t is u :: :: EqTerm
   | G is D :: :: EqContext
-  | H | t --> H' | t' ::  :: SemMut
+%  | H | t --> H' | t' ::  :: SemMut
+  | l notin names ( P ) :: :: CtxNotIn
   | type_affect in G :: :: CtxIn
   | label_stmt in H :: :: HeapIn
   | names ( G ) /\ names ( D ) = empty :: :: CtxClash
@@ -266,7 +267,7 @@ terminals :: 'terminals_' ::=
   | !! :: :: downto {{ tex ~~\Downarrow~~ }}
   | __ :: :: heapany {{ tex ... }}
   | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
-  | _!_ :: :: bottom {{ tex \bot }}
+  | _!_ :: :: bottom {{ tex \ottty{\bot} }}
   | o :: :: bullet {{ tex \bullet }}
 
 defns
@@ -274,6 +275,9 @@ Ctx :: '' ::=
 
 defn
 names ( G ) /\ names ( D ) = empty :: :: CtxClash :: CtxClash_ {{ com $[[G]]$~~and~~$[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+
+defn
+l notin names ( P ) :: :: CtxNotIn :: CtxNotIn_ by
 
 defn
 type_affect in G :: :: CtxIn :: JcxtIn_ by
@@ -303,23 +307,30 @@ R =fix rec_type_def :: :: TyRec :: TyRec_ by
 defn
 P |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
 
-P1 |- H1
-P2 |- H2
-names(P1) /\ names(P2) = empty
------------------- :: Union
-P1 µ P2 |- H1 µ H2
+------------------- :: Empty
+empty |- empty
 
+P |- H
+------------------- :: NoEff
+P µ { l : _!_ } |- H µ { l .> o }
+
+P |- H
+l' notin names(P)
+------------------- :: LDest
+P µ { l : |A| } |- H µ { l .> l'@|A| }
+
+P |- H
 P ; U ; G |- \ x : A . t : A --o B
 ------------------- :: Lam
 P µ { l : A --o B } |- H µ { l .> \x:A.t }
 
-C : Abar >> A
 P µ { l bar : A bar } |- H µ { l bar .> vbar }
+C : Abar >> A
 ------------------ :: HeapVal
-P µ { l bar : A bar, l : A } |- H µ { l .> C lbar, l bar .> vbar }
+P µ { l : A, l bar : A bar } |- H µ { l .> C lbar, l bar .> vbar }
 
------------ :: Enlarge {{ com \TODO{remove, needed for empty labels in SemMut} }}
-empty |- H
+% ----------- :: Enlarge {{ com \TODO{remove, needed for empty labels in SemMut} }}
+% empty |- H
 
 defn
 P ; U ; G |- H | t : A :: :: TyCommand :: TyCommand_ by
@@ -335,7 +346,8 @@ P ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term o
 ------------------------ :: NoEff
 P ; U ; empty |- o : _!_
 
-------------------------------------- :: LDest {{ com \TODO{we should have either l : A in P or l not in names(P)} }}
+l notin names(P)
+------------------------------------- :: LDest
 P ; U ; empty |- l@|A| : |A|
 
 P ; U ; G µ { x : A } |- t : B
@@ -352,8 +364,8 @@ P ; U ; { x : A } |- x : A
 --------------- :: Id'
 P ; U µ { x : A} ; empty |- x : A
 
------------------------------------- :: Deref
-P µ { l : A } ; U ; empty |- *l : A
+% ------------------------------------ :: Deref
+% P µ { l : A } ; U ; empty |- *l : A
 
 P ; U ; G |- t : A --o B
 P ; U ; D |- u : A
@@ -400,7 +412,7 @@ names( G ) /\ names( D ) = empty
 P ; U ; G µ D |- case t of { roll R x -> u } : B
 
 P ; U ; G µ { d : |A| } |- t : _!_
------------------------------- :: Alloc {{ com  \TODO{add guard for LDest and NoEff} }}
+------------------------------ :: Alloc
 P ; U ; G |- alloc d A { t } : A
 
 P ; U ; G |- t : |1|
@@ -469,128 +481,7 @@ defns
 Sem :: '' ::=
 
 defn
-H | t --> H' | t' :: :: ReduceMut :: SemMut_ {{ com $[[t]]$ reduces to $[[t']]$, with heap changing from $[[H]]$ to $[[H']]$ }} by
-
-H | t --> H' | t'
-------------------- :: uApp
-H | t u --> H' | t' u
-
----------------------------- :: App
-H | (\x:A.t) u --> H | t[x := u]
-
----------------------------------- :: dLam
-H µ { l .> \x:A.t } | *l --> H µ { l .> \x:A.t } | \x:A.t
-
----------------------------------- :: dHeapVal
-H µ { l .> C lbar } | *l --> H µ { l .> C lbar } | C lbar
-
-H | t --> H' | t'
---------------------------------------------- :: uPatU
-H | case t of { () -> u } --> H' | case t' of { () -> u }
-
---------------------- :: PatU
-H | case () of { () -> u } --> H | u
-
-H | t --> H' | t'
-------------------------------------------------------------------------------- :: uPatV12
-H | case t of {1. x1 -> u1, 2. x2 -> u2} --> H' | case t' of {1. x1 -> u1, 2. x2 -> u2}
-
------------------------------------------ :: PatV1
-H µ { l .> v } | case 1. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u1[x1 := v]
-
------------------------------------------ :: PatV2
-H µ { l .> v } | case 2. l of {1. x1 -> u1, 2. x2 -> u2} --> H | u2[x2 := v]
-
-H | t --> H' | t'
------------------------------------------------------------------------------ :: uPatP
-H | case t of {<x1,x2> -> u} --> H' | case t' of {<x1,x2> -> u}
-
--------------------------------------------------------------------------------- :: PatP
-H µ { l1 .> v1, l2 .> v2 } | case <l1, l2> of {<x1,x2> -> u} --> H | u[x1 := v1, x2 := v2]
-
-H | t --> H' | t'
-------------------------------------------------------------------------------------- :: uPatE
-H | case t of {Ur x -> u} --> H' | case t' of {Ur x -> u}
-
------------------------------------------------------ :: PatE
-H µ { l .> v } | case Ur l of { Ur x -> u } --> H | u[x := v]
-
-H | t --> H' | t'
------------------------------------------------------- :: uPatR
-H | case t of { roll R x -> u} --> H' | case t' of { roll R x -> u}
-
------------------------------------------------------- :: PatR
-H µ { l .> v } | case roll R l of { roll R x -> u } --> H | u[x := v]
-
-H | t --> H' | t'
------------------------------------------------------- :: uWithEff
-H | t ; u --> H' | t' ; u
-
------------------------------------------------------- :: WithEff
-H | o ; u --> H | u
-
---------------------------------------------------- :: Alloc
-H | alloc d A { t } --> H µ { l .> null } | t[d := l@|A|] ; *l
-
-H | t --> H' | t'
-------------------------------------- :: uFillU
-H | fillUnit t --> H' | fillUnit t'
-
------------------------------------------------------------- :: FillU
-H µ { l .> null } | fillUnit l@|1| --> H µ { l .> () } | o
-
-H | t --> H' | t'
-------------------------------------- :: uFillL
-H | fillLeaf t u --> H' | fillLeaf t' u
-
-H | t --> H' | t'
-------------------------------------- :: uFillL'
-H | fillLeaf l@|A| t --> H' | fillLeaf l@|A| t'
-
------------------------------------------------------------- :: FillLLam
-H µ { l .> null } | fillLeaf l@|A| \x:A.t --> H µ { l .> \x:A.t } | o
-
------------------------------------------------------------- :: FillLHeapVal
-H µ { l .> null } | fillLeaf l@|A| C lbar --> H µ { l .> C lbar } | o
-
-H | t --> H' | t'
-------------------------------------- :: uFillV1
-H | fillLeft t d {u} --> H' | fillLeft t' d {u}
-
------------------------------------------------------------- :: FillV1
-H µ { l .> null } | fillLeft l@|A1+A2| d { t } --> H µ { l .> 1. l', l' .> null } | t[d := l'@|A1|]
-
-H | t --> H' | t'
-------------------------------------- :: uFillV2
-H | fillRight t d {u} --> H' | fillRight t' d {u}
-
------------------------------------------------------------- :: FillV2
-H µ { l .> null } | fillRight l@|A1+A2| d { t } --> H µ { l .> 2. l', l' .> null } | t[d := l'@|A2|]
-
-H | t --> H' | t'
-------------------------------------- :: uFillP
-H | fillPair t d1 d2 {u} --> H' | fillPair t' d1 d2 {u}
-
------------------------------------------------ :: FillP
-H µ { l .> null } | fillPair l@|A1*A2| d1 d2 { t } --> H µ { l .> <l1, l2> , l1 .> null, l2 .> null } | t[d1 := l1@|A1|, d2 := l2@|A2|]
-
-H | t --> H' | t'
----------------------------------------- :: uFillE
-H | fillUr t d {u} --> H' | fillUr t' d {u}
-
----------------------------------------- :: FillE
-H µ { l .> null } | fillUr l@|!A| d { t } --> H µ { l .> Ur l', l' .> null } | t[d := l'@|A|]
-
-H | t --> H' | t'
----------------------------------------- :: uFillR
-H | fillRoll R t d {u} --> H' | fillRoll R t' d {u}
-
-R =fix µ r. W
----------------------------------------- :: FillR
-H µ { l .> null } | fillRoll R l@|R| d { t } --> H µ { l .> roll R l', l' .> null } | t[d := l'@|W[r := R]|]
-
-defn
-H | t !! H' | t' :: :: ReduceImm :: SemImm_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
+H | t !! H' | t' :: :: Reduce :: SemOp_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
 
 ------------------- :: NoEff {{ com \remark{(value)} }}
 H | o !! H | o
@@ -653,15 +544,10 @@ H0 | t !! H1 | l@|1|
 ---------------------------- :: FillU
 H0 | fillUnit t !! H1 µ { l .> () } | o
 
-H0 | t !! H1 | l@|A --o B|
-H1 | u !! H2 | \x:A.t
------------------------------------------------------------- :: FillLLam {{ com \remark{block on NoEff/LDest} }}
-H0 | fillLeaf t u !! H2 µ { l .> \x:A.t } | o
-
 H0 | t !! H1 | l@|A|
-H1 | u !! H2 | C lbar
------------------------------------------------------------- :: FillLHeapVal {{ com \remark{block on NoEff/LDest} }}
-H0 | fillLeaf t u !! H2 µ { l .> C lbar } | o
+H1 | u !! H2 | v2
+------------------------------------------------------------ :: FillL
+H0 | fillLeaf t u !! H2 µ { l .> v2 } | o
 
 H0 | t !! H1 | l@|A + B|
 H1 | u[d := l'@|A|] !! H2 µ { l' .> v1 } | v2
