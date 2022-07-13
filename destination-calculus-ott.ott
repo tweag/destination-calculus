@@ -87,18 +87,18 @@ term, t, u :: 't_' ::=                                               {{ com term
   | t u                                    ::   :: App      {{ com application }}
   | t ; u :: :: WithEff {{ com effect execution }}
   | case t of { () -> u }                   ::   :: PatU     {{ com pattern-matching on unit }}
+  | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
   | case t of { 1. x1 -> u1 , 2. x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
 % | case t of { Nil -> u1 , x1 Cons x2 -> u2 } :: :: PatL {{ com pattern-matching on list }}
-  | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
   | case t of { roll R x -> u } :: :: PatR {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{ \underset{[[R]] }{\ottkw{roll} }~[[x]] \mapsto [[u]] \} }} {{ com unroll for recursive types }}
   | alloc d A { t }                                   ::   :: Alloc    {{ com allocate data }} {{ tex \underset{\ottty{[[A]]} }{\ottkw{alloc}~[[d]]}\,\textbf{.}\,[[t]] }}
   | fillUnit t :: :: FillU {{ com fill destination with unit }} {{ tex [[t]]\,\triangleleft\,\ottcons{()} }}
-  | fillLeaf t u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleleft\,[[u]] }}
+  | fillLin t u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleleft\,[[u]] }}
+  | fillUr t u :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]\,\triangleleft\,\ottcons{Ur}~[[u]] }}
   | fillLeft t d { u }                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{1.} [[d]]\,\textbf{.}\,[[u]] }}
   | fillRight t d { u }                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{2.} [[d]]\,\textbf{.}\,[[u]] }}
   | fillPair t d1 d2 { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleleft\,\langle [[d1]] , [[d2]] \rangle\,\textbf{.}\,[[u]] }}
-  | fillUr t d { u } :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]\,\triangleleft\,\ottcons{Ur}~[[d]]\,\textbf{.}\,[[u]] }}
   | fillRoll R t d { u } :: :: FillR {{ com fill destination with recursive type }} {{ tex [[t]]\,\triangleleft\,\underset{[[R]]}{\ottcons{roll} }~[[d]]\,\textbf{.}\,[[u]] }}
 %  | * l :: :: Deref {{ com \TODO{remove (only there for SemMut)} }}
   | ( t )                                   :: S :: Paren
@@ -116,33 +116,44 @@ var_subs :: 'vss_' ::= {{ com variable substitutions }}
 
 heap_val, h :: 'hv_' ::=
   | ()                                      ::   :: U
+  | Ur l :: :: E
   | 1. l :: :: V1
   | 2. l :: :: V2
   | < l1 , l2 > :: :: P
-  | Ur l :: :: E
   | roll R l :: :: R {{ tex \underset{[[R]] }{\ottkw{roll} }~[[l]] }}
   | C lbar :: M :: Generic {{ tex [[C]] \ottlb{\bar{l} } }} {{ com generic for all the cases above }}
 
 val, v :: 'v_' ::= {{ com unreducible value }}
   | o :: :: NoEff {{ com no-effect effect }}
-  | l @ | A |                                       :: :: LDest {{ com address of an allocated memory area }} {{ tex {\scriptsize\vcenter{\offinterlineskip      \ialign{##\cr$\,\,\,[[l]]$\cr\noalign{\kern0.5pt}$\ottty{\lfloor[[A]]\rfloor}$\cr} } } }}
+  | | l |                                       :: :: LDest {{ com address of an allocated memory area }} {{ tex \ottlb{\lfloor[[l]]\rfloor} }}
   | \ x : A . t                                ::   :: Lam      {{ com lambda abstraction }} {{ tex \lambda\aunderbrace[l1r]{\,[[x]]{:}[[A]]\,}\textbf{.}\,[[t]] }}
   | h :: :: HeapVal {{ com heap value }}
 
 label, l :: 'l_' ::= {{ com memory address }} {{ tex \ottlb{[[label]]} }}
 
-label_stmt, s :: 's_' ::= {{ com label statement }}
+labels :: 'll_' ::=
+  | l :: :: Single
+  | l bar :: :: SingleBar
+  | l , labels :: :: Multiple
+  | l bar, labels :: :: MultipleBar
+
+label_set, L :: 'ls_' ::= {{ com set of used labels }} {{ tex \ottlb{[[label_set]]} }}
+  | empty :: :: Empty
+  | { labels } :: :: Labels
+  | L1 µ L2 :: :: Union
+
+heap_affect, ha :: 'ha_' ::= {{ com heap cell }}
   | l .> v :: :: Val
-  | l .> null :: :: Null
+%  | l .> null :: :: Null
   | l bar .> vbar :: M :: Generic {{ tex \ottlb{\bar{[[l]]} } \heaparrow \ottnt{\bar{v} } }} {{ com generic for multiple occurences }}
 
-label_stmts :: 'ss_' ::= {{ com label statements }}
-  | s :: :: Single
-  | s , label_stmts :: :: Multiple
+heap_affects :: 'has_' ::= {{ com heap cells }}
+  | ha :: :: Single
+  | ha , heap_affects :: :: Multiple
 
-heap_context, H {{ tex \mathbb{H} }} :: 'hc_' ::= {{ com label statements }}
+heap_context, H {{ tex \mathbb{H} }} :: 'hc_' ::= {{ com heap contents }}
   | empty :: :: Empty
-  | { label_stmts } :: :: Stmts
+  | { heap_affects } :: :: Stmts
   | H1 µ H2 :: :: Union
 
 type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
@@ -185,15 +196,18 @@ type_affects :: 'tas_' ::= {{ com type affectations }}
   | ta :: :: Single
   | ta , type_affects :: :: Multiple
 
-typing_context, G {{ tex \Gamma }}, D {{ tex \Delta }}, U {{ tex \mho }}, P {{ tex \Phi }} :: 'tc_' ::= {{ com typing context }}
+typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, P {{ tex \Phi }}, Y {{ tex \Psi }} :: 'tc_' ::= {{ com typing context }}
   | empty    ::   :: Empty
   | { type_affects } ::    :: Var
-  | G µ D    ::    :: Union
+  | G1 µ G2    ::    :: Union
 
 types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
   | none :: :: None {{ tex \ottty{\cdot} }} {{ com empty type list }}
   | A :: :: Single
   | A types :: :: Multiple {{ tex [[A]]~~[[types]] }}
+
+command :: 'com_' ::=
+  | H | L t :: :: Command {{ tex [[H]]\underset{[[L]]}{|}[[t]] }}
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -213,27 +227,32 @@ types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
 
 heap_constructor, C :: 'hcons_' ::= {{ tex \ottcons{[[heap_constructor]]} }}
   | { () } :: :: U
+  | { Ur } :: :: E
   | { 1. } :: :: V1
   | { 2. } :: :: V2
   | { < , > } :: :: P
-  | { Ur } :: :: E
   | { roll R } :: :: R
   % | ( Nil ) :: :: Nil
   % | ( Cons ) :: :: Cons
 
 judg :: 'judg_' ::=
-  | P |- H :: :: TyHeap
-  | P ; U ; G |- H | t : A :: :: TyCommand
-  | P ; U ; G |- t : A ::  :: TyTerm
-  | C : Abar >> A :: :: TyCtor
+  | l in names ( P ) :: :: CtxLabelIn
+  | l notin names ( P ) :: :: CtxLabelNotIn
+  | type_affect in G :: :: CtxTypeAffIn
+  | names ( G ) /\ names ( D ) = empty :: :: CtxDisjoint
+  | names ( P ) µ names ( Y ) = L :: :: LabelSetDef
+  | l in L :: :: LabelSetIn
+  | l notin L :: :: LabelSetNotIn
+  | heap_affect in H :: :: HeapAffIn
   | A is B :: :: EqType
   | t is u :: :: EqTerm
   | G is D :: :: EqContext
-%  | H | t --> H' | t' ::  :: SemMut
-  | l notin names ( P ) :: :: CtxNotIn
-  | type_affect in G :: :: CtxIn
-  | label_stmt in H :: :: HeapIn
-  | names ( G ) /\ names ( D ) = empty :: :: CtxClash
+  | R =fix rec_type_def :: :: TyRec
+  | C : Abar >> A :: :: TyCtor
+  | P ; Y ; U ; G |- command : A :: :: TyCommand
+  | P |- H :: :: TyHeap
+  | P ; Y ; U ; G |- t : A ::  :: TyTerm
+  | command !! command' :: :: SemOp
 
 terminals :: 'terminals_' ::=
   | () :: :: unit {{ tex \ottcons{()} }}
@@ -274,19 +293,34 @@ defns
 Ctx :: '' ::=
 
 defn
-names ( G ) /\ names ( D ) = empty :: :: CtxClash :: CtxClash_ {{ com $[[G]]$~~and~~$[[D]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+l in names ( P ) :: :: CtxLabelIn :: CtxLabelIn_ by
 
 defn
-l notin names ( P ) :: :: CtxNotIn :: CtxNotIn_ by
+l notin names ( P ) :: :: CtxLabelNotIn :: CtxLabelNotIn_ by
 
 defn
-type_affect in G :: :: CtxIn :: JcxtIn_ by
+type_affect in G :: :: CtxTypeAffIn :: CtxTypeAffIn_ by
+
+defn
+names ( G1 ) /\ names ( G2 ) = empty :: :: CtxDisjoint :: CtxDisjoint_ {{ com $[[G1]]$~~and~~$[[G2]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+
+defns
+LabelSet :: '' ::=
+
+defn
+names ( P ) µ names ( Y ) = L :: :: LabelSetDef :: LabelSetDef_ by
+
+defn
+l in L :: :: LabelSetIn :: LabelSetIn_ by
+
+defn
+l notin L :: :: LabelSetNotIn :: LabelSetNotIn_ by
 
 defns
 Heap :: '' ::=
 
 defn
-label_stmt in H :: :: HeapIn :: HeapIn_ by
+heap_affect in H :: :: HeapAffIn :: HeapAffIn_ by
 
 defns
 Eq :: '' ::=
@@ -303,157 +337,6 @@ Ty :: '' ::=
 
 defn
 R =fix rec_type_def :: :: TyRec :: TyRec_ by
-
-defn
-P |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
-
-------------------- :: Empty
-empty |- empty
-
-P |- H
-------------------- :: NoEff
-P µ { l : _!_ } |- H µ { l .> o }
-
-P |- H
-l' notin names(P)
-------------------- :: LDest
-P µ { l : |A| } |- H µ { l .> l'@|A| }
-
-P |- H
-P ; U ; G |- \ x : A . t : A --o B
-------------------- :: Lam
-P µ { l : A --o B } |- H µ { l .> \x:A.t }
-
-P µ { l bar : A bar } |- H µ { l bar .> vbar }
-C : Abar >> A
------------------- :: HeapVal
-P µ { l : A, l bar : A bar } |- H µ { l .> C lbar, l bar .> vbar }
-
-% ----------- :: Enlarge {{ com \TODO{remove, needed for empty labels in SemMut} }}
-% empty |- H
-
-defn
-P ; U ; G |- H | t : A :: :: TyCommand :: TyCommand_ by
-
-P |- H
-P ; U ; G |- t : A
--------------------------------- :: Def
-P ; U ; G |- H | t : A
-
-defn
-P ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
-
------------------------- :: NoEff
-P ; U ; empty |- o : _!_
-
-l notin names(P)
-------------------------------------- :: LDest
-P ; U ; empty |- l@|A| : |A|
-
-P ; U ; G µ { x : A } |- t : B
------------------------ :: Lam
-P ; U ; G |- \x:A.t : A --o B
-
-C : Abar >> A
------------------------------------- :: HeapVal
-P µ { l bar : A bar } ; U ; empty |- C lbar : A
-
---------------- :: Id
-P ; U ; { x : A } |- x : A
-
---------------- :: Id'
-P ; U µ { x : A} ; empty |- x : A
-
-% ------------------------------------ :: Deref
-% P µ { l : A } ; U ; empty |- *l : A
-
-P ; U ; G |- t : A --o B
-P ; U ; D |- u : A
-names( G ) /\ names( D ) = empty
---------------------------------- :: App
-P ; U ; G µ D |- t u : B
-
-P ; U ; G |- t : _!_
-P ; U ; D |- u : B
-names( G ) /\ names( D ) = empty
---------------------------------- :: WithEff
-P ; U ; G µ D |- t ; u : B
-
-P ; U ; G |- t : 1
-P ; U ; D |- u : A
-names( G ) /\ names( D ) = empty
------------------------------------------ :: PatU
-P ; U ; G µ D |- case t of { () -> u } : A
-
-P ; U ; G |- t : A1 + A2
-P ; U ; D µ { x1 : A1 } |- u1 : B
-P ; U ; D µ { x2 : A2 } |- u2 : B
-names( G ) /\ names( D ) = empty
-------------------------------------------------------- :: PatS
-P ; U ; G µ D |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
-
-P ; U ; G |- t : A1 * A2
-P ; U ; D µ { x1 : A1 , x2 : A2 } |- u : B
-names( G ) /\ names( D ) = empty
-------------------------------------------------------- :: PatP
-P ; U ; G µ D |- case t of {<x1, x2> -> u} : B
-
-P ; U ; G |- t : !A
-P ; U µ { x : A } ; D |- u: B
-names( G ) /\ names( D ) = empty
------------------------------------------ :: PatE
-P ; U ; G µ D |- case t of { Ur x -> u } : B
-
-R =fix µ r. W
-P ; U ; G |- t : R
-P ; U ; D µ { x : W[r := R] } |- u : B
-names( G ) /\ names( D ) = empty
------------------------------ :: PatR
-P ; U ; G µ D |- case t of { roll R x -> u } : B
-
-P ; U ; G µ { d : |A| } |- t : _!_
------------------------------- :: Alloc
-P ; U ; G |- alloc d A { t } : A
-
-P ; U ; G |- t : |1|
------------------------ :: FillU
-P ; U ; G |- fillUnit t : _!_
-
-P ; U ; G |- t : |A|
-P ; U ; D |- u : A
-names( G ) /\ names( D ) = empty
------------------------------------ :: FillL
-P ; U ; G µ D |- fillLeaf t u : _!_
-
-P ; U ; G |- t : |A1 + A2|
-P ; U ; D µ { d' : |A1| } |- u : B
-names( G ) /\ names( D ) = empty
------------------------------------------ :: FillV1
-P ; U ; G µ D |- fillLeft t d' { u } : B
-
-P ; U ; G |- t : |A1 + A2|
-P ; U ; D µ { d' : |A2| } |- u : B
-names( G ) /\ names( D ) = empty
------------------------------------------ :: FillV2
-P ; U ; G |- fillRight t d' { u } : B
-
-P ; U ; G |- t : |A1 * A2|
-P ; U ; D µ { d1 : |A1| , d2 : |A2| } |- u : B
-names( G ) /\ names( D ) = empty
-----------------------------------------------:: FillP
-P ; U ; G µ D |- fillPair t d1 d2 { u } : B
-
-P ; U ; G |- t : |!A|
-P ; U ; empty µ { d : |A| } |- u : B
------------------------------------ :: FillE
-P ; U ; G |- fillUr t d { u } : B
-
-R =fix µ r. W
-P ; U ; G |- t : |R|
-P ; U ; D µ { d : |W[r := R]| } |- u : B
-names( G ) /\ names( D ) = empty
----------------------------------------------------------------- :: FillR
-P ; U ; G µ D |- fillRoll R t d { u } : B
 
 defn
 C : Abar >> A :: :: TyCtor :: TyCtor_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
@@ -477,103 +360,260 @@ R =fix µ r. W
 ---------------------- :: R
 { roll R } : W[r := R] >> R
 
+defn
+P ; Y ; U ; G |- command : A :: :: TyCommand :: TyCommand_ by
+
+names(P) µ names(Y) = L
+P |- H
+P ; Y ; U ; G |- t : A
+-------------------------------- :: Def
+P ; Y ; U ; G |- H | L t : A
+
+defn
+P |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
+
+------------------- :: Empty
+empty |- empty
+
+P |- H
+P ; Y ; U ; G |- v : A
+------------------- :: Val
+P µ { l : A } |- H µ { l .> v }
+
+defn
+P ; Y ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+
+------------------------ :: NoEff
+P ; empty ; U ; empty |- o : _!_
+
+l notin names(P)
+------------------------------------- :: LDest
+P ; { l : A } ; U ; empty |- |l| : |A|
+
+P ; Y ; U ; G µ { x : A } |- t : B
+----------------------- :: Lam
+P ; Y ; U ; G |- \x:A.t : A --o B
+
+% Comment se passe le typage d'une structure avec un trou ???
+
+C : Abar >> A
+------------------------------------ :: HeapVal
+P µ { l bar : A bar } ; empty ; U ; empty |- C lbar : A
+
+--------------- :: Id
+P ; empty ; U ; { x : A } |- x : A
+
+--------------- :: Id'
+P ; empty ; U µ { x : A } ; empty |- x : A
+
+P ; Y1 ; U ; G1 |- t : A --o B
+P ; Y2 ; U ; G2 |- u : A
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+--------------------------------- :: App
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- t u : B
+
+P ; Y1 ; U ; G1 |- t : _!_
+P ; Y2 ; U ; G2 |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+--------------------------------- :: WithEff
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- t ; u : B
+
+P ; Y1 ; U ; G1 |- t : 1
+P ; Y2 ; U ; G2 |- u : A
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------------- :: PatU
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { () -> u } : A
+
+P ; Y1 ; U ; G1 |- t : !A
+P ; Y2 ; U µ { x : A } ; G2 |- u: B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------------- :: PatE 
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { Ur x -> u } : B
+
+% TODO: what if we put a data structure containing a dest in a Ur?
+
+P ; Y1 ; U ; G1 |- t : A1 + A2
+P ; Y2 ; U ; G2 µ { x1 : A1 } |- u1 : B
+P ; Y2 ; U ; G2 µ { x2 : A2 } |- u2 : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+------------------------------------------------------- :: PatS
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
+
+P ; Y1 ; U ; G1 |- t : A1 * A2
+P ; Y2 ; U ; G2 µ { x1 : A1 , x2 : A2 } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+------------------------------------------------------- :: PatP
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of {<x1, x2> -> u} : B
+
+R =fix µ r. W
+P ; Y1 ; U ; G1 |- t : R
+P ; Y2 ; U ; G2 µ { x : W[r := R] } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------- :: PatR
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { roll R x -> u } : B
+
+P ; Y ; U ; G µ { d : |A| } |- t : _!_
+------------------------------ :: Alloc
+P ; Y ; U ; G |- alloc d A { t } : A
+
+% TODO: can change Y to empty to forbid filling dests from another alloc
+
+P ; Y ; U ; G |- t : |1|
+----------------------- :: FillU
+P ; Y ; U ; G |- fillUnit t : _!_
+
+P ; Y1 ; U ; G1 |- t : |A|
+P ; Y2 ; U ; G2 |- u : A
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------- :: FillL
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillLin t u : _!_
+
+P ; Y1 ; U ; G |- t : |!A|
+P ; empty ; U ; empty |- u : A
+----------------------------------- :: FillE
+P ; Y1 ; U ; G |- fillUr t u : _!_
+
+% TODO: should I allow Y != empty?
+
+P ; Y1 ; U ; G1 |- t : |A1 + A2|
+P ; Y2 ; U ; G2 µ { d' : |A1| } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------------- :: FillV1
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillLeft t d' { u } : B
+
+P ; Y1 ; U ; G1 |- t : |A1 + A2|
+P ; Y2 ; U ; G2 µ { d' : |A2| } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------------- :: FillV2
+P ; Y1 µ Y2 ; U ; G |- fillRight t d' { u } : B
+
+P ; Y1 ; U ; G1 |- t : |A1 * A2|
+P ; Y2 ; U ; G2 µ { d1 : |A1| , d2 : |A2| } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+----------------------------------------------:: FillP
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillPair t d1 d2 { u } : B
+
+R =fix µ r. W
+P ; Y1 ; U ; G1 |- t : |R|
+P ; Y2 ; U ; G2 µ { d : |W[r := R]| } |- u : B
+names( G1 ) /\ names( G2 ) = empty
+names( Y1 ) /\ names( Y2 ) = empty
+---------------------------------------------------------------- :: FillR
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillRoll R t d { u } : B
+
 defns
 Sem :: '' ::=
 
 defn
-H | t !! H' | t' :: :: Reduce :: SemOp_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
+command !! command' :: :: Reduce :: SemOp_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
 
 ------------------- :: NoEff {{ com \remark{(value)} }}
-H | o !! H | o
+H |L o !! H |L o
 
 ------------------- :: LDest {{ com \remark{(value)} }}
-H | l@|A| !! H | l@|A|
+H |L |l| !! H |L |l|
 
 ------------------- :: Lam {{ com \remark{(value)} }}
-H | \x:A.t !! H | \x:A.t
+H |L \x:A.t !! H |L \x:A.t
 
 -------------------- :: HeapVal {{ com \remark{(value)} }}
-H | C lbar !! H | C lbar
+H |L C lbar !! H |L C lbar
 
-H0 | t !! H1 | \x:A.t'
-H1 | u !! H2 | v2
-H2 | t'[x := v2] !! H3 | v3
+H0 |L0 t !! H1 |L1 \x:A.t'
+H1 |L1 u !! H2 |L2 v2
+H2 |L2 t'[x := v2] !! H3 |L3 v3
 ---------------------------- :: App
-H0 | t u !! H3 | v3
+H0 |L0 t u !! H3 |L3 v3
 
-H0 | t !! H1 | ()
-H1 | u !! H2 | v2
+H0 |L0 t !! H1 |L1 ()
+H1 |L1 u !! H2 |L2 v2
 --------------------------------------------- :: PatU
-H0 | case t of { () -> u } !! H2 | v2
+H0 |L0 case t of { () -> u } !! H2 |L2 v2
 
-H0 | t !! H1 µ { l .> v1 } | 1. l
-H1 µ { l .> v1 } | u1[x1 := v] !! H2 | v2
------------------------------------------ :: PatV1
-H0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 | v2
-
-H0 | t !! H1 µ { l .> v1 } | 2. l
-H1 µ { l .> v1 } | u2[x2 := v] !! H2 | v2
------------------------------------------ :: PatV2
-H0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 | v2
-
-H0 | t !! H1 µ { l1 .> v11, l2 .> v12 } | <l1, l2>
-H1 µ { l1 .> v11, l2 .> v12 } | u[x1 := v1, x2 := v2] !! H2 | v2
--------------------------------------------------------------------------------- :: PatP
-H0 | case t of {<x1,x2> -> u} !! H2 | v2
-
-H0 | t !! H1 µ { l .> v1 } | Ur l
-H1 µ { l .> v1 } | u[x := v1] !! H2 | v2
+H0 |L0 t !! H1 µ { l .> v1 } |L1 Ur l
+H1 µ { l .> v1 } |L1 u[x := v1] !! H2 |L2 v2
 ----------------------------------------------------- :: PatE
-H0 | case t of { Ur x -> u } !! H2 | v2
+H0 |L0 case t of { Ur x -> u } !! H2 |L2 v2
 
-H0 | t !! H1 µ { l .> v1 } | roll R l
-H1 µ { l .> v1 } | u[x := v1] !! H2 | v2
+H0 |L0 t !! H1 µ { l .> v1 } |L1 1. l
+H1 µ { l .> v1 } |L1 u1[x1 := v] !! H2 |L2 v2
+----------------------------------------- :: PatV1
+H0 |L0 case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 |L2 v2
+
+H0 |L0 t !! H1 µ { l .> v1 } |L1 2. l
+H1 µ { l .> v1 } |L1 u2[x2 := v] !! H2 |L2 v2
+----------------------------------------- :: PatV2
+H0 |L0 case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 |L2 v2
+
+H0 |L0 t !! H1 µ { l1 .> v11, l2 .> v12 } |L1 <l1, l2>
+H1 µ { l1 .> v11, l2 .> v12 } |L1 u[x1 := v1, x2 := v2] !! H2 |L2 v2
+-------------------------------------------------------------------------------- :: PatP
+H0 |L0 case t of {<x1,x2> -> u} !! H2 |L2 v2
+
+H0 |L0 t !! H1 µ { l .> v1 } |L1 roll R l
+H1 µ { l .> v1 } |L1 u[x := v1] !! H2 |L2 v2
 ------------------------------------------------------ :: PatR
-H0 | case t of { roll R x -> u } !! H2 | v2
+H0 |L0 case t of { roll R x -> u } !! H2 |L2 v2
 
-H0 | t !! H1 | o
-H1 | u !! H2 | v2
+H0 |L0 t !! H1 |L1 o
+H1 |L1 u !! H2 |L2 v2
 ------------------------------------------------------ :: WithEff
-H0 | t ; u !! H2 | v2
+H0 |L0 t ; u !! H2 |L2 v2
 
-H0 | t[d := l@|A|] !! H1 µ { l .> v1 } | o
+l notin L0
+H0 |L0µ{l} t[d := |l|] !! H1 µ { l .> v1 } |L1 o
 --------------------------------------------------- :: Alloc
-H0 | alloc d A { t } !! H1 µ { l .> v1 } | v1
+H0 |L0 alloc d A { t } !! H1 µ { l .> v1 } |L1 v1
 
-H0 | t !! H1 | l@|1|
+H0 |L0 t !! H1 |L1 |l|
 ---------------------------- :: FillU
-H0 | fillUnit t !! H1 µ { l .> () } | o
+H0 |L0 fillUnit t !! H1 µ { l .> () } |L1 o
 
-H0 | t !! H1 | l@|A|
-H1 | u !! H2 | v2
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1 u !! H2 |L2 v2
 ------------------------------------------------------------ :: FillL
-H0 | fillLeaf t u !! H2 µ { l .> v2 } | o
+H0 |L0 fillLin t u !! H2 µ { l .> v2 } |L2 o
 
-H0 | t !! H1 | l@|A + B|
-H1 | u[d := l'@|A|] !! H2 µ { l' .> v1 } | v2
------------------------------------------------------------- :: FillV1
-H0 | fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } | v2
-
-H0 | t !! H1 | l@|A + B|
-H1 | u[d := l'@|B|] !! H2 µ { l' .> v1 } | v2
------------------------------------------------------------- :: FillV2
-H0 | fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } | v2
-
-H0 | t !! H1 | l@|A * B|
-H1 | u[d1 := l1@|A|, d2 := l2@|B|] !! H2 µ { l1 .> v11, l2 .> v12 } | v2
---------------------------------------------------------------- :: FillP
-H0 | fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } | v2
-
-H0 | t !! H1 | l@|!A|
-H1 | u[d := l'@|A|] !! H2 µ { l' .> v1 } | v2
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1 u !! H2 |L2 v2
 --------------------------------------------------- :: FillE
-H0 | fillUr t d { u } !! H2 µ { l .> Ur l', l' .> v1 } | v2
+H0 |L0 fillUr t u !! H2 µ { l .> Ur l', l' .> v2 } |L2 o
 
-R =fix µr.W
-H0 | t !! H1 | l@|R|
-H1 | u[d := l'@|W[r := R]|] !! H2 µ { l' .> v1 } | v2
+l' notin L1
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
+------------------------------------------------------------ :: FillV1
+H0 |L0 fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } |L2 v2
+
+l' notin L1
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
+------------------------------------------------------------ :: FillV2
+H0 |L0 fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } |L2 v2
+
+l1 notin L1
+l1 notin L1
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1µ{l1,l2} u[d1 := |l1|, d2 := |l2|] !! H2 µ { l1 .> v11, l2 .> v12 } |L2 v2
+--------------------------------------------------------------- :: FillP
+H0 |L0 fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } |L2 v2
+
+l' notin L1
+H0 |L0 t !! H1 |L1 |l|
+H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
 --------------------------------------------------- :: FillR
-H0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } | v2
+H0 |L0 fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } |L2 v2
 
 % embed
 % {{ tex
@@ -667,19 +707,19 @@ H0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } | v2
 % \item If $[[P ; U ; G |- l : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is |B|]]$~~and~~$[[l : B in P]]$ (\TyTerm{LabelAsDest})
 % \item If $[[P ; U ; G |- °l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\TyTerm{DerefVal})
 % \item If $[[P ; U ; G |- *l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\TyTerm{Deref})
-% \item If $[[P ; U ; G |- \x:B1.t:A]]$, then there is some type $[[B2]]$ such that $[[A is B1 --o B2]]$~~and~~$[[P ; U ; G µ {x:B1} |- t : B2]]$ (\TyTerm{Lam})
-% \item If $[[P ; U ; G |- t u : A]]$, then there are some type $[[B]]$ and contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B --o A]]$,~~~$[[P ; U ; D2 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{App})
-% \item If $[[P ; U ; G |- t ; u : A]]$ then there are some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : 1]]$,~~~$[[P ; U ; D2 |- u : A]]$, and $[[G is D1 µ D2]]$ (\TyTerm{PatU})
-% \item If $[[P ; U ; G |- case t of { <x1, x2> -> u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B1 * B2]]$,~~~$[[P ; U ; D2 µ { x1 : B1, x2 : B2 } |- u : A]]$ and , and $[[G is D1 µ D2]]$ (\TyTerm{PatP})
-% \item If $[[P ; U ; G |- case t of { 1.x1 -> u1, 2.x2 -> u2 } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : B1 + B2]]$,~~~$[[P ; U ; D2 µ { x1 : B1 } |- u1 : A]]$,~~~$[[P ; U ; D2 µ { x2 : B2 } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatS})
-% \item If $[[P ; U ; G |- case t of { Nil -> u1, x1 Cons x2 -> u2 } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : [B] ]]$,~~~$[[P ; U ; D2 |- u1 : A]]$,~~~$[[P ; U ; D2 µ { x1 : B, x2 : [B] } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatL})
-% \item If $[[P ; U ; G |- case t of { Ur x -> u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : !B]]$,~~~$[[P ; U µ {x : B} ; D2 |- u : A]]$ and and $[[G is D1 µ D2]]$ (\TyTerm{PatE})
-% \item If $[[P ; U ; G |- fillLeaf t u : A]]$ then $[[A is 1]]$ and there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B|]]$,~~~$[[P ; U ; D2 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillL})
-% \item If $[[P ; U ; G |- fillLeft t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 + B2|]]$,~~~$[[P ; U ; D2 µ { d' : |B1| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV1})
-% \item If $[[P ; U ; G |- fillRight t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 + B2|]]$,~~~$[[P ; U ; D2 µ { d' : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV2})
-% \item If $[[P ; U ; G |- fillPair t d1 d2 { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |B1 * B2|]]$,~~~$[[P ; U ; D2 µ { d1 : |B1|, d2 : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
-% \item If $[[P ; U ; G |- fillNil t : A]]$ then $[[A is 1]]$ and there is some type $[[B]]$ such that $[[P ; U ; G |- t : |[B]| ]]$ (\TyTerm{FillNil})
-% \item If $[[P ; U ; G |- fillCons t d1 d2 { u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; D1 |- t : |[B]|]]$,~~~$[[P ; U ; D2 µ { d1 : |B|, d2 : |[B]| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
+% \item If $[[P ; U ; G1 |- \x:B1.t:A]]$, then there is some type $[[B2]]$ such that $[[A is B1 --o B2]]$~~and~~$[[P ; U ; G µ {x:B1} |- t : B2]]$ (\TyTerm{Lam})
+% \item If $[[P ; U ; G |- t u : A]]$, then there are some type $[[B]]$ and contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B --o A]]$,~~~$[[P ; U ; G22 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{App})
+% \item If $[[P ; U ; G1 |- t ; u : A]]$ then there are some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : 1]]$,~~~$[[P ; U ; G22 |- u : A]]$, and $[[G is D1 µ D2]]$ (\TyTerm{PatU})
+% \item If $[[P ; U ; G |- case t of { <x1, x2> -> u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B1 * B2]]$,~~~$[[P ; U ; G22 µ { x1 : B1, x2 : B2 } |- u : A]]$ and , and $[[G is D1 µ D2]]$ (\TyTerm{PatP})
+% \item If $[[P ; U ; G1 |- case t of { 1.x1 -> u1, 2.x2 -> u2 } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B1 + B2]]$,~~~$[[P ; U ; G22 µ { x1 : B1 } |- u1 : A]]$,~~~$[[P ; U ; G22 µ { x2 : B2 } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatS})
+% \item If $[[P ; U ; G |- case t of { Nil -> u1, x1 Cons x2 -> u2 } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : [B] ]]$,~~~$[[P ; U ; G22 |- u1 : A]]$,~~~$[[P ; U ; G22 µ { x1 : B, x2 : [B] } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatL})
+% \item If $[[P ; U ; G1 |- case t of { Ur x -> u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : !B]]$,~~~$[[P ; U µ {x : B} ; G22 |- u : A]]$ and and $[[G is D1 µ D2]]$ (\TyTerm{PatE})
+% \item If $[[P ; U ; G |- fillLin t u : A]]$ then $[[A is 1]]$ and there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B|]]$,~~~$[[P ; U ; G22 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillL})
+% \item If $[[P ; U ; G1 |- fillLeft t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 + B2|]]$,~~~$[[P ; U ; G22 µ { d' : |B1| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV1})
+% \item If $[[P ; U ; G |- fillRight t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 + B2|]]$,~~~$[[P ; U ; G22 µ { d' : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV2})
+% \item If $[[P ; U ; G |- fillPair t d1 d2 { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 * B2|]]$,~~~$[[P ; U ; G22 µ { d1 : |B1|, d2 : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
+% \item If $[[P ; U ; G1 |- fillNil t : A]]$ then $[[A is 1]]$ and there is some type $[[B]]$ such that $[[P ; U ; G |- t : |[B]| ]]$ (\TyTerm{FillNil})
+% \item If $[[P ; U ; G |- fillCons t d1 d2 { u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |[B]|]]$,~~~$[[P ; U ; G22 µ { d1 : |B|, d2 : |[B]| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
 
 % \end{itemize}
 
@@ -703,7 +743,7 @@ H0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } | v2
 % \uf: !(A --o B). \xs: [A]. \d0: |[B]|. (
 % b s (rolll
 % b ss case uf of { Ur f -> Ur (
-% b sss \d: |[B]|. \x: A. (fillCons d d1 d2 { fillLeaf d1 (f x) ; d2 })
+% b sss \d: |[B]|. \x: A. (fillCons d d1 d2 { fillLin d1 (f x) ; d2 })
 % b sse )}
 % b ss d0
 % b ss xs
@@ -717,5 +757,5 @@ parsing
 v_Lam <= t_Sub
 t_PatU <= t_App
 t_PatU <= t_FillL
-judg_HeapIn <= s_Val
+judg_HeapAffIn <= ha_Val
 hcons_V1 <= terminals_v1
