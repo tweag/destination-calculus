@@ -133,14 +133,15 @@ label, l :: 'l_' ::= {{ com memory address }} {{ tex \ottlb{[[label]]} }}
 
 labels :: 'll_' ::=
   | l :: :: Single
-  | l bar :: :: SingleBar
   | l , labels :: :: Multiple
-  | l bar, labels :: :: MultipleBar
+  | l bar :: M :: SingleBar {{ tex \ottlb{\bar{[[l]]} } }}
+  | l bar, labels :: M :: MultipleBar {{ tex \ottlb{\bar{[[l]]} }, [[labels]] }}
 
 label_set, L :: 'ls_' ::= {{ com set of used labels }} {{ tex \ottlb{[[label_set]]} }}
   | empty :: :: Empty
   | { labels } :: :: Labels
   | L1 µ L2 :: :: Union
+  | ( L ) :: S :: Paren
 
 heap_affect, ha :: 'ha_' ::= {{ com heap cell }}
   | l .> v :: :: Val
@@ -207,7 +208,7 @@ types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
   | A types :: :: Multiple {{ tex [[A]]~~[[types]] }}
 
 command :: 'com_' ::=
-  | H | L t :: :: Command {{ tex [[H]]\underset{[[L]]}{|}[[t]] }}
+  | H  L | t :: :: Command {{ tex [[H]]\underset{[[L]]}{~\diamondsuit~}[[t]] }}
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -240,7 +241,7 @@ judg :: 'judg_' ::=
   | l notin names ( P ) :: :: CtxLabelNotIn
   | type_affect in G :: :: CtxTypeAffIn
   | names ( G ) /\ names ( D ) = empty :: :: CtxDisjoint
-  | names ( P ) µ names ( Y ) = L :: :: LabelSetDef
+  | names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef
   | l in L :: :: LabelSetIn
   | l notin L :: :: LabelSetNotIn
   | heap_affect in H :: :: HeapAffIn
@@ -250,7 +251,7 @@ judg :: 'judg_' ::=
   | R =fix rec_type_def :: :: TyRec
   | C : Abar >> A :: :: TyCtor
   | P ; Y ; U ; G |- command : A :: :: TyCommand
-  | P |- H :: :: TyHeap
+  | P ; Y |- H :: :: TyHeap
   | P ; Y ; U ; G |- t : A ::  :: TyTerm
   | command !! command' :: :: SemOp
 
@@ -288,6 +289,7 @@ terminals :: 'terminals_' ::=
   | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
   | _!_ :: :: bottom {{ tex \ottty{\bot} }}
   | o :: :: bullet {{ tex \bullet }}
+  | includedin :: :: includedin {{ tex \subset }}
 
 defns
 Ctx :: '' ::=
@@ -308,13 +310,13 @@ defns
 LabelSet :: '' ::=
 
 defn
-names ( P ) µ names ( Y ) = L :: :: LabelSetDef :: LabelSetDef_ by
+names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef :: LabelSetDef_ by
 
 defn
 l in L :: :: LabelSetIn :: LabelSetIn_ by
 
 defn
-l notin L :: :: LabelSetNotIn :: LabelSetNotIn_ by
+l notin L :: :: LabelSetNotIn :: LabelSetNotIn_ {{ tex [[l]] = \ottkw{fresh}(\ottlb{\mathbb{L} } \setminus [[L]]) }} by
 
 defns
 Heap :: '' ::=
@@ -363,22 +365,24 @@ R =fix µ r. W
 defn
 P ; Y ; U ; G |- command : A :: :: TyCommand :: TyCommand_ by
 
-names(P) µ names(Y) = L
-P |- H
+names(P) µ names(Y) includedin L
+P ; Y |- H
 P ; Y ; U ; G |- t : A
 -------------------------------- :: Def
-P ; Y ; U ; G |- H | L t : A
+P ; Y ; U ; G |- H  L | t : A
 
 defn
-P |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
+P ; Y |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
 
 ------------------- :: Empty
-empty |- empty
+empty ; Y |- empty
 
-P |- H
-P ; Y ; U ; G |- v : A
+% TODO: je pourrais demander à la valeur d'être close? ça nécessite une preuve supplémentaire
+
+P ; Y |- H
+P ; Y ; empty ; empty |- v : A
 ------------------- :: Val
-P µ { l : A } |- H µ { l .> v }
+P µ { l : A } ; Y |- H µ { l .> v }
 
 defn
 P ; Y ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
@@ -394,7 +398,7 @@ P ; Y ; U ; G µ { x : A } |- t : B
 ----------------------- :: Lam
 P ; Y ; U ; G |- \x:A.t : A --o B
 
-% Comment se passe le typage d'une structure avec un trou ???
+% TODO: Comment se passe le typage d'une structure avec un trou ???
 
 C : Abar >> A
 ------------------------------------ :: HeapVal
@@ -516,104 +520,104 @@ defns
 Sem :: '' ::=
 
 defn
-command !! command' :: :: Reduce :: SemOp_ {{ com $[[t]]$ reduces to $[[t']]$, with heap growing from $[[H]]$ to $[[H']]$ }} by
+command !! command' :: :: Reduce :: SemOp_ by
 
 ------------------- :: NoEff {{ com \remark{(value)} }}
-H |L o !! H |L o
+H L | o !! H L | o
 
 ------------------- :: LDest {{ com \remark{(value)} }}
-H |L |l| !! H |L |l|
+H L | |l| !! H L | |l|
 
 ------------------- :: Lam {{ com \remark{(value)} }}
-H |L \x:A.t !! H |L \x:A.t
+H L | \x:A.t !! H L | \x:A.t
 
 -------------------- :: HeapVal {{ com \remark{(value)} }}
-H |L C lbar !! H |L C lbar
+H L | C lbar !! H L | C lbar
 
-H0 |L0 t !! H1 |L1 \x:A.t'
-H1 |L1 u !! H2 |L2 v2
-H2 |L2 t'[x := v2] !! H3 |L3 v3
+H0 L0 | t !! H1 L1 | \x:A.t'
+H1 L1 | u !! H2 L2 | v2
+H2 L2 | t'[x := v2] !! H3 L3 | v3
 ---------------------------- :: App
-H0 |L0 t u !! H3 |L3 v3
+H0 L0 | t u !! H3 L3 | v3
 
-H0 |L0 t !! H1 |L1 ()
-H1 |L1 u !! H2 |L2 v2
+H0 L0 | t !! H1 L1 | ()
+H1 L1 | u !! H2 L2 | v2
 --------------------------------------------- :: PatU
-H0 |L0 case t of { () -> u } !! H2 |L2 v2
+H0 L0 | case t of { () -> u } !! H2 L2 | v2
 
-H0 |L0 t !! H1 µ { l .> v1 } |L1 Ur l
-H1 µ { l .> v1 } |L1 u[x := v1] !! H2 |L2 v2
+H0 L0 | t !! H1 µ { l .> v1 } L1 | Ur l
+H1 µ { l .> v1 } L1 | u[x := v1] !! H2 L2 | v2
 ----------------------------------------------------- :: PatE
-H0 |L0 case t of { Ur x -> u } !! H2 |L2 v2
+H0 L0 | case t of { Ur x -> u } !! H2 L2 | v2
 
-H0 |L0 t !! H1 µ { l .> v1 } |L1 1. l
-H1 µ { l .> v1 } |L1 u1[x1 := v] !! H2 |L2 v2
+H0 L0 | t !! H1 µ { l .> v1 } L1 | 1. l
+H1 µ { l .> v1 } L1 | u1[x1 := v] !! H2 L2 | v2
 ----------------------------------------- :: PatV1
-H0 |L0 case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 |L2 v2
+H0 L0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 L2 | v2
 
-H0 |L0 t !! H1 µ { l .> v1 } |L1 2. l
-H1 µ { l .> v1 } |L1 u2[x2 := v] !! H2 |L2 v2
+H0 L0 | t !! H1 µ { l .> v1 } L1 | 2. l
+H1 µ { l .> v1 } L1 | u2[x2 := v] !! H2 L2 | v2
 ----------------------------------------- :: PatV2
-H0 |L0 case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 |L2 v2
+H0 L0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 L2 | v2
 
-H0 |L0 t !! H1 µ { l1 .> v11, l2 .> v12 } |L1 <l1, l2>
-H1 µ { l1 .> v11, l2 .> v12 } |L1 u[x1 := v1, x2 := v2] !! H2 |L2 v2
+H0 L0 | t !! H1 µ { l1 .> v11, l2 .> v12 } L1 | <l1, l2>
+H1 µ { l1 .> v11, l2 .> v12 } L1 | u[x1 := v1, x2 := v2] !! H2 L2 | v2
 -------------------------------------------------------------------------------- :: PatP
-H0 |L0 case t of {<x1,x2> -> u} !! H2 |L2 v2
+H0 L0 | case t of {<x1,x2> -> u} !! H2 L2 | v2
 
-H0 |L0 t !! H1 µ { l .> v1 } |L1 roll R l
-H1 µ { l .> v1 } |L1 u[x := v1] !! H2 |L2 v2
+H0 L0 | t !! H1 µ { l .> v1 } L1 | roll R l
+H1 µ { l .> v1 } L1 | u[x := v1] !! H2 L2 | v2
 ------------------------------------------------------ :: PatR
-H0 |L0 case t of { roll R x -> u } !! H2 |L2 v2
+H0 L0 | case t of { roll R x -> u } !! H2 L2 | v2
 
-H0 |L0 t !! H1 |L1 o
-H1 |L1 u !! H2 |L2 v2
+H0 L0 | t !! H1 L1 | o
+H1 L1 | u !! H2 L2 | v2
 ------------------------------------------------------ :: WithEff
-H0 |L0 t ; u !! H2 |L2 v2
+H0 L0 | t ; u !! H2 L2 | v2
 
 l notin L0
-H0 |L0µ{l} t[d := |l|] !! H1 µ { l .> v1 } |L1 o
+H0 L0µ{l} | t[d := |l|] !! H1 µ { l .> v1 } L1 | o
 --------------------------------------------------- :: Alloc
-H0 |L0 alloc d A { t } !! H1 µ { l .> v1 } |L1 v1
+H0 L0 | alloc d A { t } !! H1 µ { l .> v1 } L1 | v1
 
-H0 |L0 t !! H1 |L1 |l|
+H0 L0 | t !! H1 L1 | |l|
 ---------------------------- :: FillU
-H0 |L0 fillUnit t !! H1 µ { l .> () } |L1 o
+H0 L0 | fillUnit t !! H1 µ { l .> () } L1 | o
 
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1 u !! H2 |L2 v2
+H0 L0 | t !! H1 L1 | |l|
+H1 L1 | u !! H2 L2 | v2
 ------------------------------------------------------------ :: FillL
-H0 |L0 fillLin t u !! H2 µ { l .> v2 } |L2 o
+H0 L0 | fillLin t u !! H2 µ { l .> v2 } L2 | o
 
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1 u !! H2 |L2 v2
+H0 L0 | t !! H1 L1 | |l|
+H1 L1 | u !! H2 L2 | v2
 --------------------------------------------------- :: FillE
-H0 |L0 fillUr t u !! H2 µ { l .> Ur l', l' .> v2 } |L2 o
+H0 L0 | fillUr t u !! H2 µ { l .> Ur l', l' .> v2 } L2 | o
 
 l' notin L1
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
+H0 L0 | t !! H1 L1 | |l|
+H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
 ------------------------------------------------------------ :: FillV1
-H0 |L0 fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } |L2 v2
+H0 L0 | fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } L2 | v2
 
 l' notin L1
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
+H0 L0 | t !! H1 L1 | |l|
+H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
 ------------------------------------------------------------ :: FillV2
-H0 |L0 fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } |L2 v2
+H0 L0 | fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } L2 | v2
 
 l1 notin L1
-l1 notin L1
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1µ{l1,l2} u[d1 := |l1|, d2 := |l2|] !! H2 µ { l1 .> v11, l2 .> v12 } |L2 v2
+l2 notin (L1 µ { l1 })
+H0 L0 | t !! H1 L1 | |l|
+H1 L1µ{l1,l2} | u[d1 := |l1|, d2 := |l2|] !! H2 µ { l1 .> v11, l2 .> v12 } L2 | v2
 --------------------------------------------------------------- :: FillP
-H0 |L0 fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } |L2 v2
+H0 L0 | fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } L2 | v2
 
 l' notin L1
-H0 |L0 t !! H1 |L1 |l|
-H1 |L1µ{l'} u[d := |l'|] !! H2 µ { l' .> v1 } |L2 v2
+H0 L0 | t !! H1 L1 | |l|
+H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
 --------------------------------------------------- :: FillR
-H0 |L0 fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } |L2 v2
+H0 L0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } L2 | v2
 
 % embed
 % {{ tex
