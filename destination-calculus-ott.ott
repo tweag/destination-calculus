@@ -7,6 +7,12 @@
 % TODO
 % trouver comment empêcher de remplir une dest avec bullet ou dest
 
+% Plusieurs problèmes:
+% 1. Il est possible de faire alloc dd. alloc dv qui type mais ne réduit pas
+% 2. Problème de typage si Psi est nécessaire pour typer H
+% 3. Il semble possible de casser la linéarité avec ce qui est dans le heap (soit par <l1, <l1, l2>>, soit en utilisant Ur sur une structure contenant des destinations)
+% il faut interdire les destinations de scope plus haut d'apparaitre à gauche dans le corps d'un alloc
+
 embed
 {{ tex-preamble
 \usepackage[dvipsnames]{xcolor}
@@ -240,7 +246,7 @@ judg :: 'judg_' ::=
   | l in names ( P ) :: :: CtxLabelIn
   | l notin names ( P ) :: :: CtxLabelNotIn
   | type_affect in G :: :: CtxTypeAffIn
-  | names ( G ) /\ names ( D ) = empty :: :: CtxDisjoint
+  | names ( G1 ) /\ names ( G2 ) = empty :: :: CtxDisjoint
   | names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef
   | l in L :: :: LabelSetIn
   | l notin L :: :: LabelSetNotIn
