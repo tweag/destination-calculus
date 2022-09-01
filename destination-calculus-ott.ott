@@ -1,12 +1,5 @@
 % minimal + latex + comments
 
-% truc zarbi avec unit : il n'est pas facile/possible d'avoir fillUnit
-% 1 (unit) est utilisé comme monoid dans le type des commandes
-% le remplacer par bottom créé une assymétrie entre fillUnit et fillPair
-
-% TODO
-% trouver comment empêcher de remplir une dest avec bullet ou dest
-
 embed
 {{ tex-preamble
 \usepackage[dvipsnames]{xcolor}
@@ -21,13 +14,22 @@ embed
 \definecolor{ntcolor}{RGB}{105, 105, 105}
 \definecolor{spcolor}{RGB}{5, 115, 12}
 \definecolor{lbcolor}{RGB}{186, 58, 7}
+\newlength{\deltaraise}
+\setlength{\deltaraise}{1.5pt}
+\newcommand{\nicefrac}[2]{\mathrel{\raisebox{\deltaraise}{$ #1 $} }\!\!/\!\!\mathrel{\raisebox{-\deltaraise}{$ #2 $} } }
 \newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
-\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
+\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathrm{\mathit{#1} } } }
 \renewcommand{\ottkw}[1]{\mathsf{#1} }
 \newcommand{\ottcons}[1]{\mathsf{#1} }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
-\newcommand{\ottlb}[1]{\textcolor{lbcolor}{\mathit{#1} } }
+\newcommand{\replacelell}[1]{%
+  \begingroup%
+  \mathcode`l=\ell%
+  #1%
+  \endgroup%
+}
+\newcommand{\ottlb}[1]{\textcolor{lbcolor}{\mathit{\replacelell{#1} } } }
 \newcommand{\defeq}{\overset{\mathsf{def} }{=} }
 \def\mynewline{\ottsp{\backslash\!n} }
 \def\myspace#1{\myrepeat{#1}{\ottsp{\langle indent \rangle} } }
@@ -77,38 +79,33 @@ embed
 metavar metavariable, x, xs, y, uf, f, d ::=
   {{ tex \ottmv{[[metavariable]]} }}
 
-% indexvar index, i ::=
-%   {{ tex \textcolor{red}{[[index]]} }}
-
 grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | x                                       ::   :: Var      {{ com variable }}
   | v :: :: Val {{ com value }}
   | t u                                    ::   :: App      {{ com application }}
-  | t ; u :: :: WithEff {{ com effect execution }}
+  | t ; u :: :: EffThen {{ com effect execution }}
   | case t of { () -> u }                   ::   :: PatU     {{ com pattern-matching on unit }}
   | case t of { Ur x -> u } :: :: PatE {{ com pattern-matching on exponentiated value }}
-  | case t of { 1. x1 -> u1 , 2. x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
+  | case t of { inl x1 -> u1 , inr x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
-% | case t of { Nil -> u1 , x1 Cons x2 -> u2 } :: :: PatL {{ com pattern-matching on list }}
   | case t of { roll R x -> u } :: :: PatR {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{ \underset{[[R]] }{\ottkw{roll} }~[[x]] \mapsto [[u]] \} }} {{ com unroll for recursive types }}
   | alloc d A { t }                                   ::   :: Alloc    {{ com allocate data }} {{ tex \underset{\ottty{[[A]]} }{\ottkw{alloc}~[[d]]}\,\textbf{.}\,[[t]] }}
   | fillUnit t :: :: FillU {{ com fill destination with unit }} {{ tex [[t]]\,\triangleleft\,\ottcons{()} }}
   | fillLin t u                            ::   :: FillL    {{ com fill terminal-type destination }} {{ tex [[t]]\,\triangleleft\,[[u]] }}
   | fillUr t u :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]\,\triangleleft\,\ottcons{Ur}~[[u]] }}
-  | fillLeft t d { u }                          ::   :: FillV1   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{1.} [[d]]\,\textbf{.}\,[[u]] }}
-  | fillRight t d { u }                          ::   :: FillV2   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{2.} [[d]]\,\textbf{.}\,[[u]] }}
+  | fillLeft t d { u }                          ::   :: FillInl   {{ com fill sum-type destination with variant 1 }} {{ tex [[t]]\,\triangleleft\,\ottcons{inl} [[d]]\,\textbf{.}\,[[u]] }}
+  | fillRight t d { u }                          ::   :: FillInr   {{ com fill sum-type destination with variant 2 }} {{ tex [[t]]\,\triangleleft\,\ottcons{inr} [[d]]\,\textbf{.}\,[[u]] }}
   | fillPair t d1 d2 { u }                              ::   :: FillP    {{ com fill product-type destination }} {{ tex [[t]]\,\triangleleft\,\langle [[d1]] , [[d2]] \rangle\,\textbf{.}\,[[u]] }}
   | fillRoll R t d { u } :: :: FillR {{ com fill destination with recursive type }} {{ tex [[t]]\,\triangleleft\,\underset{[[R]]}{\ottcons{roll} }~[[d]]\,\textbf{.}\,[[u]] }}
-%  | * l :: :: Deref {{ com \TODO{remove (only there for SemMut)} }}
   | ( t )                                   :: S :: Paren
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
 %  | t b spe :: S :: BreakSpacing3
-  | t [ var_subs ]                             :: M :: Sub
+  | t [ var_subs ]                             :: M :: Sub {{ tex [[t]]\left[ [[var_subs]]\right] }}
 
 var_sub, vs :: 'vs_' ::= {{ com variable substitution }}
-  | x := t :: :: VarSub
+  | x := t :: :: VarSub {{ tex \nicefrac{[[t]]}{[[x]]} }}
 
 var_subs :: 'vss_' ::= {{ com variable substitutions }}
   | vs :: :: Single
@@ -117,11 +114,11 @@ var_subs :: 'vss_' ::= {{ com variable substitutions }}
 heap_val, h :: 'hv_' ::=
   | ()                                      ::   :: U
   | Ur l :: :: E
-  | 1. l :: :: V1
-  | 2. l :: :: V2
+  | inl l :: :: Inl
+  | inr l :: :: Inr
   | < l1 , l2 > :: :: P
   | roll R l :: :: R {{ tex \underset{[[R]] }{\ottkw{roll} }~[[l]] }}
-  | C lbar :: M :: Generic {{ tex [[C]] \ottlb{\bar{l} } }} {{ com generic for all the cases above }}
+  | C lbar :: M :: Generic {{ com generic for all the cases above }}
 
 val, v :: 'v_' ::= {{ com unreducible value }}
   | o :: :: NoEff {{ com no-effect effect }}
@@ -141,12 +138,11 @@ label_set, L :: 'ls_' ::= {{ com set of used labels }} {{ tex \ottlb{[[label_set
   | empty :: :: Empty
   | { labels } :: :: Labels
   | L1 µ L2 :: :: Union
-  | ( L ) :: S :: Paren
+%  | ( L ) :: S :: Paren
 
 heap_affect, ha :: 'ha_' ::= {{ com heap cell }}
-  | l .> v :: :: Val
-%  | l .> null :: :: Null
-  | l bar .> vbar :: M :: Generic {{ tex \ottlb{\bar{[[l]]} } \heaparrow \ottnt{\bar{v} } }} {{ com generic for multiple occurences }}
+  | l <| v :: :: Val
+  | l bar <| vbar :: M :: Generic {{ tex \ottlb{\bar{[[l]]} } \heaparrow [[vbar]] }} {{ com generic for multiple occurences }}
 
 heap_affects :: 'has_' ::= {{ com heap cells }}
   | ha :: :: Single
@@ -161,21 +157,19 @@ type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
   | _!_ :: :: Bottom {{ com bottom type }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
   | R :: :: Rec {{ com recursive type bound to a name }}
-%  | P :: :: Prim {{ com primitive type }}
   | A * B :: :: Prod {{ com product type }} {{ tex \ottty{[[A]] \otimes [[B]]} }}
   | A + B :: :: Sum {{ com sum type }}
   | A --o B :: :: LinArr {{ com linear function type }}
   | | A | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[A]] \rfloor} }}
   | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
   | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
-  | W [ r := A ] :: M :: Sub {{ tex [[W]][ \ottmv{r} [[:=]] \ottty{[[A]]} ] }}
+  | W [ r := A ] :: M :: Sub {{ tex [[W]]\left[ \nicefrac{[[A]]}{\ottmv{r} } \right] }}
 
 type_with_hole, W :: 'twh_' ::= {{ tex \ottty{[[type_with_hole]]} }}
+  | r :: :: Hole {{ com type hole in recursive definition }} {{ tex \ottmv{r} }}
   | _!_ :: :: Bottom {{ com bottom type }}
-  | r :: :: Hole {{ com type hole in recursive definition }} {{ tex \ottmv{[[r]]} }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
   | R :: :: Rec {{ com recursive type bound to a name }}
-%  | P :: :: Prim {{ com primitive type }}
   | W1 * W2 :: :: Prod {{ com product type }} {{ tex \ottty{[[W1]] \otimes [[W2]]} }}
   | W1 + W2 :: :: Sum {{ com sum type }}
   | W1 --o W2 :: :: LinArr {{ com linear function type }}
@@ -186,7 +180,7 @@ type_with_hole, W :: 'twh_' ::= {{ tex \ottty{[[type_with_hole]]} }}
 rec_type_bound, R :: 'rtb_' ::= {{ com recursive type bound to a name }} {{ tex \ottty{[[rec_type_bound]]} }}
 
 rec_type_def :: 'rtd_' ::=
-  | µ r . W :: :: Abs {{ tex \mu\,\ottmv{[[r]]}\,\textbf{.}\,[[W]] }}
+  | µ r . W :: :: Abs {{ tex \mu\,\ottmv{r}\,\textbf{.}\,[[W]] }}
 
 type_affect, ta :: 'ta_' ::= {{ com type affectation }}
   | x : A ::  :: Var {{ com var }}
@@ -197,7 +191,7 @@ type_affects :: 'tas_' ::= {{ com type affectations }}
   | ta :: :: Single
   | ta , type_affects :: :: Multiple
 
-typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, P {{ tex \Phi }}, Y {{ tex \Psi }} :: 'tc_' ::= {{ com typing context }}
+typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, P {{ tex \Phi }}, Y {{ tex \Psi }}, Yh {{ tex \Psi^{\scriptscriptstyle \mathbb{H} } }}, Yt {{ tex \Psi^{\ottnt{t} } }} :: 'tc_' ::= {{ com typing context }}
   | empty    ::   :: Empty
   | { type_affects } ::    :: Var
   | G1 µ G2    ::    :: Union
@@ -208,7 +202,7 @@ types, Abar {{ tex \ottty{\bar{A} } }} :: 'tys_' ::= {{ tex \ottty{[[types]]} }}
   | A types :: :: Multiple {{ tex [[A]]~~[[types]] }}
 
 command :: 'com_' ::=
-  | H  L | t :: :: Command {{ tex [[H]]\underset{[[L]]}{~\diamondsuit~}[[t]] }}
+  | L | H | t :: :: Command {{ tex [[L]]\,|\,[[H]]\,|\,[[t]] }}
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -227,30 +221,32 @@ command :: 'com_' ::=
 %   | sssssse :: :: space6e {{ tex \myspace{6} }}
 
 heap_constructor, C :: 'hcons_' ::= {{ tex \ottcons{[[heap_constructor]]} }}
-  | { () } :: :: U
-  | { Ur } :: :: E
-  | { 1. } :: :: V1
-  | { 2. } :: :: V2
-  | { < , > } :: :: P
-  | { roll R } :: :: R
-  % | ( Nil ) :: :: Nil
-  % | ( Cons ) :: :: Cons
+  | { () } :: :: U {{ tex [[()]] }}
+  | { Ur } :: :: E {{ tex [[Ur]] }}
+  | { inl } :: :: Inl {{ tex [[inl]] }}
+  | { inr } :: :: Inr {{ tex [[inr]] }}
+  | { < , > } :: :: P {{ tex \langle{,}\rangle }}
+  | { roll R } :: :: R {{ tex \ottcons{roll}~[[R]] }}
 
 judg :: 'judg_' ::=
   | l in names ( P ) :: :: CtxLabelIn
   | l notin names ( P ) :: :: CtxLabelNotIn
   | type_affect in G :: :: CtxTypeAffIn
-  | names ( G ) /\ names ( D ) = empty :: :: CtxDisjoint
-  | names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef
+  | ctxdisjoint2 G1 G2 :: :: CtxDisjoint2 {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }}
+  | ctxdisjoint3 G1 G2 G3 :: :: CtxDisjoint3 {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset~{\scriptstyle\land}~[[names]]([[G1]]) \cap [[names]]([[G3]]) = \emptyset~{\scriptstyle\land}~[[names]]([[G2]]) \cap [[names]]([[G3]]) = \emptyset }}
+  | names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef2
+  | names ( P ) µ names ( Yh ) µ names ( Yt ) includedin L :: :: LabelSetDef3
   | l in L :: :: LabelSetIn
   | l notin L :: :: LabelSetNotIn
   | heap_affect in H :: :: HeapAffIn
   | A is B :: :: EqType
   | t is u :: :: EqTerm
   | G is D :: :: EqContext
+  | { l <| v' , lbar <| vbar } = deepCopy ( L , v ) :: :: DeepCopyTree {{ tex \{ [[l]] [[<|]] [[v']], [[lbar]] [[<|]] [[vbar]] \} = \mathsf{deepCopy}([[L]], \ottlb{\lfloor[[l]]\rfloor}, [[v]]) }}
   | R =fix rec_type_def :: :: TyRec
+  | A is destFree :: :: TyDestFree {{ tex \text{$[[A]]$ is destination-free} }}
   | C : Abar >> A :: :: TyCtor
-  | P ; Y ; U ; G |- command : A :: :: TyCommand
+  | P ; Yh u Yt ; U ; G |- command : A :: :: TyCommand
   | P ; Y |- H :: :: TyHeap
   | P ; Y ; U ; G |- t : A ::  :: TyTerm
   | command !! command' :: :: SemOp
@@ -258,38 +254,33 @@ judg :: 'judg_' ::=
 terminals :: 'terminals_' ::=
   | () :: :: unit {{ tex \ottcons{()} }}
   | ->                                     ::   :: to       {{ tex \mapsto }}
-  | * :: :: deref {{ tex \ottlb{\star} }}
-  | ° :: :: valderef {{ tex \ottlb{\ostar} }}
   | + :: :: sum {{ tex \ottty{\oplus} }}
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
-  | := :: :: with {{ tex := }}
   | |- :: :: turnstile {{ tex \vdash }}
   | µ :: :: dunion {{ tex \sqcup }}
-  | ; :: :: lseq {{ tex ~;~ }}
-  | /\ :: :: intersection {{ tex \cap }}
   | empty :: :: empty {{ tex \emptyset }}
-  | --> :: :: reducesto {{ tex \longrightarrow }}
-  | '|>' :: :: renamedto {{ tex \,\triangleright\, }}
   | != :: :: neq {{ tex \neq }}
   | in :: :: in {{ tex \in }}
   | notin :: :: notin {{ tex \notin }}
   | b :: :: linebreak {{ tex \mynewline }}
   | < :: :: langle {{ tex \ottcons{\langle} }}
   | > :: :: rangle {{ tex \ottcons{\rangle} }}
-  | 1. :: :: v1 {{ tex \ottcons{1.} }}
-  | 2. :: :: v2 {{ tex \ottcons{2.} }}
+  | inl :: :: v1 {{ tex \ottcons{inl} }}
+  | inr :: :: v2 {{ tex \ottcons{inr} }}
   | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
-  | .> :: :: pointsto {{ tex \heaparrow }}
+  | <| :: :: pointsto {{ tex \heaparrow }}
   | '|' :: :: against {{ tex \,|\, }}
-  | null :: :: null {{ tex \oslash }}
   | >> :: :: consarrow {{ tex ~\ottty{\consarrow}~ }}
   | is :: :: is {{ tex = }}
   | !! :: :: downto {{ tex ~~\Downarrow~~ }}
-  | __ :: :: heapany {{ tex ... }}
   | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
   | _!_ :: :: bottom {{ tex \ottty{\bot} }}
   | o :: :: bullet {{ tex \bullet }}
   | includedin :: :: includedin {{ tex \subset }}
+  | ';' :: :: sep {{ tex ~;\, }}
+  | names :: :: names {{ tex \mathcal{N} }}
+  | lbar :: :: lbar {{ tex \ottlb{\bar{l} } }}
+  | vbar :: :: vbar {{ tex \ottnt{\bar{v} } }}
 
 defns
 Ctx :: '' ::=
@@ -304,19 +295,25 @@ defn
 type_affect in G :: :: CtxTypeAffIn :: CtxTypeAffIn_ by
 
 defn
-names ( G1 ) /\ names ( G2 ) = empty :: :: CtxDisjoint :: CtxDisjoint_ {{ com $[[G1]]$~~and~~$[[G2]]$ are disjoint typing contexts with no clashing variable names or labels }} by
+ctxdisjoint2 G1 G2 :: :: CtxDisjoint2 :: CtxDisjoint2_ {{ com $[[G1]]$~~and~~$[[G2]]$ are disjoint typing contexts with no clashing variable names or labels }} {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }} by
+
+defn
+ctxdisjoint3 G1 G2 G3 :: :: CtxDisjoint3 :: CtxDisjoint3_ {{ com $[[G1]]$, $[[G2]]$ and $[[G3]]$ are fully disjoint typing contexts with no clashing variable names or labels }} {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset~{\scriptstyle\land}~[[names]]([[G1]]) \cap [[names]]([[G3]]) = \emptyset~{\scriptstyle\land}~[[names]]([[G2]]) \cap [[names]]([[G3]]) = \emptyset }} by
 
 defns
 LabelSet :: '' ::=
 
 defn
-names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef :: LabelSetDef_ by
+names ( P ) µ names ( Y ) includedin L :: :: LabelSetDef2 :: LabelSetDef2_ by
+
+defn
+names ( P ) µ names ( Yh ) µ names ( Yt ) includedin L :: :: LabelSetDef3 :: LabelSetDef3_ by
 
 defn
 l in L :: :: LabelSetIn :: LabelSetIn_ by
 
 defn
-l notin L :: :: LabelSetNotIn :: LabelSetNotIn_ {{ tex [[l]] = \ottkw{fresh}(\ottlb{\mathbb{L} } \setminus [[L]]) }} by
+l notin L :: :: LabelSetNotIn :: LabelSetNotIn_ {{ tex [[l]] = \ottkw{fresh}([[L]]) }} by
 
 defns
 Heap :: '' ::=
@@ -335,10 +332,18 @@ defn
 G is D :: :: EqContext :: EqContext_ by
 
 defns
+Copy :: '' ::=
+defn
+{ l <| v' , lbar <| vbar } = deepCopy ( L , v ) :: :: DeepCopyTree :: DeepCopyTree_ {{ com Deep-copy $[[v]]$ into the memory tree with root $[[l]]$ and fresh labels $[[lbar]]$ }} {{ tex \{ [[l]] [[<|]] [[v']], [[lbar]] [[<|]] [[vbar]] \} = \mathsf{deepCopy}([[L]], \ottlb{\lfloor[[l]]\rfloor}, [[v]]) }} by
+
+defns
 Ty :: '' ::=
 
 defn
 R =fix rec_type_def :: :: TyRec :: TyRec_ by
+
+defn
+A is destFree :: :: TyDestFree :: TyDestFree_ {{ tex \text{$[[A]]$ is destination-free} }} {{ com $[[A]]$ is destination-free}} by
 
 defn
 C : Abar >> A :: :: TyCtor :: TyCtor_ {{ com Heap constructor $[[C]]$ builds a value of type $[[A]]$ given arguments of type $[[Abar]]$ }} by
@@ -346,11 +351,11 @@ C : Abar >> A :: :: TyCtor :: TyCtor_ {{ com Heap constructor $[[C]]$ builds a v
 ---------------- :: U
 { () } : none >> 1
 
--------------------  :: V1
-{ 1. } : A >> A + B
+-------------------  :: Inl
+{ inl } : A >> A + B
 
------------------------ :: V2
-{ 2. } : B >> A + B
+----------------------- :: Inr
+{ inr } : B >> A + B
 
 --------------------------- :: P
 { <,> } : A B >> A * B
@@ -362,30 +367,32 @@ R =fix µ r. W
 ---------------------- :: R
 { roll R } : W[r := R] >> R
 
-defn
-P ; Y ; U ; G |- command : A :: :: TyCommand :: TyCommand_ by
+%TODO: Structures de données qui contiennent un dest dest mais pas à la racine, peut on les mettre dans ur?
 
-names(P) µ names(Y) includedin L
-P ; Y |- H
-P ; Y ; U ; G |- t : A
+defn
+P ; Yh u Yt ; U ; G |- command : A :: :: TyCommand :: TyCommand_ {{ tex [[P]]~;\,[[Yh]]\!\mathrel{\raisebox{1pt}{$\scriptscriptstyle\sqcup$} }\![[Yt]]~;\,[[U]]~;\,[[G]] [[|-]] [[command]] : [[A]] }} by
+
+ctxdisjoint3 P Yh Yt
+names(P) µ  names(Yh) µ names(Yt) includedin L
+P ; Yh |- H
+P ; Yt ; U ; G |- t : A
 -------------------------------- :: Def
-P ; Y ; U ; G |- H  L | t : A
+P ; Yh u Yt ; U ; G |- L | H | t : A
 
 defn
-P ; Y |- H :: :: TyHeap :: TyHeap_ {{ com $[[H]]$ is a well-typed heap given heap typing context $[[P]]$ }} by
+P ; Y |- H :: :: TyHeap :: TyHeap_ by
 
 ------------------- :: Empty
-empty ; Y |- empty
+empty ; empty |- empty
 
-% TODO: je pourrais demander à la valeur d'être close? ça nécessite une preuve supplémentaire
-
-P ; Y |- H
-P ; Y ; empty ; empty |- v : A
+ctxdisjoint2 Y1 Y2
+P ; Y1 |- H
+P ; Y2 ; empty ; empty |- v : A
 ------------------- :: Val
-P µ { l : A } ; Y |- H µ { l .> v }
+P µ { l : A } ; Y1 µ Y2 |- H µ { l <| v }
 
 defn
-P ; Y ; U ; G |- t : A :: :: TyTerm :: TyTerm_ {{ com $[[t]]$ is a well-typed term of type $[[A]]$ given heap typing context $[[P]]$, unrestricted typing context $[[U]]$ and linear typing context $[[G]]$ }} by
+P ; Y ; U ; G |- t : A :: :: TyTerm :: TyTerm_ by
 
 ------------------------ :: NoEff
 P ; empty ; U ; empty |- o : _!_
@@ -397,8 +404,6 @@ P ; { l : A } ; U ; empty |- |l| : |A|
 P ; Y ; U ; G µ { x : A } |- t : B
 ----------------------- :: Lam
 P ; Y ; U ; G |- \x:A.t : A --o B
-
-% TODO: Comment se passe le typage d'une structure avec un trou ???
 
 C : Abar >> A
 ------------------------------------ :: HeapVal
@@ -412,54 +417,52 @@ P ; empty ; U µ { x : A } ; empty |- x : A
 
 P ; Y1 ; U ; G1 |- t : A --o B
 P ; Y2 ; U ; G2 |- u : A
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 --------------------------------- :: App
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- t u : B
 
 P ; Y1 ; U ; G1 |- t : _!_
 P ; Y2 ; U ; G2 |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
---------------------------------- :: WithEff
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
+--------------------------------- :: EffThen
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- t ; u : B
 
 P ; Y1 ; U ; G1 |- t : 1
 P ; Y2 ; U ; G2 |- u : A
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ----------------------------------------- :: PatU
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { () -> u } : A
 
 P ; Y1 ; U ; G1 |- t : !A
 P ; Y2 ; U µ { x : A } ; G2 |- u: B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ----------------------------------------- :: PatE 
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { Ur x -> u } : B
-
-% TODO: what if we put a data structure containing a dest in a Ur?
 
 P ; Y1 ; U ; G1 |- t : A1 + A2
 P ; Y2 ; U ; G2 µ { x1 : A1 } |- u1 : B
 P ; Y2 ; U ; G2 µ { x2 : A2 } |- u2 : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ------------------------------------------------------- :: PatS
-P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { 1. x1 -> u1 , 2. x2 -> u2 } : B
+P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { inl x1 -> u1 , inr x2 -> u2 } : B
 
 P ; Y1 ; U ; G1 |- t : A1 * A2
 P ; Y2 ; U ; G2 µ { x1 : A1 , x2 : A2 } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ------------------------------------------------------- :: PatP
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of {<x1, x2> -> u} : B
 
 R =fix µ r. W
 P ; Y1 ; U ; G1 |- t : R
 P ; Y2 ; U ; G2 µ { x : W[r := R] } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ----------------------------- :: PatR
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- case t of { roll R x -> u } : B
 
@@ -467,52 +470,52 @@ P ; Y ; U ; G µ { d : |A| } |- t : _!_
 ------------------------------ :: Alloc
 P ; Y ; U ; G |- alloc d A { t } : A
 
-% TODO: can change Y to empty to forbid filling dests from another alloc
-
 P ; Y ; U ; G |- t : |1|
 ----------------------- :: FillU
 P ; Y ; U ; G |- fillUnit t : _!_
 
 P ; Y1 ; U ; G1 |- t : |A|
 P ; Y2 ; U ; G2 |- u : A
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ----------------------------------- :: FillL
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillLin t u : _!_
 
+
+% TODO: should I allow Y != empty?
+
+A is destFree
 P ; Y1 ; U ; G |- t : |!A|
 P ; empty ; U ; empty |- u : A
 ----------------------------------- :: FillE
 P ; Y1 ; U ; G |- fillUr t u : _!_
 
-% TODO: should I allow Y != empty?
-
 P ; Y1 ; U ; G1 |- t : |A1 + A2|
 P ; Y2 ; U ; G2 µ { d' : |A1| } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
------------------------------------------ :: FillV1
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
+----------------------------------------- :: FillInl
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillLeft t d' { u } : B
 
 P ; Y1 ; U ; G1 |- t : |A1 + A2|
 P ; Y2 ; U ; G2 µ { d' : |A2| } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
------------------------------------------ :: FillV2
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
+----------------------------------------- :: FillInr
 P ; Y1 µ Y2 ; U ; G |- fillRight t d' { u } : B
 
 P ; Y1 ; U ; G1 |- t : |A1 * A2|
 P ; Y2 ; U ; G2 µ { d1 : |A1| , d2 : |A2| } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ----------------------------------------------:: FillP
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillPair t d1 d2 { u } : B
 
 R =fix µ r. W
 P ; Y1 ; U ; G1 |- t : |R|
 P ; Y2 ; U ; G2 µ { d : |W[r := R]| } |- u : B
-names( G1 ) /\ names( G2 ) = empty
-names( Y1 ) /\ names( Y2 ) = empty
+ctxdisjoint2 G1 G2
+ctxdisjoint2 Y1 Y2
 ---------------------------------------------------------------- :: FillR
 P ; Y1 µ Y2 ; U ; G1 µ G2 |- fillRoll R t d { u } : B
 
@@ -523,243 +526,108 @@ defn
 command !! command' :: :: Reduce :: SemOp_ by
 
 ------------------- :: NoEff {{ com \remark{(value)} }}
-H L | o !! H L | o
+L | H | o !! L | H | o
 
 ------------------- :: LDest {{ com \remark{(value)} }}
-H L | |l| !! H L | |l|
+L | H | |l| !! L | H | |l|
 
 ------------------- :: Lam {{ com \remark{(value)} }}
-H L | \x:A.t !! H L | \x:A.t
+L | H | \x:A.t !! L | H | \x:A.t
 
 -------------------- :: HeapVal {{ com \remark{(value)} }}
-H L | C lbar !! H L | C lbar
+L | H | C lbar !! L | H | C lbar
 
-H0 L0 | t !! H1 L1 | \x:A.t'
-H1 L1 | u !! H2 L2 | v2
-H2 L2 | t'[x := v2] !! H3 L3 | v3
+L0 | H0 | t !! L1 | H1 | \x:A.t'
+L1 | H1 | u !! L2 | H2 | v2
+L2 | H2 | t'[x := v2] !! L3 | H3 | v3
 ---------------------------- :: App
-H0 L0 | t u !! H3 L3 | v3
+L0 | H0 | t u !! L3 | H3 | v3
 
-H0 L0 | t !! H1 L1 | ()
-H1 L1 | u !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 | ()
+L1 | H1 | u !! L2 | H2 | v2
 --------------------------------------------- :: PatU
-H0 L0 | case t of { () -> u } !! H2 L2 | v2
+L0 | H0 | case t of { () -> u } !! L2 | H2 | v2
 
-H0 L0 | t !! H1 µ { l .> v1 } L1 | Ur l
-H1 µ { l .> v1 } L1 | u[x := v1] !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 µ { l <| v1 } | Ur l
+L1 | H1 | u[x := v1] !! L2 | H2 | v2
 ----------------------------------------------------- :: PatE
-H0 L0 | case t of { Ur x -> u } !! H2 L2 | v2
+L0 | H0 | case t of { Ur x -> u } !! L2 | H2 | v2
 
-H0 L0 | t !! H1 µ { l .> v1 } L1 | 1. l
-H1 µ { l .> v1 } L1 | u1[x1 := v] !! H2 L2 | v2
------------------------------------------ :: PatV1
-H0 L0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 µ { l <| v1 } | inl l
+L1 | H1 | u1[x1 := v1] !! L2 | H2 | v2
+----------------------------------------- :: PatInl
+L0 | H0 | case t of {inl x1 -> u1, inr x2 -> u2} !! L2 | H2 | v2
 
-H0 L0 | t !! H1 µ { l .> v1 } L1 | 2. l
-H1 µ { l .> v1 } L1 | u2[x2 := v] !! H2 L2 | v2
------------------------------------------ :: PatV2
-H0 L0 | case t of {1. x1 -> u1, 2. x2 -> u2} !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 µ { l <| v1 } | inr l
+L1 | H1 | u2[x2 := v1] !! L2 | H2 | v2
+----------------------------------------- :: PatInr
+L0 | H0 | case t of {inl x1 -> u1, inr x2 -> u2} !! L2 | H2 | v2
 
-H0 L0 | t !! H1 µ { l1 .> v11, l2 .> v12 } L1 | <l1, l2>
-H1 µ { l1 .> v11, l2 .> v12 } L1 | u[x1 := v1, x2 := v2] !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 µ { l1 <| v11, l2 <| v12 } | <l1, l2>
+L1 | H1 | u[x1 := v11, x2 := v12] !! L2 | H2 | v2
 -------------------------------------------------------------------------------- :: PatP
-H0 L0 | case t of {<x1,x2> -> u} !! H2 L2 | v2
+L0 | H0 | case t of {<x1,x2> -> u} !! L2 | H2 | v2
 
-H0 L0 | t !! H1 µ { l .> v1 } L1 | roll R l
-H1 µ { l .> v1 } L1 | u[x := v1] !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 µ { l <| v1 } | roll R l
+L1 | H1 | u[x := v1] !! L2 | H2 | v2
 ------------------------------------------------------ :: PatR
-H0 L0 | case t of { roll R x -> u } !! H2 L2 | v2
+L0 | H0 | case t of { roll R x -> u } !! L2 | H2 | v2
 
-H0 L0 | t !! H1 L1 | o
-H1 L1 | u !! H2 L2 | v2
------------------------------------------------------- :: WithEff
-H0 L0 | t ; u !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 | o
+L1 | H1 | u !! L2 | H2 | v2
+------------------------------------------------------ :: EffThen
+L0 | H0 | t ; u !! L2 | H2 | v2
 
 l notin L0
-H0 L0µ{l} | t[d := |l|] !! H1 µ { l .> v1 } L1 | o
+L0µ{l} | H0 | t[d := |l|] !! L1 | H1 µ { l <| v1 } | o
 --------------------------------------------------- :: Alloc
-H0 L0 | alloc d A { t } !! H1 µ { l .> v1 } L1 | v1
+L0 | H0 | alloc d A { t } !! L1 | H1 | v1
 
-H0 L0 | t !! H1 L1 | |l|
+L0 | H0 | t !! L1 | H1 | |l|
 ---------------------------- :: FillU
-H0 L0 | fillUnit t !! H1 µ { l .> () } L1 | o
+L0 | H0 | fillUnit t !! L1 | H1 µ { l <| () } | o
 
-H0 L0 | t !! H1 L1 | |l|
-H1 L1 | u !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 | |l|
+L1 | H1 | u !! L2 | H2 | v2
+{ l <| v3 , lbar <| vbar } = deepCopy(L2, v2)
 ------------------------------------------------------------ :: FillL
-H0 L0 | fillLin t u !! H2 µ { l .> v2 } L2 | o
+L0 | H0 | fillLin t u !! L2 µ { l bar } | H2 µ { l <| v3, l bar <| vbar } | o
 
-H0 L0 | t !! H1 L1 | |l|
-H1 L1 | u !! H2 L2 | v2
+L0 | H0 | t !! L1 | H1 | |l|
+L1 | H1 | u !! L2 | H2 | v2
+l' notin L2
+{ l' <| v3 , lbar <| vbar } = deepCopy(L2 µ {l'}, v2)
 --------------------------------------------------- :: FillE
-H0 L0 | fillUr t u !! H2 µ { l .> Ur l', l' .> v2 } L2 | o
+L0 | H0 | fillUr t u !! L2 µ {l', l bar} | H2 µ { l <| Ur l', l' <| v3, l bar <| vbar } | o
 
 l' notin L1
-H0 L0 | t !! H1 L1 | |l|
-H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
------------------------------------------------------------- :: FillV1
-H0 L0 | fillLeft t d { u } !! H2 µ { l .> 1. l', l' .> v1 } L2 | v2
+L0 | H0 | t !! L1 | H1 | |l|
+L1µ{l'} | H1 | u[d := |l'|] !! L2 | H2 µ { l' <| v1 } | v2
+------------------------------------------------------------ :: FillInl
+L0 | H0 | fillLeft t d { u } !! L2 | H2 µ { l <| inl l', l' <| v1 } | v2
 
 l' notin L1
-H0 L0 | t !! H1 L1 | |l|
-H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
------------------------------------------------------------- :: FillV2
-H0 L0 | fillRight t d { u } !! H2 µ { l .> 2. l', l' .> v1 } L2 | v2
+L0 | H0 | t !! L1 | H1 | |l|
+L1µ{l'} | H1 | u[d := |l'|] !! L2 | H2 µ { l' <| v1 } | v2
+------------------------------------------------------------ :: FillInr
+L0 | H0 | fillRight t d { u } !! L2 | H2 µ { l <| inr l', l' <| v1 } | v2
 
 l1 notin L1
-l2 notin (L1 µ { l1 })
-H0 L0 | t !! H1 L1 | |l|
-H1 L1µ{l1,l2} | u[d1 := |l1|, d2 := |l2|] !! H2 µ { l1 .> v11, l2 .> v12 } L2 | v2
+l2 notin L1 µ { l1 }
+L0 | H0 | t !! L1 | H1 | |l|
+L1µ{l1,l2} | H1 | u[d1 := |l1|, d2 := |l2|] !! L2 | H2 µ { l1 <| v11, l2 <| v12 } | v2
 --------------------------------------------------------------- :: FillP
-H0 L0 | fillPair t d1 d2 { u } !! H2 µ { l .> <l1, l2>, l1 .> v11, l2 .> v12 } L2 | v2
+L0 | H0 | fillPair t d1 d2 { u } !! L2 | H2 µ { l <| <l1, l2>, l1 <| v11, l2 <| v12 } | v2
 
 l' notin L1
-H0 L0 | t !! H1 L1 | |l|
-H1 L1µ{l'} | u[d := |l'|] !! H2 µ { l' .> v1 } L2 | v2
+L0 | H0 | t !! L1 | H1 | |l|
+L1µ{l'} | H1 | u[d := |l'|] !! L2 | H2 µ { l' <| v1 } | v2
 --------------------------------------------------- :: FillR
-H0 L0 | fillRoll R t d { u } !! H2 µ { l .> roll R l', l' .> v1 } L2 | v2
-
-% embed
-% {{ tex
-
-% \begin{defi}[Pointer-less term]
-% A term $[[t]]$ is said "pointer-less" if neither itself nor one of its subterms are one of $[[l]]$, $[[*l]]$ or $[[°l]]$.
-% \end{defi}
-
-% \begin{lem}[Canonical forms]
-
-% Let $[[v]]$ be a value such that $[[H0]] | [[t0]] \overset{n}{\longrightarrow} [[H]] | [[v]]$ and $[[P ; U ; G |- H | v : A]]$ for some \emph{pointer-less} term $[[t0]]$.
-
-% \begin{tabular}{ll}
-% Ty & Value \\
-% $[[A is 1]]$ & $[[v is ()]]$ \\
-% $[[A is B1 * B2]]$ & $[[v is °l]] ~~\land~~ [[l .> <l1, l2> in H]]$ \\
-% $[[A is B1 + B2]]$ & $[[v is °l]] ~~\land~~ \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$ \\
-% $[[A is B1 --o B2]]$ & $[[v is \x:B1.t]]$ \\
-% $[[A is |B|]]$ & $[[v is l]]$ \\
-% $[[A is [B] ]]$ & $[[v is °l]] ~~\land~~ \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$ \\
-% $[[A is !B ]]$ & $[[v is Ur t]]$\\
-% \end{tabular}
-
-% \bigskip
-
-% \noindent\textit{Proof:}
-
-% \begin{itemize}
-% \item If $[[A is 1]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-% \item $[[v]]$ can be $[[()]]$ (\TyTerm{Unit})
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : 1 in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> 1]]$ (by application of \TyHeap{Ctor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : 1]] \implies [[v is ()]]$
-
-% \item If $[[A is B1 * B2]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 * B2 in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 * B2]]$ (by application of \TyHeap{Ctor}). There is only one such $[[C]]$: $[[(<,>)]]$. In addition, we should have $[[l .> <l1, l2> in H]]$ (still from \TyHeap{Ctor}).
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : B1 * B2]] \implies [[v is °l]] ~~\land~~ [[l .> <l1, l2> in H]]$
-
-% \item If $[[A is B1 + B2]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:A'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 + B2 in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 + B2]]$ (by application of \TyHeap{Ctor}). There are two constructors matching this criterion: $[[(1.)]]$~~and~~$[[(2.)]]$. With the former, we should have $[[l .> 1. l' in H]]$, and with the latter, we should have $[[l .> 2. l' in H]]$ (still from \TyHeap{Ctor}).
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : B1 + B2]] \implies [[v is °l]] ~~\land~~ \left([[l .> 1. l' in H]]~~\lor~~[[l .> 2. l' in H]]\right)$
-
-% \item If $[[A is B1 --o B2]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-% \item $[[v]]$ can be $[[\x:B1.t]]$ (\TyTerm{Lam})
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : B1 --o B2 in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> B1 --o B2]]$ (by application of \TyHeap{Ctor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : B1 --o B2]] \implies [[v is \x:B1.t]]$
-
-% \item If $[[A is |B|]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[Ur t]]$ (Inversion lemma).
-% \item $[[v]]$ can be $[[l]]$ (\TyTerm{LabelAsDest}), in which case $[[l : A in P]]$.
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : |B| in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> |B|]]$ (by application of \TyHeap{Ctor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : |B|]] \implies [[v is l]]$
-
-% \item If $[[A is [B] ]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$, $[[Ur t]]$ or $[[l]]$ (Inversion lemma).
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> [B] ]]$ (by application of \TyHeap{Ctor}). There are two constructors matching this criterion: $[[(Nil)]]$~~and~~$[[(Cons)]]$. With the former, we should have $[[l .> Nil in H]]$, and with the latter, we should have $[[l .> l1 Cons l2 in H]]$ (still from \TyHeap{Ctor}).
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : [B] ]] \implies [[v is °l]] ~~\land~~ \left([[l .> Nil in H]] ~~\lor~~[[l .> l1 Cons l2 in H]]\right)$
-
-% \item If $[[A is !B ]]$:
-% \begin{itemize}
-% \item $[[v]]$ cannot be one of $[[()]]$, $[[\x:B'.t]]$ or $[[l]]$ (Inversion lemma).
-% \item $[[v]]$ can be $[[Ur t]]$ (\TyTerm{Exp}).
-% \item Let $[[v is °l]]$. Because $[[°l]]$ is not present in $[[t0]]$, it must have been produced by a reduction rule, that is to say either \SemMut{DerefVal} or \SemMut{DerefCtor}. In the former case, it means that $[[l' .> °l in H]]$, which can only be added to the heap $[[H]]$ via \SemMut{FillL}, so $[[°l]]$ would have been preexistant (produced by another mean). In the latter case, $[[l .> C lbar in H]]$ which means that the rule \TyHeap{Ctor} has been used at least once in the typing derivation of $[[H]]$. We need $[[l : [B] in P]]$ from \TyTerm{DerefVal}, so we need a heap constructor $[[C : Abar >> !B]]$ (by application of \TyHeap{Ctor}), but there is no such $[[C]]$. As a result, $[[v]]$ cannot be $[[°l]]$.
-% \end{itemize}
-% So $[[P ; U ; G |- H | v : !B ]] \implies [[v is Ur t]]$
-
-% \end{itemize}
-% \end{lem}
-
-% \begin{lem}[Inversion of the typing relation]\phantom{nl}
-
-% \begin{itemize}
-% \item If $[[P ; U ; G |- x : A]]$, then either $[[G is {x : A}]]$ or $[[x : A in U]]~\land~[[G is empty]]$ (\TyTerm{Id} and \TyTerm{Id'})
-% \item If $[[P ; U ; G |- () : A]]$, then $[[G is empty]]$~~and~~$[[A is 1]]$ (\TyTerm{Unit})
-% \item If $[[P ; U ; G |- Ur t : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is !B]]$~~and~~$[[P ; U ; empty |- t : B]]$ (\TyTerm{Exp})
-% \item If $[[P ; U ; G |- l : A]]$ then $[[G is empty]]$ and there is some type $[[B]]$ such that $[[A is |B|]]$~~and~~$[[l : B in P]]$ (\TyTerm{LabelAsDest})
-% \item If $[[P ; U ; G |- °l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\TyTerm{DerefVal})
-% \item If $[[P ; U ; G |- *l : A]]$ then $[[G is empty]]$~~and~~$[[l : A in P]]$ (\TyTerm{Deref})
-% \item If $[[P ; U ; G1 |- \x:B1.t:A]]$, then there is some type $[[B2]]$ such that $[[A is B1 --o B2]]$~~and~~$[[P ; U ; G µ {x:B1} |- t : B2]]$ (\TyTerm{Lam})
-% \item If $[[P ; U ; G |- t u : A]]$, then there are some type $[[B]]$ and contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B --o A]]$,~~~$[[P ; U ; G22 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{App})
-% \item If $[[P ; U ; G1 |- t ; u : A]]$ then there are some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : 1]]$,~~~$[[P ; U ; G22 |- u : A]]$, and $[[G is D1 µ D2]]$ (\TyTerm{PatU})
-% \item If $[[P ; U ; G |- case t of { <x1, x2> -> u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B1 * B2]]$,~~~$[[P ; U ; G22 µ { x1 : B1, x2 : B2 } |- u : A]]$ and , and $[[G is D1 µ D2]]$ (\TyTerm{PatP})
-% \item If $[[P ; U ; G1 |- case t of { 1.x1 -> u1, 2.x2 -> u2 } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : B1 + B2]]$,~~~$[[P ; U ; G22 µ { x1 : B1 } |- u1 : A]]$,~~~$[[P ; U ; G22 µ { x2 : B2 } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatS})
-% \item If $[[P ; U ; G |- case t of { Nil -> u1, x1 Cons x2 -> u2 } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : [B] ]]$,~~~$[[P ; U ; G22 |- u1 : A]]$,~~~$[[P ; U ; G22 µ { x1 : B, x2 : [B] } |- u2 : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{PatL})
-% \item If $[[P ; U ; G1 |- case t of { Ur x -> u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : !B]]$,~~~$[[P ; U µ {x : B} ; G22 |- u : A]]$ and and $[[G is D1 µ D2]]$ (\TyTerm{PatE})
-% \item If $[[P ; U ; G |- fillLin t u : A]]$ then $[[A is 1]]$ and there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B|]]$,~~~$[[P ; U ; G22 |- u : B]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillL})
-% \item If $[[P ; U ; G1 |- fillLeft t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 + B2|]]$,~~~$[[P ; U ; G22 µ { d' : |B1| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV1})
-% \item If $[[P ; U ; G |- fillRight t d' { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 + B2|]]$,~~~$[[P ; U ; G22 µ { d' : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillV2})
-% \item If $[[P ; U ; G |- fillPair t d1 d2 { u } : A]]$ then there are some types $[[B1]]$, $[[B2]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |B1 * B2|]]$,~~~$[[P ; U ; G22 µ { d1 : |B1|, d2 : |B2| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
-% \item If $[[P ; U ; G1 |- fillNil t : A]]$ then $[[A is 1]]$ and there is some type $[[B]]$ such that $[[P ; U ; G |- t : |[B]| ]]$ (\TyTerm{FillNil})
-% \item If $[[P ; U ; G |- fillCons t d1 d2 { u } : A]]$ then there are some type $[[B]]$ and some contexts $[[D1]]$, $[[D2]]$ such that $[[P ; U ; G21 |- t : |[B]|]]$,~~~$[[P ; U ; G22 µ { d1 : |B|, d2 : |[B]| } |- u : A]]$~~and~~$[[G is D1 µ D2]]$ (\TyTerm{FillP})
-
-% \end{itemize}
-
-% \bigskip
-
-% \noindent\textit{Proof:}
-
-% \smallskip
-
-% Immediate from the definition of the typing relation.
-
-% \end{lem}
-
-% \bigskip
-% \togglespaces
-
-% \noindent\textbf{Example 1 :} implementation of $\ottkw{map}$ with $\ottkw{rolll}$
-
-% \[\begin{array}{l}
-% \ottkw{map} \defeq [[
-% \uf: !(A --o B). \xs: [A]. \d0: |[B]|. (
-% b s (rolll
-% b ss case uf of { Ur f -> Ur (
-% b sss \d: |[B]|. \x: A. (fillCons d d1 d2 { fillLin d1 (f x) ; d2 })
-% b sse )}
-% b ss d0
-% b ss xs
-% ) b fillNil se)
-% ]]
-% \end{array}\]
-% }}
-
+L0 | H0 | fillRoll R t d { u } !! L2 | H2 µ { l <| roll R l', l' <| v1 } | v2
 
 parsing
 v_Lam <= t_Sub
 t_PatU <= t_App
 t_PatU <= t_FillL
 judg_HeapAffIn <= ha_Val
-hcons_V1 <= terminals_v1
+hcons_Inl <= terminals_v1
