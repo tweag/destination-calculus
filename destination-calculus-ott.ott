@@ -14,13 +14,15 @@ embed
 \definecolor{ntcolor}{RGB}{105, 105, 105}
 \definecolor{spcolor}{RGB}{5, 115, 12}
 \definecolor{lbcolor}{RGB}{186, 58, 7}
+\definecolor{kwcolor}{RGB}{0, 0, 0}
 \newlength{\deltaraise}
 \setlength{\deltaraise}{1.5pt}
 \newcommand{\nicefrac}[2]{\mathrel{\raisebox{\deltaraise}{$ #1 $} }\!\!/\!\!\mathrel{\raisebox{-\deltaraise}{$ #2 $} } }
 \newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathrm{\mathit{#1} } } }
-\renewcommand{\ottkw}[1]{\mathsf{#1} }
+\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsf{#1} } }
+\newcommand{\ottdefault}[1]{\textcolor{black}{\mathsf{#1} } }
 \newcommand{\ottcons}[1]{\mathsf{#1} }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
 \newcommand{\replacelell}[1]{%
@@ -105,7 +107,7 @@ term, t, u :: 't_' ::=                                               {{ com term
   | t [ var_subs ]                             :: M :: Sub {{ tex [[t]]\left[ [[var_subs]]\right] }}
 
 var_sub, vs :: 'vs_' ::= {{ com variable substitution }}
-  | x := t :: :: VarSub {{ tex \nicefrac{[[t]]}{[[x]]} }}
+  | x := t :: :: VarSub
 
 var_subs :: 'vss_' ::= {{ com variable substitutions }}
   | vs :: :: Single
@@ -163,7 +165,7 @@ type, A, B :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
   | | A | :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[A]] \rfloor} }}
   | ! A :: :: Exp {{ com exponential }} {{ tex \ottty{![[A]]} }}
   | ( A )  :: S :: Paren {{ tex \ottty{([[A]])} }}
-  | W [ r := A ] :: M :: Sub {{ tex [[W]]\left[ \nicefrac{[[A]]}{\ottmv{r} } \right] }}
+  | W [ r := A ] :: M :: Sub {{ tex [[W]]\ottdefault{[} \ottmv{r}~\ottdefault{[[:=]]}~\ottty{[[A]]} \ottdefault{]} }}
 
 type_with_hole, W :: 'twh_' ::= {{ tex \ottty{[[type_with_hole]]} }}
   | r :: :: Hole {{ com type hole in recursive definition }} {{ tex \ottmv{r} }}
@@ -256,6 +258,7 @@ terminals :: 'terminals_' ::=
   | ->                                     ::   :: to       {{ tex \mapsto }}
   | + :: :: sum {{ tex \ottty{\oplus} }}
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
+  | := :: :: with {{ tex := }}
   | |- :: :: turnstile {{ tex \vdash }}
   | µ :: :: dunion {{ tex \sqcup }}
   | empty :: :: empty {{ tex \emptyset }}
@@ -372,7 +375,7 @@ R =fix µ r. W
 defn
 P ; Yh u Yt ; U ; G |- command : A :: :: TyCommand :: TyCommand_ {{ tex [[P]]~;\,[[Yh]]\!\mathrel{\raisebox{1pt}{$\scriptscriptstyle\sqcup$} }\![[Yt]]~;\,[[U]]~;\,[[G]] [[|-]] [[command]] : [[A]] }} by
 
-ctxdisjoint3 P Yh Yt
+ctxdisjoint2 Yh Yt
 names(P) µ  names(Yh) µ names(Yt) includedin L
 P ; Yh |- H
 P ; Yt ; U ; G |- t : A
