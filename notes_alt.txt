@@ -1,0 +1,42 @@
+
+% Problème 2 allocs : Ur dans Ur
+% Peut être pas un problème avec fillUr qui devient terminal !
+% Mais problème d'allocUr dans une fonction non? -> Sauf si allocUr demande t à typer !B
+% Quid du passage de structure shared en paramètre d'une fonction ?
+% Comment fonctionne un moveUr niveau mémoire ?
+
+-------------------------------------------------------------------------------
+
+Arnaud Spiwack11:59 AM
+alloc c. u
+alloc d. u
+~>
+{d = l (l fresh) } u[d\l]
+S   l <| u
+Arnaud Spiwack12:00 PM
+~>
+H[l\u] bottom
+Arnaud Spiwack12:02 PM
+S U { d = v }    bottom
+~>
+S    v
+You12:04 PM
+d = <l1, l2>
+Arnaud Spiwack12:04 PM
+H, t ==> v
+
+{ x <| Ur x', x' <| inl x'' }
+case x of Ur x' -> alloc y : AxB with y <| <y1, y2>. y1 <| x' ; y2 <| x' in t
+{ x' <| inl x, y <| <y1, y2>, y1 <| inl x'', y2 <| inl x'' }
+
+
+linéaire : gestion mémoire lexicale
+! "classique" : gestion mémoire RC
+
+x^w <| <x1, x2>, x1^w <| ..., x2^w <| ...
+Umega = { x, x1?, x2? }
+
+!(AxB) --o !A x !B
+
+% issue : non determinism because
+% case x of Ur x' -> case x' of <x1, x2>, we need x1, x2 in the linear context, but they have multiplicity w
