@@ -139,7 +139,7 @@ subs :: 'subs_' ::= {{ com substitutions }}
   | sub :: :: Single
   | sub , subs :: :: Multiple
 
-data_with_hole, dh {{ tex \ottnt{d_h} }} :: 'dh_' ::=
+data_with_hole, dh {{ tex \ottnt{\underline{d} } }} :: 'dh_' ::=
   | d :: :: NoHole
   | h :: :: H
   | Ur dh :: :: E
@@ -172,16 +172,16 @@ data_type, D :: 'ty_' ::= {{ tex \ottty{[[data_type]]} }}
   | D1 * D2 :: :: Prod {{ com product type }} {{ tex \ottty{[[D1]] \otimes [[D2]]} }}
   | D1 + D2 :: :: Sum {{ com sum type }}
   | A1 --o A2 :: :: LinArr {{ com linear function type }}
-  | | D1 | ^ p :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[D1]] \rfloor}^{[[p]]} }}
+  | | D | ^ p :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[D]] \rfloor}^{[[p]]} }}
   | ! D :: :: Exp {{ com exponential }} {{ tex \ottty{![[D]]} }}
   | ( D )  :: S :: Paren {{ tex \ottty{([[D]])} }}
   | DV [ X := D ] :: M :: Sub {{ tex [[DV]]\ottdefault{[} \ottty{X}~\ottdefault{[[:=]]}~\ottty{[[D]]} \ottdefault{]} }}
 
-type_with_var, AV {{ tex \ottty{A_V} }} :: 'twh_' ::= {{ tex \ottty{[[type_with_var]]} }}
+type_with_var, AV {{ tex \ottty{\underline{A} } }} :: 'twh_' ::= {{ tex \ottty{[[type_with_var]]} }}
   | _!_ :: :: Bottom
   | DV :: :: Data
 
-data_type_with_var, DV {{ tex \ottty{D_V} }} :: 'dtwh_' ::= {{ tex \ottty{[[data_type_with_var]]} }}
+data_type_with_var, DV {{ tex \ottty{\underline{D} } }} :: 'dtwh_' ::= {{ tex \ottty{[[data_type_with_var]]} }}
   | X :: :: Var {{ com type variable in recursive definition }} {{ tex \ottty{X} }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
   | R :: :: Rec {{ com recursive type bound to a name }}
@@ -205,7 +205,7 @@ type_affects :: 'tas_' ::= {{ com type affectations }}
   | ta :: :: Single
   | ta , type_affects :: :: Multiple
 
-typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, Gh {{ tex \mathrm{\Gamma_{\mathit{h} } } }}, P {{ tex \mathrm{P} }}, N {{ tex \mathrm{N} }} :: 'tc_' ::= {{ com typing context }}
+typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, Gh {{ tex \mathrm{H} }}, P {{ tex \mathrm{H_{P} } }}, N {{ tex \mathrm{H_{N} } }} :: 'tc_' ::= {{ com typing context }}
   | empty    ::   :: Empty
   | { type_affects } ::    :: Var
   | G1 µ G2    ::    :: Union
@@ -259,8 +259,7 @@ terminals :: 'terminals_' ::=
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | := :: :: with {{ tex := }}
   | |- :: :: turnstile {{ tex \vdash }}
-  | -| :: :: stileturn {{ tex \dashv }} 
-  | -||- :: :: bistile {{ tex \dashv\vdash }}
+  | -| :: :: stileturn {{ tex \dashv }}
   | µ :: :: dunion {{ tex \sqcup }}
   | empty :: :: empty {{ tex \emptyset }}
   | != :: :: neq {{ tex \neq }}
@@ -346,21 +345,21 @@ U ; Gh u G |- t : A
 U ; G |- S | t : A
 
 defn
-P ; N -||- dh ^ p : D :: :: TyDh :: TyDh_ {{ tex [[P]]~;\,[[N]]~[[-||-]]~[[dh]]~^{[[p]]}\!\!:~[[D]] }} {{ com $[[P]]$ stands for "provides", $[[N]]$ for "needs" }} by
+P ; N -||- dh ^ p : D :: :: TyDh :: TyDh_ {{ tex [[N]]\vdash[[dh]]~^{[[p]]}\!\!:~[[D]]\vdash[[P]] }} {{ com $[[P]]$ stands for "provides", $[[N]]$ for "needs" }} by
 
 ------------------ :: H
 {h ^p: D} ; empty -||- h^p : D
 
 ------------------ :: Dest
-{ h ^p: D } ; { h ^p: D } -||- Dest h ^l : |D|^p
+empty ; { h ^p: D } -||- Dest h ^l : |D|^p
 
 ------------------ :: U
 empty ; empty -||- *^p : 1
 
-empty ; Gh u { x : A1 } |- t : A2
-p = w => Gh = empty
+empty ; N u { x : A1 } |- t : A2
+p = w => N = empty
 ------------------ :: Fn
-empty ; Gh -||- \x:D. t ^p : A1 --o A2
+empty ; N -||- \x:D. t ^p : A1 --o A2
 
 P ; N -||- dh ^w : D
 ---------------- :: E
@@ -387,7 +386,7 @@ P ; N -||- dh ^p : DV[X := R]
 P ; N -||- @R dh ^p : R
 
 defn
-Gh -| S :: :: TyStore :: TyStore_ by
+Gh -| S :: :: TyStore :: TyStore_ {{ tex [[S]]\vdash[[Gh]] }} by
 
 ------------------- :: Empty
 empty -| empty
