@@ -76,7 +76,22 @@ embed
 \newcommand{\SemMut}[1]{\textsc{SemMut\_#1}%
 }
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
-\newcommand{\remark}[1]{~\textnormal{\itshape #1} }
+\newcommand{\remark}[1]{~\textnormal{\small\itshape #1} }
+\newcommand{\holearrowgen}[1]{\ottho{\text{#1}\!\!\!\rightharpoonup} } % 
+\def\restriction#1#2{\mathchoice
+              {\setbox1\hbox{${\displaystyle #1}_{\scriptstyle #2}$}
+              \restrictionaux{#1}{#2} }
+              {\setbox1\hbox{${\textstyle #1}_{\scriptstyle #2}$}
+              \restrictionaux{#1}{#2} }
+              {\setbox1\hbox{${\scriptstyle #1}_{\scriptscriptstyle #2}$}
+              \restrictionaux{#1}{#2} }
+              {\setbox1\hbox{${\scriptscriptstyle #1}_{\scriptscriptstyle #2}$}
+              \restrictionaux{#1}{#2} } }
+\def\restrictionaux#1#2{ {#1\,\smash{\vrule height .8\ht1 depth .85\dp1} }_{\,#2} }
+\newcommand{\tickedsquare}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\checkmark$} }
+\newcommand{\notickedsquare}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\,$} }
+\newcommand{\holearrow}{\holearrowgen{\notickedsquare} }
+\newcommand{\noholearrow}{\holearrowgen{\tickedsquare} }
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -88,6 +103,7 @@ grammar
 term, t, u :: 't_' ::=                                               {{ com term }}
   | v :: :: Val {{ com value }}
   | x :: :: Var {{ com variable }}
+  | x bar :: :: VarGeneric {{ tex \ottmv{\bar{[[x]]} } }}
   | t u                                    ::   :: App      {{ com application }}
   | t ; u :: :: EffSeq {{ com effect sequencing }} {{ tex [[t]] \,\fatsemi\, [[u]] }}
   | case t of { * -> u }                   ::   :: PatU {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{ \star \mapsto [[u]] \} }}     {{ com pattern-matching on unit }}
@@ -95,7 +111,8 @@ term, t, u :: 't_' ::=                                               {{ com term
   | case t of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
   | case t of { @ R x -> u } :: :: PatR {{ com pattern-matching on recursive data }}
-  | alloc x D { t }                                   ::   :: Alloc    {{ com get data from a dest-filling statement }} {{ tex \underset{\ottty{[[D]]} }{\ottkw{alloc}~[[x]]}\,\textbf{.}\,[[t]] }}
+  | alloc C D x { t }                                   ::   :: Alloc    {{ com get data from a dest-filling statement }} {{ tex \underset{\ottty{[[D]]} }{\ottkw{alloc}~[[C]]~[[x]]}\,\textbf{.}\,[[t]] }}
+  | t with hole_subs :: :: HComp {{ com hole composition }}
   | fillUnit p t :: :: FillU {{ com fill destination with unit }} {{ tex [[t]]\,\triangleleft^{\,[[p]]}\,\star }}
   | fillFn p t { \ x : A . u } :: :: FillFn {{ com fill destination with function }} {{ tex [[t]]\,\triangleleft^{\,[[p]]}\,\lambda\,[[x]]\!:\![[A]]\,\textbf{.}\,[[u]] }}
   | fillLeaf p t u :: :: FillL {{ com fill destination with value }} {{ tex [[t]]\,\triangleleft^{\,[[p]]}\,[[u]] }}
@@ -111,13 +128,15 @@ term, t, u :: 't_' ::=                                               {{ com term
   | t [ subs ]                             :: M :: Sub
 
 hole, h :: 'h_' ::= {{ com hole in the lexical store }} {{ tex \ottho{[[hole]]} }}
+  | C [ x ] :: :: Conn
 
 val, v :: 'v_' ::= {{ com value (unreducible term) }}
   | o :: :: NoEff {{ com empty effect }}
   | d                                       ::   :: Data      {{ com data structure }}
 
 data, d :: 'd_' ::=
-  | Dest h :: :: Dest {{ com hole reified as a destination }} {{ tex \ottho{\lfloor[[h]]\rfloor} }}
+  | x asDest :: :: Dest {{ com stored destination }} {{ tex [[x]]^{\lfloor\!\rfloor} }}
+  | h :: :: H {{ com hole }}
   | * ::   :: U {{ com unit }} {{ tex \star }}
   | \ x : A . t :: ::  Fn {{ com lambda abstraction }} {{ tex \lambda\,[[x]]\!:\![[A]]\,\textbf{.}\,[[t]] }}
   | Ur d :: :: E {{ com exponential }}
@@ -132,39 +151,53 @@ multiplicity, p :: 'mult_' ::= {{ com multiplicity }} {{ tex \ottmult{[[multipli
   | w :: :: Many {{ com for holes/destinations under a $\ottcons{Ur}$ }} {{ tex \ottmult{\omega} }}
 
 sub :: 'sub_' ::= {{ com substitution }}
-  | x := v :: :: VarSub
-  | h := dh :: :: HoleSub {{ com note: $\ottho{\lfloor{}h\rfloor}$ won't be replaced in $\mathbb{S}[\ottho{h} := \ottnt{dh}]$ }}
+  | var_sub :: :: VarSub
+  | hole_sub :: :: HoleSub
 
 subs :: 'subs_' ::= {{ com substitutions }}
-  | sub :: :: Single
-  | sub , subs :: :: Multiple
+  | var_subs :: :: VarSubs
+  | hole_subs :: :: HoleSubs
 
-data_with_hole, dh {{ tex \ottnt{\underline{d} } }} :: 'dh_' ::=
-  | d :: :: NoHole
-  | h :: :: H
-  | Ur dh :: :: E
-  | Inl dh :: :: Inl
-  | Inr dh :: :: Inr
-  | < dh1 , dh2 > :: :: P
-  | @ R dh :: :: R
-  | ( dh ) :: S :: Paren
+var_sub :: 'vsub_' ::= {{ com variable substitution }}
+  | x := v :: :: VarSub
 
-store_affect, sa :: 'sa_' ::= {{ com store cell }}
-  | x : D = dh :: :: StoreVal
+var_subs :: 'vsubs_' ::= {{ com variable substitutions }}
+  | var_sub :: :: Single
+  | var_sub , var_subs :: :: Multiple
 
-store_affects :: 'sas_' ::= {{ com store cells }}
-  | sa :: :: Single
-  | sa , store_affects :: :: Multiple
+hole_sub :: 'hsub_' ::= {{ com hole substitution }}
+  | h := t :: :: HoleSub % {{ com note: $\ottho{\lfloor{}h\rfloor}$ won't be replaced in $\mathbb{S}[\ottho{h} := \ottnt{dh}]$ }}
 
-store, S {{ tex \mathbb{S} }} :: 's_' ::=
+hole_subs :: 'hsubs_' ::= {{ com hole substitutions }}
+  | hole_sub :: :: Single
+  | hole_sub , hole_subs :: :: Multiple
+
+dest_conns, C {{ tex \ottho{\mathcal{C} } }} :: 'dconns_' ::= {{ com dest substitutions by holes }}
   | empty :: :: Empty
-  | { store_affects } :: :: Stmts
-  | S1 µ S2 :: :: Union
-  | S [ subs ] :: M :: Sub
+  | { dest_conn } :: :: Some
+
+dest_conn :: 'dconn_' ::=
+  | x -> h :: :: Single
+  | x -> h , dest_conn :: :: Multiple
+  | x bar -> h bar :: M :: Generic {{ tex \ottmv{\bar{[[x]]} }[[->]]\ottho{\bar{[[h]]} } }}
+
+% store_affect, sa :: 'sa_' ::= {{ com store cell }}
+%   | x : D = dh :: :: StoreVal
+
+% store_affects :: 'sas_' ::= {{ com store cells }}
+%   | sa :: :: Single
+%   | sa , store_affects :: :: Multiple
+
+% store, S {{ tex \mathbb{S} }} :: 's_' ::=
+%   | empty :: :: Empty
+%   | { store_affects } :: :: Stmts
+%   | S1 µ S2 :: :: Union
+%   | S [ subs ] :: M :: Sub
 
 type, A :: 'ty_' ::= {{ tex \ottty{[[type]]} }}
   | _!_ :: :: Bottom {{ com bottom (effect) type }}
-  | D :: :: Data {{ com data type }}
+  | H #- D :: :: DataWithHole {{ tex \boxed{\scriptstyle[[H]]}[[D]] }}
+  | emptyH #- D :: :: Data {{ tex [\!][[D]] }}
 
 data_type, D :: 'ty_' ::= {{ tex \ottty{[[data_type]]} }}
   | 1 :: :: One {{ com unit type }} {{ tex \ottty{[[1]]} }}
@@ -173,13 +206,15 @@ data_type, D :: 'ty_' ::= {{ tex \ottty{[[data_type]]} }}
   | D1 + D2 :: :: Sum {{ com sum type }} {{ tex \ottty{[[D1]]\!\oplus\![[D2]]} }}
   | A1 --o A2 :: :: LinArr {{ com linear function type }}
   | | D | ^ p :: :: Dest {{ com destination type }} {{ tex \ottty{\lfloor [[D]] \rfloor}^{[[p]]} }}
+  | | D bar | ^ p bar :: M :: DestGeneric {{ com destination type }} {{ tex \ottty{\bar{\lfloor [[D]]\rfloor} }^{\ottmult{\bar{[[p]]} } } }}
   | ! D :: :: Exp {{ com exponential }} {{ tex \ottty{![[D]]} }}
   | ( D )  :: S :: Paren {{ tex \ottty{([[D]])} }}
   | DV [ X := D ] :: M :: Sub {{ com unroll a recursive data type }} {{ tex [[DV]]\ottdefault{[} \ottty{X}~\ottdefault{[[:=]]}~\ottty{[[D]]} \ottdefault{]} }}
 
 type_with_var, AV {{ tex \ottty{\underline{A} } }} :: 'twh_' ::= {{ tex \ottty{[[type_with_var]]} }}
   | _!_ :: :: Bottom
-  | DV :: :: Data
+  | H #- DV :: :: DataWithHole {{ tex \ottty{\boxed{\scriptstyle[[H]]} }[[DV]] }}
+  | emptyH #- DV :: :: Data {{ tex \ottty{[]}[[DV]] }}
 
 data_type_with_var, DV {{ tex \ottty{\underline{D} } }} :: 'dtwh_' ::= {{ tex \ottty{[[data_type_with_var]]} }}
   | X :: :: Var {{ tex \ottty{X} }}
@@ -199,19 +234,20 @@ rec_type_def :: 'rtd_' ::= {{ com recursive type definition }}
 
 type_affect, ta :: 'ta_' ::= {{ com type affectation }}
   | x : A ::  :: Var {{ com variable }}
-  | h ^ p : D ::  :: Hole {{ com hole }} {{ tex [[h]]~^{[[p]]}\!\!:~[[D]] }}
+  | h ^ p : D ::  :: Hole {{ com hole }} {{ tex [[h]]~^{[[p]]}\!:~[[D]] }}
+  | h bar ^ p bar : D bar :: M :: Generic {{ tex \ottho{\bar{[[h]]} }~^{\ottmult{\bar{[[p]]} } }\!:~\ottty{\bar{[[D]]} } }}
 
 type_affects :: 'tas_' ::= {{ com type affectations }}
   | ta :: :: Single
   | ta , type_affects :: :: Multiple
 
-typing_context, G {{ tex \Gamma }}, U {{ tex \mho }}, H {{ tex \mathrm{H} }}, Hp {{ tex \mathrm{H_{P} } }}, Hn {{ tex \mathrm{H_{N} } }} :: 'tc_' ::= {{ com typing context }}
+typing_context, G {{ tex \Gamma }}, Gd {{tex \restriction{\Gamma}{\lfloor\!\rfloor} }}, U {{ tex \mho }}, H {{ tex \ottho{\mathrm{H} } }}, Hw {{tex \restriction{\ottho{\mathrm{H} } }{\ottmult{ \omega} } }} :: 'tc_' ::= {{ com typing context }}
   | empty    ::   :: Empty
   | { type_affects } ::    :: Var
   | G1 µ G2    ::    :: Union
 
-command :: 'com_' ::=
-  | S | t :: :: Command {{ tex [[S]]\,|\,[[t]] }}
+% command :: 'com_' ::=
+%   | S | t :: :: Command {{ tex [[S]]\,|\,[[t]] }}
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -264,6 +300,7 @@ terminals :: 'terminals_' ::=
   | Ur :: :: ur {{ tex \ottcons{Ur}\, }}
   | Dest :: :: dest {{ tex \ottcons{Dest}\, }}
   | <| :: :: pointsto {{ tex \storearrow }}
+  | |> :: :: connectsto {{ tex \triangleright }}
   | '|' :: :: against {{ tex \,|\, }}
   | !! :: :: downto {{ tex ~~\Downarrow~~ }}
   | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
@@ -328,323 +365,260 @@ defn
 R =fix rec_type_def :: :: TyRec :: TyRec_ by
 
 defn
-U ; G |- command : A :: :: TyComm :: TyComm_ by
-
-S |- H
-U ; H u G |- t : A
--------------------------------- :: Def
-U ; G |- S | t : A
-
-defn
-Hn |- dh ^ p : D |- Hp :: :: TyDh :: TyDh_ {{ tex [[Hn]] [[|-]] [[dh]] ^{~[[p]]\!\!}: [[D]] [[|-]] [[Hp]] }} {{ com $[[Hn]]$ stands for "needs", $[[Hp]]$ for "provides" }} by
-
------------------- :: H
-empty |- h^p : D |- {h ^p: D}
-
------------------- :: Dest
-{ h ^p: D } |- Dest h ^l : |D|^p |- empty
-
------------------- :: U
-empty |- *^p : 1 |- empty
-
-empty ; Hn u { x : A1 } |- t : A2
-p = w => Hn = empty
------------------- :: Fn
-Hn |- \x:D. t ^p : A1 --o A2 |- empty
-
-Hn |- dh ^w : D |- Hp
----------------- :: E
-Hn |- Ur dh ^p: !D |- Hp
-
-Hn |- dh ^p : D1 |- Hp
-------------------- :: Inl
-Hn |- Inl dh ^p : D1+D2 |- Hp
-
-Hn |- dh ^p : D2 |- Hp
-------------------- :: Inr
-Hn |- Inr dh ^p : D1+D2 |- Hp
-
-Hn1 |- dh1 ^p : D1 |- Hp1
-Hn2 |- dh2 ^p : D2 |- Hp2
-% ctxdisjoint2 Hp1 Hp2
-% ctxdisjoint2 Hn1 Hn2
--------------------------- :: P
-Hn1 µ Hn2 |- <dh1, dh2> ^p: D1 * D2 |- Hp1 µ Hp2
-
-R =fix µ X. DV
-Hn |- dh ^p : DV[X := R] |- Hp
------------------------------ :: R
-Hn |- @R dh ^p : R |- Hp
-
-defn
-S |- H :: :: TyStore :: TyStore_ by
-
-------------------- :: Empty
-empty |- empty
-
-S |- H µ Hn
-Hn |- dh ^l : D |- Hp
-% ctxdisjoint2 H Hp
-% x notin names (S)
--------------------- :: Root
-S µ { x : D = dh } |- H µ Hp
-
-
-defn
-U ; H u G |- t : A :: :: TyTerm :: TyTerm_ {{ tex [[U]]~;\,[[H]]\mathrel{\raisebox{1pt}{\scalebox{0.5}{$\sqcup$}\!\! } }[[G]] [[|-]] [[t]] : [[A]] }} by
+U ; G |- t : A :: :: TyTerm :: TyTerm_ by
 
 ------------------------ :: NoEff
-U ; empty u empty |- o : _!_
+U ; empty |- o : _!_
 
-------------------------- :: Dest
-U ; { h ^p : D } u empty |- Dest h : |D|^p
+------------------------- :: H
+U ; empty |- h : { h ^p : D } #- D
+
+------------------------- :: Dest {{ com \remark{Used to restrict syntax space for values} }}
+U ; { x : emptyH #- |D|^p } |- x asDest : emptyH #- |D|^p
 
 --------------- :: U
-U ; empty u empty |- * : 1
+U ; empty |- * : emptyH #- 1
 
-empty ; H u { x : A1 } |- t : A2
+empty ; Gd µ { x : A1 } |- t : A2
 ------------------------------- :: Fn
-U ; H u empty |- \ x : A1 . t : A1 --o A2
+U ; Gd |- \ x : A1 . t : emptyH #- A1 --o A2
 
-empty ; empty u empty |- d : D
+empty ; empty |- d : Hw #- D
 --------------------- :: E
-U ; empty u empty |- Ur d : !D
+U ; empty |- Ur d : Hw #- !D
 
-empty ; H u empty |- d : D1
+empty ; Gd |- d : H #- D1
 -------------------- :: Inl
-U ; H u empty |- Inl d : D1 + D2
+U ; Gd |- Inl d : H #- D1 + D2
 
-empty ; H u empty |- d : D2
+empty ; Gd |- d : H #- D2
 -------------------- :: Inr
-U ; H u empty |- Inr d : D1 + D2
+U ; Gd |- Inr d : H #- D1 + D2
 
-empty ; H1 u empty |- d1 : D1
-empty ; H2 u empty |- d2 : D2
+empty ; Gd1 |- d1 : H1 #- D1
+empty ; Gd2 |- d2 : H2 #- D2
 % ctxdisjoint2 H1 H2
+% ctxdisjoint2 Gd1 Gd2
 ----------------------- :: P
-U ; H1 µ H2 u empty |- <d1, d2> : D1 * D2
+U ; Gd1 µ Gd2 |- <d1, d2> : H1 µ H2 #- D1 * D2
 
 R =fix µX.DV
-empty ; H u empty |- d : DV[X := R]
+empty ; empty |- d : H #- DV[X := R]
 --------------------------------- :: R
-U ; H u empty |- @R d : R
+U ; empty |- @R d : H #- R
 
 x notin names(U)
 ------------------------------- :: Id
-U ; empty u { x : A } |- x : A
+U ; { x : A } |- x : A
 
 --------------- :: Id'
-U µ { x : A } ; empty u empty |- x : A
+U µ { x : A } ; empty |- x : A
 
-U ; H1 u G1 |- t : A1 --o A2
-U ; H2 u G2 |- u : A1
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- A1 --o A2
+U ; G2 |- u : A1
 % ctxdisjoint2 G1 G2
 --------------------------------- :: App
-U ; H1 µ H2 u G1 µ G2 |- t u : A2
+U ; G1 µ G2 |- t u : A2
 
-U ; H1 u G1 |- t : _!_
-U ; H2 u G2 |- u : A2
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : _!_
+U ; G2 |- u : A2
 % ctxdisjoint2 G1 G2
 --------------------------------- :: EffSeq
-U ; H1 µ H2 u G1 µ G2 |- t ; u : A2
+U ; G1 µ G2 |- t ; u : A2
 
-U ; H1 u G1 |- t : 1
-U ; H2 u G2 |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- 1
+U ; G2 |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------------------- :: PatU
-U ; H1 µ H2 u G1 µ G2 |- case t of { * -> u } : A
+U ; G1 µ G2 |- case t of { * -> u } : A
 
-U ; H1 u G1 |- t : !D
-U µ { x : D } ; H2 u G2 |- u: A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- !D
+U µ { x : emptyH #- D } ; G2 |- u: A
 % ctxdisjoint2 G1 G2
 ----------------------------------------- :: PatE
-U ; H1 µ H2 u G1 µ G2 |- case t of { Ur x -> u } : A
+U ; G1 µ G2 |- case t of { Ur x -> u } : A
 
-U ; H1 u G1 |- t : D1 + D2
-U ; H2 u G2 µ { x1 : D1 } |- u1 : A
-U ; H2 u G2 µ { x2 : D2 } |- u2 : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- D1 + D2
+U ; G2 µ { x1 : emptyH #- D1 } |- u1 : A
+U ; G2 µ { x2 : emptyH #- D2 } |- u2 : A
 % ctxdisjoint2 G1 G2
 ------------------------------------------------------- :: PatS
-U ; H1 µ H2 u G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : A
+U ; G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : A
 
-U ; H1 u G1 |- t : D1 * D2
-U ; H2 u G2 µ { x1 : D1 , x2 : D2 } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- D1 * D2
+U ; G2 µ { x1 : emptyH #- D1 , x2 : emptyH #- D2 } |- u : A
 % ctxdisjoint2 G1 G2
 ------------------------------------------------------- :: PatP
-U ; H1 µ H2 u G1 µ G2 |- case t of {<x1, x2> -> u} : A
+U ; G1 µ G2 |- case t of {<x1, x2> -> u} : A
 
 R =fix µ X. DV
-U ; H1 u G1 |- t : R
-U ; H2 u G2 µ { x : DV[X := R] } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- R
+U ; G2 µ { x : emptyH #- DV[X := R] } |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------- :: PatR
-U ; H1 µ H2 u G1 µ G2 |- case t of { @R x -> u } : A
+U ; G1 µ G2 |- case t of { @R x -> u } : A
 
-U ; H u G µ { x : |D|^l } |- t : _!_
+U ; G µ { x : emptyH #- |D|^l } |- t ; x bar : emptyH #- |D bar| ^ p bar
 ------------------------------ :: Alloc
-U ; H u G |- alloc x D { t } : D
+U ; G |- alloc { x bar -> h bar } D x { t } : {h bar ^ p bar : D bar} #- D
 
-U ; H u G |- t : |1|^p
+U ; G1 |- t : H1 µ { h ^p : D' } #- D
+U ; G2 |- u : H2 #- D'
+% ctxdisjoint2 G1 G2
+% ctxdisjoint2 H1 H2
+p = w => G2 = empty
+------------------------ :: HComp
+U ; G1 µ G2 |- t with h := u : H1 µ H2 #- D
+
+U ; G |- t : emptyH #- |1|^p
 ----------------------- :: FillU
-U ; H u G |- fillUnit p t : _!_
+U ; G |- fillUnit p t : _!_
 
-U ; H1 u G1 |- t : |A1 --o A2|^p
-U ; H2 u G2 µ { x : A1 } |- u : A2
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |A1 --o A2|^p
+U ; G2 µ { x : A1 } |- u : A2
 % ctxdisjoint2 G1 G2
-p = w => (H2 = empty and G2 = empty)
+p = w => G2 = empty
 ----------------------------- :: FillFn
-U ; H1 µ H2 u G1 µ G2 |- fillFn p t { \ x : A1 . u } : _!_
+U ; G1 µ G2 |- fillFn p t { \ x : A1 . u } : _!_
 
-U ; H1 u G1 |- t : |D|^p
-U ; H2 u G2 |- u : D
-% ctxdisjoint2 H1 H2
+% We could fill with holed things ??
+% How to propagate holes ? Should we have H #- _!_ too?
+U ; G1 |- t : emptyH #- |D|^p
+U ; G2 |- u : emptyH #- D
 % ctxdisjoint2 G1 G2
-p = w => (H2 = empty and G2 = empty)
----------------------- :: FillL
-U ; H1 µ H2 u G1 µ G2 |- fillLeaf p t u : _!_
+p = w => G2 = empty
+---------------------- :: FillL {{ com \remark{How to propagate holes ?} }}
+U ; G1 µ G2 |- fillLeaf p t u : _!_
 
-U ; H1 u G1 |- t : |!D|^p
-U ; H2 u G2 µ { x : |D|^w } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |!D|^p
+U ; G2 µ { x : emptyH #- |D|^w } |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------------- :: FillE
-U ; H1 µ H2 u G1 µ G2 |- fillUr p t x { u } : A
+U ; G1 µ G2 |- fillUr p t x { u } : A
 
-U ; H1 u G1 |- t : |D1 + D2|^p
-U ; H2 u G2 µ { x : |D1|^p } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |D1 + D2|^p
+U ; G2 µ { x : emptyH #- |D1|^p } |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------------------- :: FillInl
-U ; H1 µ H2 u G1 µ G2 |- fillLeft p t x { u } : A
+U ; G1 µ G2 |- fillLeft p t x { u } : A
 
-U ; H1 u G1 |- t : |D1 + D2|^p
-U ; H2 u G2 µ { x : |D2|^p } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |D1 + D2|^p
+U ; G2 µ { x : emptyH #- |D2|^p } |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------------------- :: FillInr
-U ; H1 µ H2 u G1 µ G2 |- fillRight p t x { u } : A
+U ; G1 µ G2 |- fillRight p t x { u } : A
 
-U ; H1 u G1 |- t : |D1 * D2|^p
-U ; H2 u G2 µ { x1 : |D1|^p , x2 : |D2|^p } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |D1 * D2|^p
+U ; G2 µ { x1 : emptyH #- |D1|^p , x2 : emptyH #- |D2|^p } |- u : A
 % ctxdisjoint2 G1 G2
 ----------------------------------------------:: FillP
-U ; H1 µ H2 u G1 µ G2 |- fillPair p t x1 x2 { u } : A
+U ; G1 µ G2 |- fillPair p t x1 x2 { u } : A
 
 R =fix µ X. DV
-U ; H1 u G1 |- t : |R|^p
-U ; H2 u G2 µ { x : |DV[X := R]|^p } |- u : A
-% ctxdisjoint2 H1 H2
+U ; G1 |- t : emptyH #- |R|^p
+U ; G2 µ { x : emptyH #- |DV[X := R]|^p } |- u : A
 % ctxdisjoint2 G1 G2
 ---------------------------------------------------------------- :: FillR
-U ; H1 µ H2 u G1 µ G2 |- fillRoll p R t x { u } : A
+U ; G1 µ G2 |- fillRoll p R t x { u } : A
 
-defns
-Sem :: '' ::=
+% defns
+% Sem :: '' ::=
 
-defn
-command !! command' :: :: Reduce :: SemOp_ by
+% defn
+% t --> t' :: :: Reduce :: SemOp_ by
 
-------------------- :: Val
-S | v !! S | v
+% ------------------- :: Val
+% S | v !! S | v
 
-S0 | t !! S1 | \ x : A . t'
-S1 | u !! S2 | v2
-S2 | t'[x := v2] !! S3 | v3
----------------------------- :: App
-S0 | t u !! S3 | v3
+% S0 | t !! S1 | \ x : A . t'
+% S1 | u !! S2 | v2
+% S2 | t'[x := v2] !! S3 | v3
+% ---------------------------- :: App
+% S0 | t u !! S3 | v3
 
-S0 | t !! S1 | o
-S1 | u !! S2 | v2
------------------------------------------------------- :: EffSeq
-S0 | t ; u !! S2 | v2
+% S0 | t !! S1 | o
+% S1 | u !! S2 | v2
+% ------------------------------------------------------ :: EffSeq
+% S0 | t ; u !! S2 | v2
 
-S0 | t !! S1 | *
-S1 | u !! S2 | v2
---------------------------------------------- :: PatU
-S0 | case t of { * -> u } !! S2 | v2
+% S0 | t !! S1 | *
+% S1 | u !! S2 | v2
+% --------------------------------------------- :: PatU
+% S0 | case t of { * -> u } !! S2 | v2
 
-S0 | t !! S1 | Ur d
-S1 | u[y := d] !! S2 | v2
------------------------------------------------------ :: PatE
-S0 | case t of { Ur y -> u } !! S2 | v2
+% S0 | t !! S1 | Ur d
+% S1 | u[y := d] !! S2 | v2
+% ----------------------------------------------------- :: PatE
+% S0 | case t of { Ur y -> u } !! S2 | v2
 
-S0 | t !! S1 | Inl d
-S1 | u1[y1 := d] !! S2 | v2
------------------------------------------ :: PatInl
-S0 | case t of {Inl y1 -> u1, Inr y2 -> u2} !! S2 | v2
+% S0 | t !! S1 | Inl d
+% S1 | u1[y1 := d] !! S2 | v2
+% ----------------------------------------- :: PatInl
+% S0 | case t of {Inl y1 -> u1, Inr y2 -> u2} !! S2 | v2
 
-S0 | t !! S1 | Inr d
-S1 | u2[y2 := d] !! S2 | v2
------------------------------------------ :: PatInr
-S0 | case t of {Inl y1 -> u1, Inr y2 -> u2} !! S2 | v2
+% S0 | t !! S1 | Inr d
+% S1 | u2[y2 := d] !! S2 | v2
+% ----------------------------------------- :: PatInr
+% S0 | case t of {Inl y1 -> u1, Inr y2 -> u2} !! S2 | v2
 
-S0 | t !! S1 | <d1, d2>
-S1 | u[y1 := d1, y2 := d2] !! S2 | v2
--------------------------------------------------------------------------------- :: PatP
-S0 | case t of {<y1,y2> -> u} !! S2 | v2
+% S0 | t !! S1 | <d1, d2>
+% S1 | u[y1 := d1, y2 := d2] !! S2 | v2
+% -------------------------------------------------------------------------------- :: PatP
+% S0 | case t of {<y1,y2> -> u} !! S2 | v2
 
-S0 | t !! S1 | @R d
-S1 | u[y := d] !! S2 | v2
------------------------------------------------------- :: PatR
-S0 | case t of { @ R y -> u } !! S2 | v2
+% S0 | t !! S1 | @R d
+% S1 | u[y := d] !! S2 | v2
+% ------------------------------------------------------ :: PatR
+% S0 | case t of { @ R y -> u } !! S2 | v2
 
-fresh h
-S0 µ { x : D = h } | t[x := Dest h] !! S1 µ { x : D = d } | o
---------------------------------------------------- :: Alloc
-S0 | alloc x D { t } !! S1 | d
+% fresh h
+% S0 µ { x : D = h } | t[x := Dest h] !! S1 µ { x : D = d } | o
+% --------------------------------------------------- :: Alloc
+% S0 | alloc x D { t } !! S1 | d
 
-S0 | t !! S1 | Dest h
----------------------------- :: FillU
-S0 | fillUnit p t !! S1[h := *] | o
+% S0 | t !! S1 | Dest h
+% ---------------------------- :: FillU
+% S0 | fillUnit p t !! S1[h := *] | o
 
-S0 | t !! S1 | Dest h
--------------------------- :: FillFn
-S0 | fillFn p t { \x:A. u } !! S1[h := \x:A. u] | o
+% S0 | t !! S1 | Dest h
+% -------------------------- :: FillFn
+% S0 | fillFn p t { \x:A. u } !! S1[h := \x:A. u] | o
 
-S0 | t !! S1 | Dest h
-S1 | u !! S2 | d2
----------------------------- :: FillL
-S0 | fillLeaf p t u !! S2[h := d2] | o
+% S0 | t !! S1 | Dest h
+% S1 | u !! S2 | d2
+% ---------------------------- :: FillL
+% S0 | fillLeaf p t u !! S2[h := d2] | o
 
-fresh h'
-S0 | t !! S1 | Dest h
-S1[h := Ur h'] | u[y := Dest h'] !! S2 | v2
---------------------------------------------------- :: FillE
-S0 | fillUr p t y { u } !! S2 | v2
+% fresh h'
+% S0 | t !! S1 | Dest h
+% S1[h := Ur h'] | u[y := Dest h'] !! S2 | v2
+% --------------------------------------------------- :: FillE
+% S0 | fillUr p t y { u } !! S2 | v2
 
-fresh h'
-S0 | t !! S1 | Dest h
-S1[h := Inl h'] | u[y := Dest h'] !! S2 | v2
------------------------------------------------------------- :: FillInl
-S0 | fillLeft p t y { u } !! S2 | v2
+% fresh h'
+% S0 | t !! S1 | Dest h
+% S1[h := Inl h'] | u[y := Dest h'] !! S2 | v2
+% ------------------------------------------------------------ :: FillInl
+% S0 | fillLeft p t y { u } !! S2 | v2
 
-fresh h'
-S0 | t !! S1 | Dest h
-S1[h := Inr h'] | u[y := Dest h'] !! S2 | v2
------------------------------------------------------------- :: FillInr
-S0 | fillRight p t y { u } !! S2 | v2
+% fresh h'
+% S0 | t !! S1 | Dest h
+% S1[h := Inr h'] | u[y := Dest h'] !! S2 | v2
+% ------------------------------------------------------------ :: FillInr
+% S0 | fillRight p t y { u } !! S2 | v2
 
-fresh h1
-fresh h2
-S0 | t !! S1 | Dest h
-S1[h := <h1, h2>] | u[y1 := Dest h1, y2 := Dest h2] !! S2 | v2
---------------------------------------------------------------- :: FillP
-S0 | fillPair p t y1 y2 { u } !! S2 | v2
+% fresh h1
+% fresh h2
+% S0 | t !! S1 | Dest h
+% S1[h := <h1, h2>] | u[y1 := Dest h1, y2 := Dest h2] !! S2 | v2
+% --------------------------------------------------------------- :: FillP
+% S0 | fillPair p t y1 y2 { u } !! S2 | v2
 
-fresh h'
-S0 | t !! S1 | Dest h
-S1[h := @R h'] | u[y := Dest h'] !! S2 | v2
---------------------------------------------------- :: FillR
-S0 | fillRoll p R t x { u } !! S2 | v2
+% fresh h'
+% S0 | t !! S1 | Dest h
+% S1[h := @R h'] | u[y := Dest h'] !! S2 | v2
+% --------------------------------------------------- :: FillR
+% S0 | fillRoll p R t x { u } !! S2 | v2
 
 parsing
 t_PatU <= t_App
