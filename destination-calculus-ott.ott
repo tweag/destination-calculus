@@ -95,7 +95,7 @@ embed
 \newcommand{\mparcomma}{ {\scriptstyle\odot} }
 \newcommand{\expc}{\ottty{\,\text{\makebox[0pt][l]{\raisebox{.4ex}{\scriptsize !} }\raisebox{-.1ex}{\hspace{-0.4ex}\scriptsize c} } }\hspace{-0.7ex} }
 \newcommand{\expw}{\ottty{\,\text{\makebox[0pt][l]{\raisebox{.4ex}{\scriptsize !} }\raisebox{0.05ex}{\hspace{-0.6ex}${\scriptscriptstyle\omega}$} } }\hspace{-0.7ex} }
-\newcommand{\putarrow}[1]{\!\overset{#1}{\prec}\!}
+\newcommand{\putarrow}[1]{\!\overset{#1}{\triangleleft}\!}
 \newcommand{\lam}[3]{\lambda\,#1\!:\!#2\,\textbf{.}\,#3}
 }}
 
@@ -139,7 +139,7 @@ term, t, u :: 't_' ::=                                               {{ com term
 % hole, h :: 'h_' ::= {{ com hole }} {{ tex \ottho{[[hole]]} }}
 
 val, v :: 'v_' ::= {{ com value (unreducible term) }}
-  | o :: :: NoEff {{ com empty effect }}
+  | / sub / :: :: NoEff {{ com empty effect }}
   | d                                       ::   :: Data      {{ com data structure }}
 
 % effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
@@ -392,7 +392,7 @@ defn
 U ; G |- t : A :: :: TyTerm :: TyTerm_ by
 
 ------------------------ :: NoEff
-U ; empty |- o : _!_
+U ; { - x :^p D } |- / x := v / : _!_
 
 --------------- :: U
 U ; empty |- * : 1
@@ -556,7 +556,7 @@ U ; G |- fillPair p t : !c (!c |D1|^p mpar !c |D2|^p)
 
 U ; G |- t : !c |!c D1 mpar !c D2|^p
 ----------------------------------------------:: FillM
-U ; G |- fillMpar p t : !c (|D1|^p * |D2|^p)
+U ; G |- fillMpar p t : !c (!c |D1|^p mpar !c |D2|^p)
 
 defns
 Sem :: '' ::=
@@ -616,9 +616,9 @@ t !! C <v1 ¤ C <v2 ¤ v3>>
 ---------------------------------------- :: ReassocM
 reassoc t !! C <C <v1 ¤ v2> ¤ v3>
 
-t !! C <o ¤ d>
+t !! C < /x := v/ ¤ d>
 ------------------------------ :: RedLM
-redL t !! C d
+redL t !! (C d)[x := v]
 
 t !! C <v1 ¤ v2>
 u v1 !! v3
@@ -681,3 +681,4 @@ dty_Sum <= dty_Comp
 dty_Prod <= dty_Comp
 dty_Mpar <= dty_Comp
 dtywv_Comp <= dty_Sub
+t_Sub <= t_Paren
