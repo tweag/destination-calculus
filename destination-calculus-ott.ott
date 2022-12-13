@@ -17,6 +17,7 @@ embed
 \definecolor{multcolor}{RGB}{26, 87, 186}
 \definecolor{holecolor}{RGB}{186, 58, 7}
 \definecolor{effcolor}{RGB}{186, 58, 7}
+\definecolor{eccolor}{RGB}{58, 120, 7}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
 \newlength{\deltaraise}
 \setlength{\deltaraise}{1.5pt}
@@ -30,6 +31,7 @@ embed
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
 \newcommand{\ottho}[1]{\textcolor{holecolor}{#1 } }
 \newcommand{\otteff}[1]{\textcolor{effcolor}{#1 } }
+\newcommand{\ottec}[1]{\textcolor{eccolor}{#1 } }
 \newcommand{\replacelell}[1]{%
   \begingroup%
   \mathcode`l=\ell%
@@ -115,39 +117,40 @@ term, t, u :: 't_' ::=                                               {{ com term
   | case t of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatS     {{ com pattern-matching on sum }}
   | case t of { @ R x -> u } :: :: PatR {{ com pattern-matching on recursive data }}
   | case t of { < x1 , x2 > -> u }            ::   :: PatP     {{ com pattern-matching on product }}
-  | extract t :: :: Ex
-  | flip t :: :: FlipM
-  | reassoc t :: :: ReassocM
-  | redL t :: :: RedLM
-  | mapL t with u :: :: MapLM
-  | alloc D                                   ::   :: Alloc    {{ com get data from a dest-filling statement }} % {{ tex \underset{\ottty{[[D]]} }{\ottkw{alloc} } }}
+  | extract t :: :: Ex {{ com remove $\ottcons{C}$ wrapper }}
+  | flip t :: :: FlipM {{ com flip mpar sides }}
+  | reassoc t :: :: ReassocM {{ com reassociated nested mpar }}
+  | redL t :: :: RedLM {{ com extract right when left is bottom }}
+  | mapL t with u :: :: MapLM {{ com map function on left side }}
+  | alloc D                                   ::   :: Alloc    {{ com generate new hole and associated dest }} % {{ tex \underset{\ottty{[[D]]} }{\ottkw{alloc} } }}
+  | fillLeaf p t u :: :: FillL {{ com move into destination }} {{ tex [[t]]~\putarrow{[[p]]}~[[u]] }}
   | fillUnit p t :: :: FillU {{ com fill destination with unit }} {{ tex [[t]]~\putarrow{[[p]]}~[[*]] }}
-  | fillFn p { \ x : A . u } t :: :: FillFn {{ com fill destination with function }} {{ tex [[t]]~\putarrow{[[p]]}~\lam{[[x]]}{[[A]]}{[[u]]} }}
-  | fillLeaf p u t :: :: FillL {{ com fill destination with value }} {{ tex [[t]]~\putarrow{[[p]]}~[[u]] }}
+  | fillFn p t { \ x : A . u } :: :: FillFn {{ com fill destination with function }} {{ tex [[t]]~\putarrow{[[p]]}~\lam{[[x]]}{[[A]]}{[[u]]} }}
   | fillUr p t :: :: FillE {{ com fill destination with exponential }} {{ tex [[t]]~\putarrow{[[p]]}~[[Ur]] }}
   | fillLeft p t                          ::   :: FillInl   {{ com fill destination with sum variant 1 }} {{ tex [[t]]~\putarrow{[[p]]}~[[Inl]] }}
   | fillRight p t                          ::   :: FillInr   {{ com fill destination with sum variant 2 }} {{ tex [[t]]~\putarrow{[[p]]}~[[Inr]] }}
-  | fillRoll p R t :: :: FillR {{ com fill destination with recursive data }} {{ tex [[t]]~\putarrow{[[p]]}~\ottty{[[@]][[R]]} }}
+  | fillRoll p t R :: :: FillR {{ com fill destination with recursive type label }} {{ tex [[t]]~\putarrow{[[p]]}~\ottty{[[@]][[R]]} }}
   | fillPair p t                              ::   :: FillP    {{ com fill destination with product }} {{ tex [[t]]~\putarrow{[[p]]}~\ottcons{\langle,\rangle} }}
-  | fillMpar p t :: :: FillM {{ tex [[t]]~\putarrow{[[p]]}~\ottcons{\langle\mparcomma\rangle} }}
+  | fillMpar p t :: :: FillM {{ com fill destination with data mpar }} {{ tex [[t]]~\putarrow{[[p]]}~\ottcons{\langle\mparcomma\rangle} }}
   | ( t )                                   :: S :: Paren
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
 %  | t b spe :: S :: BreakSpacing3
-  | t [ subs ]                             :: M :: Sub
+  | t [ e ]                             :: M :: Sub
+  | E [ t ] :: M :: Ec
 
 % hole, h :: 'h_' ::= {{ com hole }} {{ tex \ottho{[[hole]]} }}
 
-val, v :: 'v_' ::= {{ com value (unreducible term) }}
-  | / sub / :: :: NoEff {{ com empty effect }}
+value, v :: 'v_' ::= {{ com value (unreducible term) }}
+  | o :: :: BotVal
   | d                                       ::   :: Data      {{ com data structure }}
 
-% effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
-%   | o :: :: NoEff
-%   | [ subs ] :: :: Sub
-%   | e1 . e2 :: :: Concat {{ tex [[e1]] \cdot [[e2]] }}
+effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
+  | o :: :: NoEff {{ com empty effect }} {{ tex \otteff{\varepsilon} }}
+  | subs :: :: Sub
+%  | e1 . e2 :: :: Concat {{ tex [[e1]] \cdot [[e2]] }}
 
-data, d :: 'd_' ::=
+data_value, d :: 'd_' ::=
   | | x | :: :: D {{ com destination }} {{ tex \ottmv{\lfloor[[x]]\rfloor} }}
   | x :: :: Var {{ com var or hole }}
   | * ::   :: U {{ com unit }} {{ tex \star }}
@@ -158,7 +161,7 @@ data, d :: 'd_' ::=
   | Inr d :: :: Inr {{ com sum variant 2 }}
   | @ R d :: :: R {{ com recursive data }}
   | < d1 , d2 > :: :: P {{ com product }}
-  | < v1 ¤ v2 > :: :: M {{ com mpar }}
+  | < t1 ¤ t2 > :: :: M {{ com mpar }}
   | ( d ) :: S :: Paren
 
 multiplicity, p :: 'mult_' ::= {{ com multiplicity }} {{ tex \ottmult{[[multiplicity]]} }}
@@ -264,6 +267,32 @@ typing_context, U {{ tex \mho }}, G {{ tex \Gamma }}, Gn {{ tex \Gamma^- }} :: '
   | G1 µ+ G2 :: :: SDisjoint
   | G1 µ~ G2 :: :: HDisjoint
 
+evaluation_context, E :: 'ec_' ::= {{ com evaluation context }} {{ tex \ottec{[[evaluation_context]]} }}
+  | [ ] :: :: Window {{ tex \ottec{[~]} }}
+  | < E ¤ t2 > :: :: Mpar1
+  | < v1 ¤ E > :: :: Mpar2
+  | case E of { * -> u }                   ::   :: PatU
+  | case E of { Ur x -> u } :: :: PatE
+  | case E of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatS
+  | case E of { @ R x -> u } :: :: PatR
+  | case E of { < x1 , x2 > -> u }            ::   :: PatP
+  | extract E :: :: Ex
+  | flip E :: :: FlipM
+  | reassoc E :: :: ReassocM
+  | redL E :: :: RedLM
+  | mapL E with t2 :: :: MapLM1
+  | mapL v1 with E :: :: MapLM2
+  | fillUnit p E :: :: FillU {{ tex [[E]]~\putarrow{[[p]]}~[[*]] }}
+  | fillFn p E { \ x : A . u } :: :: FillFn {{ tex [[E]]~\putarrow{[[p]]}~\lam{[[x]]}{[[A]]}{[[u]]} }}
+  | fillLeaf p E t2 :: :: FillL1 {{ tex [[E]]~\putarrow{[[p]]}~[[u]] }}
+  | fillLeaf p v1 E :: :: FillL2 {{ tex [[E]]~\putarrow{[[p]]}~[[u]] }}
+  | fillUr p E :: :: FillE {{ tex [[E]]~\putarrow{[[p]]}~[[Ur]] }}
+  | fillLeft p E                          ::   :: FillInl   {{ tex [[E]]~\putarrow{[[p]]}~[[Inl]] }}
+  | fillRight p E                          ::   :: FillInr   {{ tex [[E]]~\putarrow{[[p]]}~[[Inr]] }}
+  | fillRoll p E R :: :: FillR {{ tex [[E]]~\putarrow{[[p]]}~\ottty{[[@]][[R]]} }}
+  | fillPair p E                              ::   :: FillP    {{ tex [[E]]~\putarrow{[[p]]}~\ottcons{\langle,\rangle} }}
+  | fillMpar p E :: :: FillM {{ tex [[E]]~\putarrow{[[p]]}~\ottcons{\langle\mparcomma\rangle} }}
+
 % command :: 'com_' ::=
 %   | S | t :: :: Command {{ tex [[S]]\,|\,[[t]] }}
 
@@ -336,6 +365,8 @@ terminals :: 'terminals_' ::=
   | ';' :: :: sep {{ tex ~{;}~ }}
   | * :: :: unit {{ tex \star }}
   | ¤ :: :: mparcomma {{ tex \mparcomma }}
+  | --> :: :: rlocal {{ tex \longrightarrow }}
+  | ~~> :: :: rglobal {{ tex \rightsquigarrow }}
 
 defns
 Ctx :: '' ::=
@@ -392,7 +423,7 @@ defn
 U ; G |- t : A :: :: TyTerm :: TyTerm_ by
 
 ------------------------ :: NoEff
-U ; { - x :^p D } |- / x := v / : _!_
+U ; empty |- o : _!_
 
 --------------- :: U
 U ; empty |- * : 1
@@ -427,10 +458,10 @@ empty ; G2 |- d2 : D2
 ----------------------- :: P
 U ; G1 µ~ G2 |- <d1, d2> : D1 * D2
 
-empty ; G1 |- d1 : D1
-empty ; G2 |- d2 : D2
+U ; G1 |- t1 : A1
+U ; G2 |- t2 : A2
 ----------------------- :: M
-U ; G1 µ+ G1 |- <d1 ¤ d2> : D1 mpar D2
+U ; G1 µ+ G1 |- <t1 ¤ t2> : A1 mpar A2
 
 ------------------------- :: D
 U ; { - x :^p D } |- |x| : |D|^p
@@ -491,13 +522,13 @@ U ; G |- t : !c (A1 mpar !c (A2 mpar A3))
 U ; G |- reassoc t : !c (!c (A1 mpar A2) mpar A3)
 
 U ; G |- t : !c (_!_ mpar D)
------------------------------- :: RedRM
+------------------------------ :: RedLM
 U ; G |- redL t : !c D
 
 U ; G1 |- t : !c (A1 mpar A2)
 U ; G2 |- u : !c (A1 --o A3)
---------------------------------- :: MapRM
-U ; G1 µ~ G2 |- mapL t with u : A3 mpar A2
+--------------------------------- :: MapLM
+U ; G1 µ~ G2 |- mapL t with u : !c (A3 mpar A2)
 
 ------------------------------- :: Alloc
 U ; empty |- alloc D : !c (!c |D|^l mpar D)
@@ -523,7 +554,7 @@ U ; G1 |- t : !c |A1 --o A2|^p
 U ; G2 µ~ { x : A1 } |- u : A2
 p = w => G2 = empty
 ----------------------------- :: FillFn
-U ; G1 µ~ G2 |- fillFn p { \ x : A1 . u } t : _!_
+U ; G1 µ~ G2 |- fillFn p t { \ x : A1 . u } : _!_
 
 % TODO: linearity of D? should be ok because if Ur above, then u: N
 % TODO: so dests are ruled out, and linear functions would capture something
@@ -531,7 +562,7 @@ U ; G1 |- t : !c |D|^p
 U ; G2 |- u : D
 p = w => G2 = empty
 ---------------------- :: FillL
-U ; G1 µ~ G2 |- fillLeaf p u t : _!_
+U ; G1 µ~ G2 |- fillLeaf p t u : _!_
 
 U ; G |- t : !c |!w N|^p
 ----------------------------------- :: FillE
@@ -548,7 +579,7 @@ U ; G |- fillRight p t : !c |D2|^p
 R =fix µ X. DV
 U ; G |- t : !c |R|^p
 ---------------------------------------------------------------- :: FillR
-U ; G |- fillRoll p R t : !c |DV[X := R]|^p
+U ; G |- fillRoll p t R : !c |DV[X := R]|^p
 
 U ; G |- t : !c |D1 * D2|^p
 ----------------------------------------------:: FillP
@@ -562,117 +593,89 @@ defns
 Sem :: '' ::=
 
 defn
-t !! t' :: :: Reduce :: SemOp_ by
+t --> e | t' :: :: RLocal :: RLocal_ by
 
-------------------- :: Val
-v !! v
-
-t !! C (\ x : A . t')
-u !! v2
-t'[x := v2] !! v3
 ---------------------------- :: App
-t u !! v3
+(C (\ x : A . t)) d --> o | t[x := d]
 
-t !! C *
-u !! v2
 --------------------------------------------- :: PatU
-case t of { * -> u } !! v2
+case * of { * -> t } --> o | t
 
-t !! C (Ur d)
-u[y := C d] !! v2
 ----------------------------------------------------- :: PatE
-case t of { Ur y -> u } !! v2
+case C (Ur d) of { Ur x -> t } --> o | t[x := C d]
 
-t !! C (Inl d)
-u1[y1 := C d] !! v2
 ----------------------------------------- :: PatInl
-case t of {Inl y1 -> u1, Inr y2 -> u2} !! v2
+case C (Inl d) of {Inl x1 -> t1, Inr x2 -> t2} --> o | t1[x1 := C d]
 
-t !! C (Inr d)
-u2[y2 := C d] !! v2
 ----------------------------------------- :: PatInr
-case t of {Inl y1 -> u1, Inr y2 -> u2} !! v2
+case C (Inr d) of {Inl x1 -> t1, Inr x2 -> t2} --> o | t2[x2 := C d]
 
-t !! C (@R d)
-u[y := C d] !! v2
 ------------------------------------------------------ :: PatR
-case t of { @ R y -> u } !! v2
+case C (@R d) of { @ R x -> t } --> o | t[x := C d]
 
-
-t !! C <d1, d2>
-u[y1 := C d1, y2 := C d2] !! v2
 -------------------------------------------- :: PatP
-case t of {<y1,y2> -> u} !! v2
+case C <d1, d2> of {<x1,x2> -> t} --> o | t[x1 := C d1, x2 := C d2]
 
-t !! C d
 -------------------------------------------- :: Ex
-extract t !! d
+extract (C d) --> o | d
 
-t !! C <v1 ¤ v2>
 --------------------------------------------------- :: FlipM
-flip t !! C <v2 ¤ v1>
+flip (C <v1 ¤ v2>) --> o | C <v2 ¤ v1>
 
-t !! C <v1 ¤ C <v2 ¤ v3>>
 ---------------------------------------- :: ReassocM
-reassoc t !! C <C <v1 ¤ v2> ¤ v3>
+reassoc (C <v1 ¤ C <v2 ¤ v3>>) --> o | C <C <v1 ¤ v2> ¤ v3>
 
-t !! C < /x := v/ ¤ d>
 ------------------------------ :: RedLM
-redL t !! (C d)[x := v]
+redL (C <o ¤ d>) --> o | C d
 
-t !! C <v1 ¤ v2>
-u v1 !! v3
 ---------------------------- :: MapLM
-mapL t with u !! C <v3 ¤ v2>
+mapL (C <v1 ¤ v2>) with (C (\x:A.t)) --> o | C < t[x := v1] ¤ v2>
 
 fresh x
 ---------------------------- :: Alloc
-alloc D !! C <C |x| ¤ x>
+alloc D --> o | C <C |x| ¤ x>
 
-% % TODO: need a way to portal info through mpar
-% t !! |x|
-% ---------------------------- :: FillU
-% fillUnit p t !! S1[h := *] | o
+---------------------------- :: FillU
+fillUnit p (C |x|) --> x := * | o
 
-% S0 | t !! S1 | Dest h
-% -------------------------- :: FillFn
-% S0 | fillFn p t { \x:A. u } !! S1[h := \x:A. u] | o
+-------------------------- :: FillFn
+fillFn p (C |x|) { \y:A. t } --> x := \y:A.t  | o
 
-% S0 | t !! S1 | Dest h
-% S1 | u !! S2 | d2
-% ---------------------------- :: FillL
-% S0 | fillLeaf p t u !! S2[h := d2] | o
+---------------------------- :: FillL
+fillLeaf p (C |x|) v --> x := v | o
 
-% fresh h'
-% S0 | t !! S1 | Dest h
-% S1[h := Ur h'] | u[y := Dest h'] !! S2 | v2
-% --------------------------------------------------- :: FillE
-% S0 | fillUr p t y { u } !! S2 | v2
+fresh x'
+--------------------------------------------------- :: FillE
+fillUr p (C |x|) --> x := Ur x' | C |x'|
 
-% fresh h'
-% S0 | t !! S1 | Dest h
-% S1[h := Inl h'] | u[y := Dest h'] !! S2 | v2
-% ------------------------------------------------------------ :: FillInl
-% S0 | fillLeft p t y { u } !! S2 | v2
+fresh x'
+------------------------------------------------------------ :: FillInl
+fillLeft p (C |x|) --> x := Inl x' | C |x'|
 
-% fresh h'
-% S0 | t !! S1 | Dest h
-% S1[h := Inr h'] | u[y := Dest h'] !! S2 | v2
-% ------------------------------------------------------------ :: FillInr
-% S0 | fillRight p t y { u } !! S2 | v2
+fresh x'
+------------------------------------------------------------ :: FillInr
+fillRight p (C |x|) --> x := Inr x' | C |x'|
 
-% fresh h1
-% fresh h2
-% S0 | t !! S1 | Dest h
-% S1[h := <h1, h2>] | u[y1 := Dest h1, y2 := Dest h2] !! S2 | v2
-% --------------------------------------------------------------- :: FillP
-% S0 | fillPair p t y1 y2 { u } !! S2 | v2
+fresh x'
+------------------------------------------------------------ :: FillR
+fillRoll p (C |x|) R --> x := @R x' | C |x'|
 
-% fresh h'
-% S0 | t !! S1 | Dest h
-% S1[h := @R h'] | u[y := Dest h'] !! S2 | v2
-% --------------------------------------------------- :: FillR
-% S0 | fillRoll p R t x { u } !! S2 | v2
+fresh x1
+fresh x2
+--------------------------------------------------------------- :: FillP
+fillPair p (C |x|) --> x := <x1, x2> | C <C |x1| ¤ C |x2|>
+
+fresh x1
+fresh x2
+--------------------------------------------------------------- :: FillM
+fillMpar p (C |x|) --> x := <C x1 ¤ C x2> | C <C |x1| ¤ C |x2|>
+
+defn
+t ~~> t' :: :: RGlobal :: RGlobal_ by
+
+t --> e | t'
+---------------------- :: Global
+E[t] ~~> (E[t'])[e]
 
 parsing
 t_PatU <= t_App
