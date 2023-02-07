@@ -1,0 +1,27 @@
+νy. E[t0] = F[v
+
+=== F[t] where F[ ] = vy. E[ ]
+
+EffUp:
+if x != y
+
+
+NuUp:
+if x notin F
+then F[vx. t] --> o | vx. F[t]
+
+RGlobal_Eff:
+on utilise E[t] pour dire qu'il faut une réduction locale t-->t', et s'il y a un binder il doit être dans t et non dans E
+donc c'est le rôle des réductions locales de laisser passer les binders non concernés
+
+vy. E[te'] = vy. tn'
+te = F[tn]
+vy. E[te] = F[vy. tn]
+
+vy. E[F[tn]] = F[vy. tn]
+
+mapL (nu x. C <C |x| ¤ x>) with \x:A.x --> nu x. C <C |x| ¤ x>
+mapL (nu x1. nu x2. C < C |x1| ¤ C < C |x2| ¤ <x1, x2> > >) with \x1:A. x1 <| 1 --> nu x2. C < C () ¤ C < C |x2| ¤ <1, x2> > >
+
+
+
