@@ -18,11 +18,9 @@ embed
 \definecolor{tycolor}{RGB}{26, 87, 186}
 \definecolor{ntcolor}{RGB}{105, 105, 105}
 \definecolor{spcolor}{RGB}{5, 115, 12}
-\definecolor{multcolor}{RGB}{26, 87, 186}
 \definecolor{lbcolor}{RGB}{186, 58, 7}
-\definecolor{scopecolor}{RGB}{200, 120, 211}
+\definecolor{modecolor}{RGB}{200, 120, 211}
 \definecolor{effcolor}{RGB}{186, 58, 7}
-\definecolor{eccolor}{RGB}{58, 120, 7}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
 \newlength{\deltaraise}
 \setlength{\deltaraise}{1.5pt}
@@ -35,16 +33,14 @@ embed
 \newcommand{\ottcons}[1]{\mathsf{#1} }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
 \newcommand{\ottlb}[1]{\textcolor{lbcolor}{#1} }
-\newcommand{\ottscope}[1]{\textcolor{scopecolor}{\mathsf{#1} } }
+\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathsf{#1} } }
 \newcommand{\otteff}[1]{\textcolor{effcolor}{\mathsf{#1} } }
-\newcommand{\ottec}[1]{\textcolor{eccolor}{#1} }
 \newcommand{\replacelell}[1]{%
   \begingroup%
   \mathcode`l=\ell%
   #1%
   \endgroup%
 }
-\newcommand{\ottmult}[1]{\textcolor{multcolor}{\mathit{#1} } }
 \newcommand{\defeq}{\overset{\mathsf{def} }{=} }
 \def\mynewline{\ottsp{\backslash\!n} }
 \def\myspace#1{\myrepeat{#1}{\ottsp{\langle destent \rangle} } }
@@ -105,6 +101,7 @@ embed
 \newcommand{\expw}{\ottty{\,\text{\makebox[0pt][l]{\raisebox{.4ex}{\scriptsize !} }\raisebox{0.05ex}{\hspace{-0.6ex}${\scriptscriptstyle\omega}$} } }\hspace{-0.7ex} }
 \newcommand{\putarrow}[1]{\!\overset{#1}{\triangleleft}\!}
 \newcommand{\lam}[3]{\ottcons{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
+\newcommand{\lamnt}[2]{\ottcons{\lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\nuabs}[1]{\nu#1\textbf{.}\,}
 }}
@@ -114,80 +111,62 @@ embed
 metavar termvar, x, y, h ::=
   {{ tex \ottmv{[[termvar]]} }}
 
-metavar idxvar, i ::=
-  {{ tex \ottmv{[[idxvar]]} }}
+% metavar idxvar, i ::=
+%   {{ tex \ottmv{[[idxvar]]} }}
 
 grammar
 
-% label, l :: 'l_' ::= {{ tex \ottlb{[[label]]} }}
+label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }}
+
+mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }}
+  | _ :: :: Placeholder {{ tex \ottmod{\_} }}
+  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }}
+  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }}
+  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }}
+  | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
 
 type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
-  | P ^ n :: :: ScopeIdx {{ tex [[P]]^{[[n]]} }}
-
-%ref_type, R :: 'RefTy_' ::= {{ com Reference type }} {{ tex \ottty{[[ref_type]]} }}
-%non_ref_type, N :: 'NonRefTy_' ::= {{ com Non-reference type }} {{ tex \ottty{[[non_ref_type]]} }}
-
-partial_type, T :: 'PTy_' ::= {{ tex \ottty{[[partial_type]]} }}
-  % | _|_ :: :: Bottom {{ tex \ottty{\bot} }}
-  % | n1 <w n2 :: :: Witness {{ tex \ottty{[[n1]]\overset{w}{<}[[n2]]} }} {{ com Scope nesting witness }}
   | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
-  | A1 + A2 :: :: Sum {{ tex \ottty{[[A1]] \oplus [[A2]]} }} {{ com Sum }}
-  | A1 * A2 :: :: Prod {{ tex \ottty{[[A1]] \otimes [[A2]]} }} {{ com Product }}
-%  | Box N :: :: Box {{ tex \ottty{Box\,[[N]]} }} {{ com Non-reference type stored in the heap }}
-  | A1 --o A2 :: :: Lambda {{ tex \ottty{_{[[n1]]}[[A1]]\,[[--o]]\,_{[[n2]]}[[A2]]} }} {{ com Linear function }}
-  | Dest A :: :: Dest {{ tex \ottty{Dest\,_{[[n]]}[[A]]} }} {{ com Destination }}
-  | A1 i ><| A2 :: :: Incomplete {{ tex \ottty{[[A1]]~_{[[i]]}\![[><|]]\,[[A2]]} }} {{ com Incomplete type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  % | A1 ><| A2 :: :: Incomplete {{ tex \ottty{[[A1]]\,[[><|]]\,[[A2]]} }} {{ com Incomplete type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | ( P ) :: S :: Paren {{ tex \ottty{\left(}[[P]]\ottty{\right)} } }}
+  | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
+  | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
+  | A1 m1 ><| A2 :: :: Ampar {{ tex [[A1]]\,_{[[m1]]}\![[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
+  | A1 --o m2 A2 :: :: Lambda {{ tex [[A1]]\,[[--o]]_{\![[m2]]}\,[[A2]] }} {{ com Linear function }}
+  | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
+  | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
 
-scope_index, s :: 'ScIdx_' ::= {{ com Concrete or abstract scope index }} {{ tex \ottscope{[[scope_index]]} }}
-  | i :: :: Var
-  | n :: :: Val
-
-concrete_scope_index, n, m :: 'CScIdx_' ::= {{ com Concrete scope index }} {{ tex \ottscope{[[concrete_scope_index]]} }}
-  | 0 :: :: Zero {{ tex \ottscope{0} }}
-  | n + 1 :: :: Succ {{ tex [[n]]\ottscope{+1} }}
-  | max ( n1 , n2 ) :: :: Maxnn
-  | max ( n, G ) :: :: MaxnCtx
-  | max ( G ) :: :: MaxCtx
-  | _ :: M :: Placeholder
-  | ( n ) :: S :: Paren {{ tex \ottscope{([[n]])} }}
-
-% heap form: { @l1: hv1, @l2: hv2 }
-dynamic_value, v :: 'DynVal_' ::= {{ com dynamic value }}
+dynamic_value, v :: 'DynVal_' ::= {{ com Dynamic value }}
   % | o :: :: Bottom
   % | W :: :: Witness {{ tex \Lam{[[s]]}{[[n]]} }} {{ com Unit-like representation for witnesses }}
-  | x :: :: VarHole {{ com Var or Hole }}
-  | @ x :: :: Dest {{ tex \ottmv{@}[[x]] }} {{ com Destination }}
+  | l :: :: Hole {{ com Hole }}
+  | @ l :: :: Dest {{ tex \ottlb{@}[[l]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | Inl v :: :: Inl {{ com Left variant for sum }}
   | Inr v :: :: Inr {{ com Right variant for sum }}
   | < v1 , v2 > :: :: Prod {{ tex \ottcons{\langle}\,[[v1]]\,\ottcons{,}~[[v2]]\,\ottcons{\rangle} }} {{ com Product }}
-  | < v1 ¤ v2 > :: :: Incomplete {{ tex \ottcons{\langle}\,[[v1]]\,\ottcons{\bbcomma}~[[v2]]\,\ottcons{\rangle} }} {{ com Incomplete ($[[v2]]$ is the root of the structure being built) }}
-  | \ x : A . t :: :: Lambda {{ tex \lam{[[x]]}{[[A]]}{[[t]]} }} {{ com linear function }}
+  | < v1 ¤ v2 > :: :: Ampar {{ tex \ottcons{\langle}\,[[v1]]\,\ottcons{\bbcomma}~[[v2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[v2]]$ is the root of the structure being built) }}
+  | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | ( v ) :: S :: Paren
 
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
-  | v :: :: DynVal {{ com dynamic value }}
-  | t u                                    ::   :: App      {{ com application }}
-  % | t1 . t2 :: :: Transivity {{ com apply transitivity to scope witnesses }}
-  % | box t :: :: Box {{ com store non-reference value in the heap }}
-  % | * t :: :: Deref {{ tex \star[[t]] }} {{ com get non-reference value from the heap }}
+  | v :: :: DynVal {{ com Dynamic value }}
+  | x :: :: Var {{ com Variable }}
+  | t u                                    ::   :: App      {{ com Application }}
+  | t ; u                   ::   :: PatUnit {{ com Pattern-match on unit }}
+  | case t of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com Pattern-match on sum }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{Inl}\,[[x1]]\,[[->]]\,[[u1]]\,,~\ottcons{Inr}\,[[x2]]\,[[->]]\,[[u2]]\,\} }}
+  | case t of { < x1 , x2 > -> u }            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{\langle}\,[[x1]]\,\ottcons{,}~[[x2]]\,\ottcons{\rangle}\,[[->]]\,[[u]]\,\} }}
+  | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex \ottkw{mapL}~[[t]]~\ottkw{with}~\{\,[[x]]\,[[->]]\,[[u]]\,\} }}
 
-  | t ; u                   ::   :: PatUnit {{ com discard unit }}
-%  | case t of { () -> u } :: :: PatU {{ com pattern-match on unit }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,[[()]]\,[[->]]\,[[u]]\,\} }}
-  | case t of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com pattern-match on sum }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{Inl}\,[[x1]]\,[[->]]\,[[u1]]\,,~\ottcons{Inr}\,[[x2]]\,[[->]]\,[[u2]]\,\} }}
-  | case t of { < x1 , x2 > -> u }            ::   :: PatProd     {{ com pattern-match on product }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{\langle}\,[[x1]]\,\ottcons{,}~[[x2]]\,\ottcons{\rangle}\,[[->]]\,[[u]]\,\} }}
-  | case t of { < x ¤ _ > -> < u ¤ _ > } :: :: MapIncomplete {{ com map over the left side of the incomplete $[[t]]$ }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{\langle}\,[[x]]\,\ottcons{\bbcomma}~\_\,\ottcons{\rangle}\,[[->]]\,\ottcons{\langle}\,[[u]]\,\ottcons{\bbcomma}~\_\,\ottcons{\rangle}\,\} }}
+  | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
+  | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion from ${\ottmod{\scriptstyle G} }$ }}
+  | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]} }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]} }} {{ com Extract value from trivial ampar }}
 
-  | alloc :: :: Alloc {{ com return a fresh Incomplete object }}
-  | into t :: :: IntoIncomplete {{ com transform the ref value into a trivial incomplete }}
-  | from t :: :: FromIncomplete {{ com transform a trivial incomplete into a ref value}}
-  | t <| () :: :: FillUnit {{ com fill destination with unit }}
-  | t <| Inl                          ::   :: FillInl   {{ com fill destination with left variant }}
-  | t <| Inr                          ::   :: FillInr   {{ com fill destination with right variant }}
-  | t <| <,>                              ::   :: FillProd    {{ com fill destination with product constructor }}
-  | t <|. u :: :: FillComp {{ com fill destination with root of Incomplete $[[u]]$ }}
+  | alloc :: :: Alloc {{ com Return a fresh "identity" Ampar object }}
+  | t <| () :: :: FillUnit {{ com Fill destination with unit }}
+  | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
+  | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
+  | t <| <,>                              ::   :: FillProd    {{ com Fill destination with product constructor }}
+  | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
 
   | ( t )                                   :: S :: Paren
   | t [ e ]                             :: M :: SubEff
@@ -196,7 +175,7 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   % | t b spe :: S :: BreakSpacing3
 
 sub :: 'Sub_' ::= {{ com variable or label substitution }}
-  | x := v :: :: VarSub
+  | x -> v :: :: VarSub
   % | x := t :: :: VarSub
 
 subs :: 'Subs_' ::= {{ com variable or  substitutions }}
@@ -220,8 +199,10 @@ effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
 %   | H1 µ H2 :: :: Disjoint
 
 type_affect, ta :: 'TyAff_' ::= {{ com type affectation }}
-  | x : n A :: :: VarHole {{ com Var or Hole }} {{ tex [[x]]:^{[[n]]}\,[[A]] }}
-  | - x : n A :: :: Dest {{ com Destination }} {{ tex \ottmv{-}[[x]]:^{[[n]]}\, [[A]] }}
+%  | x : A :: :: LocalVar
+  | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
+  | + l : A :: :: Hole {{ com Hole }} {{ tex \ottlb{+}[[l]]:[[A]] }}
+  | - l : A :: :: Dest {{ com Destination }} {{ tex \ottlb{-}[[l]]:[[A]] }}
 
 type_affects :: 'TyAffs_' ::= {{ com type affectations }}
   | ta :: :: Single
@@ -232,7 +213,7 @@ typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com typi
   | { type_affects } ::    :: Affs
   | G1 µ G2    ::    :: Disjoint
   | G1 µ+ G2 :: :: DisjointInteract
-  % | G1 µ~ G2 :: :: HDisjoint
+  | G [ m1 -> m2 ] :: :: OverwriteMode
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -251,62 +232,53 @@ typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com typi
 %   | sssssse :: :: space6e {{ tex \myspace{6} }}
 
 terminals :: 'terminals_' ::=
-  | := :: :: subwith {{ tex := }}
+% === Type syntax ===
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | ><| :: :: rtimes {{ tex \ottty{\rtimes} }}
+  % | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
+
+% === Term syntax ===
   | ->                                     ::   :: mapsto       {{ tex \mapsto }}
-  | |- :: :: turnstile {{ tex \vdash }}
-  | µ :: :: dunion {{ tex \sqcup }}
-  | µ+ :: :: sdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\pm$} } }}
-  % | µ~ :: :: hdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{-.7ex}{\hspace{.18ex}\text{\textasciitilde}\!}~\,} }}
-  | '{}' :: :: empty {{ tex \{\} }}
-  | != :: :: neq {{ tex \neq }}
-  | in :: :: in {{ tex \in }}
-  | notin :: :: notin {{ tex \notin }}
-  % | b :: :: linebreak {{ tex \mynewline }}
-  % | o :: :: bottom {{ tex \ottcons{\bullet} }}
   | () :: :: unit {{ tex \ottcons{()} }}
   | Inl :: :: inl {{ tex \ottcons{Inl} }}
   | Inr :: :: inr {{ tex \ottcons{Inr} }}
   | <,> :: :: prod {{ tex \ottcons{\langle{,}\rangle} }}
+  | ¤ :: :: mparcomma {{ tex \mparcomma }}
   | <| :: :: fill {{ tex \triangleleft }}
   | <|. :: :: fillcomp {{ tex \triangleleft\cdot\, }}
-  % | <&> :: :: flipmap {{ tex \succ\!\!\!\succ }}
-  % | S :: :: s {{ tex \ottcons{S} }}
-  % | !c :: :: expc {{ tex \expc{} }}
-  % | !w :: :: expw {{ tex \expw{} }}
-  % | mpar :: :: mpar {{ tex \mpar{} }}
-  % | Dest :: :: dest {{ tex \ottcons{Dest}\, }}
-  % | <| :: :: pointsto {{ tex \storearrow }}
-  | '|' :: :: against {{ tex \,|\, }}
-  | !! :: :: downto {{ tex \Downarrow }}
-  % | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
+  | ';' :: :: sep {{ tex ~;\, }}
+  % | <&> :: :: flipmap {{ tex \prec\!\!{\scriptstyle\ottkw{mapL} }\!\!\succ }}
   % | _!_ :: :: bottom {{ tex \ottty{\bot} }}
+
+% === Contexts ===
+  | µ :: :: dunion {{ tex \sqcup }}
+  | µ+ :: :: sdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\pm$} } }}
+  | '{}' :: :: empty {{ tex \{\} }}
+
+% === Judgements ===
+  | != :: :: neq {{ tex \neq }}
+  | <= :: :: leq {{ tex \leq }}
+  | in :: :: in {{ tex \in }}
+  | notin :: :: notin {{ tex \notin }}
   | includedin :: :: includedin {{ tex \subset }}
   | names :: :: names {{ tex \mathcal{N} }}
-  | => :: :: implies {{ tex \implies }}
-  % | and :: :: land {{ tex \land }}
-  | ';' :: :: sep {{ tex ~;\, }}
-  % | '.' :: :: comp {{ tex \,.\, }}
-  % | * :: :: deref {{ tex \star }}
-  | ¤ :: :: mparcomma {{ tex \mparcomma }}
+
+% === Typing ===
+  | |- :: :: turnstile {{ tex \vdash }}
+
+% === Semantics ===
   | --> :: :: rlocal {{ tex \longrightarrow }}
   | ~~> :: :: rglobal {{ tex \rightsquigarrow }}
-  % | with :: :: with {{ tex ~\textsf{with}~ }}
-  % | nu :: :: nu {{ tex \nu\! }}
-  % | \/ :: :: or {{ tex ~~\lor~~ }}
+  % | !! :: :: downto {{ tex \Downarrow }}
 
 defns
 Ctx :: '' ::=
 
 defn
-x != y :: :: CtxVarNe :: CtxVarNe_ by
-
-defn
 x in names ( G ) :: :: CtxVarIn :: CtxVarIn_ by
 
 defn
-x in names ( G ) :: :: CtxLblIn :: CtxLblIn_ by
+l in names ( G ) :: :: CtxLblIn :: CtxLblIn_ by
 
 defn
 x notin names ( G ) :: :: CtxVarNotIn :: CtxVarNotIn_ by
@@ -315,52 +287,36 @@ defn
 l notin names ( G ) :: :: CtxLblNotIn :: CtxLblNotIn_ by
 
 defn
+fresh x :: :: FreshVar :: FreshVar_ by
+
+defn
+fresh l :: :: FreshLbl :: FreshLbl_ by
+
+defn
 type_affect in G :: :: CtxTyAffIn :: CtxTyAffIn_ by
 
 defn
-ctxdisjoint2 G1 G2 :: :: CtxDisjoint2 :: CtxDisjoint2_ {{ com $[[G1]]$~~and~~$[[G2]]$ are disjoint typing contexts}} {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }} by
-
-defn
-G3 = G1 µ+ G2 :: :: CtxInteract :: CtxInteract_
-
-defn
-fresh x :: :: FreshVarHole :: FreshVarHole_ by
-
-% defns
-% Heap :: '' ::=
-
-% defn
-% heap_affect in H :: :: HeapAffIn :: HeapAffIn_ by
-
-% defn
-% l in names ( H ) :: :: HeapLblIn :: HeapLblIn_ by
-
-% defn
-% l notin names ( H ) :: :: HeapLblNotIn :: HeapLblNotIn_ by
+comparable_modes ( G ) :: :: CtxModeCompat :: CtxModeCompat_ {{ tex \ottkw{comparable\_modes}([[G]]) }} by
 
 defns
 Eq :: '' ::=
 
 defn
-A1 = A2 :: :: EqType :: EqType_ {{ tex [[A1]] = [[A2]] }} by
+A1 = A2 :: :: EqType :: EqType_ by
 defn
-A1 != A2 :: :: NeqType :: NeqType_ {{ tex [[A1]] \neq [[A2]] }} by
+A1 != A2 :: :: NeqType :: NeqType_ by
 defn
-t = u :: :: EqTerm :: EqTerm_ {{ tex [[t]] = [[u]] }} by
+t = u :: :: EqTerm :: EqTerm_ by
 defn
-G = D :: :: EqContext :: EqContext_ {{ tex [[G]] = [[D]] }} by
-
-defns
-Scope :: '' ::=
-
+t != u :: :: NeqTerm :: NeqTerm_ by
 defn
-s1 < s2 :: :: ScopeLt :: ScopeLt_ by
+m1 = m2 :: :: EqMode :: EqMode_ by
 defn
-s1 <= s2 :: :: ScopeLeq :: ScopeLeq_ {{ tex [[s1]] \leq [[s2]] }} by
+m1 <= m2 :: :: LeqMode :: LeqMode_ by
 defn
-s1 > s2 :: :: ScopeGt :: ScopeGt_ by
+G1 = G2 :: :: EqCtx :: EqCtx_ {{ tex [[G1]] = [[G2]] }} by
 defn
-s1 >= s2 :: :: ScopeGeq :: ScopeGeq_ {{ tex [[s1]] \geq [[s2]] }} by
+G1 disjoint G2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }} by
 
 defns
 Ty :: '' ::=
@@ -370,73 +326,128 @@ Ty :: '' ::=
 % Une dest qui parait plus jeune qu'elle ne l'est pourrait servir à faire fuiter une dest dans le scope parent, mais impossible tant que son type ne change pas -> aucun problème à prendre le max des dates de naissance.
 
 defn
-s G |- t : n A :: :: TyTerm :: TyTerm_ {{ tex ^{[[s]]}\,[[G]][[|-]][[t]]:^{[[n]]}\,[[A]] }} by
+G |- t : m A :: :: TyTerm :: TyTerm_ {{ tex [[G]][[|-]][[t]]\,:_{[[m]]}[[A]] }} by
 
-% m G |- t : n A
-% ----------------- :: FastForward
-% m + 1 G |- t : n A
+G |- t : _G A
+----------------- :: WeakenLocal
+G |- fromGlobal t : m A
 
----------------- :: VarHole
-m { x : A } |- x : A
+_G = max_mode(G)
+G |- t : m A
+----------------- :: WeakenForeign
+G |- toGlobal t : _G A
 
-n <= m
+---------------- :: Hole
+{ + l : A } |- l : m A
+
+% -l behaves as a global binding
 ---------------- :: Dest
-m { - x : A } |- @x : (Dest A)^s
+{ - l : A } |- @l : m Dest A
 
 ---------------- :: Unit
-m {} |- () : 1^0
+{} |- () : _G 1
 
-m G |- v : P1^n1
+% Dynamic values cannot contain variables in G as it isn't a value of form v
+
+G |- v : m A1
 ---------------- :: Inl
-m G |- Inl v : (P1^n1 + P2^n2)^max(n1, n2)
+G |- Inl v : m A1 + A2
 
-m G |- v : P2^n2
+G |- v : m A2
 ---------------- :: Inr
-m G |- Inr v : (P1^n1 + P2^n2)^max(n1, n2)
+G |- Inr v : m A1 + A2
 
-m G1 |- v1 : P1^n1
-m G2 |- v2 : P2^n2
+G1 |- v1 : m A1
+G2 |- v2 : m A2
 ----------------- :: Prod
-m G1 µ G2 |- < v1, v2 > : (P1^n1 * P2^n2)^max(n1, n2)
+G1 µ G2 |- < v1, v2 > : m A1 * A2
 
-m G1 |- v1 : A1
-m G2 |- v2 : A2
+% if an Ampar ever contains holes inside, they must come from a nested Ampar that would neutralized them before they reach the context of the top Ampar
+% left side isn't allowed to contain holes (nor variables of any type because of shape v); should we enforce that?
+% right side can contain both holes and destinations, but no variables of any type because of shape v
+
+G1 |- v1 : _ A1
+G2 |- v2 : _ A2
 G3 = G1 µ+ G2
------------------ :: Incomplete
-m G3 |- < v1 ¤ v2 > : (A1 i ><| A2)^max(A1[i := 0])
+----------------- :: Ampar
+G3 |- < v1 ¤ v2 > : m2 A1 m1 ><| A2
 
-m G µ { x : A1 } |- t : A2
+G µ { x : m1 A1 } |- t : m2 A2
+comparable_modes(G µ { x : m1 A1 })
+m1 = max_mode(G µ { x : m1 A1 })
 ----------------- :: Lambda
-m G |- \x:A.t : max(G) A1 --o A2
+G |- \x -> t : m1 A1 --o m2 A2
 
-m G1 |- t : n n1 A1 --o n2 A2
-m G2 |- u : n1 A1
+G1 |- t : m1 A1 --o m2 A2
+G2 |- u : m1 A1
 ----------------- :: App
-m G1 µ G2 |- t u : n2 A2
+G1 µ G2 |- t u : m2 A2
 
-% TODO: should be n or 0?
-m G1 |- t : 0 1
-m G2 |- u : A
+G1 |- t : m 1
+G2 |- u : m' B
 ----------------- :: PatUnit
-m G1 µ G2 |- t ; u : A
+G1 µ G2 |- t ; u : m' B
 
-m G1 |- t : (A1 + A2)^n
-m G2 µ { x : A1 } |- u1 : B
-m G2 µ { x : A2 } |- u2 : B
+G1 |- t : m A1 + A2
+G2 µ { x1 : m A1 } |- u1 : m' B
+G2 µ { x2 : m A2 } |- u2 : m' B
 ----------------- :: PatSum
-m G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : B
+G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : m' B
 
-m G1 |- t : (A1 * A2)^n
-m G2 µ { x1 : A1, x2 : A2 } |- u : B
+G1 |- t : m A1 * A2
+G2 µ { x1 : m A1, x2 : m A2 } |- u : m' B
 ----------------- :: PatProd
-m G1 µ G2 |- case t of { < x1 , x2 > -> u } : B
+G1 µ G2 |- case t of { < x1 , x2 > -> u } : m' B
 
-% inv : n <= s(Left). Any captured value must appear in the signature. if n < s(Left) it means Left is only dest neutralized by the ¤. So 
-% case < @h ¤ h> of { <x ¤ _> -> <<x ¤ h> ¤ _> } ??
+% m2 : how the ampar behaves as a value carrier, ultimately mode of the value extracted with fromAmpar
+% m1 : mode that should be given to x when we map over the ampar
+% m2' = max_mode(G1 µ G2) ?
+% any previously captured dest will appear in G1, that way we cannot go from foreign
+% to global just by mapping \x -> x
+G1 |- t : m2 A1 m1 ><| A2
+comparable_modes(G2)
+m2' = max_mode(G1 µ G2)
+G2[ _L -> _F ] µ { x : m1 A1 } |- u : m1' A1'
+-------------------------------- :: MapAmpar
+G1 µ G2 |- t <&> \ x -> u : m2' A1' m1' ><| A2
 
-% mapL \() -> d : d appears in context; new lifetime = s(d) = lifetime output > before
-% mapL \d -> d : d doesn't appear in context; new lifetime = old = lifetime output
-% mapL \d -> () : d doesn't appear in context; new lifetime = old != lifetime output
-% mapL \d1 -> d1 <| (); d2 where s(d2) < s(d1) : d2 appears in context; new lifetime = lifetime output < old
-m G1 |- t : (A1 ><| A2)^n
-m G2 µ { x : A1 } |- 
+-------------------------------- :: Alloc
+{} |- alloc : _G (Dest A2) _L ><| A2
+
+G |- t : m A
+------------------------------- :: ToAmpar
+G |- toAmpar t : m 1 _G ><| A
+
+G |- t : m 1 _ ><| A
+------------------------------- :: FromAmpar
+G |- fromAmpar t : m A
+
+G |- t : _ Dest 1
+------------------------------ :: FillUnit
+G |- t <| () : _G 1
+
+G |- t : m Dest (A1 + A2)
+------------------------------ :: FillInl
+G |- t <| Inl : m Dest A1
+
+G |- t : m Dest (A1 + A2)
+------------------------------ :: FillInr
+G |- t <| Inr : m Dest A2
+
+G |- t : m Dest (A1 * A2)
+------------------------------ :: FillProd
+G |- t <| <,> : m Dest A1 * Dest A2
+
+G1 |- t : _L Dest A2
+G2 |- u : m2 A1 m1 ><| A2
+m2 <= _F
+----------------------------- :: FillCompL
+G1 µ G2 |- t <|. u : m1 A1
+
+G1 |- t : _F Dest A2
+G2 |- u : _G A1 m1 ><| A2
+----------------------------- :: FillCompF
+G1 µ G2 |- t <|. u : m1 A1
+
+parsing
+Ty_Prod <= Ty_Dest 
