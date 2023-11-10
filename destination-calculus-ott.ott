@@ -108,7 +108,7 @@ embed
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
 
-metavar termvar, x, y, h ::=
+metavar termvar, x, y, d ::= {{ com Term-level variable }}
   {{ tex \ottmv{[[termvar]]} }}
 
 % metavar idxvar, i ::=
@@ -116,13 +116,13 @@ metavar termvar, x, y, h ::=
 
 grammar
 
-label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }}
+label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }} {{ com Label }}
 
-mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }}
-  | _ :: :: Placeholder {{ tex \ottmod{\_} }}
-  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }}
-  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }}
-  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }}
+mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
+  | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
+  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
+  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
+  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
   | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
 
 type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
@@ -161,7 +161,7 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]} }} {{ com Wrap $[[t]]$ into a trivial ampar }}
   | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]} }} {{ com Extract value from trivial ampar }}
 
-  | alloc :: :: Alloc {{ com Return a fresh "identity" Ampar object }}
+  | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }}
   | t <| () :: :: FillUnit {{ com Fill destination with unit }}
   | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
   | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
@@ -362,16 +362,15 @@ G2 |- v2 : m A2
 ----------------- :: Prod
 G1 µ G2 |- < v1, v2 > : m A1 * A2
 
-% if an Ampar ever contains holes inside, they must come from a nested Ampar that would neutralized them before they reach the context of the top Ampar
 % left side isn't allowed to contain holes (nor variables of any type because of shape v); should we enforce that?
-% right side can contain both holes and destinations, but no variables of any type because of shape v
-
+% right side can contain both holes and destinations
 G1 |- v1 : _ A1
 G2 |- v2 : _ A2
 G3 = G1 µ+ G2
 ----------------- :: Ampar
 G3 |- < v1 ¤ v2 > : m2 A1 m1 ><| A2
 
+% m1 : how the closure behaves as a value carrier
 G µ { x : m1 A1 } |- t : m2 A2
 comparable_modes(G µ { x : m1 A1 })
 m1 = max_mode(G µ { x : m1 A1 })
@@ -401,11 +400,9 @@ G1 µ G2 |- case t of { < x1 , x2 > -> u } : m' B
 
 % m2 : how the ampar behaves as a value carrier, ultimately mode of the value extracted with fromAmpar
 % m1 : mode that should be given to x when we map over the ampar
-% m2' = max_mode(G1 µ G2) ?
-% any previously captured dest will appear in G1, that way we cannot go from foreign
-% to global just by mapping \x -> x
+% m2' = max_mode(G1 µ G2) because any previously captured dest will appear in G1, that way we cannot go from foreign to global just by mapping \x -> x
 G1 |- t : m2 A1 m1 ><| A2
-comparable_modes(G2)
+comparable_modes(G1 µ G2)
 m2' = max_mode(G1 µ G2)
 G2[ _L -> _F ] µ { x : m1 A1 } |- u : m1' A1'
 -------------------------------- :: MapAmpar
