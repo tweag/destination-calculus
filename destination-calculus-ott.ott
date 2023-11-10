@@ -124,13 +124,20 @@ mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
   | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
   | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
   | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
+  | if mode_cond then m3 else m4 :: :: If {{ tex \ottmod{if}~[[mode_cond]]~\ottmod{then}~[[m3]]~\ottmod{else}~[[m4]] }}
+
+mode_cond :: 'ModeCond' ::= {{ com Mode statement }}
+  | m1 = m2 :: :: Eq
+  | m1 <= m2 :: :: Leq
+  | m in suprmodes ( G ) :: :: Supr
+  | exists m in suprmodes ( G ) :: :: ExistsSupr
 
 type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
   | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
   | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
-  | A1 m1 ><| A2 :: :: Ampar {{ tex [[A1]]\,_{[[m1]]}\![[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | A1 --o m2 A2 :: :: Lambda {{ tex [[A1]]\,[[--o]]_{\![[m2]]}\,[[A2]] }} {{ com Linear function }}
+  | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
+  | m1 A1 --o A2 :: :: Lambda {{ tex _{[[m1]]}[[A1]]\,[[--o]]\,[[A2]] }} {{ com Linear function }}
   | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
   | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
 
@@ -156,8 +163,8 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | case t of { < x1 , x2 > -> u }            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{\langle}\,[[x1]]\,\ottcons{,}~[[x2]]\,\ottcons{\rangle}\,[[->]]\,[[u]]\,\} }}
   | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex \ottkw{mapL}~[[t]]~\ottkw{with}~\{\,[[x]]\,[[->]]\,[[u]]\,\} }}
 
-  | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
-  | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion from ${\ottmod{\scriptstyle G} }$ }}
+  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
+  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion from ${\ottmod{\scriptstyle G} }$ }}
   | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]} }} {{ com Wrap $[[t]]$ into a trivial ampar }}
   | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]} }} {{ com Extract value from trivial ampar }}
 
@@ -256,6 +263,7 @@ terminals :: 'terminals_' ::=
   | '{}' :: :: empty {{ tex \{\} }}
 
 % === Judgements ===
+  | exists :: :: exists {{ tex \exists }}
   | != :: :: neq {{ tex \neq }}
   | <= :: :: leq {{ tex \leq }}
   | in :: :: in {{ tex \in }}
@@ -296,7 +304,7 @@ defn
 type_affect in G :: :: CtxTyAffIn :: CtxTyAffIn_ by
 
 defn
-comparable_modes ( G ) :: :: CtxModeCompat :: CtxModeCompat_ {{ tex \ottkw{comparable\_modes}([[G]]) }} by
+mode_cond :: :: ModeCond :: ModeCond_ by
 
 defns
 Eq :: '' ::=
@@ -310,10 +318,6 @@ t = u :: :: EqTerm :: EqTerm_ by
 defn
 t != u :: :: NeqTerm :: NeqTerm_ by
 defn
-m1 = m2 :: :: EqMode :: EqMode_ by
-defn
-m1 <= m2 :: :: LeqMode :: LeqMode_ by
-defn
 G1 = G2 :: :: EqCtx :: EqCtx_ {{ tex [[G1]] = [[G2]] }} by
 defn
 G1 disjoint G2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }} by
@@ -326,125 +330,128 @@ Ty :: '' ::=
 % Une dest qui parait plus jeune qu'elle ne l'est pourrait servir à faire fuiter une dest dans le scope parent, mais impossible tant que son type ne change pas -> aucun problème à prendre le max des dates de naissance.
 
 defn
-G |- t : m A :: :: TyTerm :: TyTerm_ {{ tex [[G]][[|-]][[t]]\,:_{[[m]]}[[A]] }} by
+G |- t : A :: :: TyTerm :: TyTerm_ {{ tex [[G]][[|-]][[t]]\,:[[A]] }} by
 
-G |- t : _G A
------------------ :: WeakenLocal
-G |- fromGlobal t : m A
+% G |- t : _G A
+% ----------------- :: WeakenLocal
+% G |- fromGlobal t : m A
 
-_G = max_mode(G)
-G |- t : m A
------------------ :: WeakenForeign
-G |- toGlobal t : _G A
+% _G = max_mode(G)
+% G |- t : m A
+% ----------------- :: WeakenForeign
+% G |- toGlobal t : _G A
 
 ---------------- :: Hole
-{ + l : A } |- l : m A
+{ + l : A } |- l : A
 
 % -l behaves as a global binding
 ---------------- :: Dest
-{ - l : A } |- @l : m Dest A
+{ - l : A } |- @l : Dest A
 
 ---------------- :: Unit
-{} |- () : _G 1
+{} |- () : 1
 
 % Dynamic values cannot contain variables in G as it isn't a value of form v
 
-G |- v : m A1
+G |- v : A1
 ---------------- :: Inl
-G |- Inl v : m A1 + A2
+G |- Inl v : A1 + A2
 
-G |- v : m A2
+G |- v : A2
 ---------------- :: Inr
-G |- Inr v : m A1 + A2
+G |- Inr v : A1 + A2
 
-G1 |- v1 : m A1
-G2 |- v2 : m A2
+G1 |- v1 : A1
+G2 |- v2 : A2
 ----------------- :: Prod
-G1 µ G2 |- < v1, v2 > : m A1 * A2
+G1 µ G2 |- < v1, v2 > : A1 * A2
 
 % left side isn't allowed to contain holes (nor variables of any type because of shape v); should we enforce that?
 % right side can contain both holes and destinations
-G1 |- v1 : _ A1
-G2 |- v2 : _ A2
+G1 |- v1 : A1
+G2 |- v2 : A2
 G3 = G1 µ+ G2
 ----------------- :: Ampar
-G3 |- < v1 ¤ v2 > : m2 A1 m1 ><| A2
+G3 |- < v1 ¤ v2 > : A1 ><| A2
 
-% m1 : how the closure behaves as a value carrier
-G µ { x : m1 A1 } |- t : m2 A2
-comparable_modes(G µ { x : m1 A1 })
-m1 = max_mode(G µ { x : m1 A1 })
+G µ { x : m1 A1 } |- t : A2
 ----------------- :: Lambda
-G |- \x -> t : m1 A1 --o m2 A2
+G |- \x -> t : m1 A1 --o A2
 
-G1 |- t : m1 A1 --o m2 A2
-G2 |- u : m1 A1
+G1 |- t : m1 A1 --o A2
+G2 |- u : A1
+m1 in suprmodes(G2)
 ----------------- :: App
-G1 µ G2 |- t u : m2 A2
+G1 µ G2 |- t u : A2
 
-G1 |- t : m 1
-G2 |- u : m' B
+G1 |- t : 1
+G2 |- u : B
 ----------------- :: PatUnit
-G1 µ G2 |- t ; u : m' B
+G1 µ G2 |- t ; u : B
 
-G1 |- t : m A1 + A2
-G2 µ { x1 : m A1 } |- u1 : m' B
-G2 µ { x2 : m A2 } |- u2 : m' B
+G1 |- t : A1 + A2
+exists m in suprmodes (G1)
+G2 µ { x1 : m A1 } |- u1 : B
+G2 µ { x2 : m A2 } |- u2 : B
 ----------------- :: PatSum
-G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : m' B
+G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : B
 
-G1 |- t : m A1 * A2
-G2 µ { x1 : m A1, x2 : m A2 } |- u : m' B
+G1 |- t : A1 * A2
+exists m in suprmodes (G1)
+G2 µ { x1 : m A1, x2 : m A2 } |- u : B
 ----------------- :: PatProd
-G1 µ G2 |- case t of { < x1 , x2 > -> u } : m' B
+G1 µ G2 |- case t of { < x1 , x2 > -> u } : B
 
-% m2 : how the ampar behaves as a value carrier, ultimately mode of the value extracted with fromAmpar
-% m1 : mode that should be given to x when we map over the ampar
-% m2' = max_mode(G1 µ G2) because any previously captured dest will appear in G1, that way we cannot go from foreign to global just by mapping \x -> x
-G1 |- t : m2 A1 m1 ><| A2
-comparable_modes(G1 µ G2)
-m2' = max_mode(G1 µ G2)
-G2[ _L -> _F ] µ { x : m1 A1 } |- u : m1' A1'
+G1 |- t : A1 ><| A2
+% ensures that we cannot capture dests of different scopes (G2)
+exists m' in suprmodes(G1 µ G2)
+m = if _F in suprmodes(G1) then _F else _L
+G2[ _L -> _F ] µ { x : m A1 } |- u : B
 -------------------------------- :: MapAmpar
-G1 µ G2 |- t <&> \ x -> u : m2' A1' m1' ><| A2
+G1 µ G2 |- t <&> \ x -> u : B ><| A2
 
 -------------------------------- :: Alloc
-{} |- alloc : _G (Dest A2) _L ><| A2
+{} |- alloc : Dest A ><| A
 
-G |- t : m A
+G |- t : A
 ------------------------------- :: ToAmpar
-G |- toAmpar t : m 1 _G ><| A
+G |- toAmpar t : 1 ><| A
 
-G |- t : m 1 _ ><| A
+G |- t : 1 ><| A
 ------------------------------- :: FromAmpar
-G |- fromAmpar t : m A
+G |- fromAmpar t : A
 
-G |- t : _ Dest 1
+G |- t : Dest 1
 ------------------------------ :: FillUnit
-G |- t <| () : _G 1
+G |- t <| () : 1
 
-G |- t : m Dest (A1 + A2)
+G |- t : Dest (A1 + A2)
 ------------------------------ :: FillInl
-G |- t <| Inl : m Dest A1
+G |- t <| Inl : Dest A1
 
-G |- t : m Dest (A1 + A2)
+G |- t : Dest (A1 + A2)
 ------------------------------ :: FillInr
-G |- t <| Inr : m Dest A2
+G |- t <| Inr : Dest A2
 
-G |- t : m Dest (A1 * A2)
+G |- t : Dest (A1 * A2)
 ------------------------------ :: FillProd
-G |- t <| <,> : m Dest A1 * Dest A2
+G |- t <| <,> : Dest A1 * Dest A2
 
-G1 |- t : _L Dest A2
-G2 |- u : m2 A1 m1 ><| A2
-m2 <= _F
+G1 |- t : Dest A2
+G2 |- u : A1 ><| A2
+_L in suprmodes(G1)
+_F in suprmodes(G2)
 ----------------------------- :: FillCompL
-G1 µ G2 |- t <|. u : m1 A1
+G1 µ G2 |- t <|. u : A1
 
-G1 |- t : _F Dest A2
-G2 |- u : _G A1 m1 ><| A2
+G1 |- t : Dest A2
+G2 |- u : A1 ><| A2
+_F in suprmodes(G1)
+_G in suprmodes(G2)
 ----------------------------- :: FillCompF
-G1 µ G2 |- t <|. u : m1 A1
+G1 µ G2 |- t <|. u : A1
 
 parsing
-Ty_Prod <= Ty_Dest 
+Ty_Prod <= Ty_Dest
+Ty_Sum <= Ty_Dest
+Ty_Ampar <= Ty_Dest
