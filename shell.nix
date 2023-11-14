@@ -29,6 +29,7 @@ pkgs.mkShell
           stmaryrd
           tipa
           bbold
+#          bm
           # mathptmx
           # minted
           # minted fvextra catchfile xstring kvoptions fancyvrb

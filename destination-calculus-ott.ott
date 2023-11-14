@@ -2,7 +2,9 @@
 
 embed
 {{ tex-preamble
-\usepackage{stmaryrd}
+%\usepackage{stmaryrd}
+\usepackage[T1]{fontenc}
+%\usepackage{lmodern}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{abraces}
 \usepackage{amsmath}
@@ -11,35 +13,46 @@ embed
 \usepackage{enumitem}
 \usepackage{bbold}
 \DeclareSymbolFont{bbsymbol}{U}{bbold}{m}{n}
-\DeclareMathSymbol{\bbsemicolon}{\mathbin}{bbsymbol}{"3B}
 \DeclareMathSymbol{\bbcomma}{\mathbin}{bbsymbol}{"2C}
-%\usepackage{mathptmx}
-\definecolor{mvcolor}{RGB}{119, 24, 201}
-\definecolor{tycolor}{RGB}{26, 87, 186}
-\definecolor{ntcolor}{RGB}{105, 105, 105}
-\definecolor{spcolor}{RGB}{5, 115, 12}
-\definecolor{lbcolor}{RGB}{186, 58, 7}
-\definecolor{modecolor}{RGB}{200, 120, 211}
-\definecolor{effcolor}{RGB}{186, 58, 7}
+\DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sbc}{n}
+\definecolor{ntcolor}{RGB}{75, 75, 75}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
-\definecolor{holecolor}{RGB}{25,77,112}
+\definecolor{lbcolor}{HTML}{F8980F} % yellow-orange, underlined
+\definecolor{tycolor}{HTML}{176FC1} % blue, bold
+\definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
+\definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
+\definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
+\definecolor{holecolor}{HTML}{F14B2D} % red, itshape
 \newlength{\deltaraise}
 \setlength{\deltaraise}{1.5pt}
 \newcommand{\nicefrac}[2]{\mathrel{\raisebox{\deltaraise}{$ #1 $} }\!\!/\!\!\mathrel{\raisebox{-\deltaraise}{$ #2 $} } }
-\newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsf{#1} } }
+\newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsfbf{#1} } }
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
+\newcommand{\ottextval}[1]{\textcolor{ntcolor}{\mathsf{\replacewv{\overline{#1} } } } }
+\newcommand{\ottextterm}[1]{\textcolor{ntcolor}{\mathsf{\replacejt{\overline{#1} } } } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
-\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsf{#1} } }
-\newcommand{\ottdefault}[1]{\textcolor{black}{\mathsf{#1} } }
-\newcommand{\ottcons}[1]{\mathsf{#1} }
-\newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
-\newcommand{\ottlb}[1]{\textcolor{lbcolor}{#1} }
-\newcommand{\otthol}[1]{\textcolor{holecolor}{#1} }
-\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathsf{#1} } }
-\newcommand{\otteff}[1]{\textcolor{effcolor}{\mathsf{#1} } }
+\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1} } }
+\newcommand{\ottdefault}[1]{\textcolor{black}{#1} }
+\newcommand{\ottcons}[1]{\textcolor{black}{\mathsf{#1} } }
+\newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathit{#1} } }
+\newcommand{\ottlb}[1]{\textcolor{lbcolor}{\mathit{\underline{\replacelell{#1} } } } }
+\newcommand{\otthol}[1]{\textcolor{holecolor}{\mathit{#1} } }
+\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathtt{#1} } }
 \newcommand{\replacelell}[1]{%
   \begingroup%
   \mathcode`l=\ell%
+  #1%
+  \endgroup%
+}
+\newcommand{\replacejt}[1]{%
+  \begingroup%
+  \mathcode`j=\mathcode`t
+  #1%
+  \endgroup%
+}
+\newcommand{\replacewv}[1]{%
+  \begingroup%
+  \mathcode`w=\mathcode`v
   #1%
   \endgroup%
 }
@@ -103,7 +116,7 @@ embed
 \newcommand{\expw}{\ottty{\,\text{\makebox[0pt][l]{\raisebox{.4ex}{\scriptsize !} }\raisebox{0.05ex}{\hspace{-0.6ex}${\scriptscriptstyle\omega}$} } }\hspace{-0.7ex} }
 \newcommand{\putarrow}[1]{\!\overset{#1}{\triangleleft}\!}
 \newcommand{\lam}[3]{\ottcons{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
-\newcommand{\lamnt}[2]{\ottcons{\lambda}\,#1\,\textbf{.}\,#2}
+\newcommand{\lamnt}[2]{\ottcons{\lambda}#1\,\textbf{.}\,#2}
 \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\nuabs}[1]{\nu#1\textbf{.}\,}
 \newlength{\mylen}
@@ -127,14 +140,14 @@ label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }} {{ com Label }}
 hole, h :: 'Hole_' ::= {{ tex \otthol{[[hole]]} }} {{ com Hole }}
 
 mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
-  | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
+  % | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
   | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
   | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
   | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
   | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
-  | if mode_cond then m3 else m4 :: :: If {{ tex \ottmod{if}~[[mode_cond]]~\ottmod{then}~[[m3]]~\ottmod{else}~[[m4]] }}
+  | if mode_cond then m3 else m4 :: :: If
 
-mode_cond :: 'ModeCond' ::= {{ com Mode statement }}
+mode_cond :: 'ModeCond' ::= {{ com Mode statement }} {{ tex \ottmod{[[mode_cond]]} }}
   | m1 = m2 :: :: Eq
   | m1 <= m2 :: :: Leq
   | m in upper_modes ( G ) :: :: Supr
@@ -159,17 +172,17 @@ term_value, v :: 'TermVal_' ::= {{ com Term value }}
   | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | ( v ) :: S :: Paren
 
-extended_value, ev {{ tex \ottnt{\underline{v} } }} :: 'ExtVal_' ::= {{ com Store value }}
+extended_value, w :: 'ExtVal_' ::= {{ com Store value }} {{ tex \ottextval{[[extended_value]]} }}
   | v :: :: TermVal {{ com Term value }}
   | h :: :: Hole {{ com Hole }}
-  | Inl ev :: :: Inl {{ com Left variant with val or hole }}
-  | Inr ev :: :: Inr {{ com Right variant with val or hole }}
-  | ( ev1 , ev2 ) :: :: Prod {{ tex \ottcons{(}[[ev1]]\,\ottcons{,}~[[ev2]]\ottcons{)} }} {{ com Product with val or hole }}
-  | ( ev ) :: S :: Paren
+  | Inl w :: :: Inl {{ com Left variant with val or hole }}
+  | Inr w :: :: Inr {{ com Right variant with val or hole }}
+  | ( w1 , w2 ) :: :: Prod {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
+  | ( w ) :: S :: Paren
 
 store_affect, ha :: 'StoreAff_' ::=
-  | l -> < v1 ¤ ev2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}\,[[v1]]\,\ottcons{\bbcomma}~[[ev2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[ev2]]$ is the root of the structure being built) }}
-  | l -> < [] ¤ ev2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\,\square\,\ottcons{\bbcomma}~[[ev2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[ev2]]$ is the root of the structure being built) }}
+  | l -> < v1 ¤ w2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Closed ampar ($[[w2]]$ = root of the incomplete struct) }}
+  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\square\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
 
 store_affects :: 'StoreAffs_' ::=
   | ha :: :: Single
@@ -177,8 +190,8 @@ store_affects :: 'StoreAffs_' ::=
 
 store, S :: 'Store_' ::=
   | {} :: :: Empty {{ tex [] }}
-  | { store_affects } :: :: Affs {{ tex [ [[store_affects]] ] }}
-  | S [ e ] :: :: OverwriteMode
+  | { store_affects } :: :: Affs {{ tex [\, [[store_affects]] \,] }}
+  | S [ subs ] :: :: Subs
   | S1 µ S2 :: :: Disjoint
 
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
@@ -203,32 +216,28 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
 
   | ( t )                                   :: S :: Paren
-  | t [ e ]                             :: M :: SubEff
+  | t [ subs ]                             :: M :: Subs
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
   % | t b spe :: S :: BreakSpacing3
 
-extended_term, et {{ tex \ottnt{\underline{t} } }} :: 'ExtTerm_' ::= {{ com Extended term }}
+extended_term, j :: 'ExtTerm_' ::= {{ com Extended term }} {{ tex \ottextterm{[[extended_term]]} }}
   | t :: :: Term
-  | ev :: :: StoreVal
+  | w :: :: ExtVal
 
 sub :: 'Sub_' ::= {{ com variable or label substitution }}
   | x := v :: :: VarSub
-  | h := ev :: :: HoleSub
+  | h := w :: :: HoleSub
 
 subs :: 'Subs_' ::= {{ com variable or  substitutions }}
   | sub :: :: Single
   | sub , subs :: :: Multiple
 
-effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
-  | o :: :: NoEff {{ com empty effect }} {{ tex \otteff{\varepsilon} }}
-  | subs :: :: Sub
-
 type_affect, ta :: 'TyAff_' ::= {{ com type affectation }}
 %  | x : A :: :: LocalVar
   | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
-  | + l : A :: :: AmparPos {{ tex \ottlb{+}[[l]]:[[A]] }}
-  | - l : A :: :: AmparNeg {{ tex \ottlb{-}[[l]]:[[A]] }}
+  | + l : A :: :: AmparPos {{ tex \textcolor{lbcolor}{+}[[l]]:[[A]] }}
+  | - l : A :: :: AmparNeg {{ tex \textcolor{lbcolor}{-}[[l]]:[[A]] }}
   | + h : A :: :: Hole {{ com Hole }} {{ tex \otthol{+}[[h]]:[[A]] }}
   | - h : A :: :: Dest {{ com Destination }} {{ tex \otthol{-}[[h]]:[[A]] }}
 
@@ -370,16 +379,16 @@ G1 µ+ G2 |- S1 µ S2
 % left side isn't allowed to contain holes
 % right side can contain both holes and destinations
 G1 |- v1 : A1
-G2 |- ev2 : A2
+G2 |- w2 : A2
 ------------------ :: ClosedAmpar
-(G1 µ+ G2) µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ ev2 > }
+(G1 µ+ G2) µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ w2 > }
 
-G2 |- ev2 : A2
+G2 |- w2 : A2
 ------------------ :: OpenAmpar
-G2 |- { l -> < [] ¤ ev2 > }
+G2 |- { l -> < [] ¤ w2 > }
 
 defn
-G |- et : A :: :: TyTerm :: TyTerm_ by
+G |- j : A :: :: TyTerm :: TyTerm_ by
 
 ---------------- :: Ampar
 { + l : A } |- l : A
@@ -393,18 +402,18 @@ G |- et : A :: :: TyTerm :: TyTerm_ by
 ---------------- :: Unit
 {} |- () : 1
 
-G |- ev : A1
+G |- w : A1
 ---------------- :: Inl
-G |- Inl ev : A1 + A2
+G |- Inl w : A1 + A2
 
-G |- ev : A2
+G |- w : A2
 ---------------- :: Inr
-G |- Inr ev : A1 + A2
+G |- Inr w : A1 + A2
 
-G1 |- ev1 : A1
-G2 |- ev2 : A2
+G1 |- w1 : A1
+G2 |- w2 : A2
 ----------------- :: Prod
-G1 µ G2 |- ( ev1, ev2 ) : A1 * A2
+G1 µ G2 |- ( w1, w2 ) : A1 * A2
 
 G µ { x : m1 A1 } |- t : A2
 ----------------- :: Lambda
@@ -518,10 +527,10 @@ S1 | u[x1 := v1, x2 := v2] !! S2 | v2
 ----------------------- :: PatProd
 S0 | t & \case (x1,x2) -> u !! S2 | v2
 
-S0 | t !! S1 µ { l -> < v1 ¤ ev1 > } | l
-S1 µ { l -> < [] ¤ ev1 > } | u[x := v1] !! S2 µ { l -> < [] ¤ ev2 > } | v2
+S0 | t !! S1 µ { l -> < v1 ¤ w1 > } | l
+S1 µ { l -> < [] ¤ w1 > } | u[x := v1] !! S2 µ { l -> < [] ¤ w2 > } | v2
 ---------------------------------- :: MapAmpar
-S0 | t <&> \ x -> u !! S2 µ { l -> < v2 ¤ ev2 > } | l
+S0 | t <&> \ x -> u !! S2 µ { l -> < v2 ¤ w2 > } | l
 
 fresh h
 fresh l
@@ -558,9 +567,9 @@ fresh h2
 S0 | t <| (,) !! S1[h := (h1,h2)] | (@h1, @h2)
 
 S0 | t !! S1 | @h
-S1 | u !! S2 µ { l -> <v1 ¤ ev1> } | l
+S1 | u !! S2 µ { l -> <v1 ¤ w1> } | l
 ---------------------------------------- :: FillComp
-S0 | t <|. u !! S2[h := ev1] | v1
+S0 | t <|. u !! S2[h := w1] | v1
 
 parsing
 Ty_Prod <= Ty_Dest
