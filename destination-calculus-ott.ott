@@ -3,8 +3,9 @@
 embed
 {{ tex-preamble
 %\usepackage{stmaryrd}
+\geometry{a4paper,left=0.75cm,right=0.75cm,top=1.25cm,bottom=2cm}
 \usepackage[T1]{fontenc}
-%\usepackage{lmodern}
+\usepackage{lmodern}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{abraces}
 \usepackage{amsmath}
@@ -139,29 +140,6 @@ label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }} {{ com Label }}
 
 hole, h :: 'Hole_' ::= {{ tex \otthol{[[hole]]} }} {{ com Hole }}
 
-mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
-  % | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
-  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
-  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
-  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
-  | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
-  | if mode_cond then m3 else m4 :: :: If
-
-mode_cond :: 'ModeCond' ::= {{ com Mode statement }} {{ tex \ottmod{[[mode_cond]]} }}
-  | m1 = m2 :: :: Eq
-  | m1 <= m2 :: :: Leq
-  | m in upper_modes ( G ) :: :: Supr
-  | exists m in upper_modes ( G ) :: :: ExistsSupr
-
-type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
-  | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
-  | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
-  | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
-  | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | m1 A1 --o A2 :: :: Lambda {{ tex _{[[m1]]}[[A1]]\,[[--o]]\,[[A2]] }} {{ com Linear function }}
-  | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
-  | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
-
 term_value, v :: 'TermVal_' ::= {{ com Term value }}
   | l :: :: LblAmpar {{ com Label representing an Ampar }}
   | @ h :: :: Dest {{ tex \otthol{@}[[h]] }} {{ com Destination }}
@@ -179,20 +157,6 @@ extended_value, w :: 'ExtVal_' ::= {{ com Store value }} {{ tex \ottextval{[[ext
   | Inr w :: :: Inr {{ com Right variant with val or hole }}
   | ( w1 , w2 ) :: :: Prod {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
   | ( w ) :: S :: Paren
-
-store_affect, ha :: 'StoreAff_' ::=
-  | l -> < v1 ¤ w2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Closed ampar ($[[w2]]$ = root of the incomplete struct) }}
-  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\square\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
-
-store_affects :: 'StoreAffs_' ::=
-  | ha :: :: Single
-  | ha , store_affects :: :: Multiple
-
-store, S :: 'Store_' ::=
-  | {} :: :: Empty {{ tex [] }}
-  | { store_affects } :: :: Affs {{ tex [\, [[store_affects]] \,] }}
-  | S [ subs ] :: :: Subs
-  | S1 µ S2 :: :: Disjoint
 
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
   | v :: :: TermVal {{ com Term value }}
@@ -225,15 +189,60 @@ extended_term, j :: 'ExtTerm_' ::= {{ com Extended term }} {{ tex \ottextterm{[[
   | t :: :: Term
   | w :: :: ExtVal
 
-sub :: 'Sub_' ::= {{ com variable or label substitution }}
+sub :: 'Sub_' ::= {{ com Variable or label substitution }}
   | x := v :: :: VarSub
   | h := w :: :: HoleSub
 
-subs :: 'Subs_' ::= {{ com variable or  substitutions }}
+subs :: 'Subs_' ::= {{ com Substitutions }}
   | sub :: :: Single
   | sub , subs :: :: Multiple
 
-type_affect, ta :: 'TyAff_' ::= {{ com type affectation }}
+store, S :: 'Store_' ::=
+  | {} :: :: Empty {{ tex [] }}
+  | { store_assigns } :: :: Assigns {{ tex [\, [[store_assigns]] \,] }}
+  | S [ subs ] :: :: Subs
+  | S1 µ S2 :: :: Disjoint
+
+store_assign, ha :: 'StoreAssign_' ::=
+  | l -> < v1 ¤ w2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Closed ampar ($[[w2]]$ = root of the incomplete struct) }}
+  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\square\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
+
+store_assigns :: 'StoreAssigns_' ::=
+  | ha :: :: Single
+  | ha , store_assigns :: :: Multiple
+
+type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
+  | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
+  | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
+  | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
+  | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
+  | m1 A1 --o A2 :: :: Lambda {{ tex _{[[m1]]}[[A1]]\,[[--o]]\,[[A2]] }} {{ com Linear function }}
+  | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
+  | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
+
+mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
+  % | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
+  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
+  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
+  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
+  | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
+  | if mode_cond then m3 else m4 :: :: If
+
+mode_cond :: 'ModeCond' ::= {{ com Mode statement }} {{ tex \ottmod{[[mode_cond]]} }}
+  | m1 = m2 :: :: Eq
+  % | m1 <= m2 :: :: Leq
+  | m in upper_modes ( G ) :: :: Supr
+  | exists m in upper_modes ( G ) :: :: ExistsSupr
+
+typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com Typing context }}
+  | {}    ::   :: Empty
+  | { type_assigns } ::    :: Assigns
+  | G1 µ G2    ::    :: Disjoint
+  | G1 µ+ G2 :: :: DisjointInteract
+  | G [ m1 -> m2 ] :: :: OverwriteMode
+  | ( G ) :: S :: Paren
+
+type_assign, ta :: 'TyAssign_' ::= {{ com Type assignment }}
 %  | x : A :: :: LocalVar
   | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
   | + l : A :: :: AmparPos {{ tex \textcolor{lbcolor}{+}[[l]]:[[A]] }}
@@ -241,17 +250,9 @@ type_affect, ta :: 'TyAff_' ::= {{ com type affectation }}
   | + h : A :: :: Hole {{ com Hole }} {{ tex \otthol{+}[[h]]:[[A]] }}
   | - h : A :: :: Dest {{ com Destination }} {{ tex \otthol{-}[[h]]:[[A]] }}
 
-type_affects :: 'TyAffs_' ::= {{ com type affectations }}
+type_assigns :: 'TyAssigns_' ::= {{ com Type assignments }}
   | ta :: :: Single
-  | ta , type_affects :: :: Multiple
-
-typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com typing context }}
-  | {}    ::   :: Empty
-  | { type_affects } ::    :: Affs
-  | G1 µ G2    ::    :: Disjoint
-  | G1 µ+ G2 :: :: DisjointInteract
-  | G [ m1 -> m2 ] :: :: OverwriteMode
-  | ( G ) :: S :: Paren
+  | ta , type_assigns :: :: Multiple
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -329,7 +330,7 @@ defn
 fresh h :: :: FreshHole :: FreshHole_ by
 
 defn
-type_affect in G :: :: CtxTyAffIn :: CtxTyAffIn_ by
+type_assign in G :: :: CtxTyAssignIn :: CtxTyAssignIn_ by
 
 defn
 mode_cond :: :: ModeCond :: ModeCond_ by
