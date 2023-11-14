@@ -22,6 +22,7 @@ embed
 \definecolor{modecolor}{RGB}{200, 120, 211}
 \definecolor{effcolor}{RGB}{186, 58, 7}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
+\definecolor{holecolor}{RGB}{25,77,112}
 \newlength{\deltaraise}
 \setlength{\deltaraise}{1.5pt}
 \newcommand{\nicefrac}[2]{\mathrel{\raisebox{\deltaraise}{$ #1 $} }\!\!/\!\!\mathrel{\raisebox{-\deltaraise}{$ #2 $} } }
@@ -33,6 +34,7 @@ embed
 \newcommand{\ottcons}[1]{\mathsf{#1} }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathsf{#1} } }
 \newcommand{\ottlb}[1]{\textcolor{lbcolor}{#1} }
+\newcommand{\otthol}[1]{\textcolor{holecolor}{#1} }
 \newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathsf{#1} } }
 \newcommand{\otteff}[1]{\textcolor{effcolor}{\mathsf{#1} } }
 \newcommand{\replacelell}[1]{%
@@ -104,6 +106,10 @@ embed
 \newcommand{\lamnt}[2]{\ottcons{\lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\nuabs}[1]{\nu#1\textbf{.}\,}
+\newlength{\mylen}
+\setbox1=\hbox{$\bullet$}\setbox2=\hbox{$\scriptscriptstyle\bullet$}
+\setlength{\mylen}{\dimexpr0.5\ht1-0.5\ht2}
+\def\mybullet{\raisebox{\mylen}{$\scriptscriptstyle\bullet$} }
 }}
 
 %TODO: replace lambda see https://tex.stackexchange.com/questions/200910/replace-a-few-math-symbols-in-the-newtxmath-font
@@ -118,6 +124,8 @@ grammar
 
 label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }} {{ com Label }}
 
+hole, h :: 'Hole_' ::= {{ tex \otthol{[[hole]]} }} {{ com Hole }}
+
 mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
   | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
   | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
@@ -129,8 +137,8 @@ mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
 mode_cond :: 'ModeCond' ::= {{ com Mode statement }}
   | m1 = m2 :: :: Eq
   | m1 <= m2 :: :: Leq
-  | m in suprmodes ( G ) :: :: Supr
-  | exists m in suprmodes ( G ) :: :: ExistsSupr
+  | m in upper_modes ( G ) :: :: Supr
+  | exists m in upper_modes ( G ) :: :: ExistsSupr
 
 type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
@@ -141,38 +149,57 @@ type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
   | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
 
-dynamic_value, v :: 'DynVal_' ::= {{ com Dynamic value }}
-  % | o :: :: Bottom
-  % | W :: :: Witness {{ tex \Lam{[[s]]}{[[n]]} }} {{ com Unit-like representation for witnesses }}
-  | l :: :: Hole {{ com Hole }}
-  | @ l :: :: Dest {{ tex \ottlb{@}[[l]] }} {{ com Destination }}
+term_value, v :: 'TermVal_' ::= {{ com Term value }}
+  | l :: :: LblAmpar {{ com Label representing an Ampar }}
+  | @ h :: :: Dest {{ tex \otthol{@}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | Inl v :: :: Inl {{ com Left variant for sum }}
   | Inr v :: :: Inr {{ com Right variant for sum }}
-  | < v1 , v2 > :: :: Prod {{ tex \ottcons{\langle}\,[[v1]]\,\ottcons{,}~[[v2]]\,\ottcons{\rangle} }} {{ com Product }}
-  | < v1 ¤ v2 > :: :: Ampar {{ tex \ottcons{\langle}\,[[v1]]\,\ottcons{\bbcomma}~[[v2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[v2]]$ is the root of the structure being built) }}
+  | ( v1 , v2 ) :: :: Prod {{ tex \ottcons{(}[[v1]]\,\ottcons{,}~[[v2]]\ottcons{)} }} {{ com Product }}
   | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | ( v ) :: S :: Paren
 
+extended_value, ev {{ tex \ottnt{\underline{v} } }} :: 'ExtVal_' ::= {{ com Store value }}
+  | v :: :: TermVal {{ com Term value }}
+  | h :: :: Hole {{ com Hole }}
+  | Inl ev :: :: Inl {{ com Left variant with val or hole }}
+  | Inr ev :: :: Inr {{ com Right variant with val or hole }}
+  | ( ev1 , ev2 ) :: :: Prod {{ tex \ottcons{(}[[ev1]]\,\ottcons{,}~[[ev2]]\ottcons{)} }} {{ com Product with val or hole }}
+  | ( ev ) :: S :: Paren
+
+store_affect, ha :: 'StoreAff_' ::=
+  | l -> < v1 ¤ ev2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}\,[[v1]]\,\ottcons{\bbcomma}~[[ev2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[ev2]]$ is the root of the structure being built) }}
+  | l -> < [] ¤ ev2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\,\square\,\ottcons{\bbcomma}~[[ev2]]\,\ottcons{\rangle} }} {{ com Ampar ($[[ev2]]$ is the root of the structure being built) }}
+
+store_affects :: 'StoreAffs_' ::=
+  | ha :: :: Single
+  | ha , store_affects :: :: Multiple
+
+store, S :: 'Store_' ::=
+  | {} :: :: Empty {{ tex [] }}
+  | { store_affects } :: :: Affs {{ tex [ [[store_affects]] ] }}
+  | S [ e ] :: :: OverwriteMode
+  | S1 µ S2 :: :: Disjoint
+
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
-  | v :: :: DynVal {{ com Dynamic value }}
+  | v :: :: TermVal {{ com Term value }}
   | x :: :: Var {{ com Variable }}
   | t u                                    ::   :: App      {{ com Application }}
-  | t ; u                   ::   :: PatUnit {{ com Pattern-match on unit }}
-  | case t of { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com Pattern-match on sum }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{Inl}\,[[x1]]\,[[->]]\,[[u1]]\,,~\ottcons{Inr}\,[[x2]]\,[[->]]\,[[u2]]\,\} }}
-  | case t of { < x1 , x2 > -> u }            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex \ottkw{case}~[[t]]~\ottkw{of}~\{\,\ottcons{\langle}\,[[x1]]\,\ottcons{,}~[[x2]]\,\ottcons{\rangle}\,[[->]]\,[[u]]\,\} }}
-  | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex \ottkw{mapL}~[[t]]~\ottkw{with}~\{\,[[x]]\,[[->]]\,[[u]]\,\} }}
+  | t ; u                   ::   :: PatUnit {{ com Pattern-match on unit }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,[[()]]\![[->]]\,[[u]] }}
+  | t & \case { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com Pattern-match on sum }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\{\,\ottcons{Inl}\,[[x1]][[->]][[u1]]\,,~\ottcons{Inr}\,[[x2]][[->]][[u2]]\,\} }}
+  | t & \case ( x1 , x2 ) -> u            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\ottcons{(}[[x1]]\,\ottcons{,}~[[x2]]\ottcons{)}\![[->]]\,[[u]] }}
+  | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex [[t]]~\succ\!\!\ottkw{mapL}\,[[x]]\![[->]]\,[[u]] }}
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
   % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion from ${\ottmod{\scriptstyle G} }$ }}
-  | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]} }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]} }} {{ com Extract value from trivial ampar }}
+  | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]}\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]}\,[[t]] }} {{ com Extract value from trivial ampar }}
 
   | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }}
   | t <| () :: :: FillUnit {{ com Fill destination with unit }}
   | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
   | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
-  | t <| <,>                              ::   :: FillProd    {{ com Fill destination with product constructor }}
+  | t <| (,)                              ::   :: FillProd    {{ com Fill destination with product constructor }}
   | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
 
   | ( t )                                   :: S :: Paren
@@ -181,9 +208,13 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   % | b sp t :: S :: BreakSpacing2
   % | t b spe :: S :: BreakSpacing3
 
+extended_term, et {{ tex \ottnt{\underline{t} } }} :: 'ExtTerm_' ::= {{ com Extended term }}
+  | t :: :: Term
+  | ev :: :: StoreVal
+
 sub :: 'Sub_' ::= {{ com variable or label substitution }}
-  | x -> v :: :: VarSub
-  % | x := t :: :: VarSub
+  | x := v :: :: VarSub
+  | h := ev :: :: HoleSub
 
 subs :: 'Subs_' ::= {{ com variable or  substitutions }}
   | sub :: :: Single
@@ -193,23 +224,13 @@ effect, e :: 'e_' ::= {{ tex \otteff{[[effect]]} }}
   | o :: :: NoEff {{ com empty effect }} {{ tex \otteff{\varepsilon} }}
   | subs :: :: Sub
 
-% heap_affect, ha :: 'HeapAff_' ::=
-%   | l = hv :: :: Aff {{ tex [[l]]\,=\,[hv]] }}
-
-% heap_affects :: 'HeapAffs_' ::=
-%   | ha :: :: Single
-%   | ha , heap_affects :: :: Multiple
-
-% heap, H :: 'Heap_' ::=
-%   | empty :: :: Empty
-%   | { heap_affects } :: :: Affs
-%   | H1 µ H2 :: :: Disjoint
-
 type_affect, ta :: 'TyAff_' ::= {{ com type affectation }}
 %  | x : A :: :: LocalVar
   | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
-  | + l : A :: :: Hole {{ com Hole }} {{ tex \ottlb{+}[[l]]:[[A]] }}
-  | - l : A :: :: Dest {{ com Destination }} {{ tex \ottlb{-}[[l]]:[[A]] }}
+  | + l : A :: :: AmparPos {{ tex \ottlb{+}[[l]]:[[A]] }}
+  | - l : A :: :: AmparNeg {{ tex \ottlb{-}[[l]]:[[A]] }}
+  | + h : A :: :: Hole {{ com Hole }} {{ tex \otthol{+}[[h]]:[[A]] }}
+  | - h : A :: :: Dest {{ com Destination }} {{ tex \otthol{-}[[h]]:[[A]] }}
 
 type_affects :: 'TyAffs_' ::= {{ com type affectations }}
   | ta :: :: Single
@@ -221,6 +242,7 @@ typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com typi
   | G1 µ G2    ::    :: Disjoint
   | G1 µ+ G2 :: :: DisjointInteract
   | G [ m1 -> m2 ] :: :: OverwriteMode
+  | ( G ) :: S :: Paren
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -242,20 +264,15 @@ terminals :: 'terminals_' ::=
 % === Type syntax ===
   | --o :: :: linarr {{ tex \ottty{\multimap} }}
   | ><| :: :: rtimes {{ tex \ottty{\rtimes} }}
-  % | =fix :: :: fix {{ tex \overset{\mathsf{fix} }{=} }}
 
 % === Term syntax ===
   | ->                                     ::   :: mapsto       {{ tex \mapsto }}
   | () :: :: unit {{ tex \ottcons{()} }}
   | Inl :: :: inl {{ tex \ottcons{Inl} }}
   | Inr :: :: inr {{ tex \ottcons{Inr} }}
-  | <,> :: :: prod {{ tex \ottcons{\langle{,}\rangle} }}
-  | ¤ :: :: mparcomma {{ tex \mparcomma }}
+  | (,) :: :: prod {{ tex \ottcons{({,})} }}
   | <| :: :: fill {{ tex \triangleleft }}
-  | <|. :: :: fillcomp {{ tex \triangleleft\cdot\, }}
-  | ';' :: :: sep {{ tex ~;\, }}
-  % | <&> :: :: flipmap {{ tex \prec\!\!{\scriptstyle\ottkw{mapL} }\!\!\succ }}
-  % | _!_ :: :: bottom {{ tex \ottty{\bot} }}
+  | <|. :: :: fillcomp {{ tex \triangleleft\!\mybullet\, }}
 
 % === Contexts ===
   | µ :: :: dunion {{ tex \sqcup }}
@@ -275,9 +292,8 @@ terminals :: 'terminals_' ::=
   | |- :: :: turnstile {{ tex \vdash }}
 
 % === Semantics ===
-  | --> :: :: rlocal {{ tex \longrightarrow }}
-  | ~~> :: :: rglobal {{ tex \rightsquigarrow }}
-  % | !! :: :: downto {{ tex \Downarrow }}
+  | '|' :: :: cmd {{ tex ~|~ }}
+  | !! :: :: downto {{ tex \,\Downarrow\, }}
 
 defns
 Ctx :: '' ::=
@@ -299,6 +315,9 @@ fresh x :: :: FreshVar :: FreshVar_ by
 
 defn
 fresh l :: :: FreshLbl :: FreshLbl_ by
+
+defn
+fresh h :: :: FreshHole :: FreshHole_ by
 
 defn
 type_affect in G :: :: CtxTyAffIn :: CtxTyAffIn_ by
@@ -328,51 +347,64 @@ Ty :: '' ::=
 % Une dest qui parait plus vieille qu'elle ne l'est réellement (donc qui aurait une date de naissance plus petite que la vraie) peut fuiter dans le scope parent en étant utilisée comme valeur stockée. C'est un problème immédiat, qui doit être étendu à tout conteneur qui contiendrait une telle dest => Date de naissance d'un truc = max de la date de naissance de ses composants
 
 % Une dest qui parait plus jeune qu'elle ne l'est pourrait servir à faire fuiter une dest dans le scope parent, mais impossible tant que son type ne change pas -> aucun problème à prendre le max des dates de naissance.
+defn
+G |- S | t : A :: :: TyCmd :: TyCmd_ by
+
+G1 |- S
+G2 |- t : A
+------------------ :: Cmd
+G1 µ+ G2 |- S | t : A
+
 
 defn
-G |- t : A :: :: TyTerm :: TyTerm_ {{ tex [[G]][[|-]][[t]]\,:[[A]] }} by
+G |- S :: :: TyHeap :: TyHeap_ by
 
-% G |- t : _G A
-% ----------------- :: WeakenLocal
-% G |- fromGlobal t : m A
+------------------ :: Empty
+{} |- {}
 
-% _G = max_mode(G)
-% G |- t : m A
-% ----------------- :: WeakenForeign
-% G |- toGlobal t : _G A
+G1 |- S1
+G2 |- S2
+------------------- :: Union
+G1 µ+ G2 |- S1 µ S2
 
----------------- :: Hole
+% left side isn't allowed to contain holes
+% right side can contain both holes and destinations
+G1 |- v1 : A1
+G2 |- ev2 : A2
+------------------ :: ClosedAmpar
+(G1 µ+ G2) µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ ev2 > }
+
+G2 |- ev2 : A2
+------------------ :: OpenAmpar
+G2 |- { l -> < [] ¤ ev2 > }
+
+defn
+G |- et : A :: :: TyTerm :: TyTerm_ by
+
+---------------- :: Ampar
 { + l : A } |- l : A
 
-% -l behaves as a global binding
 ---------------- :: Dest
-{ - l : A } |- @l : Dest A
+{ - h : A } |- @h : Dest A
+
+--------------------- :: Hole
+{ + h : A } |- h : A
 
 ---------------- :: Unit
 {} |- () : 1
 
-% Dynamic values cannot contain variables in G as it isn't a value of form v
-
-G |- v : A1
+G |- ev : A1
 ---------------- :: Inl
-G |- Inl v : A1 + A2
+G |- Inl ev : A1 + A2
 
-G |- v : A2
+G |- ev : A2
 ---------------- :: Inr
-G |- Inr v : A1 + A2
+G |- Inr ev : A1 + A2
 
-G1 |- v1 : A1
-G2 |- v2 : A2
+G1 |- ev1 : A1
+G2 |- ev2 : A2
 ----------------- :: Prod
-G1 µ G2 |- < v1, v2 > : A1 * A2
-
-% left side isn't allowed to contain holes (nor variables of any type because of shape v); should we enforce that?
-% right side can contain both holes and destinations
-G1 |- v1 : A1
-G2 |- v2 : A2
-G3 = G1 µ+ G2
------------------ :: Ampar
-G3 |- < v1 ¤ v2 > : A1 ><| A2
+G1 µ G2 |- ( ev1, ev2 ) : A1 * A2
 
 G µ { x : m1 A1 } |- t : A2
 ----------------- :: Lambda
@@ -380,7 +412,7 @@ G |- \x -> t : m1 A1 --o A2
 
 G1 |- t : m1 A1 --o A2
 G2 |- u : A1
-m1 in suprmodes(G2)
+m1 in upper_modes(G2)
 ----------------- :: App
 G1 µ G2 |- t u : A2
 
@@ -390,22 +422,22 @@ G2 |- u : B
 G1 µ G2 |- t ; u : B
 
 G1 |- t : A1 + A2
-exists m in suprmodes (G1)
+exists m in upper_modes (G1)
 G2 µ { x1 : m A1 } |- u1 : B
 G2 µ { x2 : m A2 } |- u2 : B
 ----------------- :: PatSum
-G1 µ G2 |- case t of { Inl x1 -> u1 , Inr x2 -> u2 } : B
+G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : B
 
 G1 |- t : A1 * A2
-exists m in suprmodes (G1)
+exists m in upper_modes (G1)
 G2 µ { x1 : m A1, x2 : m A2 } |- u : B
 ----------------- :: PatProd
-G1 µ G2 |- case t of { < x1 , x2 > -> u } : B
+G1 µ G2 |- t & \case ( x1 , x2 ) -> u : B
 
 G1 |- t : A1 ><| A2
 % ensures that we cannot capture dests of different scopes (G2)
-exists m' in suprmodes(G1 µ G2)
-m = if _F in suprmodes(G1) then _F else _L
+exists m' in upper_modes(G1 µ G2)
+m = if _F in upper_modes(G1) then _F else _L
 G2[ _L -> _F ] µ { x : m A1 } |- u : B
 -------------------------------- :: MapAmpar
 G1 µ G2 |- t <&> \ x -> u : B ><| A2
@@ -435,21 +467,100 @@ G |- t <| Inr : Dest A2
 
 G |- t : Dest (A1 * A2)
 ------------------------------ :: FillProd
-G |- t <| <,> : Dest A1 * Dest A2
+G |- t <| (,) : Dest A1 * Dest A2
 
 G1 |- t : Dest A2
 G2 |- u : A1 ><| A2
-_L in suprmodes(G1)
-_F in suprmodes(G2)
+_L in upper_modes(G1)
+_F in upper_modes(G2)
 ----------------------------- :: FillCompL
 G1 µ G2 |- t <|. u : A1
 
 G1 |- t : Dest A2
 G2 |- u : A1 ><| A2
-_F in suprmodes(G1)
-_G in suprmodes(G2)
+_F in upper_modes(G1)
+_G in upper_modes(G2)
 ----------------------------- :: FillCompF
 G1 µ G2 |- t <|. u : A1
+
+defns
+Sem :: '' ::=
+
+defn
+S | t !! S' | t' :: :: BigStep :: BigStep_ by
+
+------------------ :: Val
+S0 | v !! S0 | v
+
+S0 | t1 !! S1 | \x -> u
+S1 | t2 !! S2 | v2
+S2 | u[x := v2] !! S3 | v3
+------------------ :: App
+S0 | t1 t2 !! S3 | v3
+
+S0 | t1 !! S1 | ()
+S1 | t2 !! S2 | v2
+----------------------- :: PatUnit
+S0 | t1 ; t2 !! S2 | v2
+
+S0 | t !! S1 | Inl v1
+S1 | u1[x1 := v1] !! S2 | v2
+----------------------- :: PatInl
+S0 | t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! S2 | v2
+
+S0 | t !! S1 | Inr v1
+S1 | u2[x2 := v1] !! S2 | v2
+----------------------- :: PatInr
+S0 | t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! S2 | v2
+
+S0 | t !! S1 | (v1,v2)
+S1 | u[x1 := v1, x2 := v2] !! S2 | v2
+----------------------- :: PatProd
+S0 | t & \case (x1,x2) -> u !! S2 | v2
+
+S0 | t !! S1 µ { l -> < v1 ¤ ev1 > } | l
+S1 µ { l -> < [] ¤ ev1 > } | u[x := v1] !! S2 µ { l -> < [] ¤ ev2 > } | v2
+---------------------------------- :: MapAmpar
+S0 | t <&> \ x -> u !! S2 µ { l -> < v2 ¤ ev2 > } | l
+
+fresh h
+fresh l
+-------------------------- :: Alloc
+S0 | alloc !! S0 µ { l -> < @h ¤ h > } | l
+
+S0 | t !! S1 | v
+fresh l
+----------------------------------------- :: ToAmpar
+S0 | toAmpar t !! S1 µ { l -> < () ¤ v > } | l
+
+S0 | t !! S1 µ { l -> < () ¤ v > } | l
+-------------------------------------- :: FromAmpar
+S0 | fromAmpar t !! S1 | v
+
+S0 | t !! S1 | @h
+------------------------------------- :: FillUnit
+S0 | t <| () !! S1[h := ()] | ()
+
+S0 | t !! S1 | @h
+fresh h'
+--------------------------------------- :: FillInl
+S0 | t <| Inl !! S1[h := Inl h'] | @h'
+
+S0 | t !! S1 | @h
+fresh h'
+--------------------------------------- :: FillInr
+S0 | t <| Inr !! S1[h := Inr h'] | @h'
+
+S0 | t !! S1 | @h
+fresh h1
+fresh h2
+--------------------------------------- :: FillProd
+S0 | t <| (,) !! S1[h := (h1,h2)] | (@h1, @h2)
+
+S0 | t !! S1 | @h
+S1 | u !! S2 µ { l -> <v1 ¤ ev1> } | l
+---------------------------------------- :: FillComp
+S0 | t <|. u !! S2[h := ev1] | v1
 
 parsing
 Ty_Prod <= Ty_Dest
