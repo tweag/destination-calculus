@@ -205,7 +205,7 @@ store, S :: 'Store_' ::=
 
 store_assign, ha :: 'StoreAssign_' ::=
   | l -> < v1 ¤ w2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Closed ampar ($[[w2]]$ = root of the incomplete struct) }}
-  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\square\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
+  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\blacksquare\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
 
 store_assigns :: 'StoreAssigns_' ::=
   | ha :: :: Single
@@ -216,8 +216,8 @@ type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
   | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
   | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | m1 A1 --o A2 :: :: Lambda {{ tex _{[[m1]]}[[A1]]\,[[--o]]\,[[A2]] }} {{ com Linear function }}
-  | Dest A :: :: Dest {{ tex [[A]]\ottty{^\bot} }} {{ com Destination }}
+  | m1 A1 --o A2 :: :: Lambda {{ tex [[A1]]\,_{[[m1]]}\![[--o]]\,[[A2]] }} {{ com Linear function }}
+  | Dest A :: :: Dest {{ tex [[A]]\ottty{^D} }} {{ com Destination }}
   | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
 
 mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
@@ -247,8 +247,8 @@ type_assign, ta :: 'TyAssign_' ::= {{ com Type assignment }}
   | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
   | + l : A :: :: AmparPos {{ tex \textcolor{lbcolor}{+}[[l]]:[[A]] }}
   | - l : A :: :: AmparNeg {{ tex \textcolor{lbcolor}{-}[[l]]:[[A]] }}
-  | + h : A :: :: Hole {{ com Hole }} {{ tex \otthol{+}[[h]]:[[A]] }}
-  | - h : A :: :: Dest {{ com Destination }} {{ tex \otthol{-}[[h]]:[[A]] }}
+  | + h : A :: :: Dest {{ com Destination }} {{ tex \otthol{+}[[h]]:[[A]] }}
+  | - h : A :: :: Hole {{ com Hole }} {{ tex \otthol{-}[[h]]:[[A]] }}
 
 type_assigns :: 'TyAssigns_' ::= {{ com Type assignments }}
   | ta :: :: Single
@@ -333,6 +333,9 @@ defn
 type_assign in G :: :: CtxTyAssignIn :: CtxTyAssignIn_ by
 
 defn
+positive ( G ) :: :: CtxPos :: CtxPos_ by
+
+defn
 mode_cond :: :: ModeCond :: ModeCond_ by
 
 defns
@@ -381,8 +384,10 @@ G1 µ+ G2 |- S1 µ S2
 % right side can contain both holes and destinations
 G1 |- v1 : A1
 G2 |- w2 : A2
+G3 = G1 µ+ G2
+positive(G3)
 ------------------ :: ClosedAmpar
-(G1 µ+ G2) µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ w2 > }
+G3 µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ w2 > }
 
 G2 |- w2 : A2
 ------------------ :: OpenAmpar
@@ -395,10 +400,10 @@ G |- j : A :: :: TyTerm :: TyTerm_ by
 { + l : A } |- l : A
 
 ---------------- :: Dest
-{ - h : A } |- @h : Dest A
+{ + h : A } |- @h : Dest A
 
 --------------------- :: Hole
-{ + h : A } |- h : A
+{ - h : A } |- h : A
 
 ---------------- :: Unit
 {} |- () : 1
@@ -528,10 +533,10 @@ S1 | u[x1 := v1, x2 := v2] !! S2 | v2
 ----------------------- :: PatProd
 S0 | t & \case (x1,x2) -> u !! S2 | v2
 
-S0 | t !! S1 µ { l -> < v1 ¤ w1 > } | l
-S1 µ { l -> < [] ¤ w1 > } | u[x := v1] !! S2 µ { l -> < [] ¤ w2 > } | v2
+S0 | t !! S1 µ { l -> < v1 ¤ w2 > } | l
+S1 µ { l -> < [] ¤ w2 > } | u[x := v1] !! S2 µ { l -> < [] ¤ w4 > } | v3
 ---------------------------------- :: MapAmpar
-S0 | t <&> \ x -> u !! S2 µ { l -> < v2 ¤ w2 > } | l
+S0 | t <&> \ x -> u !! S2 µ { l -> < v3 ¤ w4 > } | l
 
 fresh h
 fresh l
@@ -568,9 +573,9 @@ fresh h2
 S0 | t <| (,) !! S1[h := (h1,h2)] | (@h1, @h2)
 
 S0 | t !! S1 | @h
-S1 | u !! S2 µ { l -> <v1 ¤ w1> } | l
+S1 | u !! S2 µ { l -> <v1 ¤ w2> } | l
 ---------------------------------------- :: FillComp
-S0 | t <|. u !! S2[h := w1] | v1
+S0 | t <|. u !! S2[h := w2] | v1
 
 parsing
 Ty_Prod <= Ty_Dest

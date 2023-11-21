@@ -45,6 +45,7 @@ CanonicalFLemma + (3).2 => (4)          v = l
                                  .3     Gs11' |- v1 : A1
                                  .4     Gs12' |- w2 : A2
                                  .5     Gs1 |- S1
+                                 .6     onlyPositiveHole(Gs11' µ+ Gs12')
 
 (7).4 + (7).5 + TyHeap_Union + TyHeap_OpenAmpar =>
                               (8)       Gs12' µ+ Gs1 |- S1 µ [l -> <[], w2>]
@@ -89,7 +90,11 @@ LEMMA Preservation of Ampar Right type (PAR)
 
 (19).2 + PARLemma => (20) Gw4 |- w4 : A2
 
-(20) + (17).3 + TyHeap_OpenAmpar => (21) {-l : B ><| A2} µ (Gv3 µ+ Gw4) |- [l -> <v3, w4>]
+(20) + (17).3 + TyHeap_ClosedAmpar => (21) {-l : B ><| A2} µ (Gv3 µ+ Gw4) |- [l -> <v3, w4>]
+     HERE: must prove onlyPositiveHole(Gv3 µ+ Gw4)
+
+
+
 (21) + TyHeap_Union + (19).3 => (22) Gs2 µ+ ({-l : B ><| A2} µ (Gv3 µ+ Gw4)) |- S2 µ [l -> <v3, w4>]
 TyTerm_Ampar => (23) {+ l : B ><| A2} |- l : B ><| A2
 TyCmd_Cmd + (22) + (23) => (24) Gs2 µ+ Gv3 µ+ Gw4 |- S2 µ [l -> <v3, w4>] | l : B ><| A2
