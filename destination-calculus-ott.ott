@@ -18,7 +18,7 @@ embed
 \DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sbc}{n}
 \definecolor{ntcolor}{RGB}{75, 75, 75}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
-\definecolor{lbcolor}{HTML}{F8980F} % yellow-orange, underlined
+\definecolor{effcolor}{HTML}{F8980F} % yellow-orange, underlined
 \definecolor{tycolor}{HTML}{176FC1} % blue, bold
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
 \definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
@@ -36,7 +36,7 @@ embed
 \newcommand{\ottdefault}[1]{\textcolor{black}{#1} }
 \newcommand{\ottcons}[1]{\textcolor{black}{\mathsf{#1} } }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathit{#1} } }
-\newcommand{\ottlb}[1]{\textcolor{lbcolor}{\mathit{\underline{\replacelell{#1} } } } }
+\newcommand{\otteff}[1]{\textcolor{effcolor}{\mathit{\replacelell{#1} } } }
 \newcommand{\otthol}[1]{\textcolor{holecolor}{\mathit{#1} } }
 \newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathtt{#1} } }
 \newcommand{\replacelell}[1]{%
@@ -61,6 +61,16 @@ embed
 \def\mynewline{\ottsp{\backslash\!n} }
 \def\myspace#1{\myrepeat{#1}{\ottsp{\langle destent \rangle} } }
 \makeatletter
+\newcommand{\shorteq}{%
+  \settowidth{\@tempdima}{--}% Width of hyphen
+  \resizebox{\@tempdima}{\height}{=}%
+}
+\newcommand{\coloneq}{\mathrel{%
+  \!\raisebox{0.09ex}{$\mathop{:}$\hspace{-0.1ex}%
+  }%
+  \shorteq\hspace{-0.2ex}%
+}%
+}
 \newcount\my@repeat@count
 \newcommand{\myrepeat}[2]{%
   \begingroup
@@ -136,12 +146,12 @@ metavar termvar, x, y, d ::= {{ com Term-level variable }}
 
 grammar
 
-label, l :: 'Lbl_' ::= {{ tex \ottlb{[[label]]} }} {{ com Label }}
+% label, l :: 'Lbl_' ::= {{ tex \otteff{[[label]]} }} {{ com Label }}
 
 hole, h :: 'Hole_' ::= {{ tex \otthol{[[hole]]} }} {{ com Hole }}
 
 term_value, v :: 'TermVal_' ::= {{ com Term value }}
-  | l :: :: LblAmpar {{ com Label representing an Ampar }}
+  | < v1 ¤ w2 > H :: :: Ampar {{ com Ampar }} {{ tex \ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle}_{[[H]]} }}
   | @ h :: :: Dest {{ tex \otthol{@}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | Inl v :: :: Inl {{ com Left variant for sum }}
@@ -157,6 +167,7 @@ extended_value, w :: 'ExtVal_' ::= {{ com Store value }} {{ tex \ottextval{[[ext
   | Inr w :: :: Inr {{ com Right variant with val or hole }}
   | ( w1 , w2 ) :: :: Prod {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
   | ( w ) :: S :: Paren
+  | w [ e ] :: M :: Effect
 
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
   | v :: :: TermVal {{ com Term value }}
@@ -172,7 +183,7 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]}\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
   | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]}\,[[t]] }} {{ com Extract value from trivial ampar }}
 
-  | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }}
+  | alloc A :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[A]]} }}
   | t <| () :: :: FillUnit {{ com Fill destination with unit }}
   | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
   | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
@@ -180,7 +191,7 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
 
   | ( t )                                   :: S :: Paren
-  | t [ subs ]                             :: M :: Subs
+  | t [ sub ]                             :: M :: Sub
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
   % | t b spe :: S :: BreakSpacing3
@@ -189,27 +200,16 @@ extended_term, j :: 'ExtTerm_' ::= {{ com Extended term }} {{ tex \ottextterm{[[
   | t :: :: Term
   | w :: :: ExtVal
 
-sub :: 'Sub_' ::= {{ com Variable or label substitution }}
-  | x := v :: :: VarSub
-  | h := w :: :: HoleSub
+sub :: 'Sub_' ::= {{ com Variable substitution }}
+  | x := v :: :: Single
+  | sub1 , sub2 :: :: Multiple
+  | ( sub ) :: S :: Paren {{ tex [[sub]] }}
 
-subs :: 'Subs_' ::= {{ com Substitutions }}
-  | sub :: :: Single
-  | sub , subs :: :: Multiple
-
-store, S :: 'Store_' ::=
-  | {} :: :: Empty {{ tex [] }}
-  | { store_assigns } :: :: Assigns {{ tex [\, [[store_assigns]] \,] }}
-  | S [ subs ] :: :: Subs
-  | S1 µ S2 :: :: Disjoint
-
-store_assign, ha :: 'StoreAssign_' ::=
-  | l -> < v1 ¤ w2 > :: :: ClosedAmpar {{ tex [[l]][[->]]\ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Closed ampar ($[[w2]]$ = root of the incomplete struct) }}
-  | l -> < [] ¤ w2 > :: :: OpenAmpar {{ tex [[l]][[->]]\ottcons{\langle}\blacksquare\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle} }} {{ com Open ampar ($[[w2]]$ = root of the incomplete struct) }}
-
-store_assigns :: 'StoreAssigns_' ::=
-  | ha :: :: Single
-  | ha , store_assigns :: :: Multiple
+effect, e :: 'Eff_' ::= {{ com Effect }} {{ tex \otteff{[[effect]]} }}
+  | o :: :: NoEff {{ tex \otteff{\varepsilon} }} {{ com No effect }}
+  | h := w :: :: Single {{ tex [[h]]~\otteff{[[:=]]}~[[w]] }}
+  | e1 . e2 :: :: Multiple {{ tex [[e1]]~\otteff{\cdot}~[[e2]] }}
+  | ( e ) :: S :: Paren {{ tex [[e]] }}
 
 type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
@@ -234,25 +234,39 @@ mode_cond :: 'ModeCond' ::= {{ com Mode statement }} {{ tex \ottmod{[[mode_cond]
   | m in upper_modes ( G ) :: :: Supr
   | exists m in upper_modes ( G ) :: :: ExistsSupr
 
-typing_context, U {{ tex \mho }}, G {{ tex \Gamma }} :: 'TyCtx_' ::= {{ com Typing context }}
+typing_context, D {{ tex \Delta }} :: 'TyCtx_' ::= {{ com Typing context }}
+  | G    ::   :: OnlyPos
+  | H ::    :: OnlyNeg
+  | G u H :: :: SepPosNeg {{ tex [[G]]\mathrel{\raisebox{1pt}{\scalebox{0.5}{$\sqcup$}\!\! } }[[H]] }}
+
+pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context }}
   | {}    ::   :: Empty
-  | { type_assigns } ::    :: Assigns
+  | { pos_assigns } :: :: Assigns
   | G1 µ G2    ::    :: Disjoint
-  | G1 µ+ G2 :: :: DisjointInteract
+  | - H :: :: Minus
   | G [ m1 -> m2 ] :: :: OverwriteMode
   | ( G ) :: S :: Paren
 
-type_assign, ta :: 'TyAssign_' ::= {{ com Type assignment }}
+pos_assign, pa :: 'PosAssign_' ::= {{ com Positive type assignment }}
 %  | x : A :: :: LocalVar
   | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
-  | + l : A :: :: AmparPos {{ tex \textcolor{lbcolor}{+}[[l]]:[[A]] }}
-  | - l : A :: :: AmparNeg {{ tex \textcolor{lbcolor}{-}[[l]]:[[A]] }}
   | + h : A :: :: Dest {{ com Destination }} {{ tex \otthol{+}[[h]]:[[A]] }}
-  | - h : A :: :: Hole {{ com Hole }} {{ tex \otthol{-}[[h]]:[[A]] }}
+pos_assigns :: 'PosAssigns_' ::= {{ com Positive type assignments }}
+  | pa :: :: Single
+  | pa , pos_assigns :: :: Multiple
 
-type_assigns :: 'TyAssigns_' ::= {{ com Type assignments }}
-  | ta :: :: Single
-  | ta , type_assigns :: :: Multiple
+neg_assign, na :: 'NegAssign_' ::= {{ com Negative type assignment }}
+  | - h : A :: :: Hole {{ com Hole }} {{ tex \otthol{-}[[h]]:[[A]] }}
+neg_assigns :: 'NegAssigns_' ::= {{ com Negative type assignments }}
+  | na :: :: Single
+  | na , neg_assigns :: :: Multiple
+
+neg_context, H :: 'NegCtx_' ::= {{ com Negative typing context }}
+  | {}    ::   :: Empty
+  | { neg_assigns } :: :: Assigns
+  | H1 µ H2    ::    :: Disjoint
+  | - G :: :: Minus
+  | ( H ) :: S :: Paren
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -283,6 +297,7 @@ terminals :: 'terminals_' ::=
   | (,) :: :: prod {{ tex \ottcons{({,})} }}
   | <| :: :: fill {{ tex \triangleleft }}
   | <|. :: :: fillcomp {{ tex \triangleleft\!\mybullet\, }}
+  | := :: :: assign {{ tex \coloneq }}
 
 % === Contexts ===
   | µ :: :: dunion {{ tex \sqcup }}
@@ -309,31 +324,43 @@ defns
 Ctx :: '' ::=
 
 defn
-x in names ( G ) :: :: CtxVarIn :: CtxVarIn_ by
+x in names ( D ) :: :: CtxVarIn :: CtxVarIn_ by
+
+% defn
+% l in names ( G ) :: :: CtxLblIn :: CtxLblIn_ by
 
 defn
-l in names ( G ) :: :: CtxLblIn :: CtxLblIn_ by
+h in names ( D ) :: :: CtxHoleIn :: CtxHoleIn_ by
 
 defn
-x notin names ( G ) :: :: CtxVarNotIn :: CtxVarNotIn_ by
+x notin names ( D ) :: :: CtxVarNotIn :: CtxVarNotIn_ by
+
+% defn
+% l notin names ( G ) :: :: CtxLblNotIn :: CtxLblNotIn_ by
 
 defn
-l notin names ( G ) :: :: CtxLblNotIn :: CtxLblNotIn_ by
+h notin names ( D ) :: :: CtxHoleNotIn :: CtxHoleNotIn_ by
 
 defn
 fresh x :: :: FreshVar :: FreshVar_ by
 
-defn
-fresh l :: :: FreshLbl :: FreshLbl_ by
+% defn
+% fresh l :: :: FreshLbl :: FreshLbl_ by
 
 defn
 fresh h :: :: FreshHole :: FreshHole_ by
 
 defn
-type_assign in G :: :: CtxTyAssignIn :: CtxTyAssignIn_ by
+pos_assign in G :: :: PosCtxAssignIn :: PosCtxAssignIn_ by
 
 defn
-positive ( G ) :: :: CtxPos :: CtxPos_ by
+neg_assign in H :: :: NegCtxAssignIn :: NegCtxAssignIn_ by
+
+defn
+onlyPositive ( D ) :: :: CtxPos :: CtxPos_ by
+
+defn
+onlyNegative ( D ) :: :: CtxNeg :: CtxNeg_ by
 
 defn
 mode_cond :: :: ModeCond :: ModeCond_ by
@@ -350,234 +377,216 @@ t = u :: :: EqTerm :: EqTerm_ by
 defn
 t != u :: :: NeqTerm :: NeqTerm_ by
 defn
-G1 = G2 :: :: EqCtx :: EqCtx_ {{ tex [[G1]] = [[G2]] }} by
+D1 = D2 :: :: EqCtx :: EqCtx_ by
 defn
-G1 disjoint G2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[G1]]) \cap [[names]]([[G2]]) = \emptyset }} by
+D1 disjoint D2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[D1]]) \cap [[names]]([[D2]]) = \emptyset }} by
+
+defns
+Eff :: '' ::=
+defn
+e2 , w2 H2 = apply ( e1 , w1 H1 ) :: :: EffApply :: EffApply_ {{ tex [[e2]],~[[w2]]\,_{[[H2]]} = \ottkw{apply}([[e1]],~[[w1]]\,_{[[H1]]}) }} {{ com Apply effect }} by
 
 defns
 Ty :: '' ::=
 
-% Une dest qui parait plus vieille qu'elle ne l'est réellement (donc qui aurait une date de naissance plus petite que la vraie) peut fuiter dans le scope parent en étant utilisée comme valeur stockée. C'est un problème immédiat, qui doit être étendu à tout conteneur qui contiendrait une telle dest => Date de naissance d'un truc = max de la date de naissance de ses composants
-
-% Une dest qui parait plus jeune qu'elle ne l'est pourrait servir à faire fuiter une dest dans le scope parent, mais impossible tant que son type ne change pas -> aucun problème à prendre le max des dates de naissance.
 defn
-G |- S | t : A :: :: TyCmd :: TyCmd_ by
-
-G1 |- S
-G2 |- t : A
------------------- :: Cmd
-G1 µ+ G2 |- S | t : A
-
-
-defn
-G |- S :: :: TyHeap :: TyHeap_ by
-
------------------- :: Empty
-{} |- {}
-
-G1 |- S1
-G2 |- S2
-------------------- :: Union
-G1 µ+ G2 |- S1 µ S2
-
-% left side isn't allowed to contain holes
-% right side can contain both holes and destinations
-G1 |- v1 : A1
-G2 |- w2 : A2
-G3 = G1 µ+ G2
-positive(G3)
------------------- :: ClosedAmpar
-G3 µ { - l : A1 ><| A2 } |- { l -> < v1 ¤ w2 > }
-
-G2 |- w2 : A2
------------------- :: OpenAmpar
-G2 |- { l -> < [] ¤ w2 > }
-
-defn
-G |- j : A :: :: TyTerm :: TyTerm_ by
-
----------------- :: Ampar
-{ + l : A } |- l : A
-
----------------- :: Dest
-{ + h : A } |- @h : Dest A
+D |- j : A :: :: TyTermExt :: TyTermExt_ by
 
 --------------------- :: Hole
-{ - h : A } |- h : A
+{} u { - h : A } |- h : A
 
----------------- :: Unit
-{} |- () : 1
+---------------- :: Dest
+{ + h : A } u {} |- @h : Dest A
 
-G |- w : A1
----------------- :: Inl
-G |- Inl w : A1 + A2
+--------------------- :: Unit
+{} u {} |- () : 1
 
-G |- w : A2
----------------- :: Inr
-G |- Inr w : A1 + A2
+G u H |- w : A1
+--------------------- :: Inl
+G u H |- Inl w : A1 + A2
 
-G1 |- w1 : A1
-G2 |- w2 : A2
------------------ :: Prod
-G1 µ G2 |- ( w1, w2 ) : A1 * A2
+G u H |- w : A2
+--------------------- :: Inr
+G u H |- Inr w : A1 + A2
 
-G µ { x : m1 A1 } |- t : A2
+G1 u H1 |- w1 : A1
+G2 u H2 |- w2 : A2
+G1 u H1 disjoint G2 u H2
+------------------------- :: Prod
+G1 µ G2 u H1 µ H2 |- (w1, w2) : A1 * A2
+
+G1 µ -H u {} |- v1 : A1
+G2 u H |- w2 : A2
+G1 disjoint G2
+---------------- :: Ampar
+G1 µ G2 u {} |- <v1 ¤ w2> H : A1 ><| A2
+
+G µ { x : m1 A1 } u {} |- t : A2
 ----------------- :: Lambda
-G |- \x -> t : m1 A1 --o A2
+G u {} |- \x -> t : m1 A1 --o A2
 
-G1 |- t : m1 A1 --o A2
-G2 |- u : A1
+G1 u {} |- t : m1 A1 --o A2
+G2 u {} |- u : A1
 m1 in upper_modes(G2)
+G1 disjoint G2
 ----------------- :: App
-G1 µ G2 |- t u : A2
+G1 µ G2 u {} |- t u : A2
 
-G1 |- t : 1
-G2 |- u : B
+G1 u {} |- t : 1
+G2 u {} |- u : B
+G1 disjoint G2
 ----------------- :: PatUnit
-G1 µ G2 |- t ; u : B
+G1 µ G2 u {} |- t ; u : B
 
-G1 |- t : A1 + A2
+G1 u {} |- t : A1 + A2
 exists m in upper_modes (G1)
-G2 µ { x1 : m A1 } |- u1 : B
-G2 µ { x2 : m A2 } |- u2 : B
+G2 µ { x1 : m A1 } u {} |- u1 : B
+G2 µ { x2 : m A2 } u {} |- u2 : B
+G1 disjoint G2
 ----------------- :: PatSum
-G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : B
+G1 µ G2 u {} |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : B
 
-G1 |- t : A1 * A2
+G1 u {} |- t : A1 * A2
 exists m in upper_modes (G1)
-G2 µ { x1 : m A1, x2 : m A2 } |- u : B
+G2 µ { x1 : m A1, x2 : m A2 } u {} |- u : B
+G1 disjoint G2
 ----------------- :: PatProd
-G1 µ G2 |- t & \case ( x1 , x2 ) -> u : B
+G1 µ G2 u {} |- t & \case ( x1 , x2 ) -> u : B
 
-G1 |- t : A1 ><| A2
+G1 u {} |- t : A1 ><| A2
 % ensures that we cannot capture dests of different scopes (G2)
 exists m' in upper_modes(G1 µ G2)
 m = if _F in upper_modes(G1) then _F else _L
-G2[ _L -> _F ] µ { x : m A1 } |- u : B
+G2[ _L -> _F ] µ { x : m A1 } u {} |- u : B
+G1 disjoint G2
 -------------------------------- :: MapAmpar
-G1 µ G2 |- t <&> \ x -> u : B ><| A2
+G1 µ G2 u {} |- t <&> \ x -> u : B ><| A2
 
 -------------------------------- :: Alloc
-{} |- alloc : Dest A ><| A
+{} u {} |- alloc A : Dest A ><| A
 
-G |- t : A
+G u {} |- t : A
 ------------------------------- :: ToAmpar
-G |- toAmpar t : 1 ><| A
+G u {} |- toAmpar t : 1 ><| A
 
-G |- t : 1 ><| A
+G u {} |- t : 1 ><| A
 ------------------------------- :: FromAmpar
-G |- fromAmpar t : A
+G u {} |- fromAmpar t : A
 
-G |- t : Dest 1
+G u {} |- t : Dest 1
 ------------------------------ :: FillUnit
-G |- t <| () : 1
+G u {} |- t <| () : 1
 
-G |- t : Dest (A1 + A2)
+G u {} |- t : Dest (A1 + A2)
 ------------------------------ :: FillInl
-G |- t <| Inl : Dest A1
+G u {} |- t <| Inl : Dest A1
 
-G |- t : Dest (A1 + A2)
+G u {} |- t : Dest (A1 + A2)
 ------------------------------ :: FillInr
-G |- t <| Inr : Dest A2
+G u {} |- t <| Inr : Dest A2
 
-G |- t : Dest (A1 * A2)
+G u {} |- t : Dest (A1 * A2)
 ------------------------------ :: FillProd
-G |- t <| (,) : Dest A1 * Dest A2
+G u {} |- t <| (,) : Dest A1 * Dest A2
 
-G1 |- t : Dest A2
-G2 |- u : A1 ><| A2
+G1 u {} |- t : Dest A2
+G2 u {} |- u : A1 ><| A2
+G1 disjoint G2
 _L in upper_modes(G1)
 _F in upper_modes(G2)
 ----------------------------- :: FillCompL
-G1 µ G2 |- t <|. u : A1
+G1 µ G2 u {} |- t <|. u : A1
 
-G1 |- t : Dest A2
-G2 |- u : A1 ><| A2
+G1 u {} |- t : Dest A2
+G2 u {} |- u : A1 ><| A2
+G1 disjoint G2
 _F in upper_modes(G1)
 _G in upper_modes(G2)
 ----------------------------- :: FillCompF
-G1 µ G2 |- t <|. u : A1
+G1 µ G2 u {} |- t <|. u : A1
 
 defns
 Sem :: '' ::=
 
 defn
-S | t !! S' | t' :: :: BigStep :: BigStep_ by
+t !! t' | e :: :: BigStep :: BigStep_ by
 
 ------------------ :: Val
-S0 | v !! S0 | v
+v !! v | o
 
-S0 | t1 !! S1 | \x -> u
-S1 | t2 !! S2 | v2
-S2 | u[x := v2] !! S3 | v3
+t1 !! \x -> u | e1
+t2 !! v2 | e2
+u[x := v2] !! v3 | e3
 ------------------ :: App
-S0 | t1 t2 !! S3 | v3
+t1 t2 !! v3 | (e1 . e2) . e3
 
-S0 | t1 !! S1 | ()
-S1 | t2 !! S2 | v2
+t1 !! () | e1
+t2 !! v2 | e2
 ----------------------- :: PatUnit
-S0 | t1 ; t2 !! S2 | v2
+t1 ; t2 !! v2 | e1 . e2
 
-S0 | t !! S1 | Inl v1
-S1 | u1[x1 := v1] !! S2 | v2
+t !! Inl v1 | e1
+u1[x1 := v1] !! v2 | e2
 ----------------------- :: PatInl
-S0 | t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! S2 | v2
+t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! v2 | e1 . e2
 
-S0 | t !! S1 | Inr v1
-S1 | u2[x2 := v1] !! S2 | v2
+t !! Inr v1 | e1
+u2[x2 := v1] !! v2 | e2
 ----------------------- :: PatInr
-S0 | t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! S2 | v2
+t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! v2 | e1 . e2
 
-S0 | t !! S1 | (v1,v2)
-S1 | u[x1 := v1, x2 := v2] !! S2 | v2
+t !! (v1,v2) | e1
+u[x1 := v1, x2 := v2] !! v2 | e2
 ----------------------- :: PatProd
-S0 | t & \case (x1,x2) -> u !! S2 | v2
+t & \case (x1,x2) -> u !! v2 | e1 . e2
 
-S0 | t !! S1 µ { l -> < v1 ¤ w2 > } | l
-S1 µ { l -> < [] ¤ w2 > } | u[x := v1] !! S2 µ { l -> < [] ¤ w4 > } | v3
+% Can e1 have effect on the content of the ampar? I don't think so, but maybe
+t !! < v1 ¤ w2 > H | e1
+u[x := v1] !! v3 | e2
+e3, w4 H' = apply(e1 . e2, w2 H)
 ---------------------------------- :: MapAmpar
-S0 | t <&> \ x -> u !! S2 µ { l -> < v3 ¤ w4 > } | l
+t <&> \ x -> u !! <v3 ¤ w4> H' | e3
 
 fresh h
-fresh l
 -------------------------- :: Alloc
-S0 | alloc !! S0 µ { l -> < @h ¤ h > } | l
+alloc A !! < @h ¤ h > { -h : A } | o
 
-S0 | t !! S1 | v
-fresh l
+t !! v | e
 ----------------------------------------- :: ToAmpar
-S0 | toAmpar t !! S1 µ { l -> < () ¤ v > } | l
+toAmpar t !! < () ¤ v > {} | e
 
-S0 | t !! S1 µ { l -> < () ¤ v > } | l
+t !! < () ¤ v > {} | e
 -------------------------------------- :: FromAmpar
-S0 | fromAmpar t !! S1 | v
+fromAmpar t !! v | e
 
-S0 | t !! S1 | @h
+t !! @h | e
 ------------------------------------- :: FillUnit
-S0 | t <| () !! S1[h := ()] | ()
+t <| () !! () | e . h := ()
 
-S0 | t !! S1 | @h
+t !! @h | e
 fresh h'
 --------------------------------------- :: FillInl
-S0 | t <| Inl !! S1[h := Inl h'] | @h'
+t <| Inl !! @h' | e . h := Inl h'
 
-S0 | t !! S1 | @h
-fresh h'
+t !! @h | e
 --------------------------------------- :: FillInr
-S0 | t <| Inr !! S1[h := Inr h'] | @h'
+t <| Inr !! @h' | e . h := Inr h'
 
-S0 | t !! S1 | @h
+t !! @h | e
 fresh h1
 fresh h2
 --------------------------------------- :: FillProd
-S0 | t <| (,) !! S1[h := (h1,h2)] | (@h1, @h2)
+t <| (,) !! (@h1, @h2) | e . h := (h1,h2)
 
-S0 | t !! S1 | @h
-S1 | u !! S2 µ { l -> <v1 ¤ w2> } | l
+t !! @h | e1
+u !! <v1 ¤ w2> H | e2
 ---------------------------------------- :: FillComp
-S0 | t <|. u !! S2[h := w2] | v1
+t <|. u !! v1 | (e1 . e2) . h := w2
 
 parsing
 Ty_Prod <= Ty_Dest
 Ty_Sum <= Ty_Dest
 Ty_Ampar <= Ty_Dest
+PosCtx_Disjoint <= PosCtx_Minus
+NegCtx_Disjoint <= NegCtx_Minus
+
