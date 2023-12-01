@@ -443,11 +443,16 @@ G1 u H1 disjoint G2 u H2
 ------------------------- :: Prod
 G1 µ G2 u H1 µ H2 ||- (w1, w2) : A1 * A2
 
-G1 µ -H u {} ||- v1 : A1
+-H u {} ||- v1 : A1
 G2 u H ||- w2 : A2
+---------------- :: IncompleteAmpar
+G2 u {} ||- <v1 ¤ w2> H : A1 ><| A2
+
+G1 u {} ||- v1 : A1
+G2 u {} ||- v2 : A2
 G1 disjoint G2
----------------- :: Ampar
-G1 µ G2 u {} ||- <v1 ¤ w2> H : A1 ><| A2
+---------------- :: CompleteAmpar {{ com \quad\textnormal{(behaves as a pair)} }}
+G1 µ G2 u {} ||- <v1 ¤ v2> {} : A1 ><| A2
 
 G µ { x : m1 A1 } |- t : A2
 ----------------- :: Lambda
