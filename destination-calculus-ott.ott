@@ -36,9 +36,9 @@ embed
 \newcommand{\ottdefault}[1]{\textcolor{black}{#1} }
 \newcommand{\ottcons}[1]{\textcolor{black}{\mathsf{#1} } }
 \newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathit{#1} } }
-\newcommand{\otteff}[1]{\otthol{#1} }
-\newcommand{\otthol}[1]{\textcolor{holecolor}{\mathit{#1} } }
-\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathtt{#1} } }
+\newcommand{\otteff}[1]{#1}
+\newcommand{\otthol}[1]{\textcolor{holecolor}{\mathtt{#1} } }
+\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathit{#1} } }
 \newcommand{\replacelell}[1]{%
   \begingroup%
   \mathcode`l=\ell%
@@ -130,6 +130,7 @@ embed
 \newcommand{\lamnt}[2]{\ottcons{\lambda}#1\,\textbf{.}\,#2}
 \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
 \newcommand{\nuabs}[1]{\nu#1\textbf{.}\,}
+\newcommand{\expcons}[1]{\ottcons{ {\scriptstyle E} }_{#1}\,}
 \newlength{\mylen}
 \setbox1=\hbox{$\bullet$}\setbox2=\hbox{$\scriptscriptstyle\bullet$}
 \setlength{\mylen}{\dimexpr0.5\ht1-0.5\ht2}
@@ -141,14 +142,10 @@ embed
 metavar termvar, x, y, d ::= {{ com Term-level variable }}
   {{ tex \ottmv{[[termvar]]} }}
 
-% metavar idxvar, i ::=
-%   {{ tex \ottmv{[[idxvar]]} }}
+metavar holevar, h ::= {{ com Hole }}
+  {{ tex \otthol{[[holevar]]} }}
 
 grammar
-
-% label, l :: 'Lbl_' ::= {{ tex \otteff{[[label]]} }} {{ com Label }}
-
-hole, h :: 'Hole_' ::= {{ tex \otthol{[[hole]]} }} {{ com Hole }}
 
 term_value, v :: 'TermVal_' ::= {{ com Term value }}
   | < v1 ¤ w2 > H :: :: Ampar {{ com Ampar }} {{ tex \ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle}_{[[H]]} }}
@@ -157,6 +154,7 @@ term_value, v :: 'TermVal_' ::= {{ com Term value }}
   | Inl v :: :: Inl {{ com Left variant for sum }}
   | Inr v :: :: Inr {{ com Right variant for sum }}
   | ( v1 , v2 ) :: :: Prod {{ tex \ottcons{(}[[v1]]\,\ottcons{,}~[[v2]]\ottcons{)} }} {{ com Product }}
+  | exp m v :: :: Exp {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | ( v ) :: S :: Paren
 
@@ -166,16 +164,18 @@ extended_value, w :: 'ExtVal_' ::= {{ com Store value }} {{ tex \ottextval{[[ext
   | Inl w :: :: Inl {{ com Left variant with val or hole }}
   | Inr w :: :: Inr {{ com Right variant with val or hole }}
   | ( w1 , w2 ) :: :: Prod {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
+  | exp m w :: :: Exp {{ tex \expcons{[[m]]}[[w]] }} {{ com Exponential with val or hole }}
   | ( w ) :: S :: Paren
   | w [ e ] :: M :: Effect
 
 term, t, u :: 'Term_' ::=                                               {{ com Term }}
   | v :: :: TermVal {{ com Term value }}
   | x :: :: Var {{ com Variable }}
-  | t u                                    ::   :: App      {{ com Application }}
+  | t & u                                    ::   :: App      {{ com Application }} {{ tex [[t]]~\succ~[[u]] }}
   | t ; u                   ::   :: PatUnit {{ com Pattern-match on unit }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,[[()]]\![[->]]\,[[u]] }}
   | t & \case { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com Pattern-match on sum }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\{\,\ottcons{Inl}\,[[x1]][[->]][[u1]]\,,~\ottcons{Inr}\,[[x2]][[->]][[u2]]\,\} }}
   | t & \case ( x1 , x2 ) -> u            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\ottcons{(}[[x1]]\,\ottcons{,}~[[x2]]\ottcons{)}\![[->]]\,[[u]] }}
+  | t & \case exp m x -> u            ::   :: PatExp     {{ com Pattern-match on exponential }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\expcons{[[m]]}[[x]][[->]]\,[[u]] }}
   | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex [[t]]~\succ\!\!\ottkw{mapL}\,[[x]]\![[->]]\,[[u]] }}
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
@@ -188,13 +188,14 @@ term, t, u :: 'Term_' ::=                                               {{ com T
   | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
   | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
   | t <| (,)                              ::   :: FillProd    {{ com Fill destination with product constructor }}
+  | t <| exp m :: :: FillExp {{ com Fill destination with exponential constructor }} {{ tex [[t]][[<|]]\expcons{[[m]]} }}
   | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
 
   | ( t )                                   :: S :: Paren
   | t [ sub ]                             :: M :: Sub
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpacing2
-  % | t b spe :: S :: BreakSpacing3
+  % | t b spe : : S :: BreakSpacing3
 
 % extended_term, j :: 'ExtTerm_' ::= {{ com Extended term }} {{ tex \ottextterm{[[extended_term]]} }}
 %   | t :: :: Term
@@ -205,8 +206,8 @@ sub :: 'Sub_' ::= {{ com Variable substitution }}
   | sub1 , sub2 :: :: Multiple
   | ( sub ) :: S :: Paren {{ tex [[sub]] }}
 
-effect, e :: 'Eff_' ::= {{ com Effect }} {{ tex \otteff{[[effect]]} }}
-  | o :: :: NoEff {{ tex \otteff{\varepsilon} }} {{ com No effect }}
+effect, e :: 'Eff_' ::= {{ com Effect }}
+  | o :: :: NoEff {{ tex \varepsilon }} {{ com No effect }}
   | h := w :: :: Single {{ tex [[h]][[:=]][[w]] }}
   | e1 . e2 :: :: Multiple {{ tex [[e1]]\,\cdot\,[[e2]] }}
   | ( e ) :: S :: Paren {{ tex [[e]] }}
@@ -215,24 +216,18 @@ type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
   | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
   | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
   | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
+  | ! m A :: :: Exp {{ tex \ottty{!}_{[[m]]}[[A]] }} {{ com Exponential }}
   | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | m1 A1 --o A2 :: :: Lambda {{ tex [[A1]]\,_{[[m1]]}\![[--o]]\,[[A2]] }} {{ com Linear function }}
-  | Dest A :: :: Dest {{ tex [[A]]\ottty{^D} }} {{ com Destination }}
+  | A1 m -> A2 :: :: Lambda {{ tex [[A1]]\,_{[[m]]}\!\ottty{\to}\,[[A2]] }} {{ com Linear function }}
+  | | A | m :: :: Dest {{ tex \ottty{\lfloor}[[A]]\ottty{\rfloor}_{[[m]]} }} {{ com Destination }}
   | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
 
-mode, m :: 'Mode_' ::= {{ tex \ottmod{[[mode]]} }} {{ com Mode }}
-  % | _ :: :: Placeholder {{ tex \ottmod{\_} }} {{ com Placeholder for any mode }}
-  | _L :: :: Local {{ tex \ottmod{\scriptstyle L} }} {{ com Local }}
-  | _F :: :: Foreign {{ tex \ottmod{\scriptstyle F} }} {{ com Foreign }}
-  | _G :: :: Global {{ tex \ottmod{\scriptstyle G} }} {{ com Global }}
-  | max_mode ( G ) :: :: MaxCtx {{ tex \ottmod{max\_mode(}[[G]]\ottmod{)} }}
-  | if mode_cond then m3 else m4 :: :: If
-
-mode_cond :: 'ModeCond' ::= {{ com Mode statement }} {{ tex \ottmod{[[mode_cond]]} }}
-  | m1 = m2 :: :: Eq
-  % | m1 <= m2 :: :: Leq
-  | m in upper_modes ( G ) :: :: Supr
-  | exists m in upper_modes ( G ) :: :: ExistsSupr
+multiplicity, m :: 'Mult_' ::= {{ tex \ottmod{[[multiplicity]]} }} {{ com Multiplicity (Semiring with product $[[.]]$) }}
+  | 0 :: :: Now {{ tex \ottmod{\nu} }} {{ com Born now. Identity of the product }}
+  | I :: :: One {{ tex \ottmod{\uparrow} }} {{ com One scope older }}
+  | inf :: :: Inf {{ tex \ottmod{\infty} }} {{ com Infinitely old / static. Absorbing for product }}
+  | m1 . m2 :: :: SemiringTimes {{ com Semiring product }}
+  | ( m ) :: S :: Paren {{ tex \ottmod{(}[[m]]\ottmod{)} }}
 
 typing_context, D {{ tex \Delta }} :: 'TyCtx_' ::= {{ com Typing context }}
   | G    ::   :: OnlyPos
@@ -244,28 +239,29 @@ pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context 
   | { pos_assigns } :: :: Assigns
   | G1 µ G2    ::    :: Disjoint
   | - H :: :: Minus
-  | G [ m1 -> m2 ] :: :: OverwriteMode
+  | m . G :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
   | ( G ) :: S :: Paren
 
 pos_assign, pa :: 'PosAssign_' ::= {{ com Positive type assignment }}
 %  | x : A :: :: LocalVar
-  | x : m A :: :: Var {{ tex [[x]]:_{[[m]]}[[A]] }}
-  | + h : A :: :: Dest {{ com Destination }} {{ tex \otthol{+}[[h]]:[[A]] }}
+  | + x : m A :: :: Var {{ com Variable }} {{ tex \ottmv{+}[[x]]:_{[[m]]}[[A]] }}
+  | + h : m A :: :: Dest {{ com Destination }} {{ tex \otthol{+}[[h]]:_{[[m]]}[[A]] }}
 pos_assigns :: 'PosAssigns_' ::= {{ com Positive type assignments }}
   | pa :: :: Single
   | pa , pos_assigns :: :: Multiple
 
 neg_assign, na :: 'NegAssign_' ::= {{ com Negative type assignment }}
-  | - h : A :: :: Hole {{ com Hole }} {{ tex \otthol{-}[[h]]:[[A]] }}
+  | - h : m A :: :: Hole {{ com Hole }} {{ tex \otthol{-}[[h]]:_{[[m]]}[[A]] }}
 neg_assigns :: 'NegAssigns_' ::= {{ com Negative type assignments }}
   | na :: :: Single
   | na , neg_assigns :: :: Multiple
 
-neg_context, H :: 'NegCtx_' ::= {{ com Negative typing context }}
+neg_context, H {{ tex \textrm{H} }} :: 'NegCtx_' ::= {{ com Negative typing context }}
   | {}    ::   :: Empty
   | { neg_assigns } :: :: Assigns
   | H1 µ H2    ::    :: Disjoint
   | - G :: :: Minus
+  | m . H :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
   | ( H ) :: S :: Paren
 
 eff_app :: 'EffApp_' ::= {{ com Effect application }}
@@ -303,11 +299,12 @@ terminals :: 'terminals_' ::=
   | <| :: :: fill {{ tex \triangleleft }}
   | <|. :: :: fillcomp {{ tex \triangleleft\!\mybullet\, }}
   | := :: :: assign {{ tex \coloneq }}
+  | '.' :: :: semiring {{ tex \ottmod{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
 
 % === Contexts ===
   | µ :: :: dunion {{ tex \sqcup }}
-  | µ+ :: :: sdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\pm$} } }}
-  | '{}' :: :: empty {{ tex \{\} }}
+%  | µ+ :: :: sdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\pm$} } }}
+  | '{}' :: :: empty {{ tex \emptyset }}
 
 % === Judgements ===
   | exists :: :: exists {{ tex \exists }}
@@ -368,9 +365,6 @@ onlyPositive ( D ) :: :: CtxPos :: CtxPos_ by
 defn
 onlyNegative ( D ) :: :: CtxNeg :: CtxNeg_ by
 
-defn
-mode_cond :: :: ModeCond :: ModeCond_ by
-
 defns
 Eq :: '' ::=
 
@@ -390,41 +384,41 @@ D1 disjoint D2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[D1]]) \cap [
 defns
 Ty :: '' ::=
 
-defn
-D ||- e :: :: TyEff :: TyEff_ by
+% defn
+% D ||- e :: :: TyEff :: TyEff_ by
 
--------------- :: NoEff
-{} u {} ||- o
+% -------------- :: NoEff
+% {} u {} ||- o
 
-G u H ||- w : A
-h notin names (G)
-------------------- :: Single
-G µ {+h : A} u H ||- h := w
+% G u H ||- w : A
+% h notin names (G)
+% ------------------- :: Single
+% G µ {+h : A} u H ||- h := w
 
-G1 u H1 µ H ||- e1
-G2 µ -H u H2 ||- e2
-G1 u H1 disjoint G2 u H2
-------------------------- :: Union
-G1 µ G2 u H1 µ H2 ||- e1 . e2
+% G1 u H1 µ H ||- e1
+% G2 µ -H u H2 ||- e2
+% G1 u H1 disjoint G2 u H2
+% ------------------------- :: Union
+% G1 µ G2 u H1 µ H2 ||- e1 . e2
 
-defn
-G |- v | e : A :: :: TyCmd :: TyCmd_ by
+% defn
+% G |- v | e : A :: :: TyCmd :: TyCmd_ by
 
-G1 µ -H |- v : A
-G2 u H ||- e
-G1 disjoint G2
------------------- :: Cmd
-G1 µ G2 |- v | e : A
+% G1 µ -H |- v : A
+% G2 u H ||- e
+% G1 disjoint G2
+% ------------------ :: Cmd
+% G1 µ G2 |- v | e : A
 
 
 defn
 D ||- w : A :: :: TyValExt :: TyValExt_ by
 
 --------------------- :: Hole
-{} u { - h : A } ||- h : A
+{} u { - h : 0 A } ||- h : A
 
 ---------------- :: Dest
-{ + h : A } u {} ||- @h : Dest A
+{ + h : m A } u {} ||- @h : |A|m
 
 --------------------- :: Unit
 {} u {} ||- () : 1
@@ -443,20 +437,20 @@ G1 u H1 disjoint G2 u H2
 ------------------------- :: Prod
 G1 µ G2 u H1 µ H2 ||- (w1, w2) : A1 * A2
 
+% TODO: should we augment age of holes which are below an exponential?
+% TODO: yes so that they match their destination mode?
+G u H ||- w : A
+--------------------- :: Exp
+m.G u m.H ||- exp m w : ! m A
+
 -H u {} ||- v1 : A1
 G2 u H ||- w2 : A2
----------------- :: IncompleteAmpar
+---------------- :: Ampar
 G2 u {} ||- <v1 ¤ w2> H : A1 ><| A2
 
-G1 u {} ||- v1 : A1
-G2 u {} ||- v2 : A2
-G1 disjoint G2
----------------- :: CompleteAmpar {{ com \quad\textnormal{(behaves as a pair)} }}
-G1 µ G2 u {} ||- <v1 ¤ v2> {} : A1 ><| A2
-
-G µ { x : m1 A1 } |- t : A2
+G µ { +x : m A1 } |- t : A2
 ----------------- :: Lambda
-G u {} ||- \x -> t : m1 A1 --o A2
+G u {} ||- \x -> t : A1 m -> A2
 
 defn
 G |- t : A :: :: TyTerm :: TyTerm_ by
@@ -465,15 +459,17 @@ G u {} ||- v : A
 ----------------- :: Val
 G |- v : A
 
--------------------- :: Var
-{ x : m A } |- x : A
+-------------------- :: VarNow
+{ +x : 0 A } |- x : A
 
-G1 |- t : m1 A1 --o A2
-G2 |- u : A1
-m1 in upper_modes(G2)
+-------------------- :: VarInf
+{ +x : inf A } |- x : A
+
+G1 |- t : A1
+G2 |- u : A1 m -> A2
 G1 disjoint G2
 ----------------- :: App
-G1 µ G2 |- t u : A2
+m.G1 µ G2 |- t & u : A2
 
 G1 |- t : 1
 G2 |- u : B
@@ -482,31 +478,58 @@ G1 disjoint G2
 G1 µ G2 |- t ; u : B
 
 G1 |- t : A1 + A2
-exists m in upper_modes (G1)
-G2 µ { x1 : m A1 } |- u1 : B
-G2 µ { x2 : m A2 } |- u2 : B
+G2 µ { +x1 : m A1 } |- u1 : B
+G2 µ { +x2 : m A2 } |- u2 : B
 G1 disjoint G2
 ----------------- :: PatSum
-G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : B
+m.G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : B
 
 G1 |- t : A1 * A2
-exists m in upper_modes (G1)
-G2 µ { x1 : m A1, x2 : m A2 } |- u : B
+G2 µ { +x1 : m A1, +x2 : m A2 } |- u : B
 G1 disjoint G2
 ----------------- :: PatProd
-G1 µ G2 |- t & \case ( x1 , x2 ) -> u : B
+m.G1 µ G2 |- t & \case ( x1 , x2) -> u : B
+
+G1 |- t : !m' A
+G2 µ { +x : m.m' A1 } |- u : B
+G1 disjoint G2
+----------------- :: PatExp
+m.G1 µ G2 |- t & \case exp m' x -> u : B
 
 G1 |- t : A1 ><| A2
-% ensures that we cannot capture dests of different scopes (G2)
-exists m' in upper_modes(G1 µ G2)
-m = if _F in upper_modes(G1) then _F else _L
-G2[ _L -> _F ] µ { x : m A1 } |- u : B
+I.G2 µ { +x : 0 A1 } |- u : B
 G1 disjoint G2
 -------------------------------- :: MapAmpar
 G1 µ G2 |- t <&> \ x -> u : B ><| A2
 
+G1 |- t : |A2|m
+G2 |- u : A1 ><| A2
+G1 disjoint G2
+----------------------------- :: FillComp
+G1 µ (I.m).G2 |- t <|. u : A1
+
+G |- t : |1|m
+------------------------------ :: FillUnit
+G |- t <| () : 1
+
+G |- t : |A1 + A2| m
+------------------------------ :: FillInl
+G |- t <| Inl : |A1|m
+
+G |- t : |A1 + A2| m
+------------------------------ :: FillInr
+G |- t <| Inr : |A2|m
+
+G |- t : |A1 * A2|m
+------------------------------ :: FillProd
+G |- t <| (,) : |A1|m * |A2|m
+
+G |- t : |!m' A|m
+------------------------------ :: FillExp
+G |- t <| exp m : |A|m.m'
+
 -------------------------------- :: Alloc
-{} |- alloc A : Dest A ><| A
+{} |- alloc A : |A|0 ><| A
 
 G |- t : A
 ------------------------------- :: ToAmpar
@@ -515,38 +538,6 @@ G |- toAmpar t : 1 ><| A
 G |- t : 1 ><| A
 ------------------------------- :: FromAmpar
 G |- fromAmpar t : A
-
-G |- t : Dest 1
------------------------------- :: FillUnit
-G |- t <| () : 1
-
-G |- t : Dest (A1 + A2)
------------------------------- :: FillInl
-G |- t <| Inl : Dest A1
-
-G |- t : Dest (A1 + A2)
------------------------------- :: FillInr
-G |- t <| Inr : Dest A2
-
-G |- t : Dest (A1 * A2)
------------------------------- :: FillProd
-G |- t <| (,) : Dest A1 * Dest A2
-
-G1 |- t : Dest A2
-G2 |- u : A1 ><| A2
-G1 disjoint G2
-_L in upper_modes(G1)
-_F in upper_modes(G2)
------------------------------ :: FillCompL
-G1 µ G2 |- t <|. u : A1
-
-G1 |- t : Dest A2
-G2 |- u : A1 ><| A2
-G1 disjoint G2
-_F in upper_modes(G1)
-_G in upper_modes(G2)
------------------------------ :: FillCompF
-G1 µ G2 |- t <|. u : A1
 
 defns
 Sem :: '' ::=
@@ -566,21 +557,21 @@ h notin names(H)
 apply (h := w' . e, w H) = h := w' .^ apply (e, w H)
 
 ------------------ :: FillUnit
-apply(h := () . e, w H µ { -h : 1 }) = apply(e , w[h := ()] H)
+apply(h := () . e, w H µ { -h : 0 1 }) = apply(e , w[h := ()] H)
 
 ------------------ :: FillInl
-apply(h := Inl h' . e, w H µ { -h : A1 + A2 }) = apply(e , w[h := Inl h'] H µ {-h' : A1})
+apply(h := Inl h' . e, w H µ { -h : 0 A1 + A2 }) = apply(e , w[h := Inl h'] H µ {-h' : 0 A1})
 
 ------------------ :: FillInr
-apply(h := Inr h' . e, w H µ { -h : A1 + A2 }) = apply(e , w[h := Inr h'] H µ {-h' : A2})
+apply(h := Inr h' . e, w H µ { -h : 0 A1 + A2 }) = apply(e , w[h := Inr h'] H µ {-h' : 0 A2})
 
 ------------------ :: FillProd
-apply(h := (h1, h2) . e, w H µ { -h : A1 * A2 }) = apply(e , w[h := (h1, h2)] H µ {-h1 : A1, -h2 : A2})
+apply(h := (h1, h2) . e, w H µ { -h : 0 A1 * A2 }) = apply(e , w[h := (h1, h2)] H µ {-h1 : 0 A1, -h2 : 0 A2})
 
 G' u H' ||- w' : A
-H µ { -h : A } disjoint H'
+H µ { -h : 0 A } disjoint H'
 --------------------- :: FillComp {{ com \quad\textnormal{(Encompasses all other \textsc{Fill} rules)} }}
-apply (h := w' . e, w H µ { -h : A }) = apply (e, w[h := w'] H µ H')
+apply (h := w' . e, w H µ { -h : 0 A }) = apply (e, w[h := w'] H µ H')
 
 defn
 t !! v | e :: :: BigStep :: BigStep_ by
@@ -588,11 +579,11 @@ t !! v | e :: :: BigStep :: BigStep_ by
 ------------------ :: Val
 v !! v | o
 
-t1 !! \x -> u | e1
-t2 !! v2 | e2
-u[x := v2] !! v3 | e3
+t1 !! v1 | e1
+t2 !! \x -> u | e2
+u[x := v1] !! v3 | e3
 ------------------ :: App
-t1 t2 !! v3 | (e1 . e2) . e3
+t1 & t2 !! v3 | (e1 . e2) . e3
 
 t1 !! () | e1
 t2 !! v2 | e2
@@ -623,7 +614,7 @@ t <&> \ x -> u !! <v3 ¤ w4> H' | e1 . e3
 
 fresh h
 -------------------------- :: Alloc
-alloc A !! < @h ¤ h > { -h : A } | o
+alloc A !! < @h ¤ h > { -h : 0 A } | o
 
 t !! v | e
 ----------------------------------------- :: ToAmpar
@@ -658,9 +649,6 @@ u !! <v1 ¤ w2> H | e2
 t <|. u !! v1 | (e1 . e2) . h := w2
 
 parsing
-Ty_Prod <= Ty_Dest
-Ty_Sum <= Ty_Dest
-Ty_Ampar <= Ty_Dest
 PosCtx_Disjoint <= PosCtx_Minus
 NegCtx_Disjoint <= NegCtx_Minus
-
+PosCtx_Disjoint <= PosCtx_SemiringTimes
