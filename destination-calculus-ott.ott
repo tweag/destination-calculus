@@ -262,12 +262,13 @@ typing_context, D {{ tex \Delta }} :: 'TyCtx_' ::= {{ com Typing context }}
   | G    ::   :: OnlyPos
   | H ::    :: OnlyNeg
   | G u H :: :: SepPosNeg {{ tex [[G]]\mathrel{\raisebox{1pt}{\scalebox{0.5}{$\sqcup$}\!\! } }[[H]] }}
+  | m ° D :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex [[m]][[.]][[D]] }}
+  | ( D ) :: S :: Paren
 
 pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context }}
   | {}    ::   :: Empty
   | { pos_assigns } :: :: Assigns
   | G1 µ G2    ::    :: Disjoint
-  | - H :: :: Minus {{ tex \otthol{@}[[H]] }} {{ com Inverse the sign of the context }}
   | m . G :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
   | ( G ) :: S :: Paren
   | _ :: M :: Placeholder
@@ -290,7 +291,7 @@ neg_context, H {{ tex \textrm{H} }} :: 'NegCtx_' ::= {{ com Negative typing cont
   | {}    ::   :: Empty
   | { neg_assigns } :: :: Assigns
   | H1 µ H2    ::    :: Disjoint
-  | - G :: :: Minus  {{ tex \otthol{@^{-1} }[[G]] }} {{ com Inverse the sign of the context }}
+  | - G :: :: Minus  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Inverse the sign of the context }}
   | m . H :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex \topprod{[[m]]}[[H]] }}
   | ( H ) :: S :: Paren
   | _ :: M :: Placeholder
@@ -415,31 +416,33 @@ D1 disjoint D2 :: :: DisjointCtx :: DisjointCtx_ {{ tex [[names]]([[D1]]) \cap [
 defns
 Ty :: '' ::=
 
-% defn
-% D ||- e :: :: TyEff :: TyEff_ by
+% Tout trou créé doit apparaître soit comme dest dans le terme, soit être rempli par un effet suivant
 
-% -------------- :: NoEff
-% {} u {} ||- o
+defn
+D ||- e :: :: TyEff :: TyEff_ by
 
-% G u H ||- w : A
-% h notin names (G)
-% ------------------- :: Single
-% G µ {+h : 0 n A} u H ||- h := w
+-------------- :: NoEff
+{} u {} ||- o
 
-% G1 u H1 µ H ||- e1
-% G2 µ -H u H2 ||- e2
-% G1 u H1 disjoint G2 u H2
-% ------------------------- :: Union
-% G1 µ G2 u H1 µ H2 ||- e1 . e2
+G u H ||- w : A
+h notin names (G)
+------------------- :: Single
+m°((n.I).G µ {@h : 0 |A|n} u n.H) ||- h := w
 
-% defn
-% G |- v | e : A :: :: TyCmd :: TyCmd_ by
+G1 u H1 µ -G22 ||- e1
+G21 µ G22 u H2 ||- e2
+G1 u H1 disjoint G21 u H2
+------------------------- :: Union
+G1 µ G21 u H1 µ H2 ||- e1 . e2
 
-% G1 µ -H |- v : A
-% G2 u H ||- e
-% G1 disjoint G2
-% ------------------ :: Cmd
-% G1 µ G2 |- v | e : A
+defn
+G |- v | e : A :: :: TyCmd :: TyCmd_ by
+
+G11 µ G12 |- v : A
+G2 u -G12 ||- e
+G11 disjoint G2
+------------------ :: Cmd
+G11 µ G2 |- v | e : A
 
 
 defn
@@ -449,7 +452,7 @@ D ||- w : A :: :: TyValExt :: TyValExt_ by
 {} u { h : 0 A } ||- h : A
 
 ---------------- :: Dest
-{ @h : 0 |A|m } u {} ||- @h : |A|m
+{ @h : 0 |A|n } u {} ||- @h : |A|n
 
 --------------------- :: Unit
 {} u {} ||- () : 1
@@ -474,8 +477,8 @@ G u H ||- w : A
 --------------------- :: Exp
 m.G u m.H ||- exp m w : ! m A
 
--H u {} ||- v1 : A1
-G2 u H ||- w2 : A2
+G1 u {} ||- v1 : A1
+G2 u -G1 ||- w2 : A2
 ---------------- :: Ampar
 G2 u {} ||- <v1 ¤ w2> H : A1 ><| A2
 
@@ -533,31 +536,31 @@ G1 disjoint G2
 -------------------------------- :: MapAmpar
 G1 µ G2 |- t <&> \ x -> u : B ><| A2
 
-G1 |- t : |A2|m
+G1 |- t : |A2|n
 G2 |- u : A1 ><| A2
 G1 disjoint G2
 ----------------------------- :: FillComp
-G1 µ (I.m).G2 |- t <|. u : A1
+G1 µ (n.I).G2 |- t <|. u : A1
 
-G |- t : |1|m
+G |- t : |1|n
 ------------------------------ :: FillUnit
 G |- t <| () : 1
 
-G |- t : |A1 + A2| m
+G |- t : |A1 + A2| n
 ------------------------------ :: FillInl
-G |- t <| Inl : |A1|m
+G |- t <| Inl : |A1|n
 
-G |- t : |A1 + A2| m
+G |- t : |A1 + A2| n
 ------------------------------ :: FillInr
-G |- t <| Inr : |A2|m
+G |- t <| Inr : |A2|n
 
-G |- t : |A1 * A2|m
+G |- t : |A1 * A2|n
 ------------------------------ :: FillProd
-G |- t <| (,) : |A1|m * |A2|m
+G |- t <| (,) : |A1|n * |A2|n
 
-G |- t : |!m' A|m
+G |- t : |!n' A|n
 ------------------------------ :: FillExp
-G |- t <| exp m' : |A|m.m'
+G |- t <| exp n' : |A|n.n'
 
 -------------------------------- :: Alloc
 {} |- alloc A : |A|0 ><| A
@@ -574,6 +577,15 @@ defns
 Sem :: '' ::=
 
 defn
+H1 = H2 :: :: AtApp :: AtApp_ {{ com "Inverse sign of context" operation }} by
+
+------------------- :: Empty
+-{} = {}
+
+------------------- :: Rec
+-({@h : m |A| n} µ G) = {h : m.n A} µ -G
+
+defn
 eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com (we assume effect lists are $\otteff{\varepsilon}$-terminated) }} by
 
 ------------- :: NoEff
@@ -584,7 +596,7 @@ apply (o, w H) = o , w H
 % G' u _ ||- w' : A
 % G' disjoint -H
 h notin names(H)
---------------------- :: Skip
+--------------------- :: WindUp
 apply (h := w2 . e, w1 H) = h := w2 .^ apply (e, w1 H)
 
 % ------------------ :: FillUnit
@@ -600,9 +612,9 @@ apply (h := w2 . e, w1 H) = h := w2 .^ apply (e, w1 H)
 % apply(h := (h1, h2) . e, w H µ { -h : 0 A1 * A2 }) = apply(e , w[h := (h1, h2)] H µ {-h1 : 0 A1, -h2 : 0 A2})
 
 _ u H' ||- w2 : A
-H µ { h : m A } disjoint H'
---------------------- :: FillComp {{ com \quad\textnormal{(Encompasses all other \textsc{Fill} rules)} }}
-apply (h := w2 . e, w1 H µ { h : m A }) = apply (e, w1[h := w2] H µ m.H')
+H µ { h : n A } disjoint H'
+--------------------- :: Fill
+apply (h := w2 . e, w1 H µ { h : n A }) = apply (e, w1[h := w2] H µ n.H')
 
 defn
 t !! v | e :: :: BigStep :: BigStep_ by
@@ -680,6 +692,11 @@ u !! <v1 ¤ w2> H | e2
 t <|. u !! v1 | (e1 . e2) . h := w2
 
 parsing
-PosCtx_Disjoint <= PosCtx_Minus
 NegCtx_Disjoint <= NegCtx_Minus
 PosCtx_Disjoint <= PosCtx_SemiringTimes
+NegCtx_Disjoint <= NegCtx_SemiringTimes
+TyCtx_SemiringTimes <= PosCtx_SemiringTimes
+TyCtx_SemiringTimes <= NegCtx_SemiringTimes
+TyCtx_SemiringTimes <= TyCtx_SepPosNeg
+TyCtx_Paren <= PosCtx_Paren
+TyCtx_Paren <= NegCtx_Paren
