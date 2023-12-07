@@ -33,7 +33,7 @@ $(OTT_TEX): $(OTT_FILES)
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
 
-destination-calculus.tar.gz: destination-calculus.tex destination-calculus.bbl destination-calculus-ott.tex ottstyling.sty
+destination-calculus.tar.gz: destination-calculus.tex destination-calculus.bbl destination-calculus-ott.tex ottstyling.sty listproc.sty ottalt.sty
 	tar -cvzf $@ $^
 
 %.pdf %.bbl : %.tex bibliography.bib $(OTT_TEX)
@@ -43,7 +43,7 @@ nix::
 	nix-shell --pure --run make
 
 continous-nix:: nix
-	nix-shell --pure --run "ls destination-calculus.mng bibliography.bib $(OTT_FILES) | entr make"
+	nix-shell --pure --run "ls destination-calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make"
 
 # .SECONDARY:
 # the line above prevents deletion of temporary files, which can be helpful for debugging build problems

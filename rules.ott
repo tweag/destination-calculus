@@ -9,6 +9,15 @@ Ty :: '' ::=
 % Tout trou créé doit apparaître soit comme dest dans le terme, soit être rempli par un effet suivant
 
 defn
+H1 = H2 :: :: AtApp :: AtApp_ {{ com $\otthol{@^{\scriptscriptstyle\text{-}1} }$: "Inverse sign of context" operation }} by
+
+------------------- :: Empty
+-{} = {}
+
+------------------- :: Rec
+-({@h : m |A| n} µ G) = {h : m.n A} µ -G
+
+defn
 D ||- e :: :: TyEff :: TyEff_ {{ com Typing of effects (require both positive and negative contexts) }} by
 
 -------------- :: NoEff
@@ -36,7 +45,7 @@ G11 µ G2 |- v | e : A
 
 
 defn
-D ||- w : A :: :: TyValExt :: TyValExt_ {{ com Typing of (extended) values (require both positive and negative contexts) }} by
+D ||- w : A :: :: TyValExt :: TyValExt_ {{ com Typing of extended values (require both positive and negative contexts) }} by
 
 --------------------- :: Hole
 {} u { h : 0 A } ||- h : A
@@ -165,15 +174,6 @@ G |- fromAmpar t : A
 
 defns
 Sem :: '' ::=
-
-defn
-H1 = H2 :: :: AtApp :: AtApp_ {{ com $\otthol{@^{\scriptscriptstyle\text{-}1} }$: "Inverse sign of context" operation }} by
-
-------------------- :: Empty
--{} = {}
-
-------------------- :: Rec
--({@h : m |A| n} µ G) = {h : m.n A} µ -G
 
 defn
 eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\otteff{\varepsilon}$-terminated) }} by

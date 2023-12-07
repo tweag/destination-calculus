@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{amssymb}
 \usepackage{subcaption}
 \usepackage{hyperref}
 \hypersetup{
@@ -20,33 +21,61 @@
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \addbibresource{bibliography.bib}
 
-\input{destination-calculus-ott.tex}
+% For OTT rendering
+\usepackage[supertabular]{ottalt}
+\inputott{destination-calculus-ott.tex}
 \usepackage{ottstyling}
 
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
 
 \begin{document}
 
-\title{Destination \lambda-calculus}
+\title{Destination $\lambda$-calculus}
 \author{Thomas \textsc{Bagrel}}
 \date{\today}
 
 \maketitle
 
-\section{Introduction}
+\section{Term and value syntax}
 
-% Contenu de l'introduction
+\ottmetavars
 
-\section{Section 1}
+\ottgrammartabular{
+\otttermXXvalue\ottinterrule
+\ottextendedXXvalue\ottinterrule
+\ottterm\ottafterlastrule
+}
 
-% Contenu de la section 1
+%\ottsub\ottinterrule
 
-\section{Section 2}
+\clearpage
+\section{Type system}
 
-% Contenu de la section 2
+\ottgrammartabular{
+\otttype\ottinterrule
+\ottmultiplicity\ottinterrule
+\otttypingXXcontext\ottinterrule
 
-\section{Conclusion}
+\ottposXXcontext\ottinterrule
+\ottposXXassign\ottinterrule
+% \ottposXXassigns\ottinterrule
+\ottnegXXcontext\ottinterrule
+\ottnegXXassign\ottafterlastrule
+% \ottnegXXassigns\ottinterrule
 
-% Contenu de la conclusion
+%\otteffXXapp\ottinterrule
+% \ottauxXXpred\ottinterrule
+% \otttyXXsemXXpred\ottafterlastrule
+}
+
+\ottdefnsTy
+
+\clearpage
+\section{Effects and big-step semantics}
+
+\ottgrammartabular{
+\otteffect\ottafterlastrule
+}
+\ottdefnsSem
 
 \end{document}

@@ -8,34 +8,33 @@ pkgs.mkShell
       ott
       biber
       haskellPackages.lhs2tex
+      entr
       (texlive.combine {
         inherit (texlive)
-          # basic toolbox
           scheme-small
+          cleveref
           latexmk
-          biblatex
-          unicode-math
-          lm
-          lm-math
-          preprint xcolor
-          bussproofs
-          supertabular
-          geometry
-          ulem
-          mathtools
-          abraces
-          times
-          rsfs
-          enumitem
+          biblatex biblatex-software
           stmaryrd
-          tipa
+          unicode-math lm lm-math
+          logreq xstring
+          xargs todonotes
+          mathpartir
           bbold
-#          bm
-          # mathptmx
-          # minted
-          # minted fvextra catchfile xstring kvoptions fancyvrb
-          # upquote float ifplatform pdftexcmds etoolbox
-          # xcolor lineno framed
+          # newunicodechar
+
+          # for lhs2tex
+          lazylist polytable
+
+          # for ott
+          supertabular
+
+          # acmart and dependencies
+          # acmart totpages trimspaces
+          # libertine environ hyperxmp
+          # ifmtarg comment ncctools
+          # inconsolata newtx txfonts
+          # xpatch xurl
           ;
       })
 

@@ -17,7 +17,7 @@ term_value, v :: 'TermVal_' ::= {{ com Term value }}
   | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | ( v ) :: S :: Paren
 
-extended_value, w :: 'ExtVal_' ::= {{ com Store value }} {{ tex \ottextval{[[extended_value]]} }}
+extended_value, w :: 'ExtVal_' ::= {{ com Pseudo-value that may contain holes }} {{ tex \ottextval{[[extended_value]]} }}
   | v :: :: TermVal {{ com Term value }}
   | h :: :: Hole {{ com Hole }}
   | Inl w :: :: Inl {{ com Left variant with val or hole }}
@@ -96,35 +96,35 @@ typing_context, D {{ tex \Delta }} :: 'TyCtx_' ::= {{ com Typing context }}
   | ( D ) :: S :: Paren
 
 pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context }}
-  | {}    ::   :: Empty
+  | {}    :: S  :: Empty
   | { pos_assigns } :: :: Assigns
   | G1 µ G2    ::    :: Disjoint
   | m . G :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
   | ( G ) :: S :: Paren
   | _ :: M :: Placeholder
 
-pos_assign, pa :: 'PosAssign_' ::= {{ com Positive type assignment }}
+pos_assign :: 'PosAssign_' ::= {{ com Positive type assignment }}
 %  | x : A :: :: LocalVar
   | x : m A :: :: Var {{ com Variable }} {{ tex [[x]]:_{[[m]]}[[A]] }}
   | @ h : m | A | n :: :: Dest {{ com Destination ($[[m]]$ is its own age; $[[n]]$ is the age of values it accepts) }} {{ tex \otthol{@}[[h]]:_{[[m]]}\,\!^{[[n]]}\!\ottty{\lfloor}[[A]]\ottty{\rfloor} }}
-pos_assigns :: 'PosAssigns_' ::= {{ com Positive type assignments }}
-  | pa :: :: Single
-  | pa , pos_assigns :: :: Multiple
-
-neg_assign, na :: 'NegAssign_' ::= {{ com Negative type assignment }}
-  | h : n A :: :: Hole {{ com Hole ($[[n]]$ is the age of values it accepts, its own age is undefined) }} {{ tex [[h]]:^{[[n]]}[[A]] }}
-neg_assigns :: 'NegAssigns_' ::= {{ com Negative type assignments }}
-  | na :: :: Single
-  | na , neg_assigns :: :: Multiple
+pos_assigns {{ tex \ottnt{pos\_assign}* }} :: 'PosAssigns_' ::= {{ com Positive type assignments }}
+  | pos_assign :: :: Single
+  | pos_assign , pos_assigns :: :: Multiple
 
 neg_context, H {{ tex \textrm{H} }} :: 'NegCtx_' ::= {{ com Negative typing context }}
-  | {}    ::   :: Empty
+  | {}    ::  S :: Empty
   | { neg_assigns } :: :: Assigns
   | H1 µ H2    ::    :: Disjoint
   | - G :: :: Minus  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Inverse the sign of the context }}
   | m . H :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex \topprod{[[m]]}[[H]] }}
   | ( H ) :: S :: Paren
   | _ :: M :: Placeholder
+
+neg_assign :: 'NegAssign_' ::= {{ com Negative type assignment }}
+  | h : n A :: :: Hole {{ com Hole ($[[n]]$ is the age of values it accepts, its own age is undefined) }} {{ tex [[h]]:^{[[n]]}[[A]] }}
+neg_assigns {{ tex \ottnt{neg\_assign}* }} :: 'NegAssigns_' ::= {{ com Negative type assignments }}
+  | neg_assign :: :: Single
+  | neg_assign , neg_assigns :: :: Multiple
 
 eff_app :: 'EffApp_' ::= {{ com Effect application }}
   | e , w H :: :: Explicit {{ tex [[e]],\,[[w]]\,_{[[H]]} }}
