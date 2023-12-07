@@ -24,14 +24,14 @@ clean:
 	rm -f destination-calculus.*.gz
 	rm -f destination-calculus-ott.tex
 
-%.lhs: %.mng $(OTT_FILES)
+%.tex: %.mng $(OTT_FILES)
 	ott $(OTT_OPTS) -tex_filter $< $@ $(OTT_FILES)
 
 $(OTT_TEX): $(OTT_FILES)
 	ott $(OTT_OPTS) -o $@ $^
 
-%.tex: %.lhs
-	lhs2TeX -o $@ $<
+# %.tex: %.lhs
+# 	lhs2TeX -o $@ $<
 
 destination-calculus.tar.gz: destination-calculus.tex destination-calculus.bbl destination-calculus-ott.tex ottstyling.sty listproc.sty ottalt.sty
 	tar -cvzf $@ $^

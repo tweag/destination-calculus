@@ -99,6 +99,7 @@ pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context 
   | {}    :: S  :: Empty
   | { pos_assigns } :: :: Assigns
   | G1 µ G2    ::    :: Disjoint
+  | G @ :: :: DestRestrict {{ tex [[G]]^{\otthol{@} } }} {{ com Positive context restricted to destinations only }} % {{ tex \restriction{[[G]]}{\otthol{@} } }}
   | m . G :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
   | ( G ) :: S :: Paren
   | _ :: M :: Placeholder
@@ -203,6 +204,7 @@ aux_pred :: 'AuxPred_' ::=
   | A1 != A2 :: :: NeqType
   | t = u :: :: EqTerm
   | t != u :: :: NeqTerm
+  | G1 = G2 :: :: EqPosCtx
 
 ty_sem_pred :: 'TySemPred_' ::=
   | D ||- e :: :: TyEff
