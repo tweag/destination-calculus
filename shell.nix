@@ -7,6 +7,7 @@ pkgs.mkShell
       niv
       ott
       biber
+      haskellPackages.lhs2tex
       (texlive.combine {
         inherit (texlive)
           # basic toolbox

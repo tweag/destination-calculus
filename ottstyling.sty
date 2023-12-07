@@ -1,0 +1,127 @@
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{ottstyling}[2023/12/07 Custom operators and commands for OTT rendering]
+
+\RequirePackage{stmaryrd}
+\RequirePackage{bbold}
+\RequirePackage[safe]{tipa}
+
+% Big comma for Ampar
+\DeclareSymbolFont{bbsymbol}{U}{bbold}{m}{n}
+\DeclareMathSymbol{\bbcomma}{\mathbin}{bbsymbol}{"2C}
+
+% Allow sans-serif + bold font in math mode
+\DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sbc}{n}
+
+\definecolor{ntcolor}{RGB}{75, 75, 75}
+\definecolor{kwcolor}{RGB}{0, 0, 0}
+% \definecolor{??color}{HTML}{F8980F} % yellow-orange, underlined
+\definecolor{tycolor}{HTML}{176FC1} % blue, bold
+\definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
+\definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
+\definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
+\definecolor{holecolor}{HTML}{F14B2D} % red, itshape
+
+\newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsfbf{#1} } }
+\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
+\newcommand{\ottextval}[1]{\textcolor{ntcolor}{\mathsf{\replacewv{\overline{#1} } } } }
+\newcommand{\ottextterm}[1]{\textcolor{ntcolor}{\mathsf{\replacejt{\overline{#1} } } } }
+\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
+\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1} } }
+\newcommand{\ottdefault}[1]{\textcolor{black}{#1} }
+\newcommand{\ottcons}[1]{\textcolor{black}{\mathsf{#1} } }
+\newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathit{#1} } }
+\newcommand{\otteff}[1]{#1} % no special rendering for effects at the moment
+\newcommand{\otthol}[1]{\textcolor{holecolor}{\mathtt{#1} } }
+\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathit{#1} } }
+
+% Replace normal l with fancy round l in label names
+% \newcommand{\replacelell}[1]{%
+%   \begingroup%
+%   \mathcode`l=\ell%
+%   #1%
+%   \endgroup%
+% }
+
+% Replace w with v in extend values rendering (as a bar is added)
+\newcommand{\replacewv}[1]{%
+  \begingroup%
+  \mathcode`w=\mathcode`v
+  #1%
+  \endgroup%
+}
+
+% Used to allow tabs and newlines in OTT terms
+\def\activespaces{
+  \def\mynewline{\\}
+  \def\myspace##1{\myrepeat{##1}{\hspace{0.7cm} } }
+}
+\def\visiblespaces{
+  \def\mynewline{\ottsp{\backslash\!n} }
+  \def\myspace##1{\myrepeat{##1}{\ottsp{\langle \ldots \rangle} } }
+}
+\visiblespaces{}
+\makeatletter
+  \newcount\my@repeat@count
+  \newcommand{\myrepeat}[2]{%
+    \begingroup
+    \my@repeat@count=\z@
+    \@whilenum\my@repeat@count<#1\do{#2\advance\my@repeat@count\@ne}%
+    \endgroup
+  }
+\makeatother
+
+% Short equal operator and assignment operator
+\makeatletter
+\newcommand{\shorteq}{%
+  \settowidth{\@tempdima}{--}% Width of hyphen
+  \resizebox{\@tempdima}{\height}{=}%
+}
+\makeatother
+\newcommand{\coloneq}{\mathrel{%
+  \!\raisebox{0.09ex}{$\mathop{:}$\hspace{-0.1ex}%
+  }%
+  \shorteq\hspace{-0.2ex}%
+}%
+}
+
+% Lambda abstraction with and without type annotation
+% \newcommand{\lam}[3]{\ottcons{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
+\newcommand{\lamnt}[2]{\ottcons{\lambda}#1\,\textbf{.}\,#2}
+% \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
+
+% Constructor for exponential
+\newcommand{\expcons}[1]{\ottcons{\rrparenthesis }^{#1}\,}
+
+% Raised and scaled bullet for fillComp
+\newlength{\mylen}
+\setbox1=\hbox{$\bullet$}\setbox2=\hbox{$\scriptscriptstyle\bullet$}
+\setlength{\mylen}{\dimexpr0.5\ht1-0.5\ht2}
+\def\mybullet{\raisebox{\mylen}{$\scriptscriptstyle\bullet$} }
+
+% Raised cdot for negative context product
+% https://tex.stackexchange.com/questions/597955/a-math-font-size-knowledgeable-raisebox
+\makeatletter
+\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottmod{\cdot} } }
+\newcommand{\abcd@}[2]{%
+  % #1 = math style
+  % #2 = text to be lowered
+  \raisebox{%
+    % we make it so that the top of the
+    % lowered part is at the formula axis
+    \dimexpr+\abcd@fontdimen{#1}%
+  }{%
+    % we don't want that \scriptspace kicks in
+    \scriptspace=\z@
+    % the part to be lowered
+    $\m@th#1#2$%
+  }%
+}
+\newcommand{\abcd@fontdimen}[1]{%
+  % the height of the formula axis is \fontdimen22 <math font of family 2>
+  \fontdimen22
+  \ifx#1\displaystyle\textfont\else
+  \ifx#1\textstyle\textfont\else
+  \ifx#1\scriptstyle\scriptfont\else
+  \scriptscriptfont\fi\fi\fi 2
+}
+\makeatother
