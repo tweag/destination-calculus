@@ -116,7 +116,7 @@ neg_context, H {{ tex \textrm{H} }} :: 'NegCtx_' ::= {{ com Negative typing cont
   | {}    ::  S :: Empty
   | { neg_assigns } :: :: Assigns
   | H1 µ H2    ::    :: Disjoint
-  | - G :: :: Minus  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Inverse the sign of the context }}
+  | - G :: :: Minus  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Invert the sign of the context }}
   | m . H :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex \topprod{[[m]]}[[H]] }}
   | ( H ) :: S :: Paren
   | _ :: M :: Placeholder
