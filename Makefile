@@ -1,6 +1,7 @@
 OTT_FILES = grammar.ott rules.ott
 OTT_OPTS = -tex_show_meta false -tex_wrap false -picky_multiple_parses false -tex_suppress_ntr Q
 OTT_TEX = destination-calculus-ott.tex
+OTT_COQ = destination-calculus-ott.v
 
 all: destination-calculus.pdf
 
@@ -28,6 +29,9 @@ clean:
 	ott $(OTT_OPTS) -tex_filter $< $@ $(OTT_FILES)
 
 $(OTT_TEX): $(OTT_FILES)
+	ott $(OTT_OPTS) -o $@ $^
+
+$(OTT_COQ): $(OTT_FILES)
 	ott $(OTT_OPTS) -o $@ $^
 
 # %.tex: %.lhs

@@ -1,136 +1,125 @@
-metavar termvar, x, y, d ::= {{ com Term-level variable }}
-  {{ tex \ottmv{[[termvar]]} }}
+metavar tvar, x, y, d ::= {{ com Term-level variable }}
+  {{ tex \ottmv{[[tvar]]} }} {{ coq string }}
 
-metavar holevar, h ::= {{ com Hole }}
-  {{ tex \otthol{[[holevar]]} }}
+metavar hvar, h ::= {{ com Hole }}
+  {{ tex \otthol{[[hvar]]} }} {{ coq string }}
+
+indexvar n ::= {{ coq nat }}
 
 grammar
 
-term_value, v :: 'TermVal_' ::= {{ com Term value }}
-  | < v1 ¤ w2 > H :: :: Ampar {{ com Ampar }} {{ tex \ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle}_{[[H]]} }}
-  | @ h :: :: Dest {{ tex \otthol{@}[[h]] }} {{ com Destination }}
-  | () :: :: Unit {{ com Unit }}
-  | Inl v :: :: Inl {{ com Left variant for sum }}
-  | Inr v :: :: Inr {{ com Right variant for sum }}
-  | ( v1 , v2 ) :: :: Prod {{ tex \ottcons{(}[[v1]]\,\ottcons{,}~[[v2]]\ottcons{)} }} {{ com Product }}
-  | exp m v :: :: Exp {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
-  | \ x -> t :: :: Lambda {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
-  | ( v ) :: S :: Paren
+v :: 'v_' ::= {{ com Term value }}
+  | < v1 ¤ w2 > D :: :: T {{ com Ampar }} {{ tex \ottcons{\langle}[[v1]]\,\ottcons{\bbcomma}~[[w2]]\ottcons{\rangle}_{[[D]]} }}
+  | @ h :: :: D {{ tex \otthol{@}[[h]] }} {{ com Destination }}
+  | () :: :: U {{ com Unit }}
+  | Inl v :: :: L {{ com Left variant for sum }}
+  | Inr v :: :: R {{ com Right variant for sum }}
+  | ( v1 , v2 ) :: :: P {{ tex \ottcons{(}[[v1]]\,\ottcons{,}~[[v2]]\ottcons{)} }} {{ com Product }}
+  | exp M v :: :: E {{ tex \expcons{[[M]]}[[v]] }} {{ com Exponential }}
+  | \ x -> t :: :: F {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
+  | ( v ) :: S :: Paren {{ icho [[v]] }}
 
-extended_value, w :: 'ExtVal_' ::= {{ com Pseudo-value that may contain holes }} {{ tex \ottextval{[[extended_value]]} }}
-  | v :: :: TermVal {{ com Term value }}
-  | h :: :: Hole {{ com Hole }}
-  | Inl w :: :: Inl {{ com Left variant with val or hole }}
-  | Inr w :: :: Inr {{ com Right variant with val or hole }}
-  | ( w1 , w2 ) :: :: Prod {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
-  | exp m w :: :: Exp {{ tex \expcons{[[m]]}[[w]] }} {{ com Exponential with val or hole }}
-  | ( w ) :: S :: Paren
-  | w [ e ] :: M :: Effect
+w :: 'w_' ::= {{ com Pseudo-value that may contain holes }} {{ tex \ottextval{[[w]]} }}
+  | v :: :: V {{ com Term value }}
+  | h :: :: H {{ com Hole }}
+  | Inl w :: :: L {{ com Left variant with val or hole }}
+  | Inr w :: :: R {{ com Right variant with val or hole }}
+  | ( w1 , w2 ) :: :: P {{ tex \ottcons{(}[[w1]]\,\ottcons{,}~[[w2]]\ottcons{)} }} {{ com Product with val or hole }}
+  | exp M w :: :: E {{ tex \expcons{[[M]]}[[w]] }} {{ com Exponential with val or hole }}
+  | ( w ) :: S :: Paren {{ icho [[w]] }}
+  | w [ e ] :: M :: Effect {{ icho (w_eapp [[w]] [[e]]) }}
 
-term, t, u :: 'Term_' ::=                                               {{ com Term }}
-  | v :: :: TermVal {{ com Term value }}
-  | x :: :: Var {{ com Variable }}
+t, u :: 't_' ::=                                               {{ com Term }}
+  | v :: :: V {{ com Term value }}
+  | x :: :: X {{ com Variable }}
   | t & u                                    ::   :: App      {{ com Application }} {{ tex [[t]]~\succ~[[u]] }}
-  | t ; u                   ::   :: PatUnit {{ com Pattern-match on unit }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,[[()]]\![[->]]\,[[u]] }}
-  | t & \case { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatSum     {{ com Pattern-match on sum }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\{\,\ottcons{Inl}\,[[x1]][[->]][[u1]]\,,~\ottcons{Inr}\,[[x2]][[->]][[u2]]\,\} }}
-  | t & \case ( x1 , x2 ) -> u            ::   :: PatProd     {{ com Pattern-match on product }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\ottcons{(}[[x1]]\,\ottcons{,}~[[x2]]\ottcons{)}\![[->]]\,[[u]] }}
-  | t & \case exp m x -> u            ::   :: PatExp     {{ com Pattern-match on exponential }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\expcons{[[m]]}[[x]][[->]]\,[[u]] }}
-  | t <&> \ x -> u :: :: MapAmpar {{ com Map over the left side of the ampar }} {{ tex [[t]]~\succ\!\!\ottkw{mapL}\,[[x]]\![[->]]\,[[u]] }}
+  | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,[[()]]\![[->]]\,[[u]] }}
+  | t & \case { Inl x1 -> u1 , Inr x2 -> u2 }   ::   :: PatS     {{ com Pattern-match on sum }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\{\,\ottcons{Inl}\,[[x1]][[->]][[u1]]\,,~\ottcons{Inr}\,[[x2]][[->]][[u2]]\,\} }}
+  | t & \case ( x1 , x2 ) -> u            ::   :: PatP     {{ com Pattern-match on product }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\ottcons{(}[[x1]]\,\ottcons{,}~[[x2]]\ottcons{)}\![[->]]\,[[u]] }}
+  | t & \case exp M x -> u            ::   :: PatE     {{ com Pattern-match on exponential }} {{ tex [[t]]~\succ\!\!\ottkw{case}\,\expcons{[[M]]}[[x]][[->]]\,[[u]] }}
+  | t <&> \ x -> u :: :: Map {{ com Map over the left side of the ampar }} {{ tex [[t]]~\succ\!\!\ottkw{mapL}\,[[x]]\![[->]]\,[[u]] }}
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion to ${\ottmod{\scriptstyle G} }$ }}
   % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottmod{\scriptstyle G} } }} {{ com Mode coercion from ${\ottmod{\scriptstyle G} }$ }}
-  | toAmpar t :: :: ToAmpar {{ tex \ottkw{to}_{[[><|]]}\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | fromAmpar t :: :: FromAmpar {{ tex \ottkw{from}_{[[><|]]}\,[[t]] }} {{ com Extract value from trivial ampar }}
+  | toAmpar t :: :: ToA {{ tex \ottkw{to}_{[[><|]]}\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | fromAmpar t :: :: FromA {{ tex \ottkw{from}_{[[><|]]}\,[[t]] }} {{ com Extract value from trivial ampar }}
 
-  | alloc A :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[A]]} }}
-  | t <| () :: :: FillUnit {{ com Fill destination with unit }}
-  | t <| Inl                          ::   :: FillInl   {{ com Fill destination with left variant }}
-  | t <| Inr                          ::   :: FillInr   {{ com Fill destination with right variant }}
-  | t <| (,)                              ::   :: FillProd    {{ com Fill destination with product constructor }}
-  | t <| exp m :: :: FillExp {{ com Fill destination with exponential constructor }} {{ tex [[t]][[<|]]\expcons{[[m]]} }}
-  | t <|. u :: :: FillComp {{ com Fill destination with root of ampar $[[u]]$ }}
+  | alloc T :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[T]]} }}
+  | t <| () :: :: FillU {{ com Fill destination with unit }}
+  | t <| Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
+  | t <| Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
+  | t <| (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
+  | t <| exp M :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[<|]]\expcons{[[M]]} }}
+  | t <|. u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }}
 
-  | ( t )                                   :: S :: Paren
-  | t [ sub ]                             :: M :: Sub
+  | ( t )                                   :: S :: Paren {{ icho [[t]] }}
+  | t [ x := v ]                             :: M :: Sub {{ icho (t_sub [[[x]] [[v]]) }}
   % | b sp t b spe :: S :: BreakSpacing1
-  % | b sp t :: S :: BreakSpacing2
+  % | b sp t :: S :: BreakSpaacing2
   % | t b spe : : S :: BreakSpacing3
 
 % extended_term, j :: 'ExtTerm_' ::= {{ com Extended term }} {{ tex \ottextterm{[[extended_term]]} }}
 %   | t :: :: Term
 %   | w :: :: ExtVal
 
-sub :: 'Sub_' ::= {{ com Variable substitution }}
-  | x := v :: :: Single
-  | sub1 , sub2 :: :: Multiple
-  | ( sub ) :: S :: Paren {{ tex [[sub]] }}
+e :: 'e_' ::= {{ com Effect }} {{ tex \otteff{[[e]]} }}
+  | o :: :: N {{ tex \otteff{\varepsilon} }}
+  | h := w :: :: T
+  | e1 , ... , en :: :: X {{ com Chain effects }}
+  | ( e ) :: S :: InvisParen {{ icho [[e]] }} {{ tex [[e]] }}
 
-effect, e :: 'Eff_' ::= {{ com Effect }}
-  | o :: :: NoEff {{ tex \varepsilon }} {{ com No effect }}
-  | h := w :: :: Single {{ tex [[h]][[:=]][[w]] }}
-  | e1 . e2 :: :: Multiple {{ tex [[e1]]\,\cdot\,[[e2]] }}
-  | ( e ) :: S :: Paren {{ tex [[e]] }}
+% ew :: 'ew_' ::= {{ com Pair (Effect, Extended value with hole context)}}
+%   | ( e , w D ) :: :: P {{ tex ([[e]],\,[[w]]\,_{[[D]]}) }}
+%   | e . ew :: :: C {{ tex [[e]]~\,\hat{\cdot}\,~[[ew]] }}
+%   | interact ew :: M :: I {{ icho (ew_interact [[ew]]) }}
 
-type, A, B :: 'Ty_' ::= {{ com Type }} {{ tex \ottty{[[type]]} }}
-  | 1 :: :: Unit {{ tex \ottty{1} }} {{ com Unit }}
-  | A1 + A2 :: :: Sum {{ tex [[A1]]\ottty{\oplus}[[A2]] }} {{ com Sum }}
-  | A1 * A2 :: :: Prod {{ tex [[A1]]\ottty{\otimes}[[A2]] }} {{ com Product }}
-  | ! m A :: :: Exp {{ tex \ottty{!}^{[[m]]}\,[[A]] }} {{ com Exponential }}
-  | A1 ><| A2 :: :: Ampar {{ tex [[A1]]\,[[><|]]\,[[A2]] }} {{ com Ampar type (consuming $[[A1]]$ yields $[[A2]]$) }}
-  | A1 m -> A2 :: :: Lambda {{ tex [[A1]]\,_{[[m]]}\!\ottty{\to}\,[[A2]] }} {{ com Linear function }}
-  | | A | m :: :: Dest {{ tex \,^{[[m]]}\hspace{-0.2ex}\ottty{\lfloor}[[A]]\ottty{\rfloor} }} {{ com Destination }}
-  | ( A ) :: S :: Paren {{ tex \ottty{(}[[A]]\ottty{)} }}
+T, U :: 'T_' ::= {{ com Type }} {{ tex \ottty{[[T]]} }}
+  | I :: :: U {{ tex \ottty{1} }} {{ com Unit }}
+  | T1 + T2 :: :: S {{ tex [[T1]]\ottty{\oplus}[[T2]] }} {{ com Sum }}
+  | T1 * T2 :: :: P {{ tex [[T1]]\ottty{\otimes}[[T2]] }} {{ com Product }}
+  | ! M T :: :: E {{ tex \ottty{!}^{[[M]]}\,[[T]] }} {{ com Exponential }}
+  | T1 ><| T2 :: :: T {{ tex [[T1]]\,[[><|]]\,[[T2]] }} {{ com Ampar type (consuming $[[T1]]$ yields $[[T2]]$) }}
+  | T1 M -> T2 :: :: F {{ tex [[T1]]\,_{[[M]]}\!\ottty{\to}\,[[T2]] }} {{ com Linear function }}
+  | | T | M :: :: D {{ tex \,^{[[M]]}\hspace{-0.2ex}\ottty{\lfloor}[[T]]\ottty{\rfloor} }} {{ com Destination }}
+  | ( T ) :: S :: Paren {{ tex \ottty{(}[[T]]\ottty{)} }} {{ icho [[T]]}}
 
-multiplicity, m, n :: 'Mult_' ::= {{ tex \ottmod{[[multiplicity]]} }} {{ com Multiplicity (Semiring with product $[[.]]$) }}
-  | 0 :: :: Now {{ tex \ottmod{\nu} }} {{ com Born now. Identity of the product }}
-  | I :: :: One {{ tex \ottmod{\uparrow} }} {{ com One scope older }}
-  | inf :: :: Inf {{ tex \ottmod{\infty} }} {{ com Infinitely old / static. Absorbing for product }}
-  | m1 . m2 :: :: SemiringTimes {{ com Semiring product }}
-  | ( m ) :: S :: Paren {{ tex \ottmod{(}[[m]]\ottmod{)} }}
+M {{ tex \ottmod{\textsc{m} } }}, N {{ tex \ottmod{\textsc{n} } }} :: 'M_' ::= {{ tex \ottmod{[[M]]} }} {{ com Multiplicity (Semiring with product $[[.]]$) }}
+  | 0 :: :: 0 {{ tex \ottmod{\nu} }} {{ com Born now. Identity of the product }}
+  | 1 :: :: 1 {{ tex \ottmod{\uparrow} }} {{ com One scope older }}
+  | Inf :: :: Inf {{ tex \ottmod{\infty} }} {{ com Infinitely old / static. Absorbing for product }}
+  | M1 . ... . Mn :: :: X {{ com Semiring product }}
+  | ( M ) :: S :: Paren {{ tex \ottmod{(}[[M]]\ottmod{)} }} {{ icho [[M]] }}
 
-typing_context, D {{ tex \Delta }} :: 'TyCtx_' ::= {{ com Typing context }}
-  | G    ::   :: OnlyPos
-  | H ::    :: OnlyNeg
-  | G u H :: :: SepPosNeg {{ tex [[G]]\mathrel{\raisebox{1pt}{\scalebox{0.5}{$\sqcup$}\!\! } }[[H]] }}
-  | m ° D :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex [[m]][[.]][[D]] }}
-  | ( D ) :: S :: Paren
+% C :: 'C_' ::= {{ com Typing context }}
+%   | G    ::   :: P
+%   | D ::    :: N
+%   | G u D :: :: S {{ tex [[G]]\mathrel{\raisebox{1pt}{\scalebox{0.5}{$\sqcup$}\!\! } }[[D]] }}
+% %  | M . D :: M :: X {{ com Increase age of bindings by $[[M]]$ }} {{ tex [[M]][[.]][[D]] }}
+%   | ( C ) :: S :: Paren {{ icho [[C]] }}
 
-pos_context, G {{ tex \Gamma }} :: 'PosCtx_' ::= {{ com Positive typing context }}
-  | {}    :: S  :: Empty
-  | { pos_assigns } :: :: Assigns
-  | G1 µ G2    ::    :: Disjoint
-  | G @ :: :: DestRestrict {{ tex [[G]]^{\otthol{@} } }} {{ com Positive context restricted to destinations only }} % {{ tex \restriction{[[G]]}{\otthol{@} } }}
-  | m . G :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }}
-  | ( G ) :: S :: Paren
-  | _ :: M :: Placeholder
+C :: 'C_' ::= {{ com Context }}
+  | PC :: :: P
+  | NC :: :: N
 
-pos_assign :: 'PosAssign_' ::= {{ com Positive type assignment }}
-%  | x : A :: :: LocalVar
-  | x : m A :: :: Var {{ com Variable }} {{ tex [[x]]:_{[[m]]}[[A]] }}
-  | @ h : m | A | n :: :: Dest {{ com Destination ($[[m]]$ is its own age; $[[n]]$ is the age of values it accepts) }} {{ tex \otthol{@}[[h]]:_{[[m]]}\,\!^{[[n]]}\!\ottty{\lfloor}[[A]]\ottty{\rfloor} }}
-pos_assigns {{ tex \ottnt{pos\_assign}* }} :: 'PosAssigns_' ::= {{ com Positive type assignments }}
-  | pos_assign :: :: Single
-  | pos_assign , pos_assigns :: :: Multiple
+PC, G {{ tex \Gamma }} :: 'PC_' ::= {{ com Positive typing context }}
+  | { PA1 , .. , PAn } :: :: L
+  | M . G :: :: X {{ com Increase age of bindings by $[[M]]$ }} {{ icho (PC_times [[M]] [[G]]) }}
+  | G1 µ G2 :: :: U {{ icho (PC_union [[G1]] [[G2]]) }}
+  | ( G ) :: S :: Paren {{ icho [[G]] }}
 
-neg_context, H {{ tex \textrm{H} }} :: 'NegCtx_' ::= {{ com Negative typing context }}
-  | {}    ::  S :: Empty
-  | { neg_assigns } :: :: Assigns
-  | H1 µ H2    ::    :: Disjoint
-  | - G :: :: Minus  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Invert the sign of the context }}
-  | m . H :: :: SemiringTimes {{ com Increase age of bindings by $[[m]]$ }} {{ tex \topprod{[[m]]}[[H]] }}
-  | ( H ) :: S :: Paren
-  | _ :: M :: Placeholder
+PA :: 'PA_' ::= {{ com Positive type assignment }}
+  | x : M T :: :: V {{ com Variable }} {{ tex [[x]]:_{[[M]]}[[T]] }}
+  | @ h : M | T | N :: :: D {{ com Destination ($[[M]]$ is its own age; $[[N]]$ is the age of values it accepts) }} {{ tex \otthol{@}[[h]]:_{[[M]]}\,\!^{[[N]]}\!\ottty{\lfloor}[[T]]\ottty{\rfloor} }}
 
-neg_assign :: 'NegAssign_' ::= {{ com Negative type assignment }}
-  | h : n A :: :: Hole {{ com Hole ($[[n]]$ is the age of values it accepts, its own age is undefined) }} {{ tex [[h]]:^{[[n]]}[[A]] }}
-neg_assigns {{ tex \ottnt{neg\_assign}* }} :: 'NegAssigns_' ::= {{ com Negative type assignments }}
-  | neg_assign :: :: Single
-  | neg_assign , neg_assigns :: :: Multiple
+NC, D {{ tex \Delta }} :: 'NC_' ::= {{ com Negative typing context }}
+  | { NA1 , .. , NAn } :: :: L
+  | M . D :: :: X {{ com Increase age of bindings by $[[M]]$ }} {{ tex \topprod{[[M]]}[[D]] }} {{ icho (NC_times [[M]] [[D]]) }}
+  | - G :: :: M  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Invert the sign of the context }} {{ icho (NC_minus [[G]]) }}
+  | D1 µ D2    :: :: U {{ icho (NC_dunion [[D1]] [[D2]]) }}
+  | ( D ) :: S :: Paren {{ icho [[D]] }}
 
-eff_app :: 'EffApp_' ::= {{ com Effect application }}
-  | e , w H :: :: Explicit {{ tex [[e]],\,[[w]]\,_{[[H]]} }}
-  | apply ( eff_app ) :: :: Apply
-  | e .^ eff_app :: :: Compose {{ tex [[e]]~\,\hat{\cdot}\,~[[eff_app]] }}
+NA :: 'NA_' ::= {{ com Negative type assignment }}
+  | h : N T :: :: Hole {{ com Hole ($[[N]]$ is the age of values it accepts, its own age is undefined) }} {{ tex [[h]]:^{[[N]]}[[T]] }}
 
 % spacing, sp :: 'sp_' ::= {{ tex \ottsp{[[spacing]]} }}
 %   | s :: :: space1 {{ tex \myspace{1} }}
@@ -167,15 +156,15 @@ terminals :: 'terminals_' ::=
 % === Contexts ===
   | µ :: :: dunion {{ tex \sqcup }}
 %  | µ+ :: :: sdunion {{ tex \,\text{\makebox[0pt][l]{$\sqcup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\pm$} } }}
-  | '{}' :: :: empty {{ tex \emptyset }}
+%  | '{}' :: :: empty {{ tex \emptyset }}
 
 % === Judgements ===
-  | exists :: :: exists {{ tex \exists }}
-  | != :: :: neq {{ tex \neq }}
-  | <= :: :: leq {{ tex \leq }}
-  | in :: :: in {{ tex \in }}
+%  | exists :: :: exists {{ tex \exists }}
+%  | != :: :: neq {{ tex \neq }}
+%  | <= :: :: leq {{ tex \leq }}
+%  | in :: :: in {{ tex \in }}
   | notin :: :: notin {{ tex \notin }}
-  | includedin :: :: includedin {{ tex \subset }}
+%  | includedin :: :: includedin {{ tex \subset }}
   % | names :: :: names {{ tex \mathcal{N} }}
 
 % === Typing ===
@@ -183,44 +172,28 @@ terminals :: 'terminals_' ::=
   | ||- :: :: dturnstile {{ tex \,\Vdash\, }}
 
 % === Semantics ===
-  | '|' :: :: cmd {{ tex ~|~ }}
+  | '~>' :: :: effred {{ tex \rightsquigarrow }}
+  | '<>' :: :: diam {{ tex \diamond }}
+  | '|' :: :: eff {{ tex ~|~ }}
   | !! :: :: downto {{ tex ~\Downarrow~ }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Used only to allow predicates in body text
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-aux_pred :: 'AuxPred_' ::=
-  | x in names ( D ) :: :: CtxVarIn
-  | h in names ( D ) :: :: CtxHoleIn
-  | x notin names ( D ) :: :: CtxVarNotIn
-  | h notin names ( D ) :: :: CtxHoleNotIn
-  | D1 disjoint D2 :: :: CtxDisjoint {{ tex [[names]]([[D1]]) \cap [[names]]([[D2]]) = \emptyset }}
-  | pos_assign in G :: :: PosCtxAssignIn
-  | neg_assign in H :: :: NegCtxAssignIn
-  | fresh x :: :: FreshVar
-  | fresh h :: :: FreshHole
-  | A1 = A2 :: :: EqType
-  | A1 != A2 :: :: NeqType
-  | t = u :: :: EqTerm
-  | t != u :: :: NeqTerm
-  | G1 = G2 :: :: EqPosCtx
-
-ty_sem_pred :: 'TySemPred_' ::=
-  | D ||- e :: :: TyEff
-  | G |- v | e : A :: :: TyCmd
-  | D ||- w : A :: :: TyValExt
-  | G |- t : A :: :: TyTerm
-  | H1 = H2 :: :: AtApp
-  | eff_app1 = eff_app2 :: :: EffApp
-  | t !! v | e :: :: BigStep
+P :: '_' ::=
+  | C1 ## C2 :: :: C_D {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }}
+  | h notin dom ( C ) :: :: C_NI{{ tex [[h]] \notin [[dom]]([[C]]) }}
+  | destOnly G :: :: PC_DO
+  | fresh h :: :: C_FH
+  | G u D ||- e :: :: Ty_e {{ com Typing of effects (require both positive and negative contexts) }}
+  | G |- v <> e : T :: :: Ty_c {{ com Typing of commands (only a positive context is needed) }}
+  | G u D ||- w : T :: :: Ty_w {{ com Typing of extended values (require both positive and negative contexts) }}
+  | G |- t : T :: :: Ty_t {{ com Typing of terms (only a positive context is needed) }}
+  | w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_e {{ com Semantics of effects }}
+  | t !! v <> e :: :: Sem_t {{ com Big-step evaluation into commands }}
 
 parsing
-NegCtx_Disjoint <= NegCtx_Minus
-PosCtx_Disjoint <= PosCtx_SemiringTimes
-NegCtx_Disjoint <= NegCtx_SemiringTimes
-TyCtx_SemiringTimes <= PosCtx_SemiringTimes
-TyCtx_SemiringTimes <= NegCtx_SemiringTimes
-TyCtx_SemiringTimes <= TyCtx_SepPosNeg
-TyCtx_Paren <= PosCtx_Paren
-TyCtx_Paren <= NegCtx_Paren
+PC_U <= PC_X
+NC_U <= NC_M
+NC_U <= NC_X
