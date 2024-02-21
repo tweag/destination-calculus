@@ -388,7 +388,20 @@ TSWLatexianTemp*
 
 **/.directory
 *.pdf
-!destination-calculus.pdf
-destination-calculus.tex
+!destination_calculus.pdf
+destination_calculus.tex
 .direnv
-*-ott.tex
+*_ott.tex
+
+*.vo
+*.vio
+*.vos
+*.vok
+*.glob
+*.v.d
+*.aux
+.lia.cache
+Makefile.coq
+Makefile.coq.conf
+.Makefile.coq.d
+.coqdeps.d

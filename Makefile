@@ -1,9 +1,9 @@
 OTT_FILES = grammar.ott rules.ott
 OTT_OPTS = -tex_show_meta false -tex_wrap false -picky_multiple_parses false -tex_suppress_ntr Q
-OTT_TEX = destination-calculus-ott.tex
-OTT_COQ = destination-calculus-ott.v
+OTT_TEX = destination_calculus_ott.tex
+OTT_COQ = ott_coq/destination_calculus_ott.v
 
-all: destination-calculus.pdf
+all: destination_calculus.pdf
 
 # Manual steps to submit to Arxiv:
 # - the no-editing-mark trick isn't used on Arxiv submission. Make
@@ -11,19 +11,21 @@ all: destination-calculus.pdf
 #   mark left in the pdf.
 arxiv:
 	$(MAKE) clean
-	$(MAKE) destination-calculus.tar.gz
+	$(MAKE) destination_calculus.tar.gz
 
 arxiv-nix:
 	nix-shell --pure --run "make arxiv"
 
-clean:
+clean: Makefile.coq
+	$(MAKE) -f Makefile.coq cleanall
+	rm -f Makefile.coq Makefile.coq.conf
 	rm -f *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
 	rm -f *.log *.bcf *.fdb_latexmk *.fls *.blg
-	rm -f destination-calculus.pdf
-	rm -f destination-calculus.lhs
-	rm -f destination-calculus.tex
-	rm -f destination-calculus.*.gz
-	rm -f destination-calculus-ott.tex
+	rm -f destination_calculus.pdf
+	rm -f destination_calculus.lhs
+	rm -f destination_calculus.tex
+	rm -f destination_calculus.*.gz
+	rm -f destination_calculus_ott.tex
 
 %.tex: %.mng $(OTT_FILES)
 	ott $(OTT_OPTS) -tex_filter $< $@ $(OTT_FILES)
@@ -33,11 +35,12 @@ $(OTT_TEX): $(OTT_FILES)
 
 $(OTT_COQ): $(OTT_FILES)
 	ott $(OTT_OPTS) -o $@ $^
+	sed -i 's/: Set/: Type/g' $@
 
 # %.tex: %.lhs
 # 	lhs2TeX -o $@ $<
 
-destination-calculus.tar.gz: destination-calculus.tex destination-calculus.bbl destination-calculus-ott.tex ottstyling.sty listproc.sty ottalt.sty
+destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl destination_calculus_ott.tex ottstyling.sty listproc.sty ottalt.sty
 	tar -cvzf $@ $^
 
 %.pdf %.bbl : %.tex bibliography.bib $(OTT_TEX)
@@ -47,7 +50,13 @@ nix::
 	nix-shell --pure --run make
 
 continous-nix:: nix
-	nix-shell --pure --run "ls destination-calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make"
+	nix-shell --pure --run "ls destination_calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make"
+
+coq: Makefile.coq $(OTT_COQ)
+	$(MAKE) -f Makefile.coq
+
+Makefile.coq: _CoqProject
+	coq_makefile -f _CoqProject -o Makefile.coq
 
 # .SECONDARY:
 # the line above prevents deletion of temporary files, which can be helpful for debugging build problems

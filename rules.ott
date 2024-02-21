@@ -19,11 +19,11 @@ G u D ||- e :: :: Ty_e :: Ty_e_ {{ com Typing of effects (require both positive 
 {} u {} ||- o
 
 G u D ||- w : T
-G ## {@h : 0 |T|N}
+G ## {@h : M |T|N}
 G ## D
-{@h : 0 |T|N} ## D
+{@h : M |T|N} ## D
 ------------------- :: A
-(1.M.N).G µ M.{@h : 0 |T|N} u (M.N).D ||- h := w
+(1.M.N).G µ {@h : M |T|N} u (M.N).D ||- h := w
 
 G1 u D1 µ -G22 ||- e1
 G21 µ G22 u D2 ||- e2
@@ -37,18 +37,18 @@ G21 ## D2
 G22 ## D1
 G22 ## D2
 D1 ## D2
-------------------------- :: X
+------------------------- :: P
 G1 µ G21 u D1 µ D2 ||- e1, e2
 
 defn
-G |- v <> e : T :: :: Ty_c :: Ty_ {{ com Typing of commands (only a positive context is needed) }} by
+G |- v <> e : T :: :: Ty_c :: Ty_c_ {{ com Typing of commands (only a positive context is needed) }} by
 
 G11 µ G12 |- v : T
 G2 u -G12 ||- e
 G11 ## G12
 G11 ## G2
 G12 ## G2
------------------- :: c
+------------------ :: C
 G11 µ G2 |- v <> e : T
 
 
@@ -202,6 +202,9 @@ Sem :: '' ::=
 
 defn
 w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_e :: Sem_e_ {{ com Big-step evaluation of effects on extended values }} by
+
+------------------------- :: N
+w1 D1 | o ~> w1 D1 | o
 
 % G2 u D2 ||- w2 : T
 % G' ## -D
