@@ -19,11 +19,11 @@ G u D ||- e :: :: Ty_e :: Ty_e_ {{ com Typing of effects (require both positive 
 {} u {} ||- o
 
 G u D ||- w : T
-G ## {@h : M |T|N}
+G ## {@h : m |T|n}
 G ## D
-{@h : M |T|N} ## D
+{@h : m |T|n} ## D
 ------------------- :: A
-(1.M.N).G µ {@h : M |T|N} u (M.N).D ||- h := w
+(1.m.n).G µ {@h : m |T|n} u (m.n).D ||- h := w
 
 G1 u D1 µ -G22 ||- e1
 G21 µ G22 u D2 ||- e2
@@ -59,7 +59,7 @@ G u D ||- w : T :: :: Ty_w :: Ty_w_ {{ com Typing of extended values (require bo
 {} u { h : 0 T } ||- h : T
 
 ---------------- :: D
-{ @h : 0 |T|N } u {} ||- @h : |T|N
+{ @h : 0 |T|n } u {} ||- @h : |T|n
 
 --------------------- :: U
 {} u {} ||- () : I
@@ -90,7 +90,7 @@ G1 µ G2 u D1 µ D2 ||- (w1, w2) : T1 * T2
 G u D ||- w : T
 G ## D
 --------------------- :: E
-M.G u M.D ||- exp M w : ! M T
+m.G u m.D ||- exp m w : ! m T
 
 G1 u {} ||- v1 : T1
 G2 u -G1 ||- w2 : T2
@@ -98,10 +98,10 @@ G1 ## G2
 ---------------- :: A
 G2 u {} ||- <v1 ¤ w2> -G1 : T1 ><| T2
 
-G µ { x : M T1 } |- t : T2
-G ## { x : M T1 }
+G µ { x : m T1 } |- t : T2
+G ## { x : m T1 }
 ----------------- :: F
-G u {} ||- \x -> t : T1 M -> T2
+G u {} ||- \x -> t : T1 m -> T2
 
 defn
 G |- t : T :: :: Ty_t :: Ty_t_ {{ com Typing of terms (only a positive context is needed) }} by
@@ -117,10 +117,10 @@ G |- v : T
 { x : Inf T } |- x : T
 
 G1 |- t : T1
-G2 |- u : T1 M -> T2
+G2 |- u : T1 m -> T2
 G1 ## G2
 ----------------- :: App
-M.G1 µ G2 |- t & u : T2
+m.G1 µ G2 |- t & u : T2
 
 G1 |- t : I
 G2 |- u : U
@@ -129,29 +129,29 @@ G1 ## G2
 G1 µ G2 |- t ; u : U
 
 G1 |- t : T1 + T2
-G2 µ { x1 : M T1 } |- u1 : U
-G2 µ { x2 : M T2 } |- u2 : U
+G2 µ { x1 : m T1 } |- u1 : U
+G2 µ { x2 : m T2 } |- u2 : U
 G1 ## G2
-G2 ## { x1 : M T1 }
-G2 ## { x2 : M T2 }
+G2 ## { x1 : m T1 }
+G2 ## { x2 : m T2 }
 ----------------- :: PatS
-M.G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : U
+m.G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : U
 
 G1 |- t : T1 * T2
-G2 µ { x1 : M T1, x2 : M T2 } |- u : U
+G2 µ { x1 : m T1, x2 : m T2 } |- u : U
 G1 ## G2
-G2 ## { x1 : M T1}
-G2 ## { x2 : M T2}
-{x1 : M T1} ## {x2 : M T2}
+G2 ## { x1 : m T1}
+G2 ## { x2 : m T2}
+{x1 : m T1} ## {x2 : m T2}
 ----------------- :: PatP
-M.G1 µ G2 |- t & \case (x1 , x2) -> u : U
+m.G1 µ G2 |- t & \case (x1 , x2) -> u : U
 
-G1 |- t : !N T
-G2 µ { x : M.N T } |- u : U
+G1 |- t : !n T
+G2 µ { x : m.n T } |- u : U
 G1 ## G2
-G2 ## { x : M.N T }
+G2 ## { x : m.n T }
 ----------------- :: PatE
-M.G1 µ G2 |- t & \case exp N x -> u : U
+m.G1 µ G2 |- t & \case exp n x -> u : U
 
 G1 |- t : T1 ><| T2
 1.G2 µ { x : 0 T1 } |- u : U
@@ -160,31 +160,31 @@ G2 ## { x : 0 T1 }
 -------------------------------- :: Map
 G1 µ G2 |- t <&> \ x -> u : U ><| T2
 
-G1 |- t : |T2|N
+G1 |- t : |T2|n
 G2 |- u : T1 ><| T2
 G1 ## G2
 ----------------------------- :: FillC
-G1 µ (1.N).G2 |- t <|. u : T1
+G1 µ (1.n).G2 |- t <|. u : T1
 
-G |- t : |I|N
+G |- t : |I|n
 ------------------------------ :: FillU
 G |- t <| () : I
 
-G |- t : |T1 + T2| N
+G |- t : |T1 + T2| n
 ------------------------------ :: FillL
-G |- t <| Inl : |T1|N
+G |- t <| Inl : |T1|n
 
-G |- t : |T1 + T2| N
+G |- t : |T1 + T2| n
 ------------------------------ :: FillR
-G |- t <| Inr : |T2|N
+G |- t <| Inr : |T2|n
 
-G |- t : |T1 * T2|N
+G |- t : |T1 * T2|n
 ------------------------------ :: FillP
-G |- t <| (,) : |T1|N * |T2|N
+G |- t <| (,) : |T1|n * |T2|n
 
-G |- t : |!N T|M
+G |- t : |!n T|m
 ------------------------------ :: FillE
-G |- t <| exp N : |T|M.N
+G |- t <| exp n : |T|m.n
 
 -------------------------------- :: Alloc
 {} |- alloc T : |T|0 ><| T
@@ -215,11 +215,11 @@ w1 D1 | h := w', e1 ~> w2 D2 | h := w', e2
 
 G1' u D1' ||- w' : T
 G1' ## D1'
-D1 ## { h : N T }
+D1 ## { h : n T }
 D1 ## D1'
-w1[h := w'] (D1 µ N.D1') | e1 ~> w2 D2 | e2
+w1[h := w'] (D1 µ n.D1') | e1 ~> w2 D2 | e2
 --------------------- :: F
-w1 D1 µ { h : N T } | h := w', e1 ~> w2 D2 | e2
+w1 D1 µ { h : n T } | h := w', e1 ~> w2 D2 | e2
 
 % eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\otteff{\varepsilon}$-terminated) }} by
 
