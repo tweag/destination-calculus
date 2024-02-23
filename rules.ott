@@ -4,16 +4,16 @@ Ty :: '' ::=
 % Tout trou créé doit apparaître soit comme dest dans le terme, soit être rempli par un effet suivant
 
 defn
-C1 ## C2 :: :: C_D :: C_D_ {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }} by
+C1 ## C2 :: :: ctx_Dis :: ctx_Dis_ {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }} by
 defn
-h notin dom ( C ) :: :: C_NI :: C_NI_ {{ tex [[h]] \notin [[dom]]([[C]]) }} by
+h notin dom ( C ) :: :: ctx_NotMem :: ctx_NotMem_ {{ tex [[h]] \notin [[dom]]([[C]]) }} by
 defn
-destOnly G :: :: PC_DO :: PC_DO_ by
+destOnly G :: :: pctx_DestOnly :: pctx_DestOnly_ by
 defn
-fresh h :: :: C_FH :: C_FH_ by
+fresh h :: :: ctx_Fresh :: ctx_Fresh_ by
 
 defn
-G u D ||- e :: :: Ty_e :: Ty_e_ {{ com Typing of effects (require both positive and negative contexts) }} by
+G u D ||- e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (require both positive and negative contexts) }} by
 
 -------------- :: N
 {} u {} ||- o
@@ -41,7 +41,7 @@ D1 ## D2
 G1 µ G21 u D1 µ D2 ||- e1, e2
 
 defn
-G |- v <> e : T :: :: Ty_c :: Ty_c_ {{ com Typing of commands (only a positive context is needed) }} by
+G |- v <> e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (only a positive context is needed) }} by
 
 G11 µ G12 |- v : T
 G2 u -G12 ||- e
@@ -53,7 +53,7 @@ G11 µ G2 |- v <> e : T
 
 
 defn
-G u D ||- w : T :: :: Ty_w :: Ty_w_ {{ com Typing of extended values (require both positive and negative contexts) }} by
+G u D ||- w : T :: :: Ty_xval :: Ty_xval_ {{ com Typing of extended values (require both positive and negative contexts) }} by
 
 --------------------- :: H
 {} u { h : 0 T } ||- h : T
@@ -104,7 +104,7 @@ G ## { x : m T1 }
 G u {} ||- \x -> t : T1 m -> T2
 
 defn
-G |- t : T :: :: Ty_t :: Ty_t_ {{ com Typing of terms (only a positive context is needed) }} by
+G |- t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (only a positive context is needed) }} by
 
 G u {} ||- v : T
 ----------------- :: V
@@ -201,7 +201,7 @@ defns
 Sem :: '' ::=
 
 defn
-w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_e :: Sem_e_ {{ com Big-step evaluation of effects on extended values }} by
+w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_eff :: Sem_eff_ {{ com Big-step evaluation of effects on extended values }} by
 
 ------------------------- :: N
 w1 D1 | o ~> w1 D1 | o
@@ -243,7 +243,7 @@ w1 D1 µ { h : n T } | h := w', e1 ~> w2 D2 | e2
 
 
 defn
-t !! v <> e :: :: Sem_t :: Sem_t_ {{ com Big-step evaluation into commands }} by
+t !! v <> e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} by
 
 ------------------ :: V
 v !! v <> o

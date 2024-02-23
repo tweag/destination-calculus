@@ -5,7 +5,8 @@ Require Import Coq.Structures.Equalities.
 Require Import Coq.Structures.Orders.
 Require Import Coq.Structures.OrdersAlt.
 Require Import Coq.Structures.OrdersEx.
-Require Import Coq.FSets.FMapList.
+Require Import Coq.FSets.FMapWeakList.
+Require Import Coq.FSets.FMapFacts.
 }}
 
 metavar tvar, x, y, d ::= {{ com Term-level variable }}
@@ -44,54 +45,13 @@ nas :: 'nas_' ::= {{ com Negative type assignment }}
 
 embed
 {{ coq
-Inductive name : Set :=
+Inductive name : Type :=
   | name_X : tvar -> name
   | name_HD : hvar -> name.
 
-Module Name_as_OT <: OrderedType.
+Module Name_as_UDT <: UsualDecidableType.
   Definition t := name.
 
-  Definition lt (x y : name) :=
-    match x, y with
-    | name_X n, name_X m => Nat.lt n m
-    | name_HD n, name_HD m => Nat.lt n m
-    | name_X _, name_HD _ => True
-    | name_HD _, name_X _ => False
-    end.
-  
-  Definition compare: name -> name -> comparison :=
-    fun x y => match x, y with
-    | name_X n, name_X m => Nat.compare n m
-    | name_HD n, name_HD m => Nat.compare n m
-    | name_X _, name_HD _ => Lt
-    | name_HD _, name_X _ => Gt
-    end.
-
-    Lemma lt_trans: forall x y z : name, lt x y -> lt y z -> lt x z.
-    Proof.
-      intros x y z. destruct x, y, z.
-      - unfold lt. apply Nat.lt_trans.
-      - unfold lt. tauto.
-      - unfold lt. tauto.
-      - unfold lt. tauto.
-      - unfold lt. tauto.
-      - unfold lt. tauto.
-      - unfold lt. tauto.
-      - unfold lt. apply Nat.lt_trans.
-    Defined.
-
-    Lemma lt_not_eq : forall x y : name, lt x y -> ~ x = y.
-    Proof.
-        intros x y. destruct x, y.
-        - unfold lt. intro h. apply Nat.lt_neq in h. congruence.
-        - unfold lt. congruence.
-        - unfold lt. congruence.
-        - unfold lt. intro h'. apply Nat.lt_neq in h'. congruence.
-    Defined.
-
-    Lemma lt_compat : Proper (eq ==> eq ==> iff) lt.
-  Proof. unfold Proper. unfold respectful. intros x y H x0 y0 H0. rewrite H. rewrite H0. reflexivity. Defined.
- 
   Definition eq := @eq name.
   Definition eq_refl := @eq_refl name.
   Definition eq_sym := @eq_sym name.
@@ -113,104 +73,95 @@ Module Name_as_OT <: OrderedType.
            * right. congruence.
     Defined.
 
-  Lemma compare_spec : forall x y, CompSpec eq lt x y (compare x y).
-  Proof. Admitted.
-  (* TODO *)
+  Instance eq_equiv : Equivalence Name_as_UDT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
 
-  Instance eq_equiv : Equivalence Name_as_OT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
+End Name_as_UDT.
 
-  Instance lt_strorder : StrictOrder Name_as_OT.lt. split. unfold Irreflexive. unfold Reflexive. unfold complement. intros x h. apply lt_not_eq in h. congruence. exact lt_trans. Defined.
-End Name_as_OT.
+Module Name_as_UDTOrig := Backport_DT(Name_as_UDT).
+Module Ctx := FMapWeakList.Make(Name_as_UDTOrig).
+Module CtxFacts := FMapFacts.Properties(Ctx).
 
-Module Name_as_OTOrig := Backport_OT(Name_as_OT).
-
-Module ValidCtx := FMapList.Make(Name_as_OTOrig).
-
-Definition option_bind {A B} (f : A -> option B) (x : option A) : option B :=
-  match x with
-  | Some x => f x
-  | None => None
-  end.
-
-Definition pas_name (x : pas) : name :=
-  match x with
+Definition pas_name (b : pas) : name :=
+  match b with
   | pas_V x m2 T2 => name_X x
   | pas_D h m2 T2 m3 => name_HD h
   end.
 
-Definition pctx_add_pas (b : pas) (G : option (ValidCtx.t pas)) : option (ValidCtx.t pas) :=
-  option_bind (fun G' =>
-    if ValidCtx.mem (pas_name b) G'
-      then None
-      else Some (ValidCtx.add (pas_name b) b G')
-  ) G.
+Definition pctx_add (b : pas) (G : Ctx.t pas) (hyp: ~(Ctx.In (pas_name b) G)) : Ctx.t pas :=
+  Ctx.add (pas_name b) b G.
 
-Definition pctx_from_pas_list (bs : list pas) : option (ValidCtx.t pas) :=
-  List.fold_left (fun G b => pctx_add_pas b G) bs (Some (ValidCtx.empty pas)).
+Definition pctx_from_list_unsafe (bs : list pas) : Ctx.t pas :=
+  List.fold_left (fun G b => Ctx.add (pas_name b) b G) bs (Ctx.empty pas).
 
-Definition nas_name (x : nas) : name :=
-  match x with
+Definition nas_name (b : nas) : name :=
+  match b with
   | nas_H h m2 T2 => name_HD h
   end.
 
-Definition nctx_add_nas (b : nas) (D : option (ValidCtx.t nas)) : option (ValidCtx.t nas) :=
-  option_bind (fun D' =>
-    if ValidCtx.mem (nas_name b) D'
-      then None
-      else Some (ValidCtx.add (nas_name b) b D')
-  ) D.
+Definition nctx_add (b : nas) (D : Ctx.t nas) (hyp: ~(Ctx.In (nas_name b) D)) : Ctx.t nas :=
+  Ctx.add (nas_name b) b D.
 
-Definition nctx_from_nas_list (bs : list nas) : option (ValidCtx.t nas) :=
-  List.fold_left (fun D b => nctx_add_nas b D) bs (Some (ValidCtx.empty nas)).
+Definition nctx_from_list_unsafe (bs : list nas) : Ctx.t nas :=
+  List.fold_left (fun G b => Ctx.add (nas_name b) b G) bs (Ctx.empty nas).
 
-Definition pctx_union (G1 G2 : option (ValidCtx.t pas)) : option (ValidCtx.t pas) :=
-  option_bind (fun G2' =>
-    ValidCtx.fold (fun k x G => pctx_add_pas x G) G2' G1
-  ) G2.
+Definition pctx_union (G1 G2 : Ctx.t pas) (hyp: CtxFacts.Disjoint G1 G2) : Ctx.t pas :=
+  Ctx.fold (fun n b G => Ctx.add n b G) G2 G1.
 
-Definition nctx_union (D1 D2 : option (ValidCtx.t nas)) : option (ValidCtx.t nas) :=
-  option_bind (fun D2' =>
-    ValidCtx.fold (fun k x D => nctx_add_nas x D) D2' D1
-  ) D2.
-
-Definition pctx_sprod (m1 : mul) (G : option (ValidCtx.t pas)) : option (ValidCtx.t pas) :=
-  option_map (fun G' =>
-    ValidCtx.map (fun x =>
-      match x with
-      | pas_V x m2 T2 => pas_V x (ext_plus m1 m2) T2
-      | pas_D h m2 T2 m3 => pas_D h (ext_plus m1 m2) T2 m3
-      end
-    ) G'
+Definition pctx_sprod (m1 : mul) (G : Ctx.t pas) : Ctx.t pas :=
+  Ctx.map (fun b =>
+    match b with
+    | pas_V x m2 T2 => pas_V x (ext_plus m1 m2) T2
+    | pas_D h m2 T2 m3 => pas_D h (ext_plus m1 m2) T2 m3
+    end
   ) G.
 
-Definition nctx_sprod (m1 : mul) (D : option (ValidCtx.t nas)) : option (ValidCtx.t nas) :=
-  option_map (fun D' =>
-    ValidCtx.map (fun x =>
-      match x with
-      | nas_H h m2 T2 => nas_H h (ext_plus m1 m2) T2
-      end
-    ) D'
+Definition nctx_union (D1 D2 : Ctx.t nas) (hyp: CtxFacts.Disjoint D1 D2) : Ctx.t nas :=
+  Ctx.fold (fun n b D => Ctx.add n b D) D2 D1.
+
+Definition nctx_sprod (m1 : mul) (D : Ctx.t nas) : Ctx.t nas :=
+  Ctx.map (fun b =>
+    match b with
+    | nas_H h m2 T2 => nas_H h (ext_plus m1 m2) T2
+    end
   ) D.
 
-Definition nctx_minus (G : option (ValidCtx.t pas)) : option (ValidCtx.t nas) :=
-  option_bind (fun G' =>
-    ValidCtx.fold (fun k x D =>
-      match x with
-      | pas_V x m2 T2 => None
-      | pas_D h m2 T2 m3 => nctx_add_nas (nas_H h (ext_plus m2 m3) T2) D
-      end
-    ) G' (Some (ValidCtx.empty nas))
+Definition ctx_Has {elt: Type} (b : elt) (G : Ctx.t elt) : Prop :=
+  exists n, Ctx.MapsTo n b G.
+
+Definition pas_IsDest (b: pas) : Prop :=
+  match b with
+    | pas_V _ _ _ => False
+    | pas_D _ _ _ _ => True
+  end.
+
+Definition ctx_Coherent {elt: Type} (name_proj: elt -> name) (G: Ctx.t elt)  : Prop :=
+  forall n b, Ctx.MapsTo n b G -> name_proj b = n.
+
+Definition pctx_Coherent (G: Ctx.t pas) : Prop := ctx_Coherent pas_name G.
+Definition nctx_Coherent (D: Ctx.t nas) : Prop := ctx_Coherent nas_name D.
+
+Axiom all_pctx_Coherent: forall (G : Ctx.t pas), pctx_Coherent G.
+Axiom all_nctx_Coherent: forall (D : Ctx.t nas), nctx_Coherent D.
+
+Definition pctx_DestOnly (G : Ctx.t pas) : Prop :=
+  forall b, ctx_Has b G -> pas_IsDest b.
+
+Definition nctx_minus (G : Ctx.t pas) (hyp: pctx_DestOnly G) : Ctx.t nas :=
+  Ctx.map (fun b =>
+    match hyp b (pas_name b) with
+    | pas_D h m2 T2 m3 => nas_H h (ext_plus m2 m3) T2
+    end
   ) G.
 }}
 
 grammar
-pctx, G {{ tex \Gamma }} :: 'pctx_' ::= {{ com Positive typing context }} {{ coq option (ValidCtx.t pas) }}
+pctx, G {{ tex \Gamma }} :: 'pctx_' ::= {{ com Positive typing context }} {{ coq option (Ctx.t pas) }}
   | { pas1 , .. , pask } :: :: L {{ coq (pctx_from_pas_list [[pas1..pask]]) }}
   | m . G :: :: S {{ com Increase age of bindings by $[[m]]$ }} {{ coq (pctx_sprod [[m]] [[G]]) }}
   | G1 µ G2 :: :: U {{ coq (pctx_union [[G1]] [[G2]]) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
-nctx, D {{ tex \Delta }} :: 'nctx_' ::= {{ com Negative typing context }} {{ coq option (ValidCtx.t nas) }}
+nctx, D {{ tex \Delta }} :: 'nctx_' ::= {{ com Negative typing context }} {{ coq option (Ctx.t nas) }}
   | { nas1 , .. , nask } :: :: L {{ coq (nctx_from_nas_list [[nas1..nask]]) }}
   | m . D :: :: S {{ com Increase age of bindings by $[[m]]$ }} {{ tex \topprod{[[m]]}[[D]] }} {{ coq (nctx_sprod [[m]] [[D]]) }}
   | - G :: :: M  {{ tex \otthol{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Invert the sign of the context }} {{ coq (nctx_minus [[G]]) }}
@@ -349,16 +300,16 @@ terminals :: 'terminals_' ::=
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 P :: '_' ::=
-  | C1 ## C2 :: :: C_D {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }}
-  | h notin dom ( C ) :: :: C_NI {{ tex [[h]] \notin [[dom]]([[C]]) }}
-  | destOnly G :: :: pctx_DO
-  | fresh h :: :: C_FH
-  | G u D ||- e :: :: Ty_e {{ com Typing of effects (require both positive and negative contexts) }}
-  | G |- v <> e : T :: :: Ty_c {{ com Typing of commands (only a positive context is needed) }}
-  | G u D ||- w : T :: :: Ty_w {{ com Typing of extended values (require both positive and negative contexts) }}
-  | G |- t : T :: :: Ty_t {{ com Typing of terms (only a positive context is needed) }}
-  | w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_e {{ com Semantics of effects }}
-  | t !! v <> e :: :: Sem_t {{ com Big-step evaluation into commands }}
+  | C1 ## C2 :: :: ctx_Dis {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }}
+  | h notin dom ( C ) :: :: ctx_NotMem {{ tex [[h]] \notin [[dom]]([[C]]) }}
+  | destOnly G :: :: pctx_DestOnly
+  | fresh h :: :: ctx_Fresh
+  | G u D ||- e :: :: Ty_eff {{ com Typing of effects (require both positive and negative contexts) }}
+  | G |- v <> e : T :: :: Ty_cmd {{ com Typing of commands (only a positive context is needed) }}
+  | G u D ||- w : T :: :: Ty_xval {{ com Typing of extended values (require both positive and negative contexts) }}
+  | G |- t : T :: :: Ty_term {{ com Typing of terms (only a positive context is needed) }}
+  | w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_eff {{ com Semantics of effects }}
+  | t !! v <> e :: :: Sem_term {{ com Big-step evaluation into commands }}
 
 parsing
 pctx_U <= pctx_S
