@@ -1,199 +1,191 @@
 defns
 Ty :: '' ::=
 
-% Tout trou créé doit apparaître soit comme dest dans le terme, soit être rempli par un effet suivant
-
 defn
-C1 ## C2 :: :: ctx_Dis :: ctx_Dis_ {{ tex [[dom]]([[C1]]) \cap [[dom]]([[C2]]) = \emptyset }} by
-defn
-h notin dom ( C ) :: :: ctx_NotMem :: ctx_NotMem_ {{ tex [[h]] \notin [[dom]]([[C]]) }} by
-defn
-destOnly G :: :: pctx_DestOnly :: pctx_DestOnly_ by
-defn
-fresh h :: :: ctx_Fresh :: ctx_Fresh_ by
-
-defn
-G u D ||- e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (require both positive and negative contexts) }} by
+G ◡ D ||- e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (require both positive and negative contexts) }} by
 
 -------------- :: N
-{} u {} ||- o
+{} ◡ {} ||- o
 
-G u D ||- w : T
-G ## {@h : m |T|n}
-G ## D
-{@h : m |T|n} ## D
+G ◡ D ||- w : T  [[:TYw]]
+{{ ctx_Disjoint [[P G]] [[P {@h : m |T|n}]] }}
+{{ ctx_Disjoint [[P G]] [[N D]] }}
+{{ ctx_Disjoint [[P {@h : m |T|n}]] [[N D]] }}
 ------------------- :: A
-(1.m.n).G µ {@h : m |T|n} u (m.n).D ||- h := w
+(l1.m.n).G ∪ {@h : m |T|n} ◡ (m.n).D ||- h := w
 
-G1 u D1 µ -G22 ||- e1
-G21 µ G22 u D2 ||- e2
-G1 ## G21
-G1 ## G22
-G1 ## D1
-G1 ## D2
-G21 ## G22
-G21 ## D1
-G21 ## D2
-G22 ## D1
-G22 ## D2
-D1 ## D2
+G1 ◡ D1 ∪ -G22 ||- e1 [[:TYe1]]
+G21 ∪ G22 ◡ D2 ||- e2 [[:TYe2]]
+{{ pctx_DestOnly [[G22]] }}
+{{ ctx_Disjoint [[P G1]] [[P G21]] }}
+{{ ctx_Disjoint [[P G1]] [[P G22]] }}
+{{ ctx_Disjoint [[P G1]] [[N D1]] }}
+{{ ctx_Disjoint [[P G1]] [[N D2]] }}
+{{ ctx_Disjoint [[P G21]] [[P G22]] }}
+{{ ctx_Disjoint [[P G21]] [[N D1]] }}
+{{ ctx_Disjoint [[P G21]] [[N D2]] }}
+{{ ctx_Disjoint [[P G22]] [[N D1]] }}
+{{ ctx_Disjoint [[P G22]] [[N D2]] }}
+{{ ctx_Disjoint [[N D1]] [[N D2]] }}
 ------------------------- :: P
-G1 µ G21 u D1 µ D2 ||- e1, e2
+G1 ∪ G21 ◡ D1 ∪ D2 ||- e1, e2
 
 defn
 G |- v <> e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (only a positive context is needed) }} by
 
-G11 µ G12 |- v : T
-G2 u -G12 ||- e
-G11 ## G12
-G11 ## G2
-G12 ## G2
+G11 ∪ G12 |- v : T [[:TYv]]
+G2 ◡ -G12 ||- e [[:TYe]]
+{{ pctx_DestOnly [[G12]] }}
+{{ ctx_Disjoint [[P G11]] [[P G12]] }}
+{{ ctx_Disjoint [[P G11]] [[P G2]] }}
+{{ ctx_Disjoint [[P G12]] [[P G2]] }}
 ------------------ :: C
-G11 µ G2 |- v <> e : T
+G11 ∪ G2 |- v <> e : T
 
 
 defn
-G u D ||- w : T :: :: Ty_xval :: Ty_xval_ {{ com Typing of extended values (require both positive and negative contexts) }} by
+G ◡ D ||- w : T :: :: Ty_xval :: Ty_xval_ {{ com Typing of extended values (require both positive and negative contexts) }} by
 
 --------------------- :: H
-{} u { h : 0 T } ||- h : T
+{} ◡ { h : l0 T } ||- h : T
 
 ---------------- :: D
-{ @h : 0 |T|n } u {} ||- @h : |T|n
+{ @h : l0 |T|n } ◡ {} ||- @h : |T|n
 
 --------------------- :: U
-{} u {} ||- () : I
+{} ◡ {} ||- () : I
 
-G u D ||- w : T1
-G ## D
+G ◡ D ||- w : T1 [[:TYw]]
+{{ ctx_Disjoint [[P G]] [[N D]] }}
 --------------------- :: L
-G u D ||- Inl w : T1 + T2
+G ◡ D ||- Inl w : T1 + T2
 
-G u D ||- w : T2
-G ## D
+G ◡ D ||- w : T2 [[:TYw]]
+{{ ctx_Disjoint [[P G]] [[N D]] }}
 --------------------- :: R
-G u D ||- Inr w : T1 + T2
+G ◡ D ||- Inr w : T1 + T2
 
-G1 u D1 ||- w1 : T1
-G2 u D2 ||- w2 : T2
-G1 ## G2
-G1 ## D1
-G1 ## D2
-G2 ## D1
-G2 ## D2
-D1 ## D2
+G1 ◡ D1 ||- w1 : T1 [[:TYw1]]
+G2 ◡ D2 ||- w2 : T2 [[:TYw2]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+{{ ctx_Disjoint [[P G1]] [[N D1]] }}
+{{ ctx_Disjoint [[P G1]] [[N D2]] }}
+{{ ctx_Disjoint [[P G2]] [[N D1]] }}
+{{ ctx_Disjoint [[P G2]] [[N D2]] }}
+{{ ctx_Disjoint [[N D1]] [[N D2]] }}
 ------------------------- :: P
-G1 µ G2 u D1 µ D2 ||- (w1, w2) : T1 * T2
+G1 ∪ G2 ◡ D1 ∪ D2 ||- (w1, w2) : T1 * T2
 
 % TODO: should we augment age of holes which are below an exponential?
 % TODO: yes so that they match their destination mode?
-G u D ||- w : T
-G ## D
+G ◡ D ||- w : T [[:TYw]]
+{{ ctx_Disjoint [[P G]] [[N D]] }}
 --------------------- :: E
-m.G u m.D ||- exp m w : ! m T
+m.G ◡ m.D ||- exp m w : ! m T
 
-G1 u {} ||- v1 : T1
-G2 u -G1 ||- w2 : T2
-G1 ## G2
+G1 ◡ {} ||- v1 : T1 [[:TYv1X]]
+G2 ◡ -G1 ||- w2 : T2 [[:TYw2]]
+{{ pctx_DestOnly [[G1]] }}
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
 ---------------- :: A
-G2 u {} ||- <v1 ¤ w2> -G1 : T1 ><| T2
+G2 ◡ {} ||- <v1 ¤ w2> -G1 : T1 ⧕ T2
 
-G µ { x : m T1 } |- t : T2
-G ## { x : m T1 }
+G ∪ { x : m T1 } |- t : T2 [[:TYt]]
+{{ ctx_Disjoint [[P G]] [[P { x : m T1 }]] }}
 ----------------- :: F
-G u {} ||- \x -> t : T1 m -> T2
+G ◡ {} ||- \x -> t : T1 m -> T2
 
 defn
 G |- t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (only a positive context is needed) }} by
 
-G u {} ||- v : T
+G ◡ {} ||- v : T [[:TYvX]]
 ----------------- :: V
 G |- v : T
 
 -------------------- :: X0
-{ x : 0 T } |- x : T
+{ x : l0 T } |- x : T
 
 -------------------- :: XInf
-{ x : Inf T } |- x : T
+{ x : lInf T } |- x : T
 
-G1 |- t : T1
-G2 |- u : T1 m -> T2
-G1 ## G2
+G1 |- t : T1 [[:TYt]]
+G2 |- u : T1 m -> T2 [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
 ----------------- :: App
-m.G1 µ G2 |- t & u : T2
+m.G1 ∪ G2 |- t & u : T2
 
-G1 |- t : I
-G2 |- u : U
-G1 ## G2
+G1 |- t : I [[:TYt]]
+G2 |- u : U [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
 ----------------- :: PatU
-G1 µ G2 |- t ; u : U
+G1 ∪ G2 |- t ; u : U
 
-G1 |- t : T1 + T2
-G2 µ { x1 : m T1 } |- u1 : U
-G2 µ { x2 : m T2 } |- u2 : U
-G1 ## G2
-G2 ## { x1 : m T1 }
-G2 ## { x2 : m T2 }
+G1 |- t : T1 + T2 [[:TYt]]
+G2 ∪ { x1 : m T1 } |- u1 : U [[:TYu1]]
+G2 ∪ { x2 : m T2 } |- u2 : U [[:TYu2]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x1 : m T1 }]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x2 : m T2 }]] }}
 ----------------- :: PatS
-m.G1 µ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : U
+m.G1 ∪ G2 |- t & \case { Inl x1 -> u1 , Inr x2 -> u2 } : U
 
-G1 |- t : T1 * T2
-G2 µ { x1 : m T1, x2 : m T2 } |- u : U
-G1 ## G2
-G2 ## { x1 : m T1}
-G2 ## { x2 : m T2}
-{x1 : m T1} ## {x2 : m T2}
+G1 |- t : T1 * T2 [[:TYt]]
+G2 ∪ { x1 : m T1, x2 : m T2 } |- u : U [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x1 : m T1}]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x2 : m T2}]] }}
+{{ ctx_Disjoint [[P {x1 : m T1}]] [[P {x2 : m T2}]] }}
 ----------------- :: PatP
-m.G1 µ G2 |- t & \case (x1 , x2) -> u : U
+m.G1 ∪ G2 |- t & \case (x1 , x2) -> u : U
 
-G1 |- t : !n T
-G2 µ { x : m.n T } |- u : U
-G1 ## G2
-G2 ## { x : m.n T }
+G1 |- t : !n T [[:TYt]]
+G2 ∪ { x : m.n T } |- u : U [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x : m.n T }]] }}
 ----------------- :: PatE
-m.G1 µ G2 |- t & \case exp n x -> u : U
+m.G1 ∪ G2 |- t & \case exp n x -> u : U
 
-G1 |- t : T1 ><| T2
-1.G2 µ { x : 0 T1 } |- u : U
-G1 ## G2
-G2 ## { x : 0 T1 }
+G1 |- t : T1 ⧕ T2 [[:TYt]]
+l1.G2 ∪ { x : l0 T1 } |- u : U [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x : l0 T1 }]] }}
 -------------------------------- :: Map
-G1 µ G2 |- t <&> \ x -> u : U ><| T2
+G1 ∪ G2 |- t <&> \ x -> u : U ⧕ T2
 
-G1 |- t : |T2|n
-G2 |- u : T1 ><| T2
-G1 ## G2
+G1 |- t : |T2|n [[:TYt]]
+G2 |- u : T1 ⧕ T2 [[:TYu]]
+{{ ctx_Disjoint [[P G1]] [[P G2]] }}
 ----------------------------- :: FillC
-G1 µ (1.n).G2 |- t <|. u : T1
+G1 ∪ (l1.n).G2 |- t <|. u : T1
 
-G |- t : |I|n
+G |- t : |I|n [[:TYt]]
 ------------------------------ :: FillU
 G |- t <| () : I
 
-G |- t : |T1 + T2| n
+G |- t : |T1 + T2| n [[:TYt]]
 ------------------------------ :: FillL
 G |- t <| Inl : |T1|n
 
-G |- t : |T1 + T2| n
+G |- t : |T1 + T2| n [[:TYt]]
 ------------------------------ :: FillR
 G |- t <| Inr : |T2|n
 
-G |- t : |T1 * T2|n
+G |- t : |T1 * T2|n [[:TYt]]
 ------------------------------ :: FillP
 G |- t <| (,) : |T1|n * |T2|n
 
-G |- t : |!n T|m
+G |- t : |!n T|m [[:TYt]]
 ------------------------------ :: FillE
 G |- t <| exp n : |T|m.n
 
 -------------------------------- :: Alloc
-{} |- alloc T : |T|0 ><| T
+{} |- alloc T : |T|l0 ⧕ T
 
-G |- t : T
+G |- t : T [[:TYt]]
 ------------------------------- :: ToA
-G |- toAmpar t : I ><| T
+G |- toAmpar t : I ⧕ T
 
-G |- t : I ><| T
+G |- t : I ⧕ T [[:TYt]]
 ------------------------------- :: FromA
 G |- fromAmpar t : T
 
@@ -201,27 +193,27 @@ defns
 Sem :: '' ::=
 
 defn
-w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_eff :: Sem_eff_ {{ com Big-step evaluation of effects on extended values }} by
+w1 D1 | e1 ~> w2 D2 | e2 :: :: Sem_eff :: Sem_eff_ {{ com Big-step evaluation of effects on extended values }} {{ tex [[w1]]_{~[[D1]]}\,|~[[e1]]~~[[~>]]~~[[w2]]_{~[[D2]]}\,|~[[e2]] }} by
 
 ------------------------- :: N
 w1 D1 | o ~> w1 D1 | o
 
-% G2 u D2 ||- w2 : T
-% G' ## -D
-h notin dom(D1)
-w1 D1 |e1 ~> w2 D2| e2 
+% G2 ◡ D2 ||- w2 : T
+% {{ ctx_Disjoint [[P G']] [[-D]] }}
+{{ ctx_HvarNotMem [[h]] [[N D1]] }}
+w1 D1 |e1 ~> w2 D2| e2 [[:EAPPw1e1]]
 --------------------- :: S
 w1 D1 | h := w', e1 ~> w2 D2 | h := w', e2
 
-G1' u D1' ||- w' : T
-G1' ## D1'
-D1 ## { h : n T }
-D1 ## D1'
-w1[h := w'] (D1 µ n.D1') | e1 ~> w2 D2 | e2
+G0 ◡ D0 ||- w0 : T [[:TYw0]]
+{{ ctx_Disjoint [[P G0]] [[N D0]] }}
+{{ ctx_Disjoint [[N D1]] [[N { h : n T }]] }}
+{{ ctx_Disjoint [[N D1]] [[N D0]] }}
+w1[h := w0] (D1 ∪ n.D0) | e1 ~> w2 D2 | e2 [[:EAPPw1sube1]]
 --------------------- :: F
-w1 D1 µ { h : n T } | h := w', e1 ~> w2 D2 | e2
+w1 D1 ∪ { h : n T } | h := w0, e1 ~> w2 D2 | e2
 
-% eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\otteff{\varepsilon}$-terminated) }} by
+% eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\ottseff{\varepsilon}$-terminated) }} by
 
 % ------------- :: NoEff
 % apply (o, w D) = o , w D
@@ -231,15 +223,15 @@ w1 D1 µ { h : n T } | h := w', e1 ~> w2 D2 | e2
 
 
 % % ------------------ :: FillUnit
-% % apply(h := (), e, w D µ { -h : 0 1 }) = apply(e , w[h := ()] D)
+% % apply(h := (), e, w D ∪ { -h : l0 1 }) = apply(e , w[h := ()] D)
 
 % % ------------------ :: FillInl
-% % apply(h := Inl h', e, w D µ { -h : 0 T1 + T2 }) = apply(e , w[h := Inl h'] D µ {-h' : 0 T1})
+% % apply(h := Inl h', e, w D ∪ { -h : l0 T1 + T2 }) = apply(e , w[h := Inl h'] D ∪ {-h' : l0 T1})
 
 % % ------------------ :: FillInr
-% % apply(h := Inr h', e, w D µ { -h : 0 T1 + T2 }) = apply(e , w[h := Inr h'] D µ {-h' : 0 T2})
+% % apply(h := Inr h', e, w D ∪ { -h : l0 T1 + T2 }) = apply(e , w[h := Inr h'] D ∪ {-h' : l0 T2})
 % % ------------------ :: FillProd
-% % apply(h := (h1, h2), e, w D µ { -h : 0 T1 * T2 }) = apply(e , w[h := (h1, h2)] D µ {-h1 : 0 T1, -h2 : 0 T2})
+% % apply(h := (h1, h2), e, w D ∪ { -h : l0 T1 * T2 }) = apply(e , w[h := (h1, h2)] D ∪ {-h1 : l0 T1, -h2 : l0 T2})
 
 
 defn
@@ -248,71 +240,71 @@ t !! v <> e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands
 ------------------ :: V
 v !! v <> o
 
-t1 !! v1 <> e1
-t2 !! \x -> u <> e2
-u[x := v1] !! v3 <> e3
+t1 !! v1 <> e1 [[:REDt1]]
+t2 !! \x -> u <> e2 [[:REDt2]]
+u[x := v1] !! v3 <> e3 [[:REDusub]]
 ------------------ :: App
 t1 & t2 !! v3 <> e1, e2, e3
 
-t1 !! () <> e1
-t2 !! v2 <> e2
+t1 !! () <> e1 [[:REDt1]]
+t2 !! v2 <> e2 [[:REDt2]]
 ----------------------- :: PatU
 t1 ; t2 !! v2 <> e1, e2
 
-t !! Inl v1 <> e1
-u1[x1 := v1] !! v2 <> e2
+t !! Inl v1 <> e1 [[:REDt]]
+u1[x1 := v1] !! v2 <> e2 [[:REDu1sub]]
 ----------------------- :: PatL
 t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! v2 <> e1, e2
 
-t !! Inr v1 <> e1
-u2[x2 := v1] !! v2 <> e2
+t !! Inr v1 <> e1 [[:REDt]]
+u2[x2 := v1] !! v2 <> e2 [[:REDu2sub]]
 ----------------------- :: PatR
 t & \case { Inl x1 -> u1, Inr x2 -> u2 } !! v2 <> e1, e2
 
-t !! (v1,v2) <> e1
-u[x1 := v1][x2 := v2] !! v2 <> e2
+t !! (v1,v2) <> e1 [[:REDt]]
+u[x1 := v1][x2 := v2] !! v2 <> e2 [[:REDusub]]
 ----------------------- :: PatP
 t & \case (x1,x2) -> u !! v2 <> e1, e2
 
 % Can e1 have effect on the content of the ampar? I don't think so, but maybe
-t !! < v1 ¤ w2 > D <> e1
-u[x := v1] !! v3 <> e2
- w2 D |e2 ~> w4 D'| e3 
+t !! < v1 ¤ w2 > D <> e1 [[:REDt]]
+u[x := v1] !! v3 <> e2 [[:REDusub]]
+ w2 D |e2 ~> w4 D'| e3  [[:EAPPw2e2]]
 ---------------------------------- :: Map
 t <&> \ x -> u !! <v3 ¤ w4> D' <> e1, e3
 
-fresh h
+{{ hvar_Fresh [[h]] }}
 -------------------------- :: Alloc
-alloc T !! < @h ¤ h > { h : 0 T } <> o
+alloc T !! < @h ¤ h > { h : l0 T } <> o
 
-t !! v <> e
+t !! v <> e [[:REDt]]
 ----------------------------------------- :: ToA
 toAmpar t !! < () ¤ v > {} <> e
 
-t !! < () ¤ v > {} <> e
+t !! < () ¤ v > {} <> e [[:REDt]]
 -------------------------------------- :: FromA
 fromAmpar t !! v <> e
 
-t !! @h <> e
+t !! @h <> e [[:REDt]]
 ------------------------------------- :: FillU
 t <| () !! () <> e, h := ()
 
-t !! @h <> e
-fresh h'
+t !! @h <> e [[:REDt]]
+{{ hvar_Fresh [[h']] }}
 --------------------------------------- :: FillL
 t <| Inl !! @h' <> e, h := Inl h'
 
-t !! @h <> e
+t !! @h <> e [[:REDt]]
 --------------------------------------- :: FillR
 t <| Inr !! @h' <> e, h := Inr h'
 
-t !! @h <> e
-fresh h1
-fresh h2
+t !! @h <> e [[:REDt]]
+{{ hvar_Fresh [[h1]] }}
+{{ hvar_Fresh [[h2]] }}
 --------------------------------------- :: FillP
 t <| (,) !! (@h1, @h2) <> e, h := (h1,h2)
 
-t !! @h <> e1
-u !! <v1 ¤ w2> D <> e2
+t !! @h <> e1 [[:REDt]]
+u !! <v1 ¤ w2> D <> e2 [[:REDu]]
 ---------------------------------------- :: FillC
 t <|. u !! v1<> e1, e2, h := w2

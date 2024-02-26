@@ -14,25 +14,25 @@
 
 \definecolor{ntcolor}{RGB}{75, 75, 75}
 \definecolor{kwcolor}{RGB}{0, 0, 0}
+\definecolor{ctorcolor}{RGB}{0, 0, 0}
 % \definecolor{??color}{HTML}{F8980F} % yellow-orange, underlined
-\definecolor{tycolor}{HTML}{176FC1} % blue, bold
+\definecolor{typcolor}{HTML}{176FC1} % blue, bold
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
-\definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
+\definecolor{modacolor}{HTML}{00AAA0} % green-blue, tt
 \definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
-\definecolor{holecolor}{HTML}{F14B2D} % red, itshape
+\definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
 
-\newcommand{\ottty}[1]{\textcolor{tycolor}{\mathsfbf{#1} } }
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
-\newcommand{\ottextval}[1]{\textcolor{ntcolor}{\mathsf{\replacewv{\overline{#1} } } } }
-\newcommand{\ottextterm}[1]{\textcolor{ntcolor}{\mathsf{\replacejt{\overline{#1} } } } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
 \renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1} } }
-\newcommand{\ottdefault}[1]{\textcolor{black}{#1} }
-\newcommand{\ottcons}[1]{\textcolor{black}{\mathsf{#1} } }
-\newcommand{\ottsp}[1]{\textcolor{spcolor}{\mathit{#1} } }
-\newcommand{\otteff}[1]{#1} % no special rendering for effects at the moment
-\newcommand{\otthol}[1]{\textcolor{holecolor}{\mathtt{#1} } }
-\newcommand{\ottmod}[1]{\textcolor{modecolor}{\mathit{#1} } }
+
+\newcommand{\ottstyp}[1]{\textcolor{typcolor}{\mathsfbf{#1} } }
+\newcommand{\ottsxval}[1]{\textcolor{ntcolor}{\mathsf{\replacewv{\overline{#1} } } } }
+\newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1} } }
+\newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
+\newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
+\newcommand{\ottshvar}[1]{\textcolor{hvarcolor}{\mathtt{#1} } }
+\newcommand{\ottsmoda}[1]{\textcolor{modacolor}{\mathit{#1} } }
 
 % Replace normal l with fancy round l in label names
 % \newcommand{\replacelell}[1]{%
@@ -56,8 +56,8 @@
   \def\myspace##1{\myrepeat{##1}{\hspace{0.7cm} } }
 }
 \def\visiblespaces{
-  \def\mynewline{\ottsp{\backslash\!n} }
-  \def\myspace##1{\myrepeat{##1}{\ottsp{\langle \ldots \rangle} } }
+  \def\mynewline{\ottssp{\backslash\!n} }
+  \def\myspace##1{\myrepeat{##1}{\ottssp{\langle \ldots \rangle} } }
 }
 \visiblespaces{}
 \makeatletter
@@ -85,12 +85,12 @@
 }
 
 % Lambda abstraction with and without type annotation
-% \newcommand{\lam}[3]{\ottcons{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
-\newcommand{\lamnt}[2]{\ottcons{\lambda}#1\,\textbf{.}\,#2}
-% \newcommand{\Lam}[2]{\ottcons{\Lambda}\,#1\,\textbf{.}\,#2}
+% \newcommand{\lam}[3]{\ottsctor{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
+\newcommand{\lamnt}[2]{\ottsctor{\lambda}#1\,\textbf{.}\,#2}
+% \newcommand{\Lam}[2]{\ottsctor{\Lambda}\,#1\,\textbf{.}\,#2}
 
 % Constructor for exponential
-\newcommand{\expcons}[1]{\ottcons{\rrparenthesis }^{#1}\,}
+\newcommand{\expcons}[1]{\ottsctor{\rrparenthesis }^{#1}\,}
 
 % Raised and scaled bullet for fillComp
 \newlength{\mylen}
@@ -101,7 +101,7 @@
 % Raised cdot for negative context product
 % https://tex.stackexchange.com/questions/597955/a-math-font-size-knowledgeable-raisebox
 \makeatletter
-\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottmod{\cdot} } }
+\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottsmoda{\cdot} } }
 \newcommand{\abcd@}[2]{%
   % #1 = math style
   % #2 = text to be lowered
