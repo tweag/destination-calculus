@@ -110,35 +110,27 @@ Definition nas_name (b : nas) : name :=
   | nas_H h m T => name_HD h
   end.
 
-(* Will be aliased later to ctx *)
-Inductive _ctx : Type :=
-  | Ctx : forall (b : Type), (b -> name) -> CtxM.t b -> _ctx.
-
-Definition P (G : CtxM.t pas) : _ctx := Ctx pas pas_name G.
-Definition N (D : CtxM.t nas) : _ctx := Ctx nas nas_name D.
-
 Definition pas_IsDest (b: pas) : Prop :=
   match b with
     | pas_V _ _ _ => False
     | pas_D _ _ _ _ => True
   end.
 
-Definition ctx_Disjoint (C1 C2 : _ctx ) : Prop := match C1, C2 with
-  | Ctx _ _ C1', Ctx _ _ C2' => forall n, ~(CtxM.In n C1' /\ CtxM.In n C2')
+Definition ctx_Disjoint (C1 C2 : { b : Type & CtxM.t b } ) : Prop := match C1, C2 with
+  | existT _ _ C1', existT _ _ C2' => forall n, ~(CtxM.In n C1' /\ CtxM.In n C2')
   end.
 
-Definition ctx_NotMem (n : name) (C : _ctx ) : Prop := match C with
-  | Ctx _ _ C' => ~ (CtxM.In n C')
+Definition ctx_NotMem (n : name) (C : { b : Type & CtxM.t b } ) : Prop := match C with
+  | existT _ _ C' => ~ (CtxM.In n C')
   end.
 
-Definition ctx_HvarNotMem (h : hvar) (C : _ctx ) : Prop := ctx_NotMem (name_HD h) C.
+Definition ctx_HvarNotMem (h : hvar) (C : { b : Type & CtxM.t b } ) : Prop := ctx_NotMem (name_HD h) C.
 
-Definition ctx_Coherent (C : _ctx ) : Prop := match C with
-  | Ctx _ name_proj C' => forall n b, CtxM.MapsTo n b C' -> name_proj b = n
-  end.
+Definition P (G:CtxM.t pas): { b : Type & CtxM.t b } := (existT _ pas G).
+Definition N (D:CtxM.t nas): { b : Type & CtxM.t b } := (existT _ nas D).
 
-Axiom all_pctx_Coherent: forall (G : CtxM.t pas), ctx_Coherent (P G).
-Axiom all_nctx_Coherent: forall (D : CtxM.t nas), ctx_Coherent (N D).
+Axiom all_pctx_Coherent: forall (G : CtxM.t pas) n b, CtxM.MapsTo n b G -> pas_name b = n.
+Axiom all_nctx_Coherent: forall (D : CtxM.t nas) n b, CtxM.MapsTo n b D -> nas_name b = n.
 
 Definition pctx_DestOnly (G : CtxM.t pas) : Prop :=
   forall n b, CtxM.MapsTo n b G -> pas_IsDest b.
@@ -232,7 +224,7 @@ Inductive has : Type :=  (*r Hole assignment *)
 
 Definition eff : Type := list has.
 
-Definition ctx : Type := _ctx.
+Definition ctx : Type := ({ b : Type & CtxM.t b }).
 Definition term_sub (t: term) (x : tvar) (v : val) : term := t.
 (* TODO *)
 Definition xval_effapp (w : xval) (e : eff) : xval := w.
