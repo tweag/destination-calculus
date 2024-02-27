@@ -90,41 +90,41 @@
 \section{Type safety}
 
 \begin{thm}[Type safety]
-If $[[pctx_DestOnly G]]$ and $[[ G |- t : T ]]$ then $[[t !! v <> e]]$ and $[[G |- v <> e : T]]$.
+If $[[pctx_DestOnly G]]$ and $[[ G ⊢ t : T ]]$ then $[[t ⇓ v ⋄ e]]$ and $[[G ⊢ v ⋄ e : T]]$.
 \end{thm}
 
 \begin{thm}[Type safety for complete programs]
-  If $[[ {} |- t : T ]]$ then $[[t !! v <> o]]$ and $[[{} |- v : T]]$
+  If $[[ {} ⊢ t : T ]]$ then $[[t ⇓ v ⋄ ε]]$ and $[[{} ⊢ v : T]]$
 \end{thm}
 
 \textbf{Proof.} By induction on the typing derivation.
 
 \begin{itemize}
 
-\item \textsc{TyTerm\_Val}: (0) $[[ G |- v : T ]]$\\
-(0) gives (1) $[[v !! v <> o]]$ immediately. From \textsc{TyEff\_NoEff} and \textsc{TyCmd\_Cmd} we conclude (2) $[[G |- v <> e : T]]$.
+\item \textsc{TyTerm\_Val}: (0) $[[ G ⊢ v : T ]]$\\
+(0) gives (1) $[[v ⇓ v ⋄ ε]]$ immediately. From \textsc{TyEff\_NoEff} and \textsc{TyCmd\_Cmd} we conclude (2) $[[G ⊢ v ⋄ e : T]]$.
 
-\item \textsc{TyTerm\_App}: (0) $[[ m.G1 ∪ G2 |- t & u : T2 ]]$\\
+\item \textsc{TyTerm\_App}: (0) $[[ m·G1 ∪ G2 ⊢ t ≻ u : T2 ]]$\\
 We have\\
-(1) $[[ G1 |- t : T1 ]]$\\
-(2) $[[ G2 |- u : T1 m -> T2 ]]$\\
+(1) $[[ G1 ⊢ t : T1 ]]$\\
+(2) $[[ G2 ⊢ u : T1 m → T2 ]]$\\
 (3) $[[ctx_Disjoint (P G1) (P G2)]]$\\
-Using recursion hypothesis on (1) we get (4) $[[t !! v1 <> e1]]$ where (5) $[[G1 |- v1 <> e1 : T1]]$.\\
-Inverting \textsc{TyCmd\_Cmd} we get (5) $[[ G11 ∪ G13 |- v1 : T1 ]]$ and (6) $[[G12 ◡ -G13 ||- e1]]$ where (7) $[[G1]]$ = $[[G11 ∪ G12]]$.\\
-Using recursion hypothesis on (2) we get (8) $[[u !! v2 <> e2]]$ where (9) $[[G2 |- v2 <> e2 : T1 m -> T2]]$.\\
-Inverting \textsc{TyCmd\_Cmd} we get (10) $[[ G21 ∪ G23 |- v2 : T1 m -> T2 ]]$ and (11) $[[G22 ◡ -G23 ||- e2]]$ where (12) $[[G2]]$ = $[[G21 ∪ G22]]$.\\
-Using Lemma~\ref{lem:canonical} on (9) we get (13) $[[v2]]$ = $[[\x -> t']]$ and (14) $[[G21 ∪ G23 ∪ {x : m T1} |- t' : T2]]$.
+Using recursion hypothesis on (1) we get (4) $[[t ⇓ v1 ⋄ e1]]$ where (5) $[[G1 ⊢ v1 ⋄ e1 : T1]]$.\\
+Inverting \textsc{TyCmd\_Cmd} we get (5) $[[ G11 ∪ G13 ⊢ v1 : T1 ]]$ and (6) $[[G12 ◡ -G13 ⫦ e1]]$ where (7) $[[G1]]$ = $[[G11 ∪ G12]]$.\\
+Using recursion hypothesis on (2) we get (8) $[[u ⇓ v2 ⋄ e2]]$ where (9) $[[G2 ⊢ v2 ⋄ e2 : T1 m → T2]]$.\\
+Inverting \textsc{TyCmd\_Cmd} we get (10) $[[ G21 ∪ G23 ⊢ v2 : T1 m → T2 ]]$ and (11) $[[G22 ◡ -G23 ⫦ e2]]$ where (12) $[[G2]]$ = $[[G21 ∪ G22]]$.\\
+Using Lemma~\ref{lem:canonical} on (9) we get (13) $[[v2]]$ = $[[λx ⟼ t']]$ and (14) $[[G21 ∪ G23 ∪ {x : m T1} ⊢ t' : T2]]$.
 
 \textit{Typing value part of the result}
 
-Using Lemma~\ref{lem:subst} on (14) and (5) we get (15) $[[ m.(G11 ∪ G13) ∪ (G21 ∪ G23) |- t'[x := v1] : T2]]$.\\
-Using recursion hypothesis on (15) we get (16) $[[t'[x := v1] !! v3 <> e3]]$ where (17) $[[ m.(G11 ∪ G13) ∪ (G21 ∪ G23) |- v3 <> e3: T2]]$.
+Using Lemma~\ref{lem:subst} on (14) and (5) we get (15) $[[ m·(G11 ∪ G13) ∪ (G21 ∪ G23) ⊢ t'[x ≔ v1] : T2]]$.\\
+Using recursion hypothesis on (15) we get (16) $[[t'[x ≔ v1] ⇓ v3 ⋄ e3]]$ where (17) $[[ m·(G11 ∪ G13) ∪ (G21 ∪ G23) ⊢ v3 ⋄ e3: T2]]$.
 
 \textit{Typing effect part of the result}
 
 We have\\
-(6) $[[G12 ◡ -G13 ||- e1]]$ \\
-(11) $[[G22 ◡ -G23 ||- e2]]$
+(6) $[[G12 ◡ -G13 ⫦ e1]]$ \\
+(11) $[[G22 ◡ -G23 ⫦ e2]]$
 
 $[[ctx_Disjoint (P G12) (P G22)]]$ comes naturally from (3), (7) and (12).
 
@@ -135,21 +135,31 @@ $[[ctx_Disjoint (P G13) (P G23)]]$: freshness of holes in both effects, executed
 
 Let say this is solved by Lemma~\ref{lem:freshholes}, with no holes of $[[e1]]$ negative context appearing as dests in $[[e2]]$ positive context.
 
-By \textsc{TyEff\_Union} we get (18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ||- e1, e2]]$.\\
-Inverting \textsc{TyCmd\_Cmd} on (17) we get (19) $[[m.(G111 ∪ G131) ∪ G211 ∪ G231 ∪ G3 |- v3 : T2 ]]$ and (20) $[[m.(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ||- e3 ]]$ where (21) $[[Gk1 ∪ Gk2]]$ = $[[Gk]]$
+By \textsc{TyEff\_Union} we get (18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1, e2]]$.\\
+Inverting \textsc{TyCmd\_Cmd} on (17) we get (19) $[[m·(G111 ∪ G131) ∪ G211 ∪ G231 ∪ G3 ⊢ v3 : T2 ]]$ and (20) $[[m·(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ⫦ e3 ]]$ where (21) $[[Gk1 ∪ Gk2]]$ = $[[Gk]]$
 
 We have\\
-(18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ||- e1, e2]]$\\
-(20) $[[m.(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ||- e3 ]]$\\
+(18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1, e2]]$\\
+(20) $[[m·(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ⫦ e3 ]]$\\
 
-Using (21) on (18) to decompose $[[-G23]]$, we get (22) $[[G12 ∪ G22 ◡ -(G131 ∪ G231) ∪ -(G132 ∪ G232) ||- e1, e2]]$
+Using (21) on (18) to decompose $[[-G23]]$, we get (22) $[[G12 ∪ G22 ◡ -(G131 ∪ G231) ∪ -(G132 ∪ G232) ⫦ e1, e2]]$
 
-We want $[[G132]]$ from (22) to cancel $[[m.G132]]$ from (20), but the multiplicity doesn't match apparently.
+We want $[[G132]]$ from (22) to cancel $[[m·G132]]$ from (20), but the multiplicity doesn't match apparently.
 
-$[[G13]]$ contains dests associated to holes that may have been created when evaluating $[[t]]$ into $[[v1]]$ $[[<>]]$ $[[e1]]$. If $[[v1]]$ is used with delay (result of multiplying its context by $[[m]]$), then should we also delay the RHS of its associated effect?
-In other terms, if we have $[[{@h : l0 |T1+T2| n } |- @h' <> h := Inl h' : |T1| n]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h := Inl h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
+$[[G13]]$ contains dests associated to holes that may have been created when evaluating $[[t]]$ into $[[v1]]$ $[[⋄]]$ $[[e1]]$. If $[[v1]]$ is used with delay (result of multiplying its context by $[[m]]$), then should we also delay the RHS of its associated effect?
+In other terms, if we have $[[{@h : 1ν n ⌊T1⨁T2⌋ } ⊢ @h' ⋄ h ≔ Inl h' : n⌊T1⌋]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h ≔ Inl h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
 
-$[[(@h0 <| (,) & \case (x1, x2) -> x1 <|. (toAmpar @h1) ; x2) & (\x2 -> @h3 <|. (toAmpar x2))]]$
+$[[(@h0 ⨞ (,) ≻ case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ≻ (λx2 ⟼ @h3 ⨞· (to⧕ x2))]]$
+
+$[[@h0 ⨞ (,) ⇓ (@h01, @h02) ⋄ h0 ≔ (h01, h02)]]$
+
+$[[(x1 ⨞· (to⧕ @h1) ; x2)[x1 ≔ @h01][x2 ≔ @h02] ⇓ @h02 ⋄ h01 ≔ @h1]]$
+
+$[[(@h0 ⨞ (,) ≻ case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ⇓ @h02 ⋄ h0 ≔ (h01, h02), h01 ≔ @h1]]$
+
+$[[(@h3 ⨞· (to⧕ x2))[x2 ≔ @h02] ⇓ () ⋄ h3 ≔ @h02]]$
+
+$[[t ⇓ () ⋄ h0 ≔ (h01, h02), h01 ≔ @h1, h3 ≔ @h02]]$
 
 \end{itemize}
 
@@ -164,7 +174,7 @@ Names of the holes on the RHS of a new effect:
   \item either are $\ottkw{fresh}$ (in all \textsc{BigStep\_Fill$\langle$\textnormal{\textit{Ctor}$\rangle$}} rules), which means the only other place where those names are known and can show up is as destinations on the accompanying value of the command ($[[G12]]$ in \textsc{TyCmd\_Cmd}), but not in positive or negative contexts of the command given by the evaluation of a sibling subterm;
 
     
-  \item or are those of pre-existing holes coming from the extended value $[[w2]]$ of an ampar, when \textsc{BigStep\_FillComp} is evaluated. Because they come from an ampar, they must be neutralized by this ampar, so the left value $[[v1]]$ of the ampar is the only place where those names can show up, as destinations, if we disallow pre-existing ampar with shared hole names in the body of the initial program. And $[[v1]]$ is exactly the accompanying value returned by the evaluation of \textsc{BigStep\_FillComp}
+  \item or are those of pre-existing holes coming from the extended value $[[w2]]$ of an ampar, when \textsc{BigStep\_FillComp} is evaluated. Because they come from an ampar, they must be neutralized by this ampar, so the left value $[[v1]]$ of the ampar is the only place where those names can show up, as destinations, if we disallow pre-existing ampar with shared hole names in the body of the initial program· And $[[v1]]$ is exactly the accompanying value returned by the evaluation of \textsc{BigStep\_FillComp}
   \end{itemize}
 
   \item TODO: prove that this property is preserved by typing rules
