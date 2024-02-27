@@ -21,6 +21,8 @@ pkgs.mkShell
           xargs todonotes
           mathpartir
           bbold
+          halloweenmath
+          pict2e
           # newunicodechar
 
           # for lhs2tex

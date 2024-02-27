@@ -43,7 +43,7 @@ $(OTT_COQ): $(OTT_FILES)
 destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl destination_calculus_ott.tex ottstyling.sty listproc.sty ottalt.sty
 	tar -cvzf $@ $^
 
-%.pdf %.bbl : %.tex bibliography.bib $(OTT_TEX)
+%.pdf %.bbl : %.tex bibliography.bib ottstyling.sty $(OTT_TEX)
 	cd $(dir $<) && latexmk $(notdir $*)
 
 nix::

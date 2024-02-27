@@ -4,6 +4,7 @@
 \RequirePackage{stmaryrd}
 \RequirePackage{bbold}
 \RequirePackage[safe]{tipa}
+\RequirePackage{halloweenmath}
 
 % Big comma for Ampar
 \DeclareSymbolFont{bbsymbol}{U}{bbold}{m}{n}
@@ -20,7 +21,7 @@
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
 \definecolor{modacolor}{HTML}{00AAA0} % green-blue, tt
 \definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
-\definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
+\definecolor{hdmvcolor}{HTML}{F14B2D} % red, itshape
 
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
@@ -31,8 +32,8 @@
 \newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1} } }
 \newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
-\newcommand{\ottshvar}[1]{\textcolor{hvarcolor}{\mathtt{#1} } }
-\newcommand{\ottsmoda}[1]{\textcolor{modacolor}{\mathit{#1} } }
+\newcommand{\ottshdnm}[1]{\textcolor{hdmvcolor}{\mathtt{#1} } }
+\newcommand{\ottsmd}[1]{\textcolor{modacolor}{\mathit{#1} } }
 
 % Replace normal l with fancy round l in label names
 % \newcommand{\replacelell}[1]{%
@@ -101,7 +102,7 @@
 % Raised cdot for negative context product
 % https://tex.stackexchange.com/questions/597955/a-math-font-size-knowledgeable-raisebox
 \makeatletter
-\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottsmoda{\cdot} } }
+\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottsmd{\cdot} } }
 \newcommand{\abcd@}[2]{%
   % #1 = math style
   % #2 = text to be lowered
@@ -137,3 +138,5 @@
               {\setbox1\hbox{${\scriptscriptstyle #1}_{\scriptscriptstyle #2}$}
               \restrictionaux{#1}{#2} } }
 \def\restrictionaux#1#2{ {#1\,\smash{\vrule height .8\ht1 depth .85\dp1} }_{\,#2} }
+
+\newcommand{\cupplus}{\,\text{\makebox[0pt][l]{$\cup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle+$}}~}

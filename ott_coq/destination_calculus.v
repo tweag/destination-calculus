@@ -3,15 +3,17 @@ Require Import Ott.ott_list_core.
 Require Import Ott.destination_calculus_ott.
 Require Import Ott.ext_nat.
 
-Notation "'¹ν'" := (pair Lin (Fin 0)).
-Notation "'¹↑'" := (pair Lin (Fin 1)).
-Notation "'¹∞'" := (pair Lin Inf).
+Notation "'¹ν'" := (Some (pair Lin (Fin 0))).
+Notation "'¹↑'" := (Some (pair Lin (Fin 1))).
+Notation "'¹∞'" := (Some (pair Lin Inf)).
 
-Notation "'ων'" := (pair Ur (Fin 0)).
-Notation "'ω↑'" := (pair Ur (Fin 1)).
-Notation "'ω∞'" := (pair Ur Inf).
+Notation "'ων'" := (Some (pair Ur (Fin 0))).
+Notation "'ω↑'" := (Some (pair Ur (Fin 1))).
+Notation "'ω∞'" := (Some (pair Ur Inf)).
 
-Infix "·" := moda_times (at level 60, right associativity).
+Notation "'☠'" := None.
+
+Infix "·" := md_times (at level 60, right associativity).
 Notation "'𝟏'" := (typ_U).
 Notation "T ⨁ U" := (typ_S T U) (at level 50, left associativity).
 Notation "T ⨂ U" := (typ_P T U) (at level 40, left associativity).
@@ -25,11 +27,11 @@ Notation "h '⁻:' n T" := (nas_H h n T) (at level 60, no associativity).
 
 Notation "'⁺{' p , .. , q '}'" := (pctx_from_list_unsafe (cons p .. (cons q nil) ..)) (at level 50, no associativity).
 Notation "m '⁺·' G" := (pctx_stimes m G) (at level 60, right associativity).
-Notation "G '⁺∪' H" := (pctx_union G H) (at level 40, left associativity).
+Notation "G '⁺⨄' H" := (pctx_union G H) (at level 40, left associativity).
 
 Notation "'⁻{' p , .. , q '}'" := (nctx_from_list_unsafe (cons p .. (cons q nil) ..)) (at level 50, no associativity).
 Notation "m '⁻·' D" := (nctx_stimes m D) (at level 60, right associativity).
-Notation "D '⁻∪' E" := (nctx_union D E) (at level 40, left associativity).
+Notation "D '⁻⨄' E" := (nctx_union D E) (at level 40, left associativity).
 Notation "'⁻-' G" := (nctx_minus G) (at level 35, no associativity).
 
 Notation "t ≻ u" := (term_App t u) (at level 40, left associativity).
