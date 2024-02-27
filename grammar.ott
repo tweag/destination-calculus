@@ -25,8 +25,8 @@ hddyn, d :: 'hddyn_' ::= {{ com Hole or destination dynamic name }} {{ coq list 
   | d . 3 :: :: S3 {{ com Subnamespace 3 }} {{ coq ([[d]] ++ (cons 3 nil)) }} {{ tex [[d]]\ottshdnm{.3} }}
 
 hdnm, h :: 'hdnm_' ::= {{ com Hole or destination name }} {{ tex \ottshdnm{[[hdnm]]} }}
-  | dyn d :: :: Dyn {{ tex [[d]] }} {{ com Dynamic name }}
-  | static hdmv :: :: Static  {{ tex [[hdmv]] }} {{ com Static name }}
+  | dyn d :: :: D {{ tex [[d]] }} {{ com Dynamic name }}
+  | static hdmv :: :: S  {{ tex [[hdmv]] }} {{ com Static name }}
 
 embed
 {{ coq
@@ -44,7 +44,7 @@ Definition mul_times (p1 p2: _mul) : _mul :=
   end.
 
 Definition mul_times' (pl: list _mul) : _mul :=
-  List.fold_right mul_times pl Lin.
+  List.fold_right mul_times Lin pl.
 
 (* Astuce fresh : liste de nombres = prefixe *)
 }}
@@ -64,45 +64,40 @@ age, a :: 'age_' ::= {{ tex \ottsmd{[[age]]} }} {{ com Age (second component of 
   | a1 · ... · ak :: :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmd{(}[[a]]\ottsmd{)} }} {{ coq [[a]] }}
 
-md, m, n :: 'md_' ::= {{ tex \ottsmd{[[md]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
-  | p | a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\ottsmd{|}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
-  | ¹ν :: :: Lin0 {{ tex \ottsmd{\underline{\nu} } }} {{ com Neutral element of the product. Notation for $\ottsmd{1 | \nu}$. }} {{ coq (Some (pair Lin (Fin 0))) }}
-  | ¹↑ :: :: Lin1 {{ tex \ottsmd{\underline{\uparrow} } }} {{ com Same multiplicity, but one scope older. Notation for $\ottsmd{1 | \uparrow}$. }} {{ coq (Some (pair Lin (Fin 1))) }}
-  | ¹∞ :: :: LinInf {{ tex \ottsmd{\underline{\infty} } }} {{ com Linear, infinitely old / static. Notation for $\ottsmd{1 | \infty}$. }} {{ coq (pair Lin Inf) }}
+mode, m, n :: 'mode_' ::= {{ tex \ottsmd{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
+  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
   | ☠ :: :: Err {{ tex \ottsmd{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
-  | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (md_times' [[m1...mk]]) }}
+  | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmd{(}[[m]]\ottsmd{)} }} {{ coq [[m]] }}
 
-typ, T, U :: 'typ_' ::= {{ com Type }} {{ tex \ottstyp{[[typ]]} }}
-  | 𝟏 :: :: U {{ tex \ottstyp{1} }} {{ com Unit }}
-  | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstyp{\oplus}[[T2]] }} {{ com Sum }}
-  | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstyp{\otimes}[[T2]] }} {{ com Product }}
-  | ! m T :: :: E {{ tex \ottstyp{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
-  | T1 ⧕ T2 :: :: A {{ tex [[T1]]\,\ottstyp{\rtimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T1]]$ yields $[[T2]]$) }}
-  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstyp{\to}\,[[T2]] }} {{ com Linear function }}
-  | m ⌊ T ⌋ :: :: D {{ tex \,^{[[m]]}\hspace{-0.2ex}\ottstyp{\lfloor}[[T]]\ottstyp{\rfloor} }} {{ com Destination }}
-  | ( T ) :: S :: Paren {{ tex \ottstyp{(}[[T]]\ottstyp{)} }} {{ coq [[T]]}}
+type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }}
+  | 𝟏 :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
+  | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
+  | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
+  | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
+  | T1 ⧕ T2 :: :: A {{ tex [[T1]]\,\ottstype{\rtimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T1]]$ yields $[[T2]]$) }}
+  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Linear function }}
+  | m ⌊ T ⌋ :: :: D {{ tex \,^{[[m]]}\hspace{-0.2ex}\ottstype{\lfloor}[[T]]\ottstype{\rfloor} }} {{ com Destination }}
+  | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
-pas :: 'pas_' ::= {{ com Positive type assignment }}
+bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or hole }}
   | x : m T :: :: V {{ com Variable }} {{ tex [[x]]:_{[[m]]}[[T]] }}
-  | + h : m n ⌊ T ⌋ :: :: D {{ com Destination ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdnm{+}[[h]]:_{[[m]]}\,\!^{[[n]]}\!\ottstyp{\lfloor}[[T]]\ottstyp{\rfloor} }}
-
-nas :: 'nas_' ::= {{ com Negative type assignment }}
+  | + h : m n ⌊ T ⌋ :: :: D {{ com Destination ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdnm{+}[[h]]:_{[[m]]}\,\!^{[[n]]}\!\ottstype{\lfloor}[[T]]\ottstype{\rfloor} }}
   | - h : n T :: :: H {{ com Hole ($[[n]]$ is the modality for values it accepts, it doesn't have a modality on its own) }} {{ tex \ottshdnm{-}[[h]]:^{[[n]]}[[T]] }}
 
 embed
 {{ coq
 Inductive name : Type :=
   | name_X : tmv -> name
-  | name_HD : hdmv -> name.
+  | name_HD : hdnm -> name.
 
 Module Name_as_UDT <: UsualDecidableType.
   Definition t := name.
 
-  Definition eq := +eq name.
-  Definition eq_refl := +eq_refl name.
-  Definition eq_sym := +eq_sym name.
-  Definition eq_trans := +eq_trans name.
+  Definition eq := @eq name.
+  Definition eq_refl := @eq_refl name.
+  Definition eq_sym := @eq_sym name.
+  Definition eq_trans := @eq_trans name.
 
   (* Define the eq_dec function *)
   Theorem eq_dec : forall x y : name, {x = y} + {x <> y}.
@@ -113,12 +108,8 @@ Module Name_as_UDT <: UsualDecidableType.
            * left. rewrite e. reflexivity.
            * right. congruence.
         + right. congruence.
-    - induction y.
-        + right. congruence.
-        + assert ({h = h0} + {h <> h0}) by apply Nat.eq_dec. destruct H.
-           * left. rewrite e. reflexivity.
-           * right. congruence.
-    Defined.
+    - induction y. give_up.
+    Admitted.
 
   Instance eq_equiv : Equivalence Name_as_UDT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
 
@@ -130,136 +121,136 @@ Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
 
-Definition md_plus (m1 m2: md) : md :=
+Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
   | _, None => None
   | Some (p1, a1), Some (p2, a2) => match a1, a2 with
     | _, Inf => Some (mul_plus p1 p2, Inf)
     | Inf, _ => Some (mul_plus p1 p2, Inf)
-    | _, _ => if ext_eq a1 a2 then Some (mul_plus p1 p2, a1) else None
+    | _, _ => if a1 = a2 then Some (mul_plus p1 p2, a1) else None
     end
   end.
 
-Definition md_times (m1 m2: md) : md :=
+Definition mode_times (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
   | _, None => None
   | Some (p1, a1), Some (p2, a2) => Some (mul_times p1 p2, age_times a1 a2)
   end.
 
-Definition md_times' (ml: list md) : md :=
-  fold_right md_times ml (Some (Lin, Fin 0)).
+Definition mode_times' (ml: list mode) : mode :=
+  List.fold_right mode_times (Some (Lin, Fin 0)) ml.
 
-Definition pas_name (b : pas) : name :=
+Definition bndr_name (b : bndr) : name :=
   match b with
-  | pas_V x m T => name_X x
-  | pas_D h m1 m2 T => name_HD h
+  | bndr_V x m T => name_X x
+  | bndr_H h m T => name_HD h
+  | bndr_D h m1 m2 T => name_HD h
   end.
 
-Definition pas_md (b : pas) : md := match b with
-  | pas_V _ m _ => m
-  | pas_D _ m1 m2 _ => m1
+Definition bndr_mode (b : bndr) : mode := match b with
+  | bndr_V _ m _ => m
+  | bndr_H _ m _ => m
+  | bndr_D _ m1 m2 _ => m1
   end.
 
-Definition nas_name (b : nas) : name :=
+Definition bndr_update_mode (b:bndr) (m:mode) := match b with
+  | bndr_V x _ T => bndr_V x m T
+  | bndr_H h _ T => bndr_H h m T
+  | bndr_D h _ m2 T => bndr_D h m m2 T
+  end.
+
+Definition bndr_IsDest (b: bndr) : Prop :=
   match b with
-  | nas_H h m T => name_HD h
+    | bndr_D _ _ _ _ => True
+    | _ => False
   end.
-
-Definition nas_md (b: nas) : md := match b with
-  | nas_H _ m _ => m
-  end.
-
-Definition pas_IsDest (b: pas) : Prop :=
+Definition bndr_IsVar (b: bndr) : Prop :=
   match b with
-    | pas_V _ _ _ => False
-    | pas_D _ _ _ _ => True
+    | bndr_V _ _ _ => True
+    | _ => False
   end.
-
-Axiom pctx_Coherent: forall (G : CtxM.t pas) n b, CtxM.MapsTo n b G -> pas_name b = n.
-Axiom nctx_Coherent: forall (D : CtxM.t nas) n b, CtxM.MapsTo n b D -> nas_name b = n.
-
-Definition pas_SameShape (b b': pas) : Prop :=
-  match b, b' with
-  | pas_V _ _ _, pas_V _ _ _ => True
-  | pas_D _ _ _ _, pas_D _ _ _ _ => True
-  | _, _ => False
+Definition bndr_IsHole (b: bndr) : Prop :=
+  match b with
+    | bndr_H _ _ _ => True
+    | _ => False
   end.
+Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
+Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
+Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
+Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsDest b.
+Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsHole b.
+Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsVar b.
+Definition ctx_Valid (G: CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> exists m, bndr_mode b = Some m.
+Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
+Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
+  ~CtxM.In (name_HD h) G.
+Definition ctx_Compatible (G1 G2 : CtxM.t bndr) : Prop := True. (* TODO : define *)
 
-Theorem pas_SameNameSameShape: forall (b b': pas), pas_name b = pas_name b' -> pas_SameShape b b'.
-Proof. Admitted.
+Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> bndr_name b = n.
 
-Definition pctx_DestOnly (G : CtxM.t pas) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> pas_IsDest b.
-
-Definition pctx_Valid (G: CtxM.t pas) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> pas_md b = Some _.
-
-Definition nctx_Valid (D: CtxM.t nas) : Prop :=
-  forall n b, CtxM.MapsTo n b D -> nas_md b = Some _.
-
-Definition pctx_add (b : pas) (G : CtxM.t pas) : CtxM.t pas :=
-  match CtxM.find (pas_name b) G with
-  | None => CtxM.add (pas_name b) b G
-  | Some b' => match b, b' with
-    | pas_V x1 m1 T1, pas_V x2 m2 T2 =>
+Definition ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr :=
+  match CtxM.find (bndr_name b') G with
+  | None => CtxM.add (bndr_name b') b' G
+  | Some b => match b, b' with
+    | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
       (* assert x1 = x2 *)
-      if T1 = T2 then pas_V x1 (md_plus m1 m2) T1 else pas_V x1 None T1
-    | pas_D h1 m11 m12 T1, pas_D h2 m21 m22 T2 =>
+      if T1 = T2 then bndr_V x1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+    | bndr_D h1 m11 m12 T1, bndr_D h2 m21 m22 T2 =>
       (* assert h1 = h2 *)
-      if m12 = m22 and T1 = T2 then pas_D h1 (md_plus m11 m21) m12 T1 else pas_D h1 None m12 T1
-    | pas_V x1 m1 T1, pas_D _ _ _ _ =>
-      (* cannot happen because pas_SameNameSameShape *)
-      pas_V x1 None T1
-    | pas_D h1 m1 m2 T1, pas_V _ _ _ =>
-      (* cannot happen because pas_SameNameSameShape *)
-      pas_V h1 None m2 T1
+      if m12 = m22 and T1 = T2 then bndr_D h1 (mode_plus m11 m21) m12 T1 else bndr_update_mode b None
+    | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
+      (* assert h1 = h2 *)
+      if T1 = T2 then bndr_D h1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+    | _, _ => bndr_update_mode b None
     end
   end.
 
-Definition pctx_from_list_unsafe (bs : list pas) : CtxM.t pas :=
-  List.fold_right (fun G b => CtxM.add (pas_name b) b G) bs (CtxM.empty pas).
-
-Definition nctx_add (b : nas) (D : CtxM.t nas) : CtxM.t nas :=
-  match CtxM.find (nas_name b) D with
-  | None => CtxM.add (nas_name b) b D
-  | Some b' => match b, b' with
-    | nas_H h1 m1 T1, nas_H h2 m2 T2 =>
+Definition ctx_interact (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
+  let fallback = ctx_add b' G in
+  match CtxM.find (bndr_name b') G with
+  | None => fallback
+  | Some b => match b, b' with
+    | bndr_D h1 m11 m12 T1, bndr_H h2 m2 T2 =>
       (* assert h1 = h2 *)
-      if T1 = T2 then nas_H h1 (md_plus m1 m2) T1 else nas_H h1 None T1
+      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
+    | bndr_H h2 m2 T2, bndr_D h1 m11 m12 T1 =>
+      (* assert h1 = h2 *)
+      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
+    | _, _ => fallback
     end
   end.
 
-Definition nctx_from_list_unsafe (bs : list nas) : CtxM.t nas :=
-  List.fold_right (fun G b => CtxM.add (nas_name b) b G) bs (CtxM.empty nas).
+Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
+  List.fold_right (fun b G => CtxM.add (bndr_name b) b G) (CtxM.empty bndr) bs.
 
-Definition pctx_union (G1 G2 : CtxM.t pas) : CtxM.t pas :=
+Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.fold (fun n b G => CtxM.add n b G) G2 G1.
 
-Definition pctx_stimes (m1 : md) (G : CtxM.t pas) : CtxM.t pas :=
+Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
-    | pas_V x m2 T2 => pas_V x (md_times m1 m2) T2
-    | pas_D h m2 m3 T2 => pas_D h (md_times m1 m2) m3 T2
+    | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
+    | bndr_D h m2 m3 T2 => bndr_D h (mode_times m1 m2) m3 T2
+    | bndr_H h m2 T2 => bndr_H h (mode_times m1 m2) T2
     end
   ) G.
 
-Definition nctx_union (D1 D2 : CtxM.t nas) (hyp: ctx_Disjoint (N D1) (N D2)) : CtxM.t nas :=
-  CtxM.fold (fun n b D => CtxM.add n b D) D2 D1.
-
-Definition nctx_stimes (m1 : md) (D : CtxM.t nas) : CtxM.t nas :=
+Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
-    | nas_H h m2 T2 => nas_H h (md_times m1 m2) T2
-    end
-  ) D.
-
-Definition nctx_minus (G : CtxM.t pas) : CtxM.t nas :=
-  CtxM.map (fun b =>
-    match b with
-    | pas_V x m T => nas_H (hdnm_Static x) None T
-    | pas_D h m1 m2 T => nas_H h (md_times m1 m2) T
+    | bndr_V x m2 T2 => bndr_V x None T2 (* error *)
+    | bndr_D h m2 m3 T2 => bndr_H h (mode_times m2 m3) T2
+    | bndr_H h m2 T2 => bndr_H h None T2 (* error *)
     end
   ) G.
 
@@ -268,23 +259,13 @@ Definition concat {A : Type} (ll : list (list A)) : list A :=
 }}
 
 grammar
-pctx, G {{ tex \Gamma }} :: 'pctx_' ::= {{ com Positive typing context }} {{ coq (CtxM.t pas) }}
-  | { pas1 , .. , pask } :: :: L {{ coq (pctx_from_list_unsafe [[pas1..pask]]) }}
-  | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (pctx_stimes [[m]] [[G]]) }}
-  | G1 ⨄ G2 :: :: U {{ coq (pctx_union [[G1]] [[G2]]) }}
+ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
+  | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }}
+  | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
+  | G1 ⨄ G2 :: :: U {{ coq (ctx_union [[G1]] [[G2]]) }}
+  | G1 ⋓ G2 :: :: I {{ coq (ctx_interact [[G1]] [[G2]]) }}
+  | - G :: :: M {{ coq (ctx_minus [[G]]) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
-
-nctx, D {{ tex \Delta }} :: 'nctx_' ::= {{ com Negative typing context }} {{ coq (CtxM.t nas) }}
-  | { nas1 , .. , nask } :: :: L {{ coq (nctx_from_list_unsafe [[nas1..nask]]) }}
-  | m · D :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ tex \topprod{[[m]]}[[D]] }} {{ coq (nctx_stimes [[m]] [[D]]) }}
-  | - G :: :: M  {{ tex \ottshdnm{+^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Maps each destination of $[[G]]$ to a hole (requires \texttt{ctx\_DestOnly} $[[G]]$) }} {{ coq (nctx_minus [[G]]) }}
-  | D1 ⨄ D2   :: :: U {{ coq (nctx_union [[D1]] [[D2]]) }}
-  | ( D ) :: S :: Paren {{ coq [[D]] }}
-
-ctx, C :: 'ctx_' ::= {{ com Context }} {{ coq ({ b : Type & CtxM.t b }) }}
-  | P pctx :: :: P {{ coq (P [[pctx]]) }} {{ tex [[pctx]] }}
-  | N nctx :: :: N {{ coq (N [[nctx]]) }} {{ tex [[nctx]] }}
-  | ( C ) :: S :: InvisParen {{ coq [[C]] }} {{ tex [[C]] }}
 
 grammar
 term, t, u :: 'term_' ::=                                               {{ com Term }}
@@ -300,8 +281,8 @@ term, t, u :: 'term_' ::=                                               {{ com T
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmd{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmd{\scriptstyle G} }$ }}
   % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmd{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmd{\scriptstyle G} }$ }}
-  | to⧕ t :: :: ToA {{ tex \ottkw{to}_{\ottstyp{\rtimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | from⧕ t :: :: FromA {{ tex \ottkw{from}_{\ottstyp{\rtimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
+  | to⧕ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | from⧕ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
 
   | alloc T :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[T]]} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
@@ -318,41 +299,33 @@ term, t, u :: 'term_' ::=                                               {{ com T
   % | t b spe : : S :: BreakSpacing3
 
 val, v :: 'val_' ::= {{ com Term value }}
-  | ⟨ v1 ❟ w2 ⟩ D :: :: A {{ com Ampar }} {{ tex \ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[w2]]\ottsctor{\rangle}_{[[D]]} }}
+  | - h :: :: H {{ com Hole }} {{ tex \ottshdnm{-}[[h]] }}
   | + h :: :: D {{ tex \ottshdnm{+}[[h]] }} {{ com Destination }}
   | () :: :: U {{ com Unit }}
+  | λ x ⟼ t :: :: F (+ bind x in t +) {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
   | Inl v :: :: L {{ com Left variant for sum }}
   | Inr v :: :: R {{ com Right variant for sum }}
-  | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | ⦆ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
-  | λ x ⟼ t :: :: F (+ bind x in t +) {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
+  | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
+  | ⟨ v1 ❟ v2 ⟩ D :: :: A {{ com Ampar }} {{ tex \ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[v2]]\ottsctor{\rangle}_{[[D]]} }}
+  | v [ e ] :: M :: Effect {{ coq (val_effapp [[v]] [[e]]) }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
-xval, w :: 'xval_' ::= {{ com Pseudo-value that may contain holes }} {{ tex \ottsxval{[[xval]]} }}
-  | v :: :: V {{ com Term value }}
-  | - h :: :: H {{ com Hole }} {{ tex \ottshdnm{-}[[h]] }}
-  | Inl w :: :: L {{ com Left variant with val or hole }}
-  | Inr w :: :: R {{ com Right variant with val or hole }}
-  | ( w1 , w2 ) :: :: P {{ tex \ottsctor{(}[[w1]]\,\ottsctor{,}~[[w2]]\ottsctor{)} }} {{ com Product with val or hole }}
-  | ⦆ m w :: :: E {{ tex \expcons{[[m]]}[[w]] }} {{ com Exponential with val or hole }}
-  | ( w ) :: S :: Paren {{ coq [[w]] }}
-  | w [ e ] :: M :: Effect {{ coq (xval_effapp [[w]] [[e]]) }}
-
 has :: 'has_' ::= {{ com Hole assignment }}
-  | h ≔ w :: :: A {{ tex [[h]]\coloneq[[w]] }}
+  | h ≔ v :: :: A {{ tex [[h]]\coloneq[[v]] }}
 
 grammar
 eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list has }}
   | ε :: :: N {{ tex \ottseff{\varepsilon} }} {{ coq nil }}
   | has :: :: S {{ coq (cons [[has]] nil) }}
-  | e1 » .. » ek :: :: P {{ com Chain effects }} {{ coq concat [[e1..ek]] }}
+  | e1 » .. » ek :: :: C {{ com Chain effects }} {{ coq (concat [[e1..ek]]) }}
   | ( e ) :: S :: Paren {{ coq [[e]] }}
 
 embed
 {{ coq
 Definition term_sub (t: term) (x : tmv) (v : val) : term := t.
 (* TODO *)
-Definition xval_effapp (w : xval) (e : eff) : xval := w.
+Definition val_effapp (v : val) (e : eff) : val := v.
 (* TODO *)
 }}
 
@@ -388,7 +361,7 @@ terminals :: 'terminals_' ::=
 
 % === Contexts ===
   | ⨄ :: :: union {{ tex \cupplus }}
-  | ◡ :: :: sunion {{ tex ~{\scriptscriptstyle\cup}~ }}
+  | ⋓ :: :: interact {{ tex \cupdouble }}
 
 % === Typing & Semantics ===
   | ⤋ :: :: effred {{ tex \text{\raisebox{-0.7ex}{\rotatebox{90}{$\Lleftarrow$}\!\!} } }}
@@ -400,18 +373,30 @@ terminals :: 'terminals_' ::=
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules }}
-  | ctx_Disjoint C1 C2 :: :: ctx_Disjoint {{ tex \texttt{ctx\_Disjoint}~[[C1]]~[[C2]] }}
-  | ctx_hdmvNotMem h C :: :: ctx_hdmvNotMem {{ tex \texttt{ctx\_NotMem}~[[h]]~[[C]] }}
-  | pctx_DestOnly G :: :: pctx_DestOnly {{ tex \texttt{pctx\_DestOnly}~[[G]] }}
-  | hdmv_Fresh h :: :: hdmv_Fresh {{ tex \texttt{hdmv\_Fresh}~[[h]] }}
-  | G ◡ D ⫦ e :: :: Ty_eff
-  | G ⊢ v ⋄ e : T :: :: Ty_cmd
-  | G ◡ D ⫦ w : T :: :: Ty_xval
+  | ctx_DestOnly G :: :: ctx_DestOnly {{ tex \texttt{ctx\_DestOnly}~[[G]] }}
+  | ctx_HoleOnly G :: :: ctx_HoleOnly {{ tex \texttt{ctx\_HoleOnly}~[[G]] }}
+  | ctx_VarOnly G :: :: ctx_VarOnly {{ tex \texttt{ctx\_VarOnly}~[[G]] }}
+  | ctx_NoDest G :: :: ctx_NoDest {{ tex \texttt{ctx\_NoDest}~[[G]] }}
+  | ctx_NoHole G :: :: ctx_NoHole {{ tex \texttt{ctx\_NoHole}~[[G]] }}
+  | ctx_NoVar G :: :: ctx_NoVar {{ tex \texttt{ctx\_NoVar}~[[G]] }}
+  | ctx_Valid G :: :: ctx_Valid {{ tex \texttt{ctx\_Valid}~[[G]] }}
+  | ctx_SubsetEq G1 G2 :: :: ctx_SubsetEq {{ tex \texttt{ctx\_SubsetEq}~[[G1]]~[[G2]] }}
+  | ctx_HdnmNotMem h G :: :: ctx_HdnmNotMem {{ tex \texttt{ctx\_NotMem}~[[h]]~[[G]] }}
+  | ctx_Compatible G1 G2 :: :: ctx_Compatible {{ tex \texttt{ctx\_Compatible}~[[G1]]~[[G2]] }}
+
+  | ctx_Disjoint G1 G2 :: :: ctx_Disjoint {{ tex \texttt{ctx\_Disjoint}~[[G1]]~[[G2]] }} {{ com TODO: Just for legacy proof; remove }}
+
+  | G ⫦ e :: :: TyR_eff
+  | G ⫦ t : T :: :: TyR_term
+  | G ⊢ e :: :: Ty_eff
   | G ⊢ t : T :: :: Ty_term
-  | w1 D1 | e1 ⤋ w2 D2 | e2 :: :: Sem_eff {{ tex [[w1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[w2]]_{~[[D2]]}\,|~[[e2]] }}
+  | G ⊢ v ⋄ e : T :: :: Ty_cmd
+
+  | v1 D1 | e1 ⤋ v2 D2 | e2 :: :: Sem_eff {{ tex [[v1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[v2]]_{~[[D2]]}\,|~[[e2]] }}
   | t d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\,[[d]]\!}[[⇓]]~[[v]][[⋄]][[e]] }}
 
 parsing
-pctx_U <= pctx_S
-nctx_U <= nctx_M
-nctx_U <= nctx_S
+ctx_U <= ctx_S
+ctx_S <= ctx_M
+ctx_U left ctx_U
+

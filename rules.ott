@@ -2,236 +2,182 @@ defns
 Ty :: '' ::=
 
 defn
-G ◡ D ⫦ e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (require both positive and negative contexts) }} by
+G ⫦ e :: :: TyR_eff :: TyR_eff_ {{ com Typing of effects (raw) }} by
 
 -------------- :: N
-{} ◡ {} ⫦ ε
+{} ⫦ ε
 
-G ◡ D ⫦ w : T  [[:TYw]]
-{{ ctx_Disjoint [[P G]] [[P {+h : m n⌊T⌋}]] }}
-{{ ctx_Disjoint [[P G]] [[N D]] }}
-{{ ctx_Disjoint [[P {+h : m n⌊T⌋}]] [[N D]] }}
+G ⨄ D ⫦ v : T [[:TYRv]]
+{{ ctx_DestOnly [[G]] }}
+{{ ctx_HoleOnly [[D]] }}
 ------------------- :: A
-(¹↑·m·n)·G ⨄ {+h : m n⌊T⌋} ◡ (m·n)·D ⫦ h ≔ w
+(¹↑·m·n)·G ⨄ {+h : m n⌊T⌋} ⨄ (m·n)·D ⫦ h ≔ v
 
-G1 ◡ D1 ⨄ -G22 ⫦ e1 [[:TYe1]]
-G21 ⨄ G22 ◡ D2 ⫦ e2 [[:TYe2]]
-{{ pctx_DestOnly [[G22]] }}
-{{ ctx_Disjoint [[P G1]] [[P G21]] }}
-{{ ctx_Disjoint [[P G1]] [[P G22]] }}
-{{ ctx_Disjoint [[P G1]] [[N D1]] }}
-{{ ctx_Disjoint [[P G1]] [[N D2]] }}
-{{ ctx_Disjoint [[P G21]] [[P G22]] }}
-{{ ctx_Disjoint [[P G21]] [[N D1]] }}
-{{ ctx_Disjoint [[P G21]] [[N D2]] }}
-{{ ctx_Disjoint [[P G22]] [[N D1]] }}
-{{ ctx_Disjoint [[P G22]] [[N D2]] }}
-{{ ctx_Disjoint [[N D1]] [[N D2]] }}
-------------------------- :: P
-G1 ⨄ G21 ◡ D1 ⨄ D2 ⫦ e1 » e2
+G1 ⫦ e1 [[:TYRe1]]
+G2 ⫦ e2 [[:TYRe2]]
+------------------------- :: C
+G1 ⋓ G2 ⫦ e1 » e2
 
 defn
-G ⊢ v ⋄ e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (only a positive context is needed) }} by
+G ⊢ e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (valid ones only) }} by
 
-G11 ⨄ G12 ⊢ v : T [[:TYv]]
-G2 ◡ -G12 ⫦ e [[:TYe]]
-{{ pctx_DestOnly [[G12]] }}
-{{ ctx_Disjoint [[P G11]] [[P G12]] }}
-{{ ctx_Disjoint [[P G11]] [[P G2]] }}
-{{ ctx_Disjoint [[P G12]] [[P G2]] }}
------------------- :: C
-G11 ⨄ G2 ⊢ v ⋄ e : T
+G ⫦ e [[:TYRe]]
+{{ ctx_Valid [[G]] }}
+----------------------- :: T
+G ⊢ e
 
 defn
-G ◡ D ⫦ w : T :: :: Ty_xval :: Ty_xval_ {{ com Typing of extended values (require both positive and negative contexts) }} by
+G ⫦ t : T :: :: TyR_term :: TyR_term_ {{ com Typing of terms (raw) }} by
 
 --------------------- :: H
-{} ◡ { - h : ¹ν T } ⫦ -h : T
+{ - h : ¹ν T } ⫦ -h : T
 
 ---------------- :: D
-{ +h : ¹ν n⌊T⌋ } ◡ {} ⫦ +h : n⌊T⌋
+{ +h : ¹ν n⌊T⌋ } ⫦ +h : n⌊T⌋
 
 --------------------- :: U
-{} ◡ {} ⫦ () :𝟏
+{} ⫦ () :𝟏
 
-G ◡ D ⫦ w : T1 [[:TYw]]
-{{ ctx_Disjoint [[P G]] [[N D]] }}
+G ⫦ v : T1 [[:TYRv]]
 --------------------- :: L
-G ◡ D ⫦ Inl w : T1 ⨁ T2
+G ⫦ Inl v : T1 ⨁ T2
 
-G ◡ D ⫦ w : T2 [[:TYw]]
-{{ ctx_Disjoint [[P G]] [[N D]] }}
+G ⫦ v : T2 [[:TYRv]]
 --------------------- :: R
-G ◡ D ⫦ Inr w : T1 ⨁ T2
+G ⫦ Inr v : T1 ⨁ T2
 
-G1 ◡ D1 ⫦ w1 : T1 [[:TYw1]]
-G2 ◡ D2 ⫦ w2 : T2 [[:TYw2]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G1]] [[N D1]] }}
-{{ ctx_Disjoint [[P G1]] [[N D2]] }}
-{{ ctx_Disjoint [[P G2]] [[N D1]] }}
-{{ ctx_Disjoint [[P G2]] [[N D2]] }}
-{{ ctx_Disjoint [[N D1]] [[N D2]] }}
+G1 ⫦ v1 : T1 [[:TYRv1]]
+G2 ⫦ v2 : T2 [[:TYRv2]]
 ------------------------- :: P
-G1 ⨄ G2 ◡ D1 ⨄ D2 ⫦ (w1, w2) : T1 ⨂ T2
+G1 ⨄ G2 ⫦ (v1, v2) : T1 ⨂ T2
 
 % TODO: should we augment age of holes which are below an exponential?
 % TODO: yes so that they match their destination mode?
-G ◡ D ⫦ w : T [[:TYw]]
-{{ ctx_Disjoint [[P G]] [[N D]] }}
+G ⫦ v : T [[:TYRv]]
 --------------------- :: E
-m·G ◡ m·D ⫦ ⦆ m w : ! m T
+m·G ⫦ ⦆ m v : ! m T
 
-G1 ◡ {} ⫦ v1 : T1 [[:TYv1X]]
-G2 ◡ -G1 ⫦ w2 : T2 [[:TYw2]]
-{{ pctx_DestOnly [[G1]] }}
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+% We perform controls here on Ampar, and not on the other rules, because outside of the ampar, the hole/dests that are compensated will no longer be visible.
+% {{ ctx_DestOnly [[G1 ⋓ G2]] }} % ensures that every hole of G2 is compensated by a dest in G1 --> we might relax this one, and ensure it later in Ty_term (not raw)
+G1 ⫦ v1 : T1 [[:TYRv1]]
+G2 ⫦ v2 : T2 [[:TYRv2]]
+{{ ctx_DestOnly [[G1]] }} % ensures that there is no hole in G1 (that could be compensated by a dest in G2 and not appear in the final context).
+{{ ctx_SubsetEq [[-G1]] [[G2]] }} % ensures that every dest of G1 is from this ampar, not a stored dest (our system is supposed to restrict storing dests from other ampars in the left side). So we know that holes of this ampar are exactly -G1.
 ---------------- :: A
-G2 ◡ {} ⫦ ⟨v1 ❟ w2⟩ -G1 : T1 ⧕ T2
+G1 ⋓ G2 ⫦ ⟨v1 ❟ v2⟩ -G1 : T1 ⧕ T2
 
-G ⨄ { x : m T1 } ⊢ t : T2 [[:TYt]]
-{{ ctx_Disjoint [[P G]] [[P { x : m T1 }]] }}
+G ⨄ { x : m T1 } ⫦ t : T2 [[:TYRt]]
 ----------------- :: F
-G ◡ {} ⫦ λx ⟼ t : T1 m → T2
+G ⫦ λx ⟼ t : T1 m → T2
 
-defn
-G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (only a positive context is needed) }} by
+{{ ctx_Compatible [[G]] [[{ x : ¹ν T }]] }}
+-------------------- :: Var
+G ⫦ x : T
 
-G ◡ {} ⫦ v : T [[:TYvX]]
------------------ :: V
-G ⊢ v : T
-
--------------------- :: X0
-{ x : ¹ν T } ⊢ x : T
-
--------------------- :: XInf
-{ x : ¹∞ T } ⊢ x : T
-
-G1 ⊢ t : T1 [[:TYt]]
-G2 ⊢ u : T1 m → T2 [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+G1 ⫦ t : T1 [[:TYRt]]
+G2 ⫦ u : T1 m → T2 [[:TYRu]]
 ----------------- :: App
-m·G1 ⨄ G2 ⊢ t ≻ u : T2
+m·G1 ⨄ G2 ⫦ t ≻ u : T2
 
-G1 ⊢ t :𝟏 [[:TYt]]
-G2 ⊢ u : U [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+G1 ⫦ t :𝟏 [[:TYRt]]
+G2 ⫦ u : U [[:TYRu]]
 ----------------- :: PatU
-G1 ⨄ G2 ⊢ t ; u : U
+G1 ⨄ G2 ⫦ t ; u : U
 
-G1 ⊢ t : T1 ⨁ T2 [[:TYt]]
-G2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
-G2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x1 : m T1 }]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x2 : m T2 }]] }}
+G1 ⫦ t : T1 ⨁ T2 [[:TYRt]]
+G2 ⨄ { x1 : m T1 } ⫦ u1 : U [[:TYRu1]]
+G2 ⨄ { x2 : m T2 } ⫦ u2 : U [[:TYRu2]]
 ----------------- :: PatS
-m·G1 ⨄ G2 ⊢ t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
+m·G1 ⨄ G2 ⫦ t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
-G1 ⊢ t : T1 ⨂ T2 [[:TYt]]
-G2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x1 : m T1}]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x2 : m T2}]] }}
-{{ ctx_Disjoint [[P {x1 : m T1}]] [[P {x2 : m T2}]] }}
+G1 ⫦ t : T1 ⨂ T2 [[:TYRt]]
+G2 ⨄ { x1 : m T1, x2 : m T2 } ⫦ u : U [[:TYRu]]
 ----------------- :: PatP
-m·G1 ⨄ G2 ⊢ t ≻case (x1 , x2) ⟼ u : U
+m·G1 ⨄ G2 ⫦ t ≻case (x1 , x2) ⟼ u : U
 
-G1 ⊢ t : !n T [[:TYt]]
-G2 ⨄ { x : m·n T } ⊢ u : U [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x : m·n T }]] }}
+G1 ⫦ t : !n T [[:TYRt]]
+G2 ⨄ { x : m·n T } ⫦ u : U [[:TYRu]]
 ----------------- :: PatE
-m·G1 ⨄ G2 ⊢ t ≻case ⦆ n x ⟼ u : U
+m·G1 ⨄ G2 ⫦ t ≻case ⦆ n x ⟼ u : U
 
-G1 ⊢ t : T1 ⧕ T2 [[:TYt]]
-¹↑·G2 ⨄ { x : ¹ν T1 } ⊢ u : U [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x : ¹ν T1 }]] }}
+G1 ⫦ t : T1 ⧕ T2 [[:TYRt]]
+¹↑·G2 ⨄ { x : ¹ν T1 } ⫦ u : U [[:TYRu]]
 -------------------------------- :: Map
-G1 ⨄ G2 ⊢ t ≻map x ⟼ u : U ⧕ T2
+G1 ⨄ G2 ⫦ t ≻map x ⟼ u : U ⧕ T2
 
-G1 ⊢ t : n⌊T2⌋ [[:TYt]]
-G2 ⊢ u : T1 ⧕ T2 [[:TYu]]
-{{ ctx_Disjoint [[P G1]] [[P G2]] }}
+G1 ⫦ t : n⌊T2⌋ [[:TYRt]]
+G2 ⫦ u : T1 ⧕ T2 [[:TYRu]]
 ----------------------------- :: FillC
-G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞· u : T1
+G1 ⨄ (¹↑·n)·G2 ⫦ t ⨞· u : T1
 
-G ⊢ t : n⌊𝟏⌋ [[:TYt]]
+G ⫦ t : n⌊𝟏⌋ [[:TYRt]]
 ------------------------------ :: FillU
-G ⊢ t ⨞ () :𝟏
+G ⫦ t ⨞ () :𝟏
 
-G ⊢ t : n⌊T1 ⨁ T2⌋ [[:TYt]]
+G ⫦ t : n⌊T1 ⨁ T2⌋ [[:TYRt]]
 ------------------------------ :: FillL
-G ⊢ t ⨞ Inl : n⌊T1⌋
+G ⫦ t ⨞ Inl : n⌊T1⌋
 
-G ⊢ t : n⌊T1 ⨁ T2⌋ [[:TYt]]
+G ⫦ t : n⌊T1 ⨁ T2⌋ [[:TYRt]]
 ------------------------------ :: FillR
-G ⊢ t ⨞ Inr : n⌊T2⌋
+G ⫦ t ⨞ Inr : n⌊T2⌋
 
-G ⊢ t : n⌊T1 ⨂ T2⌋ [[:TYt]]
+G ⫦ t : n⌊T1 ⨂ T2⌋ [[:TYRt]]
 ------------------------------ :: FillP
-G ⊢ t ⨞ (,) : n⌊T1⌋ ⨂ n⌊T2⌋
+G ⫦ t ⨞ (,) : n⌊T1⌋ ⨂ n⌊T2⌋
 
-G ⊢ t : m⌊!n T⌋ [[:TYt]]
+G ⫦ t : m⌊!n T⌋ [[:TYRt]]
 ------------------------------ :: FillE
-G ⊢ t ⨞ ⦆ n : m·n⌊T⌋
+G ⫦ t ⨞ ⦆ n : m·n⌊T⌋
 
 -------------------------------- :: Alloc
-{} ⊢ alloc T : ¹ν⌊T⌋ ⧕ T
+{} ⫦ alloc T : ¹ν⌊T⌋ ⧕ T
 
-G ⊢ t : T [[:TYt]]
+G ⫦ t : T [[:TYRt]]
 ------------------------------- :: ToA
-G ⊢ to⧕ t : 𝟏 ⧕ T
+G ⫦ to⧕ t : 𝟏 ⧕ T
 
-G ⊢ t : 𝟏 ⧕ T [[:TYt]]
+G ⫦ t : 𝟏 ⧕ T [[:TYRt]]
 ------------------------------- :: FromA
-G ⊢ from⧕ t : T
+G ⫦ from⧕ t : T
+
+defn
+G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (valid ones only) }} by
+
+G ⫦ t : T [[:TYRt]]
+{{ ctx_Valid [[G]] }}
+{{ ctx_NoHole [[G]] }}
+--------------------- :: T
+G ⊢ t : T
+
+defn
+G ⊢ v ⋄ e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (valid ones only) }} by
+
+G1 ⊢ v : T [[:TYv]]
+G2 ⊢ e [[:TYe]]
+{{ ctx_DestOnly [[G1 ⋓ G2]] }}
+------------------ :: C
+G1 ⋓ G2 ⊢ v ⋄ e : T
 
 defns
 Sem :: '' ::=
 
 defn
-w1 D1 | e1 ⤋ w2 D2 | e2 :: :: Sem_eff :: Sem_eff_ {{ com Big-step evaluation of effects on extended values }} {{ tex [[w1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[w2]]_{~[[D2]]}\,|~[[e2]] }} by
+v1 G1 | e1 ⤋ v2 G2 | e2 :: :: Sem_eff :: Sem_eff_ {{ com Big-step evaluation of effects on values (with potential holes) }} {{ tex [[v1]]_{~[[G1]]}\,|~[[e1]]~~[[⤋]]~~[[v2]]_{~[[G2]]}\,|~[[e2]] }} by
 
 ------------------------- :: N
-w1 D1 | ε ⤋ w1 D1 | ε
+v1 G1 | ε ⤋ v1 G1 | ε
 
-% G2 ◡ D2 ⫦ w2 : T
-% {{ ctx_Disjoint [[P G']] [[-D]] }}
-{{ ctx_hdmvNotMem [[h]] [[N D1]] }}
-w1 D1 |e1 ⤋ w2 D2| e2 [[:EAPPw1e1]]
+{{ ctx_HdnmNotMem [[h]] [[G1]] }}
+v1 G1 |e1 ⤋ v2 G2| e2 [[:EAPPv1e1]]
 --------------------- :: S
-w1 D1 | h ≔ w' » e1 ⤋ w2 D2 | h ≔ w' » e2
+v1 G1 | h ≔ v' » e1 ⤋ v2 G2 | h ≔ v' » e2
 
-G0 ◡ D0 ⫦ w0 : T [[:TYw0]]
-{{ ctx_Disjoint [[P G0]] [[N D0]] }}
-{{ ctx_Disjoint [[N D1]] [[N { -h : n T }]] }}
-{{ ctx_Disjoint [[N D1]] [[N D0]] }}
-w1[h ≔ w0] (D1 ⨄ n·D0) | e1 ⤋ w2 D2 | e2 [[:EAPPw1sube1]]
+G0 ⫦ v0 : T [[:TYRv0]]
+{{ ctx_Valid [[G0]] }} % we don't use simple turnstile here, because we want to allow holes
+v1[h ≔ v0] (G1 ⨄ n·G0) | e1 ⤋ v2 G2 | e2 [[:EAPPv1sube1]]
 --------------------- :: F
-w1 D1 ⨄ { -h : n T } | h ≔ w0 » e1 ⤋ w2 D2 | e2
-
-% eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\ottseff{\varepsilon}$-terminated) }} by
-
-% ------------- :: NoEff
-% apply (ε, w D) = ε , w D
-
-% % Those two conditions ensures that no destination escapes its inner scope
-% % TODO Should we put them there?
-
-
-% % ------------------ :: FillUnit
-% % apply(h ≔ (), e, w D ⨄ { -h : ¹ν 1 }) = apply(e , w[h ≔ ()] D)
-
-% % ------------------ :: FillInl
-% % apply(h ≔ Inl h', e, w D ⨄ { -h : ¹ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inl h'] D ⨄ {-h' : ¹ν T1})
-
-% % ------------------ :: FillInr
-% % apply(h ≔ Inr h', e, w D ⨄ { -h : ¹ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inr h'] D ⨄ {-h' : ¹ν T2})
-% % ------------------ :: FillProd
-% % apply(h ≔ (h1, h2), e, w D ⨄ { -h : ¹ν T1 ⨂ T2 }) = apply(e , w[h ≔ (h1, h2)] D ⨄ {-h1 : ¹ν T1, -h2 : ¹ν T2})
-
+v1 G1 ⨄ { -h : n T } | h ≔ v0 » e1 ⤋ v2 G2 | e2
 
 defn
 t d ⇓ v ⋄ e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }} by
@@ -266,11 +212,11 @@ u[x1 ≔ v1][x2 ≔ v2] d.2 ⇓ v2 ⋄ e2 [[:REDusub]]
 t ≻case (x1,x2) ⟼ u d ⇓ v2 ⋄ e1 » e2
 
 % Can e1 have effect on the content of the ampar? I don't think so, but maybe
-t d.1 ⇓ ⟨ v1 ❟ w2 ⟩ D ⋄ e1 [[:REDt]]
+t d.1 ⇓ ⟨ v1 ❟ v2 ⟩ D ⋄ e1 [[:REDt]]
 u[x ≔ v1] d.2 ⇓ v3 ⋄ e2 [[:REDusub]]
- w2 D |e2 ⤋ w4 D'| e3 [[:EAPPw2e2]]
+v2 D |e2 ⤋ v4 D'| e3 [[:EAPPv2e2]]
 ---------------------------------- :: Map
-t ≻map x ⟼ u d ⇓ ⟨v3 ❟ w4⟩ D' ⋄ e1 » e3
+t ≻map x ⟼ u d ⇓ ⟨v3 ❟ v4⟩ D' ⋄ e1 » e3
 
 -------------------------- :: Alloc
 alloc T d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
@@ -300,6 +246,6 @@ t d.1 ⇓ +h ⋄ e [[:REDt]]
 t ⨞ (,) d ⇓ ( +dyn d.2, +dyn d.3) ⋄ e » h ≔ (-dyn d.2,-dyn d.3)
 
 t d.1 ⇓ +h ⋄ e1 [[:REDt]]
-u d.2 ⇓ ⟨v1 ❟ w2⟩ D ⋄ e2 [[:REDu]]
+u d.2 ⇓ ⟨v1 ❟ v2⟩ D ⋄ e2 [[:REDu]]
 ---------------------------------------- :: FillC
-t ⨞· u d ⇓ v1⋄ e1 » e2 » h ≔ w2
+t ⨞· u d ⇓ v1⋄ e1 » e2 » h ≔ v2

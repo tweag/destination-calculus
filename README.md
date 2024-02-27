@@ -1,1 +1,1 @@
-# Research on destination passing style and linear types
+# Research on destination bndrsing style and linear types

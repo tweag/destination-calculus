@@ -21,8 +21,8 @@ Definition k : Type := nat. (*r Index for ranges *)
 Definition hddyn : Type := list nat.
 
 Inductive hdnm : Type :=  (*r Hole or destination name *)
- | hdnm_Dyn (d:hddyn) (*r Dynamic name *)
- | hdnm_Static (hdmv5:hdmv) (*r Static name *).
+ | hdnm_D (d:hddyn) (*r Dynamic name *)
+ | hdnm_S (hdmv5:hdmv) (*r Static name *).
 (* Will be aliased later to mul *)
 Inductive _mul : Type :=
   | Lin : _mul
@@ -42,38 +42,36 @@ Definition mul_times' (pl: list _mul) : _mul :=
 (* Astuce fresh : liste de nombres = prefixe *)
 
 
-Definition age : Type := ext_nat.
-
 Definition mul : Type := _mul.
 
-Definition md : Type := option (mul * age).
+Definition age : Type := ext_nat.
 
-Inductive typ : Type :=  (*r Type *)
- | typ_U : typ (*r Unit *)
- | typ_S (T1:typ) (T2:typ) (*r Sum *)
- | typ_P (T1:typ) (T2:typ) (*r Product *)
- | typ_E (m:md) (T:typ) (*r Exponential *)
- | typ_A (T1:typ) (T2:typ) (*r Ampar type (consuming $(T1:typ)$ yields $(T2:typ)$) *)
- | typ_F (T1:typ) (m1:md) (T2:typ) (*r Linear function *)
- | typ_D (m:md) (T:typ) (*r Destination *).
+Definition mode : Type := option (mul * age).
 
-Inductive pas : Type :=  (*r Positive type assignment *)
- | pas_V (x:tmv) (m:md) (T:typ) (*r Variable *)
- | pas_D (h:hdnm) (m:md) (n:md) (T:typ) (*r Destination ($(m:md)$ is its own modality; $(n:md)$ is the modality for values it accepts) *).
+Inductive type : Type :=  (*r Type *)
+ | type_U : type (*r Unit *)
+ | type_S (T1:type) (T2:type) (*r Sum *)
+ | type_P (T1:type) (T2:type) (*r Product *)
+ | type_E (m:mode) (T:type) (*r Exponential *)
+ | type_A (T1:type) (T2:type) (*r Ampar type (consuming $(T1:type)$ yields $(T2:type)$) *)
+ | type_F (T1:type) (m1:mode) (T2:type) (*r Linear function *)
+ | type_D (m:mode) (T:type) (*r Destination *).
 
-Inductive nas : Type :=  (*r Negative type assignment *)
- | nas_H (h:hdnm) (n:md) (T:typ) (*r Hole ($(n:md)$ is the modality for values it accepts, it doesn't have a modality on its own) *).
+Inductive bndr : Type :=  (*r Type assignment to either variable, destination or hole *)
+ | bndr_V (x:tmv) (m:mode) (T:type) (*r Variable *)
+ | bndr_D (h:hdnm) (m:mode) (n:mode) (T:type) (*r Destination ($(m:mode)$ is its own modality; $(n:mode)$ is the modality for values it accepts) *)
+ | bndr_H (h:hdnm) (n:mode) (T:type) (*r Hole ($(n:mode)$ is the modality for values it accepts, it doesn't have a modality on its own) *).
 Inductive name : Type :=
   | name_X : tmv -> name
-  | name_HD : hdmv -> name.
+  | name_HD : hdnm -> name.
 
 Module Name_as_UDT <: UsualDecidableType.
   Definition t := name.
 
-  Definition eq := +eq name.
-  Definition eq_refl := +eq_refl name.
-  Definition eq_sym := +eq_sym name.
-  Definition eq_trans := +eq_trans name.
+  Definition eq := @eq name.
+  Definition eq_refl := @eq_refl name.
+  Definition eq_sym := @eq_sym name.
+  Definition eq_trans := @eq_trans name.
 
   (* Define the eq_dec function *)
   Theorem eq_dec : forall x y : name, {x = y} + {x <> y}.
@@ -84,12 +82,8 @@ Module Name_as_UDT <: UsualDecidableType.
            * left. rewrite e. reflexivity.
            * right. congruence.
         + right. congruence.
-    - induction y.
-        + right. congruence.
-        + assert ({h = h0} + {h <> h0}) by apply Nat.eq_dec. destruct H.
-           * left. rewrite e. reflexivity.
-           * right. congruence.
-    Defined.
+    - induction y. give_up.
+    Admitted.
 
   Instance eq_equiv : Equivalence Name_as_UDT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
 
@@ -101,136 +95,136 @@ Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
 
-Definition md_plus (m1 m2: md) : md :=
+Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
   | _, None => None
   | Some (p1, a1), Some (p2, a2) => match a1, a2 with
     | _, Inf => Some (mul_plus p1 p2, Inf)
     | Inf, _ => Some (mul_plus p1 p2, Inf)
-    | _, _ => if ext_eq a1 a2 then Some (mul_plus p1 p2, a1) else None
+    | _, _ => if a1 = a2 then Some (mul_plus p1 p2, a1) else None
     end
   end.
 
-Definition md_times (m1 m2: md) : md :=
+Definition mode_times (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
   | _, None => None
   | Some (p1, a1), Some (p2, a2) => Some (mul_times p1 p2, age_times a1 a2)
   end.
 
-Definition md_times' (ml: list md) : md :=
-  fold_right md_times ml (Some (Lin, Fin 0)).
+Definition mode_times' (ml: list mode) : mode :=
+  List.fold_right mode_times (Some (Lin, Fin 0)) ml.
 
-Definition pas_name (b : pas) : name :=
+Definition bndr_name (b : bndr) : name :=
   match b with
-  | pas_V x m T => name_X x
-  | pas_D h m1 m2 T => name_HD h
+  | bndr_V x m T => name_X x
+  | bndr_H h m T => name_HD h
+  | bndr_D h m1 m2 T => name_HD h
   end.
 
-Definition pas_md (b : pas) : md := match b with
-  | pas_V _ m _ => m
-  | pas_D _ m1 m2 _ => m1
+Definition bndr_mode (b : bndr) : mode := match b with
+  | bndr_V _ m _ => m
+  | bndr_H _ m _ => m
+  | bndr_D _ m1 m2 _ => m1
   end.
 
-Definition nas_name (b : nas) : name :=
+Definition bndr_update_mode (b:bndr) (m:mode) := match b with
+  | bndr_V x _ T => bndr_V x m T
+  | bndr_H h _ T => bndr_H h m T
+  | bndr_D h _ m2 T => bndr_D h m m2 T
+  end.
+
+Definition bndr_IsDest (b: bndr) : Prop :=
   match b with
-  | nas_H h m T => name_HD h
+    | bndr_D _ _ _ _ => True
+    | _ => False
   end.
-
-Definition nas_md (b: nas) : md := match b with
-  | nas_H _ m _ => m
-  end.
-
-Definition pas_IsDest (b: pas) : Prop :=
+Definition bndr_IsVar (b: bndr) : Prop :=
   match b with
-    | pas_V _ _ _ => False
-    | pas_D _ _ _ _ => True
+    | bndr_V _ _ _ => True
+    | _ => False
   end.
-
-Axiom pctx_Coherent: forall (G : CtxM.t pas) n b, CtxM.MapsTo n b G -> pas_name b = n.
-Axiom nctx_Coherent: forall (D : CtxM.t nas) n b, CtxM.MapsTo n b D -> nas_name b = n.
-
-Definition pas_SameShape (b b': pas) : Prop :=
-  match b, b' with
-  | pas_V _ _ _, pas_V _ _ _ => True
-  | pas_D _ _ _ _, pas_D _ _ _ _ => True
-  | _, _ => False
+Definition bndr_IsHole (b: bndr) : Prop :=
+  match b with
+    | bndr_H _ _ _ => True
+    | _ => False
   end.
+Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
+Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
+Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
+Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsDest b.
+Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsHole b.
+Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~bndr_IsVar b.
+Definition ctx_Valid (G: CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> exists m, bndr_mode b = Some m.
+Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
+Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
+  ~CtxM.In (name_HD h) G.
+Definition ctx_Compatible (G1 G2 : CtxM.t bndr) : Prop := True. (* TODO : define *)
 
-Theorem pas_SameNameSameShape: forall (b b': pas), pas_name b = pas_name b' -> pas_SameShape b b'.
-Proof. Admitted.
+Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> bndr_name b = n.
 
-Definition pctx_DestOnly (G : CtxM.t pas) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> pas_IsDest b.
-
-Definition pctx_Valid (G: CtxM.t pas) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> pas_md b = Some _.
-
-Definition nctx_Valid (D: CtxM.t nas) : Prop :=
-  forall n b, CtxM.MapsTo n b D -> nas_md b = Some _.
-
-Definition pctx_add (b : pas) (G : CtxM.t pas) : CtxM.t pas :=
-  match CtxM.find (pas_name b) G with
-  | None => CtxM.add (pas_name b) b G
-  | Some b' => match b, b' with
-    | pas_V x1 m1 T1, pas_V x2 m2 T2 =>
+Definition ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr :=
+  match CtxM.find (bndr_name b') G with
+  | None => CtxM.add (bndr_name b') b' G
+  | Some b => match b, b' with
+    | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
       (* assert x1 = x2 *)
-      if T1 = T2 then pas_V x1 (md_plus m1 m2) T1 else pas_V x1 None T1
-    | pas_D h1 m11 m12 T1, pas_D h2 m21 m22 T2 =>
+      if T1 = T2 then bndr_V x1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+    | bndr_D h1 m11 m12 T1, bndr_D h2 m21 m22 T2 =>
       (* assert h1 = h2 *)
-      if m12 = m22 and T1 = T2 then pas_D h1 (md_plus m11 m21) m12 T1 else pas_D h1 None m12 T1
-    | pas_V x1 m1 T1, pas_D _ _ _ _ =>
-      (* cannot happen because pas_SameNameSameShape *)
-      pas_V x1 None T1
-    | pas_D h1 m1 m2 T1, pas_V _ _ _ =>
-      (* cannot happen because pas_SameNameSameShape *)
-      pas_V h1 None m2 T1
+      if m12 = m22 and T1 = T2 then bndr_D h1 (mode_plus m11 m21) m12 T1 else bndr_update_mode b None
+    | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
+      (* assert h1 = h2 *)
+      if T1 = T2 then bndr_D h1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+    | _, _ => bndr_update_mode b None
     end
   end.
 
-Definition pctx_from_list_unsafe (bs : list pas) : CtxM.t pas :=
-  List.fold_right (fun G b => CtxM.add (pas_name b) b G) bs (CtxM.empty pas).
-
-Definition nctx_add (b : nas) (D : CtxM.t nas) : CtxM.t nas :=
-  match CtxM.find (nas_name b) D with
-  | None => CtxM.add (nas_name b) b D
-  | Some b' => match b, b' with
-    | nas_H h1 m1 T1, nas_H h2 m2 T2 =>
+Definition ctx_interact (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
+  let fallback = ctx_add b' G in
+  match CtxM.find (bndr_name b') G with
+  | None => fallback
+  | Some b => match b, b' with
+    | bndr_D h1 m11 m12 T1, bndr_H h2 m2 T2 =>
       (* assert h1 = h2 *)
-      if T1 = T2 then nas_H h1 (md_plus m1 m2) T1 else nas_H h1 None T1
+      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
+    | bndr_H h2 m2 T2, bndr_D h1 m11 m12 T1 =>
+      (* assert h1 = h2 *)
+      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
+    | _, _ => fallback
     end
   end.
 
-Definition nctx_from_list_unsafe (bs : list nas) : CtxM.t nas :=
-  List.fold_right (fun G b => CtxM.add (nas_name b) b G) bs (CtxM.empty nas).
+Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
+  List.fold_right (fun b G => CtxM.add (bndr_name b) b G) (CtxM.empty bndr) bs.
 
-Definition pctx_union (G1 G2 : CtxM.t pas) : CtxM.t pas :=
+Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.fold (fun n b G => CtxM.add n b G) G2 G1.
 
-Definition pctx_stimes (m1 : md) (G : CtxM.t pas) : CtxM.t pas :=
+Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
-    | pas_V x m2 T2 => pas_V x (md_times m1 m2) T2
-    | pas_D h m2 m3 T2 => pas_D h (md_times m1 m2) m3 T2
+    | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
+    | bndr_D h m2 m3 T2 => bndr_D h (mode_times m1 m2) m3 T2
+    | bndr_H h m2 T2 => bndr_H h (mode_times m1 m2) T2
     end
   ) G.
 
-Definition nctx_union (D1 D2 : CtxM.t nas) (hyp: ctx_Disjoint (N D1) (N D2)) : CtxM.t nas :=
-  CtxM.fold (fun n b D => CtxM.add n b D) D2 D1.
-
-Definition nctx_stimes (m1 : md) (D : CtxM.t nas) : CtxM.t nas :=
+Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
-    | nas_H h m2 T2 => nas_H h (md_times m1 m2) T2
-    end
-  ) D.
-
-Definition nctx_minus (G : CtxM.t pas) : CtxM.t nas :=
-  CtxM.map (fun b =>
-    match b with
-    | pas_V x m T => nas_H (hdnm_Static x) None T
-    | pas_D h m1 m2 T => nas_H h (md_times m1 m2) T
+    | bndr_V x m2 T2 => bndr_V x None T2 (* error *)
+    | bndr_D h m2 m3 T2 => bndr_H h (mode_times m2 m3) T2
+    | bndr_H h m2 T2 => bndr_H h None T2 (* error *)
     end
   ) G.
 
@@ -238,234 +232,197 @@ Definition concat {A : Type} (ll : list (list A)) : list A :=
   List.fold_right (fun x1 x2 => x1 ++ x2) nil ll.
 
 
-Definition pctx : Type := (CtxM.t pas).
+Definition ctx : Type := (CtxM.t bndr).
 
-Definition nctx : Type := (CtxM.t nas).
-
-Inductive val : Type :=  (*r Term value *)
- | val_A (v1:val) (w2:xval) (D:nctx) (*r Ampar *)
- | val_D (h:hdnm) (*r Destination *)
- | val_U : val (*r Unit *)
- | val_L (v:val) (*r Left variant for sum *)
- | val_R (v:val) (*r Right variant for sum *)
- | val_P (v1:val) (v2:val) (*r Product *)
- | val_E (m:md) (v:val) (*r Exponential *)
- | val_F (x:tmv) (t:term) (*r Linear function *)
-with xval : Type :=  (*r Pseudo-value that may contain holes *)
- | xval_V (v:val) (*r Term value *)
- | xval_H (h:hdnm) (*r Hole *)
- | xval_L (w:xval) (*r Left variant with val or hole *)
- | xval_R (w:xval) (*r Right variant with val or hole *)
- | xval_P (w1:xval) (w2:xval) (*r Product with val or hole *)
- | xval_E (m:md) (w:xval) (*r Exponential with val or hole *)
-with term : Type :=  (*r Term *)
+Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Term value *)
  | term_Var (x:tmv) (*r Variable *)
  | term_App (t:term) (u:term) (*r Application *)
  | term_PatU (t:term) (u:term) (*r Pattern-match on unit *)
  | term_PatS (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (*r Pattern-match on sum *)
  | term_PatP (t:term) (x1:tmv) (x2:tmv) (u:term) (*r Pattern-match on product *)
- | term_PatE (t:term) (m:md) (x:tmv) (u:term) (*r Pattern-match on exponential *)
+ | term_PatE (t:term) (m:mode) (x:tmv) (u:term) (*r Pattern-match on exponential *)
  | term_Map (t:term) (x:tmv) (u:term) (*r Map over the left side of the ampar *)
  | term_ToA (t:term) (*r Wrap $(t:term)$ into a trivial ampar *)
  | term_FromA (t:term) (*r Extract value from trivial ampar *)
- | term_Alloc (T:typ) (*r Return a fresh "identity" ampar object *)
+ | term_Alloc (T:type) (*r Return a fresh "identity" ampar object *)
  | term_FillU (t:term) (*r Fill destination with unit *)
  | term_FillL (t:term) (*r Fill destination with left variant *)
  | term_FillR (t:term) (*r Fill destination with right variant *)
  | term_FillP (t:term) (*r Fill destination with product constructor *)
- | term_FillE (t:term) (m:md) (*r Fill destination with exponential constructor *)
- | term_FillC (t:term) (u:term) (*r Fill destination with root of ampar $(u:term)$ *).
+ | term_FillE (t:term) (m:mode) (*r Fill destination with exponential constructor *)
+ | term_FillC (t:term) (u:term) (*r Fill destination with root of ampar $(u:term)$ *)
+with val : Type :=  (*r Term value *)
+ | val_H (h:hdnm) (*r Hole *)
+ | val_D (h:hdnm) (*r Destination *)
+ | val_U : val (*r Unit *)
+ | val_F (x:tmv) (t:term) (*r Linear function *)
+ | val_L (v:val) (*r Left variant for sum *)
+ | val_R (v:val) (*r Right variant for sum *)
+ | val_E (m:mode) (v:val) (*r Exponential *)
+ | val_P (v1:val) (v2:val) (*r Product *)
+ | val_A (v1:val) (v2:val) (D:ctx) (*r Ampar *).
 
 Inductive has : Type :=  (*r Hole assignment *)
- | has_A (h:hdnm) (w:xval).
+ | has_A (h:hdnm) (v:val).
 
 Definition eff : Type := list has.
-
-Definition ctx : Type := ({ b : Type & CtxM.t b }).
 Definition term_sub (t: term) (x : tmv) (v : val) : term := t.
 (* TODO *)
-Definition xval_effapp (w : xval) (e : eff) : xval := w.
+Definition val_effapp (v : val) (e : eff) : val := v.
 (* TODO *)
 
 
 Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual rules *)
- | _ctx_Disjoint (C1:ctx) (C2:ctx)
- | _ctx_hdmvNotMem (h:hdnm) (C:ctx)
- | _pctx_DestOnly (G:pctx)
- | _hdmv_Fresh (h:hdnm)
- | _Ty_eff (G:pctx) (D:nctx) (e:eff)
- | _Ty_cmd (G:pctx) (v:val) (e:eff) (T:typ)
- | _Ty_xval (G:pctx) (D:nctx) (w:xval) (T:typ)
- | _Ty_term (G:pctx) (t:term) (T:typ)
- | _Sem_eff (w1:xval) (D1:nctx) (e1:eff) (w2:xval) (D2:nctx) (e2:eff)
+ | _ctx_DestOnly (G:ctx)
+ | _ctx_HoleOnly (G:ctx)
+ | _ctx_VarOnly (G:ctx)
+ | _ctx_NoDest (G:ctx)
+ | _ctx_NoHole (G:ctx)
+ | _ctx_NoVar (G:ctx)
+ | _ctx_Valid (G:ctx)
+ | _ctx_SubsetEq (G1:ctx) (G2:ctx)
+ | _ctx_HdnmNotMem (h:hdnm) (G:ctx)
+ | _ctx_Compatible (G1:ctx) (G2:ctx)
+ | _ctx_Disjoint (G1:ctx) (G2:ctx) (*r TODO: Just for legacy proof; remove *)
+ | _TyR_eff (G:ctx) (e:eff)
+ | _TyR_term (G:ctx) (t:term) (T:type)
+ | _Ty_eff (G:ctx) (e:eff)
+ | _Ty_term (G:ctx) (t:term) (T:type)
+ | _Ty_cmd (G:ctx) (v:val) (e:eff) (T:type)
+ | _Sem_eff (v1:val) (D1:ctx) (e1:eff) (v2:val) (D2:ctx) (e2:eff)
  | _Sem_term (t:term) (d:hddyn) (v:val) (e:eff).
 (** definitions *)
 
 (* defns Ty *)
-Inductive Ty_eff : pctx -> nctx -> eff -> Prop :=    (* defn Ty_eff *)
- | Ty_eff_N : 
-     Ty_eff  (pctx_from_list_unsafe  nil )   (nctx_from_list_unsafe  nil )   nil 
- | Ty_eff_A : forall (m n:md) (G:pctx) (h:hdnm) (T:typ) (D:nctx) (w:xval)
-     (TYw: Ty_xval G D w T),
-     ctx_Disjoint  (P  G )   (P   (pctx_from_list_unsafe  (cons (pas_D h m n T) nil) )  )   ->
-     ctx_Disjoint  (P  G )   (N  D )   ->
-     ctx_Disjoint  (P   (pctx_from_list_unsafe  (cons (pas_D h m n T) nil) )  )   (N  D )   ->
-     Ty_eff  (pctx_union   (pctx_stimes    (md_times'  ((app (cons  (Some (pair Lin (Fin 1)))  nil) (app (cons m nil) (app (cons n nil) nil)))) )     G )     (pctx_from_list_unsafe  (cons (pas_D h m n T) nil) )  )   (nctx_stimes    (md_times'  ((app (cons m nil) (app (cons n nil) nil))) )     D )   (cons  (has_A h w)  nil) 
- | Ty_eff_P : forall (G1 G21:pctx) (D1 D2:nctx) (e1 e2:eff) (G22:pctx)
-     (TYe1: Ty_eff G1  (nctx_union  D1    (nctx_minus  G22 )  )  e1)
-     (TYe2: Ty_eff  (pctx_union  G21   G22 )  D2 e2),
-     pctx_DestOnly G22  ->
-     ctx_Disjoint  (P  G1 )   (P  G21 )   ->
-     ctx_Disjoint  (P  G1 )   (P  G22 )   ->
-     ctx_Disjoint  (P  G1 )   (N  D1 )   ->
-     ctx_Disjoint  (P  G1 )   (N  D2 )   ->
-     ctx_Disjoint  (P  G21 )   (P  G22 )   ->
-     ctx_Disjoint  (P  G21 )   (N  D1 )   ->
-     ctx_Disjoint  (P  G21 )   (N  D2 )   ->
-     ctx_Disjoint  (P  G22 )   (N  D1 )   ->
-     ctx_Disjoint  (P  G22 )   (N  D2 )   ->
-     ctx_Disjoint  (N  D1 )   (N  D2 )   ->
-     Ty_eff  (pctx_union  G1   G21 )   (nctx_union  D1   D2 )   concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) 
-with Ty_cmd : pctx -> val -> eff -> typ -> Prop :=    (* defn Ty_cmd *)
- | Ty_cmd_C : forall (G11 G2:pctx) (v:val) (e:eff) (T:typ) (G12:pctx)
-     (TYv: Ty_term  (pctx_union  G11   G12 )  (term_Val v) T)
-     (TYe: Ty_eff G2  (nctx_minus  G12 )  e),
-     pctx_DestOnly G12  ->
-     ctx_Disjoint  (P  G11 )   (P  G12 )   ->
-     ctx_Disjoint  (P  G11 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G12 )   (P  G2 )   ->
-     Ty_cmd  (pctx_union  G11   G2 )  v e T
-with Ty_xval : pctx -> nctx -> xval -> typ -> Prop :=    (* defn Ty_xval *)
- | Ty_xval_H : forall (h:hdnm) (T:typ),
-     Ty_xval  (pctx_from_list_unsafe  nil )   (nctx_from_list_unsafe  (cons (nas_H h  (Some (pair Lin (Fin 0)))  T) nil) )  (xval_H h) T
- | Ty_xval_D : forall (h:hdnm) (n:md) (T:typ),
-     Ty_xval  (pctx_from_list_unsafe  (cons (pas_D h  (Some (pair Lin (Fin 0)))  n T) nil) )   (nctx_from_list_unsafe  nil )  (xval_V (val_D h)) (typ_D n T)
- | Ty_xval_U : 
-     Ty_xval  (pctx_from_list_unsafe  nil )   (nctx_from_list_unsafe  nil )  (xval_V val_U) typ_U
- | Ty_xval_L : forall (G:pctx) (D:nctx) (w:xval) (T1 T2:typ)
-     (TYw: Ty_xval G D w T1),
-     ctx_Disjoint  (P  G )   (N  D )   ->
-     Ty_xval G D (xval_L w) (typ_S T1 T2)
- | Ty_xval_R : forall (G:pctx) (D:nctx) (w:xval) (T1 T2:typ)
-     (TYw: Ty_xval G D w T2),
-     ctx_Disjoint  (P  G )   (N  D )   ->
-     Ty_xval G D (xval_R w) (typ_S T1 T2)
- | Ty_xval_P : forall (G1 G2:pctx) (D1 D2:nctx) (w1 w2:xval) (T1 T2:typ)
-     (TYw1: Ty_xval G1 D1 w1 T1)
-     (TYw2: Ty_xval G2 D2 w2 T2),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G1 )   (N  D1 )   ->
-     ctx_Disjoint  (P  G1 )   (N  D2 )   ->
-     ctx_Disjoint  (P  G2 )   (N  D1 )   ->
-     ctx_Disjoint  (P  G2 )   (N  D2 )   ->
-     ctx_Disjoint  (N  D1 )   (N  D2 )   ->
-     Ty_xval  (pctx_union  G1   G2 )   (nctx_union  D1   D2 )  (xval_P w1 w2) (typ_P T1 T2)
- | Ty_xval_E : forall (m:md) (G:pctx) (D:nctx) (w:xval) (T:typ)
-     (TYw: Ty_xval G D w T),
-     ctx_Disjoint  (P  G )   (N  D )   ->
-     Ty_xval  (pctx_stimes  m   G )   (nctx_stimes  m   D )  (xval_E m w) (typ_E m T)
- | Ty_xval_A : forall (G2:pctx) (v1:val) (w2:xval) (G1:pctx) (T1 T2:typ)
-     (TYv1X: Ty_xval G1  (nctx_from_list_unsafe  nil )  (xval_V v1) T1)
-     (TYw2: Ty_xval G2  (nctx_minus  G1 )  w2 T2),
-     pctx_DestOnly G1  ->
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     Ty_xval G2  (nctx_from_list_unsafe  nil )  (xval_V (val_A v1 w2  (nctx_minus  G1 ) )) (typ_A T1 T2)
- | Ty_xval_F : forall (G:pctx) (x:tmv) (t:term) (T1:typ) (m:md) (T2:typ)
-     (TYt: Ty_term  (pctx_union  G    (pctx_from_list_unsafe  (cons (pas_V x m T1) nil) )  )  t T2),
-     ctx_Disjoint  (P  G )   (P   (pctx_from_list_unsafe  (cons (pas_V x m T1) nil) )  )   ->
-     Ty_xval G  (nctx_from_list_unsafe  nil )  (xval_V (val_F x t)) (typ_F T1 m T2)
-with Ty_term : pctx -> term -> typ -> Prop :=    (* defn Ty_term *)
- | Ty_term_V : forall (G:pctx) (v:val) (T:typ)
-     (TYvX: Ty_xval G  (nctx_from_list_unsafe  nil )  (xval_V v) T),
-     Ty_term G (term_Val v) T
- | Ty_term_X0 : forall (x:tmv) (T:typ),
-     Ty_term  (pctx_from_list_unsafe  (cons (pas_V x  (Some (pair Lin (Fin 0)))  T) nil) )  (term_Var x) T
- | Ty_term_XInf : forall (x:tmv) (T:typ),
-     Ty_term  (pctx_from_list_unsafe  (cons (pas_V x  (pair Lin Inf)  T) nil) )  (term_Var x) T
- | Ty_term_App : forall (m:md) (G1 G2:pctx) (t u:term) (T2 T1:typ)
-     (TYt: Ty_term G1 t T1)
-     (TYu: Ty_term G2 u (typ_F T1 m T2)),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     Ty_term  (pctx_union   (pctx_stimes  m   G1 )    G2 )  (term_App t u) T2
- | Ty_term_PatU : forall (G1 G2:pctx) (t u:term) (U:typ)
-     (TYt: Ty_term G1 t typ_U)
-     (TYu: Ty_term G2 u U),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     Ty_term  (pctx_union  G1   G2 )  (term_PatU t u) U
- | Ty_term_PatS : forall (m:md) (G1 G2:pctx) (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (U T1 T2:typ)
-     (TYt: Ty_term G1 t (typ_S T1 T2))
-     (TYu1: Ty_term  (pctx_union  G2    (pctx_from_list_unsafe  (cons (pas_V x1 m T1) nil) )  )  u1 U)
-     (TYu2: Ty_term  (pctx_union  G2    (pctx_from_list_unsafe  (cons (pas_V x2 m T2) nil) )  )  u2 U),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x1 m T1) nil) )  )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x2 m T2) nil) )  )   ->
-     Ty_term  (pctx_union   (pctx_stimes  m   G1 )    G2 )  (term_PatS t x1 u1 x2 u2) U
- | Ty_term_PatP : forall (m:md) (G1 G2:pctx) (t:term) (x1 x2:tmv) (u:term) (U T1 T2:typ)
-     (TYt: Ty_term G1 t (typ_P T1 T2))
-     (TYu: Ty_term  (pctx_union  G2    (pctx_from_list_unsafe  ((app (cons (pas_V x1 m T1) nil) (app (cons (pas_V x2 m T2) nil) nil))) )  )  u U),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x1 m T1) nil) )  )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x2 m T2) nil) )  )   ->
-     ctx_Disjoint  (P   (pctx_from_list_unsafe  (cons (pas_V x1 m T1) nil) )  )   (P   (pctx_from_list_unsafe  (cons (pas_V x2 m T2) nil) )  )   ->
-     Ty_term  (pctx_union   (pctx_stimes  m   G1 )    G2 )  (term_PatP t x1 x2 u) U
- | Ty_term_PatE : forall (m:md) (G1 G2:pctx) (t:term) (n:md) (x:tmv) (u:term) (U T:typ)
-     (TYt: Ty_term G1 t (typ_E n T))
-     (TYu: Ty_term  (pctx_union  G2    (pctx_from_list_unsafe  (cons (pas_V x  (md_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )  u U),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x  (md_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )   ->
-     Ty_term  (pctx_union   (pctx_stimes  m   G1 )    G2 )  (term_PatE t n x u) U
- | Ty_term_Map : forall (G1 G2:pctx) (t:term) (x:tmv) (u:term) (U T2 T1:typ)
-     (TYt: Ty_term G1 t (typ_A T1 T2))
-     (TYu: Ty_term  (pctx_union   (pctx_stimes   (Some (pair Lin (Fin 1)))    G2 )     (pctx_from_list_unsafe  (cons (pas_V x  (Some (pair Lin (Fin 0)))  T1) nil) )  )  u U),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     ctx_Disjoint  (P  G2 )   (P   (pctx_from_list_unsafe  (cons (pas_V x  (Some (pair Lin (Fin 0)))  T1) nil) )  )   ->
-     Ty_term  (pctx_union  G1   G2 )  (term_Map t x u) (typ_A U T2)
- | Ty_term_FillC : forall (G1:pctx) (n:md) (G2:pctx) (t u:term) (T1 T2:typ)
-     (TYt: Ty_term G1 t (typ_D n T2))
-     (TYu: Ty_term G2 u (typ_A T1 T2)),
-     ctx_Disjoint  (P  G1 )   (P  G2 )   ->
-     Ty_term  (pctx_union  G1    (pctx_stimes    (md_times'  ((app (cons  (Some (pair Lin (Fin 1)))  nil) (app (cons n nil) nil))) )     G2 )  )  (term_FillC t u) T1
- | Ty_term_FillU : forall (G:pctx) (t:term) (n:md)
-     (TYt: Ty_term G t (typ_D n typ_U)),
-     Ty_term G (term_FillU t) typ_U
- | Ty_term_FillL : forall (G:pctx) (t:term) (n:md) (T1 T2:typ)
-     (TYt: Ty_term G t (typ_D n (typ_S T1 T2))),
-     Ty_term G (term_FillL t) (typ_D n T1)
- | Ty_term_FillR : forall (G:pctx) (t:term) (n:md) (T2 T1:typ)
-     (TYt: Ty_term G t (typ_D n (typ_S T1 T2))),
-     Ty_term G (term_FillR t) (typ_D n T2)
- | Ty_term_FillP : forall (G:pctx) (t:term) (n:md) (T1 T2:typ)
-     (TYt: Ty_term G t (typ_D n (typ_P T1 T2))),
-     Ty_term G (term_FillP t) (typ_P (typ_D n T1) (typ_D n T2))
- | Ty_term_FillE : forall (G:pctx) (t:term) (n m:md) (T:typ)
-     (TYt: Ty_term G t (typ_D m (typ_E n T))),
-     Ty_term G (term_FillE t n) (typ_D  (md_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T)
- | Ty_term_Alloc : forall (T:typ),
-     Ty_term  (pctx_from_list_unsafe  nil )  (term_Alloc T) (typ_A (typ_D  (Some (pair Lin (Fin 0)))  T) T)
- | Ty_term_ToA : forall (G:pctx) (t:term) (T:typ)
-     (TYt: Ty_term G t T),
-     Ty_term G (term_ToA t) (typ_A typ_U T)
- | Ty_term_FromA : forall (G:pctx) (t:term) (T:typ)
-     (TYt: Ty_term G t (typ_A typ_U T)),
-     Ty_term G (term_FromA t) T.
+Inductive TyR_eff : ctx -> eff -> Prop :=    (* defn TyR_eff *)
+ | TyR_eff_N : 
+     TyR_eff  (ctx_from_list  nil )   nil 
+ | TyR_eff_A : forall (m n:mode) (G:ctx) (h:hdnm) (T:type) (D:ctx) (v:val)
+     (TYRv: TyR_term  (ctx_union  G   D )  (term_Val v) T),
+     ctx_DestOnly G  ->
+     ctx_HoleOnly D  ->
+     TyR_eff  (ctx_union   (ctx_union   (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons m nil) (app (cons n nil) nil)))) )     G )     (ctx_from_list  (cons (bndr_D h m n T) nil) )  )     (ctx_stimes    (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )     D )  )   (cons  (has_A h v)  nil) 
+ | TyR_eff_C : forall (G1 G2:ctx) (e1 e2:eff)
+     (TYRe1: TyR_eff G1 e1)
+     (TYRe2: TyR_eff G2 e2),
+     TyR_eff  (ctx_interact  G1   G2 )   (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
+with Ty_eff : ctx -> eff -> Prop :=    (* defn Ty_eff *)
+ | Ty_eff_T : forall (G:ctx) (e:eff)
+     (TYRe: TyR_eff G e),
+     ctx_Valid G  ->
+     Ty_eff G e
+with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
+ | TyR_term_H : forall (h:hdnm) (T:type),
+     TyR_term  (ctx_from_list  (cons (bndr_H h  (Some (pair   Lin     (Fin 0)  ))  T) nil) )  (term_Val (val_H h)) T
+ | TyR_term_D : forall (h:hdnm) (n:mode) (T:type),
+     TyR_term  (ctx_from_list  (cons (bndr_D h  (Some (pair   Lin     (Fin 0)  ))  n T) nil) )  (term_Val (val_D h)) (type_D n T)
+ | TyR_term_U : 
+     TyR_term  (ctx_from_list  nil )  (term_Val val_U) type_U
+ | TyR_term_L : forall (G:ctx) (v:val) (T1 T2:type)
+     (TYRv: TyR_term G (term_Val v) T1),
+     TyR_term G (term_Val (val_L v)) (type_S T1 T2)
+ | TyR_term_R : forall (G:ctx) (v:val) (T1 T2:type)
+     (TYRv: TyR_term G (term_Val v) T2),
+     TyR_term G (term_Val (val_R v)) (type_S T1 T2)
+ | TyR_term_P : forall (G1 G2:ctx) (v1 v2:val) (T1 T2:type)
+     (TYRv1: TyR_term G1 (term_Val v1) T1)
+     (TYRv2: TyR_term G2 (term_Val v2) T2),
+     TyR_term  (ctx_union  G1   G2 )  (term_Val (val_P v1 v2)) (type_P T1 T2)
+ | TyR_term_E : forall (m:mode) (G:ctx) (v:val) (T:type)
+     (TYRv: TyR_term G (term_Val v) T),
+     TyR_term  (ctx_stimes  m   G )  (term_Val (val_E m v)) (type_E m T)
+ | TyR_term_A : forall (G1 G2:ctx) (v1 v2:val) (T1 T2:type)
+     (TYRv1: TyR_term G1 (term_Val v1) T1)
+     (TYRv2: TyR_term G2 (term_Val v2) T2),
+     ctx_DestOnly G1  ->
+     ctx_SubsetEq  (ctx_minus  G1 )  G2  ->
+     TyR_term  (ctx_interact  G1   G2 )  (term_Val (val_A v1 v2  (ctx_minus  G1 ) )) (type_A T1 T2)
+ | TyR_term_F : forall (G:ctx) (x:tmv) (t:term) (T1:type) (m:mode) (T2:type)
+     (TYRt: TyR_term  (ctx_union  G    (ctx_from_list  (cons (bndr_V x m T1) nil) )  )  t T2),
+     TyR_term G (term_Val (val_F x t)) (type_F T1 m T2)
+ | TyR_term_Var : forall (G:ctx) (x:tmv) (T:type),
+     ctx_Compatible G  (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T) nil) )   ->
+     TyR_term G (term_Var x) T
+ | TyR_term_App : forall (m:mode) (G1 G2:ctx) (t u:term) (T2 T1:type)
+     (TYRt: TyR_term G1 t T1)
+     (TYRu: TyR_term G2 u (type_F T1 m T2)),
+     TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_App t u) T2
+ | TyR_term_PatU : forall (G1 G2:ctx) (t u:term) (U:type)
+     (TYRt: TyR_term G1 t type_U)
+     (TYRu: TyR_term G2 u U),
+     TyR_term  (ctx_union  G1   G2 )  (term_PatU t u) U
+ | TyR_term_PatS : forall (m:mode) (G1 G2:ctx) (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (U T1 T2:type)
+     (TYRt: TyR_term G1 t (type_S T1 T2))
+     (TYRu1: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x1 m T1) nil) )  )  u1 U)
+     (TYRu2: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x2 m T2) nil) )  )  u2 U),
+     TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatS t x1 u1 x2 u2) U
+ | TyR_term_PatP : forall (m:mode) (G1 G2:ctx) (t:term) (x1 x2:tmv) (u:term) (U T1 T2:type)
+     (TYRt: TyR_term G1 t (type_P T1 T2))
+     (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  ((app (cons (bndr_V x1 m T1) nil) (app (cons (bndr_V x2 m T2) nil) nil))) )  )  u U),
+     TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatP t x1 x2 u) U
+ | TyR_term_PatE : forall (m:mode) (G1 G2:ctx) (t:term) (n:mode) (x:tmv) (u:term) (U T:type)
+     (TYRt: TyR_term G1 t (type_E n T))
+     (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )  u U),
+     TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatE t n x u) U
+ | TyR_term_Map : forall (G1 G2:ctx) (t:term) (x:tmv) (u:term) (U T2 T1:type)
+     (TYRt: TyR_term G1 t (type_A T1 T2))
+     (TYRu: TyR_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    G2 )     (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T1) nil) )  )  u U),
+     TyR_term  (ctx_union  G1   G2 )  (term_Map t x u) (type_A U T2)
+ | TyR_term_FillC : forall (G1:ctx) (n:mode) (G2:ctx) (t u:term) (T1 T2:type)
+     (TYRt: TyR_term G1 t (type_D n T2))
+     (TYRu: TyR_term G2 u (type_A T1 T2)),
+     TyR_term  (ctx_union  G1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     G2 )  )  (term_FillC t u) T1
+ | TyR_term_FillU : forall (G:ctx) (t:term) (n:mode)
+     (TYRt: TyR_term G t (type_D n type_U)),
+     TyR_term G (term_FillU t) type_U
+ | TyR_term_FillL : forall (G:ctx) (t:term) (n:mode) (T1 T2:type)
+     (TYRt: TyR_term G t (type_D n (type_S T1 T2))),
+     TyR_term G (term_FillL t) (type_D n T1)
+ | TyR_term_FillR : forall (G:ctx) (t:term) (n:mode) (T2 T1:type)
+     (TYRt: TyR_term G t (type_D n (type_S T1 T2))),
+     TyR_term G (term_FillR t) (type_D n T2)
+ | TyR_term_FillP : forall (G:ctx) (t:term) (n:mode) (T1 T2:type)
+     (TYRt: TyR_term G t (type_D n (type_P T1 T2))),
+     TyR_term G (term_FillP t) (type_P (type_D n T1) (type_D n T2))
+ | TyR_term_FillE : forall (G:ctx) (t:term) (n m:mode) (T:type)
+     (TYRt: TyR_term G t (type_D m (type_E n T))),
+     TyR_term G (term_FillE t n) (type_D  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T)
+ | TyR_term_Alloc : forall (T:type),
+     TyR_term  (ctx_from_list  nil )  (term_Alloc T) (type_A (type_D  (Some (pair   Lin     (Fin 0)  ))  T) T)
+ | TyR_term_ToA : forall (G:ctx) (t:term) (T:type)
+     (TYRt: TyR_term G t T),
+     TyR_term G (term_ToA t) (type_A type_U T)
+ | TyR_term_FromA : forall (G:ctx) (t:term) (T:type)
+     (TYRt: TyR_term G t (type_A type_U T)),
+     TyR_term G (term_FromA t) T
+with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
+ | Ty_term_T : forall (G:ctx) (t:term) (T:type)
+     (TYRt: TyR_term G t T),
+     ctx_Valid G  ->
+     ctx_NoHole G  ->
+     Ty_term G t T
+with Ty_cmd : ctx -> val -> eff -> type -> Prop :=    (* defn Ty_cmd *)
+ | Ty_cmd_C : forall (G1 G2:ctx) (v:val) (e:eff) (T:type)
+     (TYv: Ty_term G1 (term_Val v) T)
+     (TYe: Ty_eff G2 e),
+     ctx_DestOnly  (ctx_interact  G1   G2 )   ->
+     Ty_cmd  (ctx_interact  G1   G2 )  v e T.
 (** definitions *)
 
 (* defns Sem *)
-Inductive Sem_eff : xval -> nctx -> eff -> xval -> nctx -> eff -> Prop :=    (* defn Sem_eff *)
- | Sem_eff_N : forall (w1:xval) (D1:nctx),
-     Sem_eff w1 D1  nil  w1 D1  nil 
- | Sem_eff_S : forall (w1:xval) (D1:nctx) (h:hdnm) (w':xval) (e1:eff) (w2:xval) (D2:nctx) (e2:eff)
-     (EAPPw1e1: Sem_eff w1 D1 e1 w2 D2 e2),
-     ctx_hdmvNotMem h  (N  D1 )   ->
-     Sem_eff w1 D1  concat  ((app (cons  (cons  (has_A h w')  nil)  nil) (app (cons e1 nil) nil)))  w2 D2  concat  ((app (cons  (cons  (has_A h w')  nil)  nil) (app (cons e2 nil) nil))) 
- | Sem_eff_F : forall (w1:xval) (D1:nctx) (h:hdnm) (n:md) (T:typ) (w0:xval) (e1:eff) (w2:xval) (D2:nctx) (e2:eff) (G0:pctx) (D0:nctx)
-     (TYw0: Ty_xval G0 D0 w0 T)
-     (EAPPw1sube1: Sem_eff  (xval_effapp  w1    (cons  (has_A h w0)  nil)  )    (nctx_union  D1    (nctx_stimes  n   D0 )  )   e1 w2 D2 e2),
-     ctx_Disjoint  (P  G0 )   (N  D0 )   ->
-     ctx_Disjoint  (N  D1 )   (N   (nctx_from_list_unsafe  (cons (nas_H h n T) nil) )  )   ->
-     ctx_Disjoint  (N  D1 )   (N  D0 )   ->
-     Sem_eff w1  (nctx_union  D1    (nctx_from_list_unsafe  (cons (nas_H h n T) nil) )  )   concat  ((app (cons  (cons  (has_A h w0)  nil)  nil) (app (cons e1 nil) nil)))  w2 D2 e2
+Inductive Sem_eff : val -> ctx -> eff -> val -> ctx -> eff -> Prop :=    (* defn Sem_eff *)
+ | Sem_eff_N : forall (v1:val) (G1:ctx),
+     Sem_eff v1 G1  nil  v1 G1  nil 
+ | Sem_eff_S : forall (v1:val) (G1:ctx) (h:hdnm) (v':val) (e1:eff) (v2:val) (G2:ctx) (e2:eff)
+     (EAPPv1e1: Sem_eff v1 G1 e1 v2 G2 e2),
+     ctx_HdnmNotMem h G1  ->
+     Sem_eff v1 G1  (concat  ((app (cons  (cons  (has_A h v')  nil)  nil) (app (cons e1 nil) nil))) )  v2 G2  (concat  ((app (cons  (cons  (has_A h v')  nil)  nil) (app (cons e2 nil) nil))) ) 
+ | Sem_eff_F : forall (v1:val) (G1:ctx) (h:hdnm) (n:mode) (T:type) (v0:val) (e1:eff) (v2:val) (G2:ctx) (e2:eff) (G0:ctx)
+     (TYRv0: TyR_term G0 (term_Val v0) T)
+     (EAPPv1sube1: Sem_eff  (val_effapp  v1    (cons  (has_A h v0)  nil)  )    (ctx_union  G1    (ctx_stimes  n   G0 )  )   e1 v2 G2 e2),
+     ctx_Valid G0  ->
+     Sem_eff v1  (ctx_union  G1    (ctx_from_list  (cons (bndr_H h n T) nil) )  )   (concat  ((app (cons  (cons  (has_A h v0)  nil)  nil) (app (cons e1 nil) nil))) )  v2 G2 e2
 with Sem_term : term -> hddyn -> val -> eff -> Prop :=    (* defn Sem_term *)
  | Sem_term_V : forall (v:val) (d:hddyn),
      Sem_term (term_Val v) d v  nil 
@@ -473,51 +430,51 @@ with Sem_term : term -> hddyn -> val -> eff -> Prop :=    (* defn Sem_term *)
      (REDt1: Sem_term t1  ( d  ++ (cons 1 nil))  v1 e1)
      (REDt2: Sem_term t2  ( d  ++ (cons 2 nil))  (val_F x u) e2)
      (REDusub: Sem_term  (term_sub  u   x   v1 )   ( d  ++ (cons 3 nil))  v3 e3),
-     Sem_term (term_App t1 t2) d v3  concat  ((app (cons e1 nil) (app (cons e2 nil) (app (cons e3 nil) nil)))) 
+     Sem_term (term_App t1 t2) d v3  (concat  ((app (cons e1 nil) (app (cons e2 nil) (app (cons e3 nil) nil)))) ) 
  | Sem_term_PatU : forall (t1 t2:term) (d:hddyn) (v2:val) (e1 e2:eff)
      (REDt1: Sem_term t1  ( d  ++ (cons 1 nil))  val_U e1)
      (REDt2: Sem_term t2  ( d  ++ (cons 2 nil))  v2 e2),
-     Sem_term (term_PatU t1 t2) d v2  concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) 
+     Sem_term (term_PatU t1 t2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
  | Sem_term_PatL : forall (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_L v1) e1)
      (REDu1sub: Sem_term  (term_sub  u1   x1   v1 )   ( d  ++ (cons 2 nil))  v2 e2),
-     Sem_term (term_PatS t x1 u1 x2 u2) d v2  concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) 
+     Sem_term (term_PatS t x1 u1 x2 u2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
  | Sem_term_PatR : forall (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_R v1) e1)
      (REDu2sub: Sem_term  (term_sub  u2   x2   v1 )   ( d  ++ (cons 2 nil))  v2 e2),
-     Sem_term (term_PatS t x1 u1 x2 u2) d v2  concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) 
+     Sem_term (term_PatS t x1 u1 x2 u2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
  | Sem_term_PatP : forall (t:term) (x1 x2:tmv) (u:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_P v1 v2) e1)
      (REDusub: Sem_term  (term_sub   (term_sub  u   x1   v1 )    x2   v2 )   ( d  ++ (cons 2 nil))  v2 e2),
-     Sem_term (term_PatP t x1 x2 u) d v2  concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) 
- | Sem_term_Map : forall (t:term) (x:tmv) (u:term) (d:hddyn) (v3:val) (w4:xval) (D':nctx) (e1 e3:eff) (v1:val) (w2:xval) (D:nctx) (e2:eff)
-     (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_A v1 w2 D) e1)
+     Sem_term (term_PatP t x1 x2 u) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
+ | Sem_term_Map : forall (t:term) (x:tmv) (u:term) (d:hddyn) (v3 v4:val) (D':ctx) (e1 e3:eff) (v1 v2:val) (D:ctx) (e2:eff)
+     (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_A v1 v2 D) e1)
      (REDusub: Sem_term  (term_sub  u   x   v1 )   ( d  ++ (cons 2 nil))  v3 e2)
-     (EAPPw2e2: Sem_eff w2 D e2 w4 D' e3),
-     Sem_term (term_Map t x u) d (val_A v3 w4 D')  concat  ((app (cons e1 nil) (app (cons e3 nil) nil))) 
- | Sem_term_Alloc : forall (T:typ) (d:hddyn),
-     Sem_term (term_Alloc T) d (val_A (val_D (hdnm_Dyn d)) (xval_H (hdnm_Dyn d))  (nctx_from_list_unsafe  (cons (nas_H (hdnm_Dyn d)  (Some (pair Lin (Fin 0)))  T) nil) ) )  nil 
+     (EAPPv2e2: Sem_eff v2 D e2 v4 D' e3),
+     Sem_term (term_Map t x u) d (val_A v3 v4 D')  (concat  ((app (cons e1 nil) (app (cons e3 nil) nil))) ) 
+ | Sem_term_Alloc : forall (T:type) (d:hddyn),
+     Sem_term (term_Alloc T) d (val_A (val_D (hdnm_D d)) (val_H (hdnm_D d))  (ctx_from_list  (cons (bndr_H (hdnm_D d)  (Some (pair   Lin     (Fin 0)  ))  T) nil) ) )  nil 
  | Sem_term_ToA : forall (t:term) (d:hddyn) (v:val) (e:eff)
      (REDt: Sem_term t d v e),
-     Sem_term (term_ToA t) d (val_A val_U (xval_V v)  (nctx_from_list_unsafe  nil ) ) e
+     Sem_term (term_ToA t) d (val_A val_U v  (ctx_from_list  nil ) ) e
  | Sem_term_FromA : forall (t:term) (d:hddyn) (v:val) (e:eff)
-     (REDt: Sem_term t d (val_A val_U (xval_V v)  (nctx_from_list_unsafe  nil ) ) e),
+     (REDt: Sem_term t d (val_A val_U v  (ctx_from_list  nil ) ) e),
      Sem_term (term_FromA t) d v e
  | Sem_term_FillU : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
      (REDt: Sem_term t d (val_D h) e),
-     Sem_term (term_FillU t) d val_U  concat  ((app (cons e nil) (app (cons  (cons  (has_A h (xval_V val_U))  nil)  nil) nil))) 
+     Sem_term (term_FillU t) d val_U  (concat  ((app (cons e nil) (app (cons  (cons  (has_A h val_U)  nil)  nil) nil))) ) 
  | Sem_term_FillL : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillL t) d (val_D (hdnm_Dyn  ( d  ++ (cons 2 nil)) ))  concat  ((app (cons e nil) (app (cons  (cons  (has_A h (xval_L (xval_H (hdnm_Dyn  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) 
+     Sem_term (term_FillL t) d (val_D (hdnm_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (has_A h (val_L (val_H (hdnm_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
  | Sem_term_FillR : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillR t) d (val_D (hdnm_Dyn  ( d  ++ (cons 2 nil)) ))  concat  ((app (cons e nil) (app (cons  (cons  (has_A h (xval_R (xval_H (hdnm_Dyn  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) 
+     Sem_term (term_FillR t) d (val_D (hdnm_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (has_A h (val_R (val_H (hdnm_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
  | Sem_term_FillP : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillP t) d (val_P (val_D (hdnm_Dyn  ( d  ++ (cons 2 nil)) )) (val_D (hdnm_Dyn  ( d  ++ (cons 3 nil)) )))  concat  ((app (cons e nil) (app (cons  (cons  (has_A h (xval_P (xval_H (hdnm_Dyn  ( d  ++ (cons 2 nil)) )) (xval_H (hdnm_Dyn  ( d  ++ (cons 3 nil)) ))))  nil)  nil) nil))) 
- | Sem_term_FillC : forall (t u:term) (d:hddyn) (v1:val) (e1 e2:eff) (h:hdnm) (w2:xval) (D:nctx)
+     Sem_term (term_FillP t) d (val_P (val_D (hdnm_D  ( d  ++ (cons 2 nil)) )) (val_D (hdnm_D  ( d  ++ (cons 3 nil)) )))  (concat  ((app (cons e nil) (app (cons  (cons  (has_A h (val_P (val_H (hdnm_D  ( d  ++ (cons 2 nil)) )) (val_H (hdnm_D  ( d  ++ (cons 3 nil)) ))))  nil)  nil) nil))) ) 
+ | Sem_term_FillC : forall (t u:term) (d:hddyn) (v1:val) (e1 e2:eff) (h:hdnm) (v2:val) (D:ctx)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e1)
-     (REDu: Sem_term u  ( d  ++ (cons 2 nil))  (val_A v1 w2 D) e2),
-     Sem_term (term_FillC t u) d v1  concat  ((app (cons e1 nil) (app (cons e2 nil) (app (cons  (cons  (has_A h w2)  nil)  nil) nil)))) .
+     (REDu: Sem_term u  ( d  ++ (cons 2 nil))  (val_A v1 v2 D) e2),
+     Sem_term (term_FillC t u) d v1  (concat  ((app (cons e1 nil) (app (cons e2 nil) (app (cons  (cons  (has_A h v2)  nil)  nil) nil)))) ) .
 
 
