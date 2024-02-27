@@ -12,7 +12,7 @@ G ◡ D ⫦ w : T  [[:TYw]]
 {{ ctx_Disjoint [[P G]] [[N D]] }}
 {{ ctx_Disjoint [[P {@h : m n⌊T⌋}]] [[N D]] }}
 ------------------- :: A
-(1↑·m·n)·G ∪ {@h : m n⌊T⌋} ◡ (m·n)·D ⫦ h ≔ w
+(¹↑·m·n)·G ∪ {@h : m n⌊T⌋} ◡ (m·n)·D ⫦ h ≔ w
 
 G1 ◡ D1 ∪ -G22 ⫦ e1 [[:TYe1]]
 G21 ∪ G22 ◡ D2 ⫦ e2 [[:TYe2]]
@@ -28,7 +28,7 @@ G21 ∪ G22 ◡ D2 ⫦ e2 [[:TYe2]]
 {{ ctx_Disjoint [[P G22]] [[N D2]] }}
 {{ ctx_Disjoint [[N D1]] [[N D2]] }}
 ------------------------- :: P
-G1 ∪ G21 ◡ D1 ∪ D2 ⫦ e1, e2
+G1 ∪ G21 ◡ D1 ∪ D2 ⫦ e1 » e2
 
 defn
 G ⊢ v ⋄ e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (only a positive context is needed) }} by
@@ -47,10 +47,10 @@ defn
 G ◡ D ⫦ w : T :: :: Ty_xval :: Ty_xval_ {{ com Typing of extended values (require both positive and negative contexts) }} by
 
 --------------------- :: H
-{} ◡ { h : 1ν T } ⫦ h : T
+{} ◡ { h : ¹ν T } ⫦ h : T
 
 ---------------- :: D
-{ @h : 1ν n⌊T⌋ } ◡ {} ⫦ @h : n⌊T⌋
+{ @h : ¹ν n⌊T⌋ } ◡ {} ⫦ @h : n⌊T⌋
 
 --------------------- :: U
 {} ◡ {} ⫦ () :𝟏
@@ -103,10 +103,10 @@ G ◡ {} ⫦ v : T [[:TYvX]]
 G ⊢ v : T
 
 -------------------- :: X0
-{ x : 1ν T } ⊢ x : T
+{ x : ¹ν T } ⊢ x : T
 
 -------------------- :: XInf
-{ x : 1∞ T } ⊢ x : T
+{ x : ¹∞ T } ⊢ x : T
 
 G1 ⊢ t : T1 [[:TYt]]
 G2 ⊢ u : T1 m → T2 [[:TYu]]
@@ -146,17 +146,17 @@ G2 ∪ { x : m·n T } ⊢ u : U [[:TYu]]
 m·G1 ∪ G2 ⊢ t ≻case ⦆ n x ⟼ u : U
 
 G1 ⊢ t : T1 ⧕ T2 [[:TYt]]
-1↑·G2 ∪ { x : 1ν T1 } ⊢ u : U [[:TYu]]
+¹↑·G2 ∪ { x : ¹ν T1 } ⊢ u : U [[:TYu]]
 {{ ctx_Disjoint [[P G1]] [[P G2]] }}
-{{ ctx_Disjoint [[P G2]] [[P { x : 1ν T1 }]] }}
+{{ ctx_Disjoint [[P G2]] [[P { x : ¹ν T1 }]] }}
 -------------------------------- :: Map
-G1 ∪ G2 ⊢ t ≻ map x ⟼ u : U ⧕ T2
+G1 ∪ G2 ⊢ t ≻map x ⟼ u : U ⧕ T2
 
 G1 ⊢ t : n⌊T2⌋ [[:TYt]]
 G2 ⊢ u : T1 ⧕ T2 [[:TYu]]
 {{ ctx_Disjoint [[P G1]] [[P G2]] }}
 ----------------------------- :: FillC
-G1 ∪ (1↑·n)·G2 ⊢ t ⨞· u : T1
+G1 ∪ (¹↑·n)·G2 ⊢ t ⨞· u : T1
 
 G ⊢ t : n⌊𝟏⌋ [[:TYt]]
 ------------------------------ :: FillU
@@ -179,7 +179,7 @@ G ⊢ t : m⌊!n T⌋ [[:TYt]]
 G ⊢ t ⨞ ⦆ n : m·n⌊T⌋
 
 -------------------------------- :: Alloc
-{} ⊢ alloc T : 1ν⌊T⌋ ⧕ T
+{} ⊢ alloc T : ¹ν⌊T⌋ ⧕ T
 
 G ⊢ t : T [[:TYt]]
 ------------------------------- :: ToA
@@ -203,7 +203,7 @@ w1 D1 | ε ⤋ w1 D1 | ε
 {{ ctx_HvarNotMem [[h]] [[N D1]] }}
 w1 D1 |e1 ⤋ w2 D2| e2 [[:EAPPw1e1]]
 --------------------- :: S
-w1 D1 | h ≔ w', e1 ⤋ w2 D2 | h ≔ w', e2
+w1 D1 | h ≔ w' » e1 ⤋ w2 D2 | h ≔ w' » e2
 
 G0 ◡ D0 ⫦ w0 : T [[:TYw0]]
 {{ ctx_Disjoint [[P G0]] [[N D0]] }}
@@ -211,7 +211,7 @@ G0 ◡ D0 ⫦ w0 : T [[:TYw0]]
 {{ ctx_Disjoint [[N D1]] [[N D0]] }}
 w1[h ≔ w0] (D1 ∪ n·D0) | e1 ⤋ w2 D2 | e2 [[:EAPPw1sube1]]
 --------------------- :: F
-w1 D1 ∪ { h : n T } | h ≔ w0, e1 ⤋ w2 D2 | e2
+w1 D1 ∪ { h : n T } | h ≔ w0 » e1 ⤋ w2 D2 | e2
 
 % eff_app1 = eff_app2 :: :: EffApp :: EffApp_ {{ com $[[apply]]$: how effects are applied locally or winded up (we assume effect lists are $\ottseff{\varepsilon}$-terminated) }} by
 
@@ -223,15 +223,15 @@ w1 D1 ∪ { h : n T } | h ≔ w0, e1 ⤋ w2 D2 | e2
 
 
 % % ------------------ :: FillUnit
-% % apply(h ≔ (), e, w D ∪ { -h : 1ν 1 }) = apply(e , w[h ≔ ()] D)
+% % apply(h ≔ (), e, w D ∪ { -h : ¹ν 1 }) = apply(e , w[h ≔ ()] D)
 
 % % ------------------ :: FillInl
-% % apply(h ≔ Inl h', e, w D ∪ { -h : 1ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inl h'] D ∪ {-h' : 1ν T1})
+% % apply(h ≔ Inl h', e, w D ∪ { -h : ¹ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inl h'] D ∪ {-h' : ¹ν T1})
 
 % % ------------------ :: FillInr
-% % apply(h ≔ Inr h', e, w D ∪ { -h : 1ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inr h'] D ∪ {-h' : 1ν T2})
+% % apply(h ≔ Inr h', e, w D ∪ { -h : ¹ν T1 ⨁ T2 }) = apply(e , w[h ≔ Inr h'] D ∪ {-h' : ¹ν T2})
 % % ------------------ :: FillProd
-% % apply(h ≔ (h1, h2), e, w D ∪ { -h : 1ν T1 ⨂ T2 }) = apply(e , w[h ≔ (h1, h2)] D ∪ {-h1 : 1ν T1, -h2 : 1ν T2})
+% % apply(h ≔ (h1, h2), e, w D ∪ { -h : ¹ν T1 ⨂ T2 }) = apply(e , w[h ≔ (h1, h2)] D ∪ {-h1 : ¹ν T1, -h2 : ¹ν T2})
 
 
 defn
@@ -244,38 +244,38 @@ t1 ⇓ v1 ⋄ e1 [[:REDt1]]
 t2 ⇓ λx ⟼ u ⋄ e2 [[:REDt2]]
 u[x ≔ v1] ⇓ v3 ⋄ e3 [[:REDusub]]
 ------------------ :: App
-t1 ≻ t2 ⇓ v3 ⋄ e1, e2, e3
+t1 ≻ t2 ⇓ v3 ⋄ e1 » e2 » e3
 
 t1 ⇓ () ⋄ e1 [[:REDt1]]
 t2 ⇓ v2 ⋄ e2 [[:REDt2]]
 ----------------------- :: PatU
-t1 ; t2 ⇓ v2 ⋄ e1, e2
+t1 ; t2 ⇓ v2 ⋄ e1 » e2
 
 t ⇓ Inl v1 ⋄ e1 [[:REDt]]
 u1[x1 ≔ v1] ⇓ v2 ⋄ e2 [[:REDu1sub]]
 ----------------------- :: PatL
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ⇓ v2 ⋄ e1, e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ⇓ v2 ⋄ e1 » e2
 
 t ⇓ Inr v1 ⋄ e1 [[:REDt]]
 u2[x2 ≔ v1] ⇓ v2 ⋄ e2 [[:REDu2sub]]
 ----------------------- :: PatR
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ⇓ v2 ⋄ e1, e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ⇓ v2 ⋄ e1 » e2
 
 t ⇓ (v1,v2) ⋄ e1 [[:REDt]]
 u[x1 ≔ v1][x2 ≔ v2] ⇓ v2 ⋄ e2 [[:REDusub]]
 ----------------------- :: PatP
-t ≻case (x1,x2) ⟼ u ⇓ v2 ⋄ e1, e2
+t ≻case (x1,x2) ⟼ u ⇓ v2 ⋄ e1 » e2
 
 % Can e1 have effect on the content of the ampar? I don't think so, but maybe
 t ⇓ ⟨ v1 ❟ w2 ⟩ D ⋄ e1 [[:REDt]]
 u[x ≔ v1] ⇓ v3 ⋄ e2 [[:REDusub]]
  w2 D |e2 ⤋ w4 D'| e3 [[:EAPPw2e2]]
 ---------------------------------- :: Map
-t ≻map x ⟼ u ⇓ ⟨v3 ❟ w4⟩ D' ⋄ e1, e3
+t ≻map x ⟼ u ⇓ ⟨v3 ❟ w4⟩ D' ⋄ e1 » e3
 
 {{ hvar_Fresh [[h]] }}
 -------------------------- :: Alloc
-alloc T ⇓ ⟨ @h ❟ h ⟩ { h : 1ν T } ⋄ ε
+alloc T ⇓ ⟨ @h ❟ h ⟩ { h : ¹ν T } ⋄ ε
 
 t ⇓ v ⋄ e [[:REDt]]
 ----------------------------------------- :: ToA
@@ -287,24 +287,24 @@ from⧕ t ⇓ v ⋄ e
 
 t ⇓ @h ⋄ e [[:REDt]]
 ------------------------------------- :: FillU
-t ⨞ () ⇓ () ⋄ e, h ≔ ()
+t ⨞ () ⇓ () ⋄ e » h ≔ ()
 
 t ⇓ @h ⋄ e [[:REDt]]
 {{ hvar_Fresh [[h']] }}
 --------------------------------------- :: FillL
-t ⨞ Inl ⇓ @h' ⋄ e, h ≔ Inl h'
+t ⨞ Inl ⇓ @h' ⋄ e » h ≔ Inl h'
 
 t ⇓ @h ⋄ e [[:REDt]]
 --------------------------------------- :: FillR
-t ⨞ Inr ⇓ @h' ⋄ e, h ≔ Inr h'
+t ⨞ Inr ⇓ @h' ⋄ e » h ≔ Inr h'
 
 t ⇓ @h ⋄ e [[:REDt]]
 {{ hvar_Fresh [[h1]] }}
 {{ hvar_Fresh [[h2]] }}
 --------------------------------------- :: FillP
-t ⨞ (,) ⇓ (@h1, @h2) ⋄ e, h ≔ (h1,h2)
+t ⨞ (,) ⇓ (@h1, @h2) ⋄ e » h ≔ (h1,h2)
 
 t ⇓ @h ⋄ e1 [[:REDt]]
 u ⇓ ⟨v1 ❟ w2⟩ D ⋄ e2 [[:REDu]]
 ---------------------------------------- :: FillC
-t ⨞· u ⇓ v1⋄ e1, e2, h ≔ w2
+t ⨞· u ⇓ v1⋄ e1 » e2 » h ≔ w2

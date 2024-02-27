@@ -135,31 +135,31 @@ $[[ctx_Disjoint (P G13) (P G23)]]$: freshness of holes in both effects, executed
 
 Let say this is solved by Lemma~\ref{lem:freshholes}, with no holes of $[[e1]]$ negative context appearing as dests in $[[e2]]$ positive context.
 
-By \textsc{TyEff\_Union} we get (18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1, e2]]$.\\
+By \textsc{TyEff\_Union} we get (18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1 » e2]]$.\\
 Inverting \textsc{TyCmd\_Cmd} on (17) we get (19) $[[m·(G111 ∪ G131) ∪ G211 ∪ G231 ∪ G3 ⊢ v3 : T2 ]]$ and (20) $[[m·(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ⫦ e3 ]]$ where (21) $[[Gk1 ∪ Gk2]]$ = $[[Gk]]$
 
 We have\\
-(18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1, e2]]$\\
+(18) $[[G12 ∪ G22 ◡ -G13 ∪ -G23 ⫦ e1 » e2]]$\\
 (20) $[[m·(G112 ∪ G132) ∪ G212 ∪ G232 ◡ -G3 ⫦ e3 ]]$\\
 
-Using (21) on (18) to decompose $[[-G23]]$, we get (22) $[[G12 ∪ G22 ◡ -(G131 ∪ G231) ∪ -(G132 ∪ G232) ⫦ e1, e2]]$
+Using (21) on (18) to decompose $[[-G23]]$, we get (22) $[[G12 ∪ G22 ◡ -(G131 ∪ G231) ∪ -(G132 ∪ G232) ⫦ e1 » e2]]$
 
 We want $[[G132]]$ from (22) to cancel $[[m·G132]]$ from (20), but the multiplicity doesn't match apparently.
 
 $[[G13]]$ contains dests associated to holes that may have been created when evaluating $[[t]]$ into $[[v1]]$ $[[⋄]]$ $[[e1]]$. If $[[v1]]$ is used with delay (result of multiplying its context by $[[m]]$), then should we also delay the RHS of its associated effect?
-In other terms, if we have $[[{@h : 1ν n ⌊T1⨁T2⌋ } ⊢ @h' ⋄ h ≔ Inl h' : n⌊T1⌋]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h ≔ Inl h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
+In other terms, if we have $[[{@h : ¹ν n ⌊T1⨁T2⌋ } ⊢ @h' ⋄ h ≔ Inl h' : n⌊T1⌋]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h ≔ Inl h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
 
-$[[(@h0 ⨞ (,) ≻ case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ≻ (λx2 ⟼ @h3 ⨞· (to⧕ x2))]]$
+$[[(@h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ≻ (λx2 ⟼ @h3 ⨞· (to⧕ x2))]]$
 
 $[[@h0 ⨞ (,) ⇓ (@h01, @h02) ⋄ h0 ≔ (h01, h02)]]$
 
 $[[(x1 ⨞· (to⧕ @h1) ; x2)[x1 ≔ @h01][x2 ≔ @h02] ⇓ @h02 ⋄ h01 ≔ @h1]]$
 
-$[[(@h0 ⨞ (,) ≻ case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ⇓ @h02 ⋄ h0 ≔ (h01, h02), h01 ≔ @h1]]$
+$[[(@h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧕ @h1) ; x2) ⇓ @h02 ⋄ h0 ≔ (h01, h02) » h01 ≔ @h1]]$
 
 $[[(@h3 ⨞· (to⧕ x2))[x2 ≔ @h02] ⇓ () ⋄ h3 ≔ @h02]]$
 
-$[[t ⇓ () ⋄ h0 ≔ (h01, h02), h01 ≔ @h1, h3 ≔ @h02]]$
+$[[t ⇓ () ⋄ h0 ≔ (h01, h02) » h01 ≔ @h1 » h3 ≔ @h02]]$
 
 \end{itemize}
 

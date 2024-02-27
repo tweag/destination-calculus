@@ -37,7 +37,7 @@ Definition mul_times' (pl: list _mul) : _mul :=
 grammar
 
 mul, p :: 'mul_' ::= {{ tex \ottsmoda{[[mul]]} }} {{ com Multiplicity (first component of modality) }} {{ coq _mul }}
-  | 1 :: :: Lin {{ tex \ottsmoda{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
+  | ¹ :: :: Lin {{ tex \ottsmoda{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmoda{\omega} }} {{ com Non-linear. Absorbing for the product }} {{ coq Ur }}
   | p1 . ... . pk :: :: P {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
   | ( p ) :: S :: Paren {{ tex \ottsmoda{(}[[p]]\ottsmoda{)} }} {{ coq [[p]] }}
@@ -51,9 +51,9 @@ age, a :: 'age_' ::= {{ tex \ottsmoda{[[age]]} }} {{ com Age (second component o
 
 moda, m, n :: 'moda_' ::= {{ tex \ottsmoda{[[moda]]} }} {{ com Modality (Semiring) }} {{ coq (mul * age) }}
   | p | a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\ottsmoda{|}[[a]] }} {{ coq (pair [[p]] [[a]]) }}
-  | 1ν :: :: Lin0 {{ tex \ottsmoda{\underline{\nu} } }} {{ com Neutral element of the product. Notation for $\ottsmoda{1 | \nu}$. }} {{ coq (pair Lin (Fin 0)) }}
-  | 1↑ :: :: Lin1 {{ tex \ottsmoda{\underline{\uparrow} } }} {{ com Same multiplicity, but one scope older. Notation for $\ottsmoda{1 | \uparrow}$. }} {{ coq (pair Lin (Fin 1)) }}
-  | 1∞ :: :: LinInf {{ tex \ottsmoda{\underline{\infty} } }} {{ com Linear, infinitely old / static. Notation for $\ottsmoda{1 | \infty}$. }} {{ coq (pair Lin Inf) }}
+  | ¹ν :: :: Lin0 {{ tex \ottsmoda{\underline{\nu} } }} {{ com Neutral element of the product. Notation for $\ottsmoda{1 | \nu}$. }} {{ coq (pair Lin (Fin 0)) }}
+  | ¹↑ :: :: Lin1 {{ tex \ottsmoda{\underline{\uparrow} } }} {{ com Same multiplicity, but one scope older. Notation for $\ottsmoda{1 | \uparrow}$. }} {{ coq (pair Lin (Fin 1)) }}
+  | ¹∞ :: :: LinInf {{ tex \ottsmoda{\underline{\infty} } }} {{ com Linear, infinitely old / static. Notation for $\ottsmoda{1 | \infty}$. }} {{ coq (pair Lin Inf) }}
   | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (moda_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmoda{(}[[m]]\ottsmoda{)} }} {{ coq [[m]] }}
 
@@ -77,8 +77,8 @@ nas :: 'nas_' ::= {{ com Negative type assignment }}
 embed
 {{ coq
 Inductive name : Type :=
-  | name_X : tvar → name
-  | name_HD : hvar → name.
+  | name_X : tvar -> name
+  | name_HD : hvar -> name.
 
 Module Name_as_UDT <: UsualDecidableType.
   Definition t := name.
@@ -124,18 +124,18 @@ Definition moda_times' (ml: list moda) : moda :=
 
 Definition pas_name (b : pas) : name :=
   match b with
-  | pas_V x m2 T2 => name_X x
-  | pas_D h m2 T2 m3 => name_HD h
+  | pas_V x m T => name_X x
+  | pas_D h m1 m2 T => name_HD h
   end.
 
 Definition nas_name (b : nas) : name :=
   match b with
-  | nas_H h m2 T2 => name_HD h
+  | nas_H h m T => name_HD h
   end.
 
 (* Will be aliased later to ctx *)
 Inductive _ctx : Type :=
-  | Ctx : forall (b : Type), (b → name) → CtxM.t b → _ctx.
+  | Ctx : forall (b : Type), (b -> name) -> CtxM.t b -> _ctx.
 
 Definition P (G : CtxM.t pas) : _ctx := Ctx pas pas_name G.
 Definition N (D : CtxM.t nas) : _ctx := Ctx nas nas_name D.
@@ -157,14 +157,14 @@ Definition ctx_NotMem (n : name) (C : _ctx ) : Prop := match C with
 Definition ctx_HvarNotMem (h : hvar) (C : _ctx ) : Prop := ctx_NotMem (name_HD h) C.
 
 Definition ctx_Coherent (C : _ctx ) : Prop := match C with
-  | Ctx _ name_proj C' => forall n b, CtxM.MapsTo n b C' → name_proj b = n
+  | Ctx _ name_proj C' => forall n b, CtxM.MapsTo n b C' -> name_proj b = n
   end.
 
 Axiom all_pctx_Coherent: forall (G : CtxM.t pas), ctx_Coherent (P G).
 Axiom all_nctx_Coherent: forall (D : CtxM.t nas), ctx_Coherent (N D).
 
 Definition pctx_DestOnly (G : CtxM.t pas) : Prop :=
-  forall n b, CtxM.MapsTo n b G → pas_IsDest b.
+  forall n b, CtxM.MapsTo n b G -> pas_IsDest b.
 
 Definition pctx_add (b : pas) (G : CtxM.t pas) (hyp: ctx_NotMem (pas_name b) (P G)) : CtxM.t pas :=
   CtxM.add (pas_name b) b G.
@@ -181,18 +181,18 @@ Definition nctx_from_list_unsafe (bs : list nas) : CtxM.t nas :=
 Definition pctx_union (G1 G2 : CtxM.t pas) (hyp: ctx_Disjoint (P G1) (P G2)) : CtxM.t pas :=
   CtxM.fold (fun n b G => CtxM.add n b G) G2 G1.
 
-Definition pctx_sprod (m1 : moda) (G : CtxM.t pas) : CtxM.t pas :=
+Definition pctx_stimes (m1 : moda) (G : CtxM.t pas) : CtxM.t pas :=
   CtxM.map (fun b =>
     match b with
     | pas_V x m2 T2 => pas_V x (moda_times m1 m2) T2
-    | pas_D h m2 T2 m3 => pas_D h (moda_times m1 m2) T2 m3
+    | pas_D h m2 m3 T2 => pas_D h (moda_times m1 m2) m3 T2
     end
   ) G.
 
 Definition nctx_union (D1 D2 : CtxM.t nas) (hyp: ctx_Disjoint (N D1) (N D2)) : CtxM.t nas :=
   CtxM.fold (fun n b D => CtxM.add n b D) D2 D1.
 
-Definition nctx_sprod (m1 : moda) (D : CtxM.t nas) : CtxM.t nas :=
+Definition nctx_stimes (m1 : moda) (D : CtxM.t nas) : CtxM.t nas :=
   CtxM.map (fun b =>
     match b with
     | nas_H h m2 T2 => nas_H h (moda_times m1 m2) T2
@@ -203,21 +203,24 @@ Definition nctx_minus (G : CtxM.t pas) (hyp: pctx_DestOnly G) : CtxM.t nas :=
   CtxM.map (fun b =>
     match b with
     | pas_V x m T => nas_H 0 (pair Lin (Fin 0)) typ_U (* Error case, TODO use hyp to remove this branch *)
-    | pas_D h m T n => nas_H h (moda_times m n) T
+    | pas_D h m1 m2 T => nas_H h (moda_times m1 m2) T
     end
   ) G.
+
+Definition concat {A : Type} (ll : list (list A)) : list A :=
+  List.fold_right (fun x1 x2 => x1 ++ x2) nil ll.
 }}
 
 grammar
 pctx, G {{ tex \Gamma }} :: 'pctx_' ::= {{ com Positive typing context }} {{ coq (CtxM.t pas) }}
   | { pas1 , .. , pask } :: :: L {{ coq (pctx_from_list_unsafe [[pas1..pask]]) }}
-  | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (pctx_sprod [[m]] [[G]]) }}
+  | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (pctx_stimes [[m]] [[G]]) }}
   | G1 ∪ G2 :: :: U {{ coq (pctx_union [[G1]] [[G2]]) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 nctx, D {{ tex \Delta }} :: 'nctx_' ::= {{ com Negative typing context }} {{ coq (CtxM.t nas) }}
   | { nas1 , .. , nask } :: :: L {{ coq (nctx_from_list_unsafe [[nas1..nask]]) }}
-  | m · D :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ tex \topprod{[[m]]}[[D]] }} {{ coq (nctx_sprod [[m]] [[D]]) }}
+  | m · D :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ tex \topprod{[[m]]}[[D]] }} {{ coq (nctx_stimes [[m]] [[D]]) }}
   | - G :: :: M  {{ tex \ottshvar{@^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Maps each destination of $[[G]]$ to a hole (requires \texttt{ctx\_DestOnly} $[[G]]$) }} {{ coq (nctx_minus [[G]]) }}
   | D1 ∪ D2   :: :: U {{ coq (nctx_union [[D1]] [[D2]]) }}
   | ( D ) :: S :: Paren {{ coq [[D]] }}
@@ -234,10 +237,10 @@ term, t, u :: 'term_' ::=                                               {{ com T
   | t ≻ u                                    ::   :: App      {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
   % | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\,\succ\,\ottkw{case}\,\ottsctor{()}\,\mapsto\,[[u]] }}
   | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
-  | t ≻ case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
-  | t ≻ case ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
-  | t ≻ case ⦆ m x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}~\expcons{[[m]]}[[x]][[⟼]][[u]] }}
-  | t ≻ map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the left side of the ampar }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
+  | t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
+  | t ≻case ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
+  | t ≻case ⦆ m x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}~\expcons{[[m]]}[[x]][[⟼]][[u]] }}
+  | t ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the left side of the ampar }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmoda{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmoda{\scriptstyle G} }$ }}
   % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmoda{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmoda{\scriptstyle G} }$ }}
@@ -279,10 +282,14 @@ xval, w :: 'xval_' ::= {{ com Pseudo-value that may contain holes }} {{ tex \ott
   | ( w ) :: S :: Paren {{ coq [[w]] }}
   | w [ e ] :: M :: Effect {{ coq (xval_effapp [[w]] [[e]]) }}
 
-eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }}
-  | ε :: :: n {{ tex \ottseff{\varepsilon} }}
+has :: 'has_' ::= {{ com Hole assignment }}
   | h ≔ w :: :: A {{ tex [[h]]\coloneq[[w]] }}
-  | e1 , ... , ek :: :: P {{ com Chain effects }}
+
+grammar
+eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list has }}
+  | ε :: :: N {{ tex \ottseff{\varepsilon} }} {{ coq nil }}
+  | has :: :: S {{ coq (cons [[has]] nil) }}
+  | e1 » .. » ek :: :: P {{ com Chain effects }} {{ coq concat [[e1..ek]] }}
   | ( e ) :: S :: Paren {{ coq [[e]] }}
 
 embed
@@ -321,13 +328,14 @@ terminals :: 'terminals_' ::=
   | (,) :: :: prod {{ tex \ottsctor{({,})} }}
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmoda{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
+  | » :: :: chain {{ tex \gg }}
 
 % === Contexts ===
   | ∪ :: :: union {{ tex \cup }}
   | ◡ :: :: sunion {{ tex ~{\scriptscriptstyle\cup}~ }}
 
 % === Typing & Semantics ===
-  | ⤋ :: :: effred {{ tex ~\downdownarrows~ }}
+  | ⤋ :: :: effred {{ tex \text{\raisebox{-0.7ex}{\rotatebox{90}{$\Lleftarrow$}\!\!} } }}
   | ⋄ :: :: diam {{ tex ~\diamond~ }}
   | ⇓ :: :: downto {{ tex ~\Downarrow~ }}
   | ⊢ :: :: vdash {{ tex \,\vdash\, }}
