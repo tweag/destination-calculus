@@ -87,7 +87,7 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
   | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
-  | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\rtimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
+  | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\ltimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
   | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Function }}
   | m ⌊ T ⌋ :: :: D {{ tex \,^{[[m]]}\hspace{-0.2ex}\ottstype{\lfloor}[[T]]\ottstype{\rfloor} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
@@ -262,11 +262,14 @@ Definition ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
   match CtxM.find (bndr_name b') G with
   | None => fallback
   | Some b => match b, b' with
-    | bndr_H h1 m1 T1, bndr_D h1 m21 m22 T1 =>
+    | bndr_H h1 m1 T1, bndr_D h2 m21 m22 T2 =>
       (* assert h1 = h2 *)
-      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2, mul_eq_dec (fst m1) Lin with
-      | left _, left _, left _ => (* true *) CtxM.remove (bndr_name b') G
-      | _, _, _ => (* false *) fallback
+      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2 with
+      | left _, left _ => (* true *) match m1 with
+        | Some (Lin, _) => CtxM.remove (bndr_name b') G
+        | _ => fallback
+        end
+      | _, _ => (* false *) fallback
       end
     | _, _ => fallback
     end
@@ -328,8 +331,8 @@ term, t, u :: 'term_' ::=                                               {{ com T
 
   % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmode{\scriptstyle G} }$ }}
   % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmode{\scriptstyle G} }$ }}
-  | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
+  | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
 
   | alloc T :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[T]]} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
@@ -440,7 +443,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G ⊢ v ⋄ e : T :: :: Ty_cmd
 
   | v1 D1 | e1 ⤋ v2 D2 | e2 :: :: Sem_eff {{ tex [[v1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[v2]]_{~[[D2]]}\,|~[[e2]] }}
-  | t d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\,[[d]]\!}[[⇓]]~[[v]][[⋄]][[e]] }}
+  | t d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }}
 
 parsing
 ctx_U <= ctx_S

@@ -241,11 +241,14 @@ Definition ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
   match CtxM.find (bndr_name b') G with
   | None => fallback
   | Some b => match b, b' with
-    | bndr_H h1 m1 T1, bndr_D h1 m21 m22 T1 =>
+    | bndr_H h1 m1 T1, bndr_D h2 m21 m22 T2 =>
       (* assert h1 = h2 *)
-      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2, mul_eq_dec (fst m1) Lin with
-      | left _, left _, left _ => (* true *) CtxM.remove (bndr_name b') G
-      | _, _, _ => (* false *) fallback
+      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2 with
+      | left _, left _ => (* true *) match m1 with
+        | Some (Lin, _) => CtxM.remove (bndr_name b') G
+        | _ => fallback
+        end
+      | _, _ => (* false *) fallback
       end
     | _, _ => fallback
     end

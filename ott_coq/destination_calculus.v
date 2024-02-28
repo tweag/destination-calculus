@@ -21,14 +21,14 @@ Notation "'ω∞'" := (Some (pair Ur Inf)).
 
 Notation "'☠'" := None.
 
-Notation Infix "·" := md_times (at level 60, right associativity).
-Notation "𝟏" := (typ_U).
-Notation "T ⨁ U" := (typ⁻_S T U) (at level 50, left associativity).
-Notation "T ⨂ U" := (typ_P T U) (at level 40, left associativity).
-Notation "! m T" := (typ_E m T) (at level 30, no associativity).
-Notation "T ⧔ U" := (typ_A T U) (at level 55, left associativity).
-Notation "T m → U" := (typ_F T m U) (at level 60, right associativity).
-Notation "m ⌊ T ⌋" := (typ_D m T) (at level 35, no associativity).
+Infix "·" := mode_times (at level 60, right associativity).
+Notation "𝟏" := (type_U).
+Notation "T ⨁ U" := (type_S T U) (at level 50, left associativity).
+Notation "T ⨂ U" := (type_P T U) (at level 40, left associativity).
+Notation "! m T" := (type_E m T) (at level 30, no associativity).
+Notation "T ⧔ U" := (type_A T U) (at level 55, left associativity).
+Notation "T m → U" := (type_F T m U) (at level 60, right associativity).
+Notation "m ⌊ T ⌋" := (type_D m T) (at level 35, no associativity).
 
 Notation "x : m T" := (bndr_V x m T) (at level 60, no associativity).
 Notation "+ h : m n ⌊ T ⌋" := (bndr_D h m n T) (at level 60, no associativity).
