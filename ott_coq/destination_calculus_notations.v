@@ -29,7 +29,7 @@ Notation "T ⨁ U" := (type_S T U) (at level 50, left associativity).
 Notation "T ⨂ U" := (type_P T U) (at level 40, left associativity).
 Notation "! m T" := (type_E m T) (at level 30, m at next level, right associativity).
 Notation "T ⧔ U" := (type_A T U) (at level 55, left associativity).
-Notation "T m → U" := (type_F T m U) (at level 59, m at next level, right associativity).
+Notation "T '‗' m '→' U" := (type_F T m U) (at level 59, m at next level, right associativity).
 Notation "⌊ T ⌋ m" := (type_D T m) (at level 35, m at next level, no associativity).
 
 (* Bindings and contexts : 60 - 64 *)
@@ -86,8 +86,8 @@ Notation "G 'ᶜ⊢' v ⋄ e 'ː' T" := (Ty_cmd G v e T) (at level 70, v at next
 Notation "v1 D1 | e1 '⤋' v2 D2 | e2" := (Sem_eff v1 D1 e1 v2 D2 e2) (at level 70, D1 at next level, e1 at next level,  v2 at next level, D2 at next level, e2 at next level, no associativity).
 Notation "t '‿' d '⇓' v ⋄ e" := (Sem_term t d v e) (at level 70, d at next level, v at next level, e at next level, no associativity).
 
-Notation "T 'for_some' a" := (sigT (fun a => T)) (at level 98, a at next level, no associativity).
+(* Notation "T 'for_some' a" := (sigT (fun a => T)) (at level 98, a at next level, no associativity).
 Notation "T 'for_some' a , b" := (sigT (fun a => (sigT (fun b => T)))) (at level 98, a at next level, b at next level, no associativity).
 Notation "T 'for_some' a , b , c" := (sigT (fun a => (sigT (fun b => (sigT (fun c => T)))))) (at level 98, a at next level, b at next level, c at next level, no associativity).
 Notation "T 'for_some' a , b , c , d" := (sigT (fun a => (sigT (fun b => (sigT (fun c => (sigT (fun d => T)))))))) (at level 98, a at next level, b at next level, c at next level, d at next level, no associativity).
-Notation "T 'for_some' a , b , c , d , e" := (sigT (fun a => (sigT (fun b => (sigT (fun c => (sigT (fun d => (sigT (fun e => T)))))))))) (at level 98, a at next level, b at next level, c at next level, d at next level, e at next level, no associativity).
+Notation "T 'for_some' a , b , c , d , e" := (sigT (fun a => (sigT (fun b => (sigT (fun c => (sigT (fun d => (sigT (fun e => T)))))))))) (at level 98, a at next level, b at next level, c at next level, d at next level, e at next level, no associativity). *)
