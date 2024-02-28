@@ -67,11 +67,11 @@ Inductive type : Type :=  (*r Type *)
  | type_E (m:mode) (T:type) (*r Exponential *)
  | type_A (T1:type) (T2:type) (*r Ampar type (consuming $(T2:type)$ yields $(T1:type)$) *)
  | type_F (T1:type) (m1:mode) (T2:type) (*r Function *)
- | type_D (m:mode) (T:type) (*r Destination *).
+ | type_D (T:type) (m:mode) (*r Destination *).
 
 Inductive bndr : Type :=  (*r Type assignment to either variable, destination or hole *)
  | bndr_V (x:tmv) (m:mode) (T:type) (*r Variable *)
- | bndr_D (h:hdnm) (m:mode) (n:mode) (T:type) (*r Destination ($(m:mode)$ is its own modality; $(n:mode)$ is the modality for values it accepts) *)
+ | bndr_D (h:hdnm) (m:mode) (T:type) (n:mode) (*r Destination ($(m:mode)$ is its own modality; $(n:mode)$ is the modality for values it accepts) *)
  | bndr_H (h:hdnm) (n:mode) (T:type) (*r Hole ($(n:mode)$ is the modality for values it accepts, it doesn't have a modality on its own) *).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
 Proof.
@@ -157,19 +157,19 @@ Definition bndr_name (b : bndr) : name :=
   match b with
   | bndr_V x m T => name_X x
   | bndr_H h m T => name_HD h
-  | bndr_D h m1 m2 T => name_HD h
+  | bndr_D h m1 T m2 => name_HD h
   end.
 
 Definition bndr_mode (b : bndr) : mode := match b with
   | bndr_V _ m _ => m
   | bndr_H _ m _ => m
-  | bndr_D _ m1 m2 _ => m1
+  | bndr_D _ m1 _ m2 => m1
   end.
 
 Definition bndr_update_mode (b:bndr) (m:mode) := match b with
   | bndr_V x _ T => bndr_V x m T
   | bndr_H h _ T => bndr_H h m T
-  | bndr_D h _ m2 T => bndr_D h m m2 T
+  | bndr_D h _ T m2 => bndr_D h m T m2
   end.
 
 Definition bndr_IsDest (b: bndr) : Prop :=
@@ -219,10 +219,10 @@ Definition ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr :=
       | left _ => (* true *) bndr_V x1 (mode_plus m1 m2) T1
       | right _ => bndr_update_mode b None
       end
-    | bndr_D h1 m11 m12 T1, bndr_D h2 m21 m22 T2 =>
+    | bndr_D h1 m11 T1 m12, bndr_D h2 m21 T2 m22 =>
       (* assert h1 = h2 *)
       match mode_eq_dec m12 m22, type_eq_dec T1 T2 with
-      | left _, left _ => (* true *) bndr_D h1 (mode_plus m11 m21) m12 T1
+      | left _, left _ => (* true *) bndr_D h1 (mode_plus m11 m21) T1 m12
       | _, _ => (* false *) bndr_update_mode b None
       end
     | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
@@ -241,7 +241,7 @@ Definition ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
   match CtxM.find (bndr_name b') G with
   | None => fallback
   | Some b => match b, b' with
-    | bndr_H h1 m1 T1, bndr_D h2 m21 m22 T2 =>
+    | bndr_H h1 m1 T1, bndr_D h2 m21 T2 m22 =>
       (* assert h1 = h2 *)
       match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2 with
       | left _, left _ => (* true *) match m1 with
@@ -269,7 +269,7 @@ Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
     | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
-    | bndr_D h m2 m3 T2 => bndr_D h (mode_times m1 m2) m3 T2
+    | bndr_D h m2 T2 m3 => bndr_D h (mode_times m1 m2) T2 m3
     | bndr_H h m2 T2 => bndr_H h (mode_times m1 m2) T2
     end
   ) G.
@@ -278,7 +278,7 @@ Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
     match b with
     | bndr_V x m2 T2 => bndr_V x None T2 (* error *)
-    | bndr_D h m2 m3 T2 => bndr_H h (mode_times m2 m3) T2
+    | bndr_D h m2 T2 m3 => bndr_H h (mode_times m2 m3) T2
     | bndr_H h m2 T2 => bndr_H h None T2 (* error *)
     end
   ) G.
@@ -357,7 +357,7 @@ Inductive TyR_eff : ctx -> eff -> Prop :=    (* defn TyR_eff *)
      (TYRv: TyR_term  (ctx_union  G   D )  (term_Val v) T),
      ctx_DestOnly G  ->
      ctx_HoleOnly D  ->
-     TyR_eff  (ctx_union   (ctx_union   (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons m nil) (app (cons n nil) nil)))) )     G )     (ctx_from_list  (cons (bndr_D h m n T) nil) )  )     (ctx_stimes    (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )     D )  )   (cons  (hf_A h v)  nil) 
+     TyR_eff  (ctx_union   (ctx_union   (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons m nil) (app (cons n nil) nil)))) )     G )     (ctx_from_list  (cons (bndr_D h m T n) nil) )  )     (ctx_stimes    (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )     D )  )   (cons  (hf_A h v)  nil) 
  | TyR_eff_C : forall (G1 G2:ctx) (e1 e2:eff)
      (TYRe1: TyR_eff G1 e1)
      (TYRe2: TyR_eff G2 e2),
@@ -370,8 +370,8 @@ with Ty_eff : ctx -> eff -> Prop :=    (* defn Ty_eff *)
 with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
  | TyR_term_H : forall (h:hdnm) (T:type),
      TyR_term  (ctx_from_list  (cons (bndr_H h  (Some (pair   Lin     (Fin 0)  ))  T) nil) )  (term_Val (val_H h)) T
- | TyR_term_D : forall (h:hdnm) (n:mode) (T:type),
-     TyR_term  (ctx_from_list  (cons (bndr_D h  (Some (pair   Lin     (Fin 0)  ))  n T) nil) )  (term_Val (val_D h)) (type_D n T)
+ | TyR_term_D : forall (h:hdnm) (T:type) (n:mode),
+     TyR_term  (ctx_from_list  (cons (bndr_D h  (Some (pair   Lin     (Fin 0)  ))  T n) nil) )  (term_Val (val_D h)) (type_D T n)
  | TyR_term_U : 
      TyR_term  (ctx_from_list  nil )  (term_Val val_U) type_U
  | TyR_term_L : forall (G:ctx) (v:val) (T1 T2:type)
@@ -425,26 +425,26 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
      (TYRu: TyR_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    G2 )     (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T2) nil) )  )  u U),
      TyR_term  (ctx_union  G1   G2 )  (term_Map t x u) (type_A T1 U)
  | TyR_term_FillC : forall (G1:ctx) (n:mode) (G2:ctx) (t u:term) (T2 T1:type)
-     (TYRt: TyR_term G1 t (type_D n T1))
+     (TYRt: TyR_term G1 t (type_D T1 n))
      (TYRu: TyR_term G2 u (type_A T1 T2)),
      TyR_term  (ctx_union  G1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     G2 )  )  (term_FillC t u) T2
  | TyR_term_FillU : forall (G:ctx) (t:term) (n:mode)
-     (TYRt: TyR_term G t (type_D n type_U)),
+     (TYRt: TyR_term G t (type_D type_U n)),
      TyR_term G (term_FillU t) type_U
- | TyR_term_FillL : forall (G:ctx) (t:term) (n:mode) (T1 T2:type)
-     (TYRt: TyR_term G t (type_D n (type_S T1 T2))),
-     TyR_term G (term_FillL t) (type_D n T1)
- | TyR_term_FillR : forall (G:ctx) (t:term) (n:mode) (T2 T1:type)
-     (TYRt: TyR_term G t (type_D n (type_S T1 T2))),
-     TyR_term G (term_FillR t) (type_D n T2)
- | TyR_term_FillP : forall (G:ctx) (t:term) (n:mode) (T1 T2:type)
-     (TYRt: TyR_term G t (type_D n (type_P T1 T2))),
-     TyR_term G (term_FillP t) (type_P (type_D n T1) (type_D n T2))
- | TyR_term_FillE : forall (G:ctx) (t:term) (n m:mode) (T:type)
-     (TYRt: TyR_term G t (type_D m (type_E n T))),
-     TyR_term G (term_FillE t n) (type_D  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T)
+ | TyR_term_FillL : forall (G:ctx) (t:term) (T1:type) (n:mode) (T2:type)
+     (TYRt: TyR_term G t (type_D (type_S T1 T2) n)),
+     TyR_term G (term_FillL t) (type_D T1 n)
+ | TyR_term_FillR : forall (G:ctx) (t:term) (T2:type) (n:mode) (T1:type)
+     (TYRt: TyR_term G t (type_D (type_S T1 T2) n)),
+     TyR_term G (term_FillR t) (type_D T2 n)
+ | TyR_term_FillP : forall (G:ctx) (t:term) (T1:type) (n:mode) (T2:type)
+     (TYRt: TyR_term G t (type_D (type_P T1 T2) n)),
+     TyR_term G (term_FillP t) (type_P (type_D T1 n) (type_D T2 n))
+ | TyR_term_FillE : forall (G:ctx) (t:term) (n:mode) (T:type) (m:mode)
+     (TYRt: TyR_term G t (type_D (type_E n T) m)),
+     TyR_term G (term_FillE t n) (type_D T  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) ) )
  | TyR_term_Alloc : forall (T:type),
-     TyR_term  (ctx_from_list  nil )  (term_Alloc T) (type_A T (type_D  (Some (pair   Lin     (Fin 0)  ))  T))
+     TyR_term  (ctx_from_list  nil )  (term_Alloc T) (type_A T (type_D T  (Some (pair   Lin     (Fin 0)  )) ))
  | TyR_term_ToA : forall (G:ctx) (t:term) (T:type)
      (TYRt: TyR_term G t T),
      TyR_term G (term_ToA t) (type_A T type_U)
