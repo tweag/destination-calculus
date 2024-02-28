@@ -23,9 +23,10 @@ Notation "'☠'" := None.
 
 Notation Infix "·" := md_times (at level 60, right associativity).
 Notation "𝟏" := (typ_U).
-Notation "T ⨁ U" := (typ_S T U) (at level 50, left associativity).
+Notation "T ⨁ U" := (typ⁻_S T U) (at level 50, left associativity).
 Notation "T ⨂ U" := (typ_P T U) (at level 40, left associativity).
 Notation "! m T" := (typ_E m T) (at level 30, no associativity).
+Notation "T ⧔ U" := (typ_A T U) (at level 55, left associativity).
 Notation "T m → U" := (typ_F T m U) (at level 60, right associativity).
 Notation "m ⌊ T ⌋" := (typ_D m T) (at level 35, no associativity).
 
@@ -36,7 +37,7 @@ Notation "- h ':' n T" := (bndr_H h n T) (at level 60, no associativity).
 Notation "{ b , .. , c }" := (ctx_from_list (cons b .. (cons c nil) ..)) (at level 0, no associativity).
 Notation "m 'ᶜ·' G" := (ctx_stimes m G) (at level 41, right associativity).
 Notation "G '⨄' H" := (ctx_union G H) (at level 50, left associativity).
-Notation "G '⋓' H" := (ctx_interact G H) (at level 50, left associativity).
+Notation "G '⁻⨄⁺' H" := (ctx_interact G H) (at level 50, no associativity).
 Notation "ᶜ- G" := (ctx_minus G) (at level 35, no associativity).
 
 Notation "t ≻ u" := (term_App t u) (at level 40, left associativity).
@@ -45,8 +46,8 @@ Notation "t '≻case' { 'Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 }" := (term_PatS t x1 
 Notation "t '≻case' ( x1 , x2 ) ⟼ u" := (term_PatP t x1 x2 u) (at level 50, left associativity).
 Notation "t '≻case' '⦆' m x ⟼ u" := (term_PatE t m x u) (at level 50, left associativity).
 Notation "t '≻map' x ⟼ u" := (term_Map t x u) (at level 50, left associativity).
-Notation "'to⧕' t" := (term_ToA t) (at level 40, left associativity).
-Notation "'from⧕' t" := (term_FromA t) (at level 40, left associativity).
+Notation "'to⧔' t" := (term_ToA t) (at level 40, left associativity).
+Notation "'from⧔' t" := (term_FromA t) (at level 40, left associativity).
 Notation "'alloc' T" := (term_Alloc T) (at level 40, left associativity).
 Notation "t ⨞ ()" := (term_FillU t) (at level 45, left associativity).
 Notation "t ⨞ 'Inl'" := (term_FillL t) (at level 45, left associativity).
@@ -68,7 +69,7 @@ Notation "'⟨' v '❟' w '⟩' D" := (val_A v w D) (at level 30, no associativi
 Notation "v 'ᵉ[' e ]" := (val_effapp v e) (at level 29, no associativity).
 
 Notation "'ε'" := nil.
-Notation "h '≔' w" := (has_A h w) (at level 30, no associativity).
+Notation "h '≔' w" := (hf_A h w) (at level 30, no associativity).
 Infix "»" := app (at level 60, right associativity).
 
 Notation "G '⫦' e" := (TyR_eff G e) (at level 60, no associativity).

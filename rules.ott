@@ -16,7 +16,7 @@ G ⨄ D ⫦ v : T [[:TYRv]]
 G1 ⫦ e1 [[:TYRe1]]
 G2 ⫦ e2 [[:TYRe2]]
 ------------------------- :: C
-G1 ⋓ G2 ⫦ e1 » e2
+G1 ⁻⨄⁺ G2 ⫦ e1 » e2
 
 defn
 G ⊢ e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (valid ones only) }} by
@@ -58,13 +58,13 @@ G ⫦ v : T [[:TYRv]]
 m·G ⫦ ⦆ m v : ! m T
 
 % We perform controls here on Ampar, and not on the other rules, because outside of the ampar, the hole/dests that are compensated will no longer be visible.
-% {{ ctx_DestOnly [[G1 ⋓ G2]] }} % ensures that every hole of G2 is compensated by a dest in G1 --> we might relax this one, and ensure it later in Ty_term (not raw)
+% {{ ctx_DestOnly [[G1 ⁻⨄⁺ G2]] }} % ensures that every hole of G1 is compensated by a dest in G2 --> we might relax this one, and ensure it later in Ty_term (not raw)
 G1 ⫦ v1 : T1 [[:TYRv1]]
 G2 ⫦ v2 : T2 [[:TYRv2]]
-{{ ctx_DestOnly [[G1]] }} % ensures that there is no hole in G1 (that could be compensated by a dest in G2 and not appear in the final context).
-{{ ctx_SubsetEq [[-G1]] [[G2]] }} % ensures that every dest of G1 is from this ampar, not a stored dest (our system is supposed to restrict storing dests from other ampars in the left side). So we know that holes of this ampar are exactly -G1.
+{{ ctx_DestOnly [[G2]] }} % ensures that there is no hole in G2 (that could be compensated by a dest in G1 and not appear in the final context). --> no longer need that with one-sided compensation, but needed for using -G2
+{{ ctx_SubsetEq [[-G2]] [[G1]] }} % ensures that every dest of G2 is from this ampar, not a stored dest (our system is supposed to restrict storing dests from other ampars in the right side). So we know that holes of this ampar are exactly -G2.
 ---------------- :: A
-G1 ⋓ G2 ⫦ ⟨v1 ❟ v2⟩ -G1 : T1 ⧕ T2
+G1 ⁻⨄⁺ G2 ⫦ ⟨v1 ❟ v2⟩ -G1 : T1 ⧔ T2
 
 G ⨄ { x : m T1 } ⫦ t : T2 [[:TYRt]]
 ----------------- :: F
@@ -100,15 +100,15 @@ G2 ⨄ { x : m·n T } ⫦ u : U [[:TYRu]]
 ----------------- :: PatE
 m·G1 ⨄ G2 ⫦ t ≻case ⦆ n x ⟼ u : U
 
-G1 ⫦ t : T1 ⧕ T2 [[:TYRt]]
-¹↑·G2 ⨄ { x : ¹ν T1 } ⫦ u : U [[:TYRu]]
+G1 ⫦ t : T1 ⧔ T2 [[:TYRt]]
+¹↑·G2 ⨄ { x : ¹ν T2 } ⫦ u : U [[:TYRu]]
 -------------------------------- :: Map
-G1 ⨄ G2 ⫦ t ≻map x ⟼ u : U ⧕ T2
+G1 ⨄ G2 ⫦ t ≻map x ⟼ u : T1 ⧔ U
 
-G1 ⫦ t : n⌊T2⌋ [[:TYRt]]
-G2 ⫦ u : T1 ⧕ T2 [[:TYRu]]
+G1 ⫦ t : n⌊T1⌋ [[:TYRt]]
+G2 ⫦ u : T1 ⧔ T2 [[:TYRu]]
 ----------------------------- :: FillC
-G1 ⨄ (¹↑·n)·G2 ⫦ t ⨞· u : T1
+G1 ⨄ (¹↑·n)·G2 ⫦ t ⨞· u : T2
 
 G ⫦ t : n⌊𝟏⌋ [[:TYRt]]
 ------------------------------ :: FillU
@@ -131,15 +131,15 @@ G ⫦ t : m⌊!n T⌋ [[:TYRt]]
 G ⫦ t ⨞ ⦆ n : m·n⌊T⌋
 
 -------------------------------- :: Alloc
-{} ⫦ alloc T : ¹ν⌊T⌋ ⧕ T
+{} ⫦ alloc T : T ⧔ ¹ν⌊T⌋
 
 G ⫦ t : T [[:TYRt]]
 ------------------------------- :: ToA
-G ⫦ to⧕ t : 𝟏 ⧕ T
+G ⫦ to⧔ t : T ⧔ 𝟏
 
-G ⫦ t : 𝟏 ⧕ T [[:TYRt]]
+G ⫦ t : T ⧔ 𝟏 [[:TYRt]]
 ------------------------------- :: FromA
-G ⫦ from⧕ t : T
+G ⫦ from⧔ t : T
 
 defn
 G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (valid ones only) }} by
@@ -153,11 +153,11 @@ G ⊢ t : T
 defn
 G ⊢ v ⋄ e : T :: :: Ty_cmd :: Ty_cmd_ {{ com Typing of commands (valid ones only) }} by
 
-G1 ⊢ v : T [[:TYv]]
-G2 ⊢ e [[:TYe]]
-{{ ctx_DestOnly [[G1 ⋓ G2]] }}
+G1 ⊢ e [[:TYe]]
+G2 ⊢ v : T [[:TYv]]
+{{ ctx_DestOnly [[G1 ⁻⨄⁺ G2]] }}
 ------------------ :: C
-G1 ⋓ G2 ⊢ v ⋄ e : T
+G1 ⁻⨄⁺ G2 ⊢ v ⋄ e : T
 
 defns
 Sem :: '' ::=
@@ -223,11 +223,11 @@ alloc T d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
 
 t d ⇓ v ⋄ e [[:REDt]]
 ----------------------------------------- :: ToA
-to⧕ t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
+to⧔ t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
 
 t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e [[:REDt]]
 -------------------------------------- :: FromA
-from⧕ t d ⇓ v ⋄ e
+from⧔ t d ⇓ v ⋄ e
 
 t d ⇓ +h ⋄ e [[:REDt]]
 ------------------------------------- :: FillU

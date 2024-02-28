@@ -19,7 +19,7 @@
 % \definecolor{??color}{HTML}{F8980F} % yellow-orange, underlined
 \definecolor{typcolor}{HTML}{176FC1} % blue, bold
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
-\definecolor{modacolor}{HTML}{00AAA0} % green-blue, tt
+\definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
 \definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
 \definecolor{hdmvcolor}{HTML}{F14B2D} % red, itshape
 
@@ -33,7 +33,7 @@
 \newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
 \newcommand{\ottshdnm}[1]{\textcolor{hdmvcolor}{\mathtt{#1} } }
-\newcommand{\ottsmd}[1]{\textcolor{modacolor}{\mathit{#1} } }
+\newcommand{\ottsmode}[1]{\textcolor{modecolor}{\mathit{#1} } }
 
 % Replace normal l with fancy round l in label names
 % \newcommand{\replacelell}[1]{%
@@ -102,7 +102,7 @@
 % Raised cdot for negative context product
 % https://tex.stackexchange.com/questions/597955/a-math-font-size-knowledgeable-raisebox
 \makeatletter
-\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottsmd{\cdot} } }
+\newcommand{\topprod}[1]{\mathpalette\abcd@{#1\ottsmode{\cdot} } }
 \newcommand{\abcd@}[2]{%
   % #1 = math style
   % #2 = text to be lowered

@@ -73,7 +73,8 @@
 \section{Effects and big-step semantics}
 
 \ottgrammartabular{
-  \otteff\ottafterlastrule
+  \otteff\ottinterrule
+  \otthf\ottafterlastrule
 }
 \ottdefnTyRXXeff{}
 \ottdefnTyXXeff{}
@@ -145,15 +146,15 @@ We want $[[G132]]$ from (22) to cancel $[[m·G132]]$ from (20), but the multipli
 $[[G13]]$ contains dests associated to holes that may have been created when evaluating $[[t]]$ into $[[v1]]$ $[[⋄]]$ $[[e1]]$. If $[[v1]]$ is used with delay (result of multiplying its context by $[[m]]$), then should we also delay the RHS of its associated effect?
 In other terms, if we have $[[{+h : ¹ν n ⌊T1⨁T2⌋ } ⊢ +h' ⋄ h ≔ Inl -h' : n⌊T1⌋]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h ≔ Inl -h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
 
-$[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧕ +h1) ; x2) ≻ (λx2 ⟼ +h3 ⨞· (to⧕ x2))]]$
+$[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧔ +h1) ; x2) ≻ (λx2 ⟼ +h3 ⨞· (to⧔ x2))]]$
 
 $[[+h0 ⨞ (,) d ⇓ (+dyn d.2, +dyn d.3) ⋄ h0 ≔ (-dyn d.2, -dyn d.3)]]$
 
-$[[(x1 ⨞· (to⧕ +h1) ; x2)[x1 ≔ +dyn d.2][x2 ≔ +dyn d.3] d' ⇓ +dyn d.3 ⋄ dyn d.2 ≔ +h1]]$
+$[[(x1 ⨞· (to⧔ +h1) ; x2)[x1 ≔ +dyn d.2][x2 ≔ +dyn d.3] d' ⇓ +dyn d.3 ⋄ dyn d.2 ≔ +h1]]$
 
-$[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧕ +h1) ; x2) d'' ⇓ +dyn d.3 ⋄ h0 ≔ (-dyn d.2, -dyn d.3) » dyn d.2 ≔ +h1]]$
+$[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧔ +h1) ; x2) d'' ⇓ +dyn d.3 ⋄ h0 ≔ (-dyn d.2, -dyn d.3) » dyn d.2 ≔ +h1]]$
 
-$[[(+h3 ⨞· (to⧕ x2))[x2 ≔ +dyn d.3] d''' ⇓ () ⋄ h3 ≔ +dyn d.3]]$
+$[[(+h3 ⨞· (to⧔ x2))[x2 ≔ +dyn d.3] d''' ⇓ () ⋄ h3 ≔ +dyn d.3]]$
 
 $[[t d'''' ⇓ () ⋄ h0 ≔ (-dyn d.2, -dyn d.3) » dyn d.2 ≔ +h1 » h3 ≔ +dyn d.3]]$
 

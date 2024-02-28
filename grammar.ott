@@ -46,37 +46,49 @@ Definition mul_times (p1 p2: _mul) : _mul :=
 Definition mul_times' (pl: list _mul) : _mul :=
   List.fold_right mul_times Lin pl.
 
-(* Astuce fresh : liste de nombres = prefixe *)
+Theorem mul_eq_dec : forall (p1 p2: _mul), {p1 = p2} + {p1 <> p2}.
+Proof.
+  decide equality.
+Defined.
+
+Theorem mode_eq_dec : forall (m1 m2: option (_mul * ext_nat)), {m1 = m2} + {m1 <> m2}.
+Proof.
+  decide equality. destruct a, p.
+  - destruct (mul_eq_dec _m _m0), (ext_eq_dec e e0); subst; auto.
+    * right. congruence.
+    * right. congruence.
+    * right. congruence.
+Defined.
 }}
 
 grammar
 
-mul, p :: 'mul_' ::= {{ tex \ottsmd{[[mul]]} }} {{ com Multiplicity (first component of modality) }} {{ coq _mul }}
-  | ¹ :: :: Lin {{ tex \ottsmd{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
-  | ω :: :: Ur {{ tex \ottsmd{\omega} }} {{ com Non-linear. Absorbing for the product }} {{ coq Ur }}
+mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (first component of modality) }} {{ coq _mul }}
+  | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
+  | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear. Absorbing for the product }} {{ coq Ur }}
   | p1 . ... . pk :: :: P {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
-  | ( p ) :: S :: Paren {{ tex \ottsmd{(}[[p]]\ottsmd{)} }} {{ coq [[p]] }}
+  | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
-age, a :: 'age_' ::= {{ tex \ottsmd{[[age]]} }} {{ com Age (second component of modality) }} {{ coq ext_nat }}
-  | ν :: :: 0 {{ tex \ottsmd{\nu} }} {{ com Born now. Neutral element of the product }} {{ coq (Fin 0) }}
-  | ↑ :: :: 1 {{ tex \ottsmd{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
-  | ∞ :: :: Inf {{ tex \ottsmd{\infty} }} {{ com Infinitely old / static. Absorbing for the product }} {{ coq Inf }}
+age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (second component of modality) }} {{ coq ext_nat }}
+  | ν :: :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now. Neutral element of the product }} {{ coq (Fin 0) }}
+  | ↑ :: :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
+  | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static. Absorbing for the product }} {{ coq Inf }}
   | a1 · ... · ak :: :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
-  | ( a ) :: S :: Paren {{ tex \ottsmd{(}[[a]]\ottsmd{)} }} {{ coq [[a]] }}
+  | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
-mode, m, n :: 'mode_' ::= {{ tex \ottsmd{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
+mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
   | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
-  | ☠ :: :: Err {{ tex \ottsmd{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
+  | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
   | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
-  | ( m ) :: S :: Paren {{ tex \ottsmd{(}[[m]]\ottsmd{)} }} {{ coq [[m]] }}
+  | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
 
-type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }}
+type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
   | 𝟏 :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
   | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
   | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
-  | T1 ⧕ T2 :: :: A {{ tex [[T1]]\,\ottstype{\rtimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T1]]$ yields $[[T2]]$) }}
-  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Linear function }}
+  | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\rtimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
+  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Function }}
   | m ⌊ T ⌋ :: :: D {{ tex \,^{[[m]]}\hspace{-0.2ex}\ottstype{\lfloor}[[T]]\ottstype{\rfloor} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
@@ -108,8 +120,18 @@ Module Name_as_UDT <: UsualDecidableType.
            * left. rewrite e. reflexivity.
            * right. congruence.
         + right. congruence.
-    - induction y. give_up.
-    Admitted.
+    - induction y.
+        + right. congruence.
+        + induction h, h0.
+          * assert ({d = d0} + {d <> d0}) by apply (list_eq_dec Nat.eq_dec). destruct H.
+            ** left. rewrite e. reflexivity.
+            ** right. congruence.
+          * right. congruence.
+          * right. congruence.
+          * assert ({hdmv5 = hdmv0} + {hdmv5 <> hdmv0}) by apply Nat.eq_dec. destruct H.
+            ** left. rewrite e. reflexivity.
+            ** right. congruence.
+    Defined.
 
   Instance eq_equiv : Equivalence Name_as_UDT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
 
@@ -118,6 +140,9 @@ End Name_as_UDT.
 Module Name_as_UDTOrig := Backport_DT(Name_as_UDT).
 Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
 
+Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type.
+
+Definition age_eq_dec : forall (a1 a2: age), {a1 = a2} + {a1 <> a2} := ext_eq_dec.
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
 
@@ -128,7 +153,14 @@ Definition mode_plus (m1 m2: mode) : mode :=
   | Some (p1, a1), Some (p2, a2) => match a1, a2 with
     | _, Inf => Some (mul_plus p1 p2, Inf)
     | Inf, _ => Some (mul_plus p1 p2, Inf)
-    | _, _ => if a1 = a2 then Some (mul_plus p1 p2, a1) else None
+    | _, _ => match a1, a2 with
+      | Fin n1, Fin n2 => match Nat.eq_dec n1 n2 with
+        | left _ => (* true *) Some (mul_plus p1 p2, Fin n1)
+        | right _ => (* false *) None
+        end
+      | Inf, Inf => Some (mul_plus p1 p2, Inf)
+      | _, _ => None
+      end
     end
   end.
 
@@ -201,40 +233,55 @@ Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> bndr_name
 Definition ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr :=
   match CtxM.find (bndr_name b') G with
   | None => CtxM.add (bndr_name b') b' G
-  | Some b => match b, b' with
+  | Some b => let new_bndr := match b, b' with
     | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
       (* assert x1 = x2 *)
-      if T1 = T2 then bndr_V x1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+      match type_eq_dec T1 T2 with
+      | left _ => (* true *) bndr_V x1 (mode_plus m1 m2) T1
+      | right _ => bndr_update_mode b None
+      end
     | bndr_D h1 m11 m12 T1, bndr_D h2 m21 m22 T2 =>
       (* assert h1 = h2 *)
-      if m12 = m22 and T1 = T2 then bndr_D h1 (mode_plus m11 m21) m12 T1 else bndr_update_mode b None
+      match mode_eq_dec m12 m22, type_eq_dec T1 T2 with
+      | left _, left _ => (* true *) bndr_D h1 (mode_plus m11 m21) m12 T1
+      | _, _ => (* false *) bndr_update_mode b None
+      end
     | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
       (* assert h1 = h2 *)
-      if T1 = T2 then bndr_D h1 (mode_plus m1 m2) T1 else bndr_update_mode b None
+      match type_eq_dec T1 T2 with
+      | left _ => (* true *) bndr_H h1 (mode_plus m1 m2) T1
+      | right _ => bndr_update_mode b None
+      end
     | _, _ => bndr_update_mode b None
     end
+    in CtxM.add (bndr_name b') new_bndr G
   end.
 
-Definition ctx_interact (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
-  let fallback = ctx_add b' G in
+Definition ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
+  let fallback := ctx_add b' G in
   match CtxM.find (bndr_name b') G with
   | None => fallback
   | Some b => match b, b' with
-    | bndr_D h1 m11 m12 T1, bndr_H h2 m2 T2 =>
+    | bndr_H h1 m1 T1, bndr_D h1 m21 m22 T1 =>
       (* assert h1 = h2 *)
-      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
-    | bndr_H h2 m2 T2, bndr_D h1 m11 m12 T1 =>
-      (* assert h1 = h2 *)
-      if (mode_plus m11 m12) = m2 and T1 = T2 then G else fallback
+      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2, mul_eq_dec (fst m1) Lin with
+      | left _, left _, left _ => (* true *) CtxM.remove (bndr_name b') G
+      | _, _, _ => (* false *) fallback
+      end
     | _, _ => fallback
     end
   end.
 
 Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
-  List.fold_right (fun b G => CtxM.add (bndr_name b) b G) (CtxM.empty bndr) bs.
+  List.fold_right (fun b G => ctx_add b G) (CtxM.empty bndr) bs.
 
 Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
-  CtxM.fold (fun n b G => CtxM.add n b G) G2 G1.
+  (* G1 is acc, G2 is iterated over *)
+  CtxM.fold (fun n b G => ctx_add b G) G2 G1.
+
+Definition ctx_interact (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
+  (* G1 is acc, G2 is iterated over *)
+  CtxM.fold (fun n b G => ctx_add_hdint b G) G2 G1.
 
 Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
   CtxM.map (fun b =>
@@ -260,16 +307,16 @@ Definition concat {A : Type} (ll : list (list A)) : list A :=
 
 grammar
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
-  | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }}
+  | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }} {{ com List of bindings }}
   | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
-  | G1 ⨄ G2 :: :: U {{ coq (ctx_union [[G1]] [[G2]]) }}
-  | G1 ⋓ G2 :: :: I {{ coq (ctx_interact [[G1]] [[G2]]) }}
-  | - G :: :: M {{ coq (ctx_minus [[G]]) }}
+  | G1 ⨄ G2 :: :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicates/incompatible elements will give bindings with mode $\ottsmode{\skull}$ }}
+  | G1 ⁻⨄⁺ G2 :: :: I {{ coq (ctx_interact [[G1]] [[G2]]) }} {{ com Sum contexts, but allow linear holes from $[[G1]]$ to be compensated by linear dests from $[[G2]]$ }}
+  | - G :: :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every hole binding into a dest binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 grammar
 term, t, u :: 'term_' ::=                                               {{ com Term }}
-  | v :: :: Val {{ com Term value }}
+  | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
   | t ≻ u                                    ::   :: App      {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
   % | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\,\succ\,\ottkw{case}\,\ottsctor{()}\,\mapsto\,[[u]] }}
@@ -277,12 +324,12 @@ term, t, u :: 'term_' ::=                                               {{ com T
   | t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
   | t ≻case ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
   | t ≻case ⦆ m x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}~\expcons{[[m]]}[[x]][[⟼]][[u]] }}
-  | t ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the left side of the ampar }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
+  | t ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the right side of the ampar }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
 
-  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmd{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmd{\scriptstyle G} }$ }}
-  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmd{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmd{\scriptstyle G} }$ }}
-  | to⧕ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | from⧕ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
+  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmode{\scriptstyle G} }$ }}
+  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmode{\scriptstyle G} }$ }}
+  | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\rtimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
 
   | alloc T :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[T]]} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
@@ -302,7 +349,7 @@ val, v :: 'val_' ::= {{ com Term value }}
   | - h :: :: H {{ com Hole }} {{ tex \ottshdnm{-}[[h]] }}
   | + h :: :: D {{ tex \ottshdnm{+}[[h]] }} {{ com Destination }}
   | () :: :: U {{ com Unit }}
-  | λ x ⟼ t :: :: F (+ bind x in t +) {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Linear function }}
+  | λ x ⟼ t :: :: F (+ bind x in t +) {{ tex \lamnt{[[x]]}{[[t]]} }} {{ com Lambda abstraction }}
   | Inl v :: :: L {{ com Left variant for sum }}
   | Inr v :: :: R {{ com Right variant for sum }}
   | ⦆ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
@@ -311,13 +358,13 @@ val, v :: 'val_' ::= {{ com Term value }}
   | v [ e ] :: M :: Effect {{ coq (val_effapp [[v]] [[e]]) }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
-has :: 'has_' ::= {{ com Hole assignment }}
-  | h ≔ v :: :: A {{ tex [[h]]\coloneq[[v]] }}
+hf, f :: 'hf_' ::= {{ com Hole filling }}
+  | h ≔ v :: :: A {{ tex [[h]]\coloneq[[v]] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }}
 
 grammar
-eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list has }}
-  | ε :: :: N {{ tex \ottseff{\varepsilon} }} {{ coq nil }}
-  | has :: :: S {{ coq (cons [[has]] nil) }}
+eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list hf }}
+  | ε :: :: N {{ tex \ottseff{\varepsilon} }} {{ coq nil }} {{ com No-op effect }}
+  | f :: :: S {{ coq (cons [[f]] nil) }} {{ com Single hole assignment }}
   | e1 » .. » ek :: :: C {{ com Chain effects }} {{ coq (concat [[e1..ek]]) }}
   | ( e ) :: S :: Paren {{ coq [[e]] }}
 
@@ -356,12 +403,12 @@ terminals :: 'terminals_' ::=
   | Inr :: :: inr {{ tex \ottsctor{Inr} }}
   | (,) :: :: prod {{ tex \ottsctor{({,})} }}
   | ⨞ :: :: fill {{ tex \triangleleft }}
-  | · :: :: semiring {{ tex \ottsmd{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
+  | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
   | » :: :: chain {{ tex \gg }}
 
 % === Contexts ===
   | ⨄ :: :: union {{ tex \cupplus }}
-  | ⋓ :: :: interact {{ tex \cupdouble }}
+  | ⁻⨄⁺ :: :: interact {{ tex ^{\,\,\,\scriptscriptstyle\ottshdnm{-}\!\!}\cupplus^{\scriptscriptstyle\!\!\ottshdnm{+} }\, }}
 
 % === Typing & Semantics ===
   | ⤋ :: :: effred {{ tex \text{\raisebox{-0.7ex}{\rotatebox{90}{$\Lleftarrow$}\!\!} } }}
