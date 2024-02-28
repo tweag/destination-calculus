@@ -180,72 +180,72 @@ v1[h ≔ v0] (G1 ⨄ n·G0) | e1 ⤋ v2 G2 | e2 [[:EAPPv1sube1]]
 v1 G1 ⨄ { -h : n T } | h ≔ v0 » e1 ⤋ v2 G2 | e2
 
 defn
-t d ⇓ v ⋄ e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }} by
+t ‿ d ⇓ v ⋄ e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }} by
 
 ------------------ :: V
-v d ⇓ v ⋄ ε
+v ‿d ⇓ v ⋄ ε
 
-t1 d.1 ⇓ v1 ⋄ e1 [[:REDt1]]
-t2 d.2 ⇓ λx ⟼ u ⋄ e2 [[:REDt2]]
-u[x ≔ v1] d.3 ⇓ v3 ⋄ e3 [[:REDusub]]
+t1 ‿d.1 ⇓ v1 ⋄ e1 [[:REDt1]]
+t2 ‿d.2 ⇓ λx ⟼ u ⋄ e2 [[:REDt2]]
+u[x ≔ v1] ‿d.3 ⇓ v3 ⋄ e3 [[:REDusub]]
 ------------------ :: App
-t1 ≻ t2 d ⇓ v3 ⋄ e1 » e2 » e3
+t1 ≻ t2 ‿d ⇓ v3 ⋄ e1 » e2 » e3
 
-t1 d.1 ⇓ () ⋄ e1 [[:REDt1]]
-t2 d.2 ⇓ v2 ⋄ e2 [[:REDt2]]
+t1 ‿d.1 ⇓ () ⋄ e1 [[:REDt1]]
+t2 ‿d.2 ⇓ v2 ⋄ e2 [[:REDt2]]
 ----------------------- :: PatU
-t1 ; t2 d ⇓ v2 ⋄ e1 » e2
+t1 ; t2 ‿d ⇓ v2 ⋄ e1 » e2
 
-t d.1 ⇓ Inl v1 ⋄ e1 [[:REDt]]
-u1[x1 ≔ v1] d.2 ⇓ v2 ⋄ e2 [[:REDu1sub]]
+t ‿d.1 ⇓ Inl v1 ⋄ e1 [[:REDt]]
+u1[x1 ≔ v1] ‿d.2 ⇓ v2 ⋄ e2 [[:REDu1sub]]
 ----------------------- :: PatL
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } d ⇓ v2 ⋄ e1 » e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ‿d ⇓ v2 ⋄ e1 » e2
 
-t d.1 ⇓ Inr v1 ⋄ e1 [[:REDt]]
-u2[x2 ≔ v1] d.2 ⇓ v2 ⋄ e2 [[:REDu2sub]]
+t ‿d.1 ⇓ Inr v1 ⋄ e1 [[:REDt]]
+u2[x2 ≔ v1] ‿d.2 ⇓ v2 ⋄ e2 [[:REDu2sub]]
 ----------------------- :: PatR
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } d ⇓ v2 ⋄ e1 » e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ‿d ⇓ v2 ⋄ e1 » e2
 
-t d.1 ⇓ (v1,v2) ⋄ e1 [[:REDt]]
-u[x1 ≔ v1][x2 ≔ v2] d.2 ⇓ v2 ⋄ e2 [[:REDusub]]
+t ‿d.1 ⇓ (v1,v2) ⋄ e1 [[:REDt]]
+u[x1 ≔ v1][x2 ≔ v2] ‿d.2 ⇓ v2 ⋄ e2 [[:REDusub]]
 ----------------------- :: PatP
-t ≻case (x1,x2) ⟼ u d ⇓ v2 ⋄ e1 » e2
+t ≻case (x1,x2) ⟼ u ‿d ⇓ v2 ⋄ e1 » e2
 
 % Can e1 have effect on the content of the ampar? I don't think so, but maybe
-t d.1 ⇓ ⟨ v1 ❟ v2 ⟩ D ⋄ e1 [[:REDt]]
-u[x ≔ v1] d.2 ⇓ v3 ⋄ e2 [[:REDusub]]
+t ‿d.1 ⇓ ⟨ v1 ❟ v2 ⟩ D ⋄ e1 [[:REDt]]
+u[x ≔ v1] ‿d.2 ⇓ v3 ⋄ e2 [[:REDusub]]
 v2 D |e2 ⤋ v4 D'| e3 [[:EAPPv2e2]]
 ---------------------------------- :: Map
-t ≻map x ⟼ u d ⇓ ⟨v3 ❟ v4⟩ D' ⋄ e1 » e3
+t ≻map x ⟼ u ‿d ⇓ ⟨v3 ❟ v4⟩ D' ⋄ e1 » e3
 
 -------------------------- :: Alloc
-alloc T d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
+alloc T ‿d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
 
-t d ⇓ v ⋄ e [[:REDt]]
+t ‿d ⇓ v ⋄ e [[:REDt]]
 ----------------------------------------- :: ToA
-to⧔ t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
+to⧔ t ‿d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
 
-t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e [[:REDt]]
+t ‿d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e [[:REDt]]
 -------------------------------------- :: FromA
-from⧔ t d ⇓ v ⋄ e
+from⧔ t ‿d ⇓ v ⋄ e
 
-t d ⇓ +h ⋄ e [[:REDt]]
+t ‿d ⇓ +h ⋄ e [[:REDt]]
 ------------------------------------- :: FillU
-t ⨞ () d ⇓ () ⋄ e » h ≔ ()
+t ⨞ () ‿d ⇓ () ⋄ e » h ≔ ()
 
-t d.1 ⇓ +h ⋄ e [[:REDt]]
+t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillL
-t ⨞ Inl d ⇓ +dyn d.2 ⋄ e » h ≔ Inl -dyn d.2
+t ⨞ Inl ‿d ⇓ +dyn d.2 ⋄ e » h ≔ Inl -dyn d.2
 
-t d.1 ⇓ +h ⋄ e [[:REDt]]
+t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillR
-t ⨞ Inr d ⇓ +dyn d.2 ⋄ e » h ≔ Inr -dyn d.2
+t ⨞ Inr ‿d ⇓ +dyn d.2 ⋄ e » h ≔ Inr -dyn d.2
 
-t d.1 ⇓ +h ⋄ e [[:REDt]]
+t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillP
-t ⨞ (,) d ⇓ ( +dyn d.2, +dyn d.3) ⋄ e » h ≔ (-dyn d.2,-dyn d.3)
+t ⨞ (,) ‿d ⇓ ( +dyn d.2, +dyn d.3) ⋄ e » h ≔ (-dyn d.2,-dyn d.3)
 
-t d.1 ⇓ +h ⋄ e1 [[:REDt]]
-u d.2 ⇓ ⟨v1 ❟ v2⟩ D ⋄ e2 [[:REDu]]
+t ‿d.1 ⇓ +h ⋄ e1 [[:REDt]]
+u ‿d.2 ⇓ ⟨v1 ❟ v2⟩ D ⋄ e2 [[:REDu]]
 ---------------------------------------- :: FillC
-t ⨞· u d ⇓ v1⋄ e1 » e2 » h ≔ v2
+t ⨞· u ‿d ⇓ v1⋄ e1 » e2 » h ≔ v2

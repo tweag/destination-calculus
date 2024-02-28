@@ -443,7 +443,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G ⊢ v ⋄ e : T :: :: Ty_cmd
 
   | v1 D1 | e1 ⤋ v2 D2 | e2 :: :: Sem_eff {{ tex [[v1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[v2]]_{~[[D2]]}\,|~[[e2]] }}
-  | t d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }}
+  | t ‿ d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }}
 
 parsing
 ctx_U <= ctx_S

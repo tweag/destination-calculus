@@ -33,7 +33,7 @@ Notation "T m → U" := (type_F T m U) (at level 59, m at next level, right asso
 Notation "⌊ T ⌋ m" := (type_D T m) (at level 35, m at next level, no associativity).
 
 (* Bindings and contexts : 60 - 64 *)
-Notation "x 'ː' m T" := (bndr_V x m T) (at level 60, m at next level, T at next level, no associativity).
+Notation "'ᵛ' x 'ː' m T" := (bndr_V x m T) (at level 60, m at next level, T at next level, no associativity).
 Notation "'⁺' h 'ː' m ⌊ T ⌋ n" := (bndr_D h m T n) (at level 60, h at next level, m at next level, T at next level, n at next level, no associativity).
 Notation "'⁻' h 'ː' n T" := (bndr_H h n T) (at level 60, h at next level, n at next level, T at next level, no associativity).
 
@@ -84,7 +84,7 @@ Notation "G 'ᵗ⊢' t 'ː' T" := (Ty_term G t T) (at level 70, t at next level,
 Notation "G 'ᶜ⊢' v ⋄ e 'ː' T" := (Ty_cmd G v e T) (at level 70, v at next level, e at next level, T at next level, no associativity).
 
 Notation "v1 D1 | e1 '⤋' v2 D2 | e2" := (Sem_eff v1 D1 e1 v2 D2 e2) (at level 70, D1 at next level, e1 at next level,  v2 at next level, D2 at next level, e2 at next level, no associativity).
-Notation "t d '⇓' v ⋄ e" := (Sem_term t d v e) (at level 70, d at next level, v at next level, e at next level, no associativity).
+Notation "t '‿' d '⇓' v ⋄ e" := (Sem_term t d v e) (at level 70, d at next level, v at next level, e at next level, no associativity).
 
 Notation "T 'for_some' a" := (sigT (fun a => T)) (at level 98, a at next level, no associativity).
 Notation "T 'for_some' a , b" := (sigT (fun a => (sigT (fun b => T)))) (at level 98, a at next level, b at next level, no associativity).
