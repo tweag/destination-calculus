@@ -10,6 +10,8 @@ G ⫦ e :: :: TyR_eff :: TyR_eff_ {{ com Typing of effects (raw) }} by
 G ⨄ D ⫦ v : T [[:TYRv]]
 {{ ctx_DestOnly [[G]] }}
 {{ ctx_HoleOnly [[D]] }}
+{{ mode_Valid [[m]] }}
+{{ mode_Valid [[n]] }}
 ------------------- :: A
 (¹↑·m·n)·G ⨄ {+h : m ⌊T⌋n} ⨄ (m·n)·D ⫦ h ≔ v
 
@@ -54,6 +56,7 @@ G1 ⨄ G2 ⫦ (v1, v2) : T1 ⨂ T2
 % TODO: should we augment age of holes which are below an exponential?
 % TODO: yes so that they match their destination mode?
 G ⫦ v : T [[:TYRv]]
+{{ mode_Valid [[m]] }}
 --------------------- :: E
 m·G ⫦ ⦆ m v : ! m T
 
@@ -64,16 +67,18 @@ G2 ⫦ v2 : T2 [[:TYRv2]]
 {{ ctx_DestOnly [[G2]] }} % ensures that there is no hole in G2 (that could be compensated by a dest in G1 and not appear in the final context). --> no longer need that with one-sided compensation, but needed for using -G2
 {{ ctx_SubsetEq [[-G2]] [[G1]] }} % ensures that every dest of G2 is from this ampar, not a stored dest (our system is supposed to restrict storing dests from other ampars in the right side). So we know that holes of this ampar are exactly -G2.
 ---------------- :: A
-G1 ⁻⨄⁺ G2 ⫦ ⟨v1 ❟ v2⟩ -G1 : T1 ⧔ T2
+G1 ⁻⨄⁺ G2 ⫦ ⟨v1 ❟ v2⟩ -G2 : T1 ⧔ T2
 
+{{ mode_Valid [[m]] }}
 G ⨄ { x : m T1 } ⫦ t : T2 [[:TYRt]]
 ----------------- :: F
 G ⫦ λx ⟼ t : T1 m → T2
 
-{{ ctx_Compatible [[G]] [[{ x : ¹ν T }]] }}
+{{ ctx_Compatible [[G]] [[x : ¹ν T]] }}
 -------------------- :: Var
 G ⫦ x : T
 
+{{ mode_Valid [[m]] }}
 G1 ⫦ t : T1 [[:TYRt]]
 G2 ⫦ u : T1 m → T2 [[:TYRu]]
 ----------------- :: App
@@ -84,27 +89,32 @@ G2 ⫦ u : U [[:TYRu]]
 ----------------- :: PatU
 G1 ⨄ G2 ⫦ t ; u : U
 
+{{ mode_Valid [[m]] }}
 G1 ⫦ t : T1 ⨁ T2 [[:TYRt]]
 G2 ⨄ { x1 : m T1 } ⫦ u1 : U [[:TYRu1]]
 G2 ⨄ { x2 : m T2 } ⫦ u2 : U [[:TYRu2]]
 ----------------- :: PatS
 m·G1 ⨄ G2 ⫦ t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
+{{ mode_Valid [[m]] }}
 G1 ⫦ t : T1 ⨂ T2 [[:TYRt]]
 G2 ⨄ { x1 : m T1, x2 : m T2 } ⫦ u : U [[:TYRu]]
 ----------------- :: PatP
 m·G1 ⨄ G2 ⫦ t ≻case (x1 , x2) ⟼ u : U
 
+{{ mode_Valid [[m]] }}
 G1 ⫦ t : !n T [[:TYRt]]
 G2 ⨄ { x : m·n T } ⫦ u : U [[:TYRu]]
 ----------------- :: PatE
 m·G1 ⨄ G2 ⫦ t ≻case ⦆ n x ⟼ u : U
 
+{{ mode_Valid [[m]] }}
 G1 ⫦ t : T1 ⧔ T2 [[:TYRt]]
 ¹↑·G2 ⨄ { x : ¹ν T2 } ⫦ u : U [[:TYRu]]
 -------------------------------- :: Map
 G1 ⨄ G2 ⫦ t ≻map x ⟼ u : T1 ⧔ U
 
+{{ mode_Valid [[n]] }}
 G1 ⫦ t : ⌊T1⌋n [[:TYRt]]
 G2 ⫦ u : T1 ⧔ T2 [[:TYRu]]
 ----------------------------- :: FillC
@@ -173,6 +183,7 @@ v1 G1 |e1 ⤋ v2 G2| e2 [[:EAPPv1e1]]
 --------------------- :: S
 v1 G1 | h ≔ v' » e1 ⤋ v2 G2 | h ≔ v' » e2
 
+{{ mode_Valid [[n]] }}
 G0 ⫦ v0 : T [[:TYRv0]]
 {{ ctx_Valid [[G0]] }} % we don't use simple turnstile here, because we want to allow holes
 v1[h ≔ v0] (G1 ⨄ n·G0) | e1 ⤋ v2 G2 | e2 [[:EAPPv1sube1]]
@@ -180,72 +191,72 @@ v1[h ≔ v0] (G1 ⨄ n·G0) | e1 ⤋ v2 G2 | e2 [[:EAPPv1sube1]]
 v1 G1 ⨄ { -h : n T } | h ≔ v0 » e1 ⤋ v2 G2 | e2
 
 defn
-t ‿ d ⇓ v ⋄ e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }} by
+t d ⇓ v ⋄ e :: :: Sem_term :: Sem_term_ {{ com Big-step evaluation into commands }} {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }} by
 
 ------------------ :: V
-v ‿d ⇓ v ⋄ ε
+v d ⇓ v ⋄ ε
 
-t1 ‿d.1 ⇓ v1 ⋄ e1 [[:REDt1]]
-t2 ‿d.2 ⇓ λx ⟼ u ⋄ e2 [[:REDt2]]
-u[x ≔ v1] ‿d.3 ⇓ v3 ⋄ e3 [[:REDusub]]
+t1 d.1 ⇓ v1 ⋄ e1 [[:REDt1]]
+t2 d.2 ⇓ λx ⟼ u ⋄ e2 [[:REDt2]]
+u[x ≔ v1] d.3 ⇓ v3 ⋄ e3 [[:REDusub]]
 ------------------ :: App
-t1 ≻ t2 ‿d ⇓ v3 ⋄ e1 » e2 » e3
+t1 ≻ t2 d ⇓ v3 ⋄ e1 » e2 » e3
 
-t1 ‿d.1 ⇓ () ⋄ e1 [[:REDt1]]
-t2 ‿d.2 ⇓ v2 ⋄ e2 [[:REDt2]]
+t1 d.1 ⇓ () ⋄ e1 [[:REDt1]]
+t2 d.2 ⇓ v2 ⋄ e2 [[:REDt2]]
 ----------------------- :: PatU
-t1 ; t2 ‿d ⇓ v2 ⋄ e1 » e2
+t1 ; t2 d ⇓ v2 ⋄ e1 » e2
 
-t ‿d.1 ⇓ Inl v1 ⋄ e1 [[:REDt]]
-u1[x1 ≔ v1] ‿d.2 ⇓ v2 ⋄ e2 [[:REDu1sub]]
+t d.1 ⇓ Inl v1 ⋄ e1 [[:REDt]]
+u1[x1 ≔ v1] d.2 ⇓ v2 ⋄ e2 [[:REDu1sub]]
 ----------------------- :: PatL
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ‿d ⇓ v2 ⋄ e1 » e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } d ⇓ v2 ⋄ e1 » e2
 
-t ‿d.1 ⇓ Inr v1 ⋄ e1 [[:REDt]]
-u2[x2 ≔ v1] ‿d.2 ⇓ v2 ⋄ e2 [[:REDu2sub]]
+t d.1 ⇓ Inr v1 ⋄ e1 [[:REDt]]
+u2[x2 ≔ v1] d.2 ⇓ v2 ⋄ e2 [[:REDu2sub]]
 ----------------------- :: PatR
-t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } ‿d ⇓ v2 ⋄ e1 » e2
+t ≻case { Inl x1 ⟼ u1, Inr x2 ⟼ u2 } d ⇓ v2 ⋄ e1 » e2
 
-t ‿d.1 ⇓ (v1,v2) ⋄ e1 [[:REDt]]
-u[x1 ≔ v1][x2 ≔ v2] ‿d.2 ⇓ v2 ⋄ e2 [[:REDusub]]
+t d.1 ⇓ (v1,v2) ⋄ e1 [[:REDt]]
+u[x1 ≔ v1][x2 ≔ v2] d.2 ⇓ v2 ⋄ e2 [[:REDusub]]
 ----------------------- :: PatP
-t ≻case (x1,x2) ⟼ u ‿d ⇓ v2 ⋄ e1 » e2
+t ≻case (x1,x2) ⟼ u d ⇓ v2 ⋄ e1 » e2
 
 % Can e1 have effect on the content of the ampar? I don't think so, but maybe
-t ‿d.1 ⇓ ⟨ v1 ❟ v2 ⟩ D ⋄ e1 [[:REDt]]
-u[x ≔ v1] ‿d.2 ⇓ v3 ⋄ e2 [[:REDusub]]
+t d.1 ⇓ ⟨ v1 ❟ v2 ⟩ D ⋄ e1 [[:REDt]]
+u[x ≔ v1] d.2 ⇓ v3 ⋄ e2 [[:REDusub]]
 v2 D |e2 ⤋ v4 D'| e3 [[:EAPPv2e2]]
 ---------------------------------- :: Map
-t ≻map x ⟼ u ‿d ⇓ ⟨v3 ❟ v4⟩ D' ⋄ e1 » e3
+t ≻map x ⟼ u d ⇓ ⟨v3 ❟ v4⟩ D' ⋄ e1 » e3
 
 -------------------------- :: Alloc
-alloc T ‿d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
+alloc T d ⇓ ⟨ +dyn d ❟ -dyn d ⟩ { -dyn d : ¹ν T } ⋄ ε
 
-t ‿d ⇓ v ⋄ e [[:REDt]]
+t d ⇓ v ⋄ e [[:REDt]]
 ----------------------------------------- :: ToA
-to⧔ t ‿d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
+to⧔ t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e
 
-t ‿d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e [[:REDt]]
+t d ⇓ ⟨ () ❟ v ⟩ {} ⋄ e [[:REDt]]
 -------------------------------------- :: FromA
-from⧔ t ‿d ⇓ v ⋄ e
+from⧔ t d ⇓ v ⋄ e
 
-t ‿d ⇓ +h ⋄ e [[:REDt]]
+t d ⇓ +h ⋄ e [[:REDt]]
 ------------------------------------- :: FillU
-t ⨞ () ‿d ⇓ () ⋄ e » h ≔ ()
+t ⨞ () d ⇓ () ⋄ e » h ≔ ()
 
-t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
+t d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillL
-t ⨞ Inl ‿d ⇓ +dyn d.2 ⋄ e » h ≔ Inl -dyn d.2
+t ⨞ Inl d ⇓ +dyn d.2 ⋄ e » h ≔ Inl -dyn d.2
 
-t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
+t d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillR
-t ⨞ Inr ‿d ⇓ +dyn d.2 ⋄ e » h ≔ Inr -dyn d.2
+t ⨞ Inr d ⇓ +dyn d.2 ⋄ e » h ≔ Inr -dyn d.2
 
-t ‿d.1 ⇓ +h ⋄ e [[:REDt]]
+t d.1 ⇓ +h ⋄ e [[:REDt]]
 --------------------------------------- :: FillP
-t ⨞ (,) ‿d ⇓ ( +dyn d.2, +dyn d.3) ⋄ e » h ≔ (-dyn d.2,-dyn d.3)
+t ⨞ (,) d ⇓ ( +dyn d.2, +dyn d.3) ⋄ e » h ≔ (-dyn d.2,-dyn d.3)
 
-t ‿d.1 ⇓ +h ⋄ e1 [[:REDt]]
-u ‿d.2 ⇓ ⟨v1 ❟ v2⟩ D ⋄ e2 [[:REDu]]
+t d.1 ⇓ +h ⋄ e1 [[:REDt]]
+u d.2 ⇓ ⟨v1 ❟ v2⟩ D ⋄ e2 [[:REDu]]
 ---------------------------------------- :: FillC
-t ⨞· u ‿d ⇓ v1⋄ e1 » e2 » h ≔ v2
+t ⨞· u d ⇓ v1⋄ e1 » e2 » h ≔ v2

@@ -51,6 +51,14 @@ Proof.
   decide equality.
 Defined.
 
+Definition mul_IsSubtype (p1 p2: _mul) : Prop := p1 = p2 \/
+  match p1, p2 with
+  | Ur, _ => True
+  | _, _ => False
+  end.
+
+(* Will be aliased later to ext_nat *)
+
 Theorem mode_eq_dec : forall (m1 m2: option (_mul * ext_nat)), {m1 = m2} + {m1 <> m2}.
 Proof.
   decide equality. destruct a, p.
@@ -145,6 +153,11 @@ Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type
 Definition age_eq_dec : forall (a1 a2: age), {a1 = a2} + {a1 <> a2} := ext_eq_dec.
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
+Definition age_IsSubtype (a1 a2: age) : Prop := a1 = a2 \/
+  match a1, a2 with
+  | Inf, _ => True
+  | _, _ => False
+  end.
 
 Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
@@ -173,6 +186,18 @@ Definition mode_times (m1 m2: mode) : mode :=
 
 Definition mode_times' (ml: list mode) : mode :=
   List.fold_right mode_times (Some (Lin, Fin 0)) ml.
+
+Definition mode_IsSubtype (m1 m2: mode) : Prop :=
+  match m1, m2 with
+  | _, None => True (* anything can be weakened to error *)
+  | Some (p1, a1), Some (p2, a2) => mul_IsSubtype p1 p2 /\ age_IsSubtype a1 a2
+  | _, _ => False
+  end.
+
+Definition mode_Valid (m : mode) : Prop := match m with
+  | None => False
+  | _ => True
+  end.
 
 Definition bndr_name (b : bndr) : name :=
   match b with
@@ -226,7 +251,34 @@ Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
 Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
   ~CtxM.In (name_HD h) G.
-Definition ctx_Compatible (G1 G2 : CtxM.t bndr) : Prop := True. (* TODO : define *)
+Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> exists a, bndr_mode b = Some (Ur, a).
+Definition ctx_Compatible (G : CtxM.t bndr) (b' : bndr) : Prop :=
+  match CtxM.find (bndr_name b') G with
+  | None => False
+  | Some b => (* assert (bndr_name b) = (bndr_name b') *)
+    match b, b' with
+    | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
+      (* assert x1 = x2 *)
+      match type_eq_dec T1 T2 with
+      | left _ => (* true *) mode_IsSubtype m1 m2 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
+      | right _ => (* false *) False
+      end
+    | bndr_D h1 m11 T1 m12, bndr_D h2 m21 T2 m22 =>
+      (* assert h1 = h2 *)
+      match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
+      | left _, left _ => (* true *) mode_IsSubtype m11 m21 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
+      | _, _ => (* false *) False
+      end
+    | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
+      (* assert h1 = h2 *)
+      match type_eq_dec T1 T2 with
+      | left _ => (* true *) mode_IsSubtype m1 m2 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
+      | right _ => (* false *) False
+      end
+    | _, _ => False
+    end
+  end.
 
 Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> bndr_name b = n.
 
@@ -358,11 +410,11 @@ val, v :: 'val_' ::= {{ com Term value }}
   | ⦆ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | ⟨ v1 ❟ v2 ⟩ D :: :: A {{ com Ampar }} {{ tex \ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[v2]]\ottsctor{\rangle}_{[[D]]} }}
-  | v [ e ] :: M :: Effect {{ coq (val_effapp [[v]] [[e]]) }}
+  | v [ hf ] :: M :: Effect {{ coq (val_hfill [[v]] [[hf]]) }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 hf, f :: 'hf_' ::= {{ com Hole filling }}
-  | h ≔ v :: :: A {{ tex [[h]]\coloneq[[v]] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }}
+  | h ≔ v :: :: F {{ tex [[h]]\coloneq[[v]] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }}
 
 grammar
 eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list hf }}
@@ -373,10 +425,67 @@ eff, e :: 'eff_' ::= {{ com Effect }} {{ tex \ottseff{[[eff]]} }} {{ coq list hf
 
 embed
 {{ coq
-Definition term_sub (t: term) (x : tmv) (v : val) : term := t.
-(* TODO *)
-Definition val_effapp (v : val) (e : eff) : val := v.
-(* TODO *)
+Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
+  | term_Val v' => term_Val (val_sub_name v' n v)
+  | term_Var y => match Name_as_UDT.eq_dec n (name_X y) with
+    | left _ => term_Val v
+    | right _ => term_Var y
+    end
+  | term_App t1 t2 => term_App (term_sub_name t1 n v) (term_sub_name t2 n v)
+  | term_PatU t1 t2 => term_PatU (term_sub_name t1 n v) (term_sub_name t2 n v)
+  | term_PatS t' x1 u1 x2 u2 =>
+    let u1' := match Name_as_UDT.eq_dec n (name_X x1) with
+      | left _ => (* shadowing *) u1
+      | right _ => term_sub_name u1 n v
+    end in
+    let u2' := match Name_as_UDT.eq_dec n (name_X x2) with
+      | left _ => (* shadowing *) u2
+      | right _ => term_sub_name u2 n v
+    end in term_PatS (term_sub_name t' n v) x1 u1' x2 u2'
+  | term_PatP t' x1 x2 u => match Name_as_UDT.eq_dec n (name_X x1), Name_as_UDT.eq_dec n (name_X x2) with
+    | right _, right _ => term_PatP (term_sub_name t' n v) x1 x2 (term_sub_name u n v)
+    | _, _ => (* at least one shadowing *) term_PatP (term_sub_name t' n v) x1 x2 u
+    end
+  | term_PatE t' m x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+      | left _ => (* shadowing *) u
+      | right _ => term_sub_name u n v
+    end in term_PatE (term_sub_name t' n v) m x' u'
+  | term_Map t' x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+      | left _ => (* shadowing *) u
+      | right _ => term_sub_name u n v
+    end in term_Map (term_sub_name t' n v) x' u'
+  | term_ToA t' => term_ToA (term_sub_name t' n v)
+  | term_FromA t' => term_FromA (term_sub_name t' n v)
+  | term_Alloc T => term_Alloc T
+  | term_FillU t1 => term_FillU (term_sub_name t1 n v)
+  | term_FillL t1 => term_FillL (term_sub_name t1 n v)
+  | term_FillR t1 => term_FillR (term_sub_name t1 n v)
+  | term_FillP t1 => term_FillP (term_sub_name t1 n v)
+  | term_FillE t1 m => term_FillE (term_sub_name t1 n v) m
+  | term_FillC t u => term_FillC (term_sub_name t n v) (term_sub_name u n v)
+end
+with val_sub_name (v': val) (n:name) (v:val) : val := match v' with
+  | val_F x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+    | left _ => (* shadowing *) u
+    | right _ => term_sub_name u n v
+    end in val_F x' u'
+  | val_H h => match Name_as_UDT.eq_dec n (name_HD h) with
+    | left _ => v
+    | right _ => val_H h
+  end
+  | val_D h => val_D h
+  | val_U => val_U
+  | val_L v'' => val_L (val_sub_name v'' n v)
+  | val_R v'' => val_R (val_sub_name v'' n v)
+  | val_E m v'' => val_E m (val_sub_name v'' n v)
+  | val_P v1 v2 => val_P (val_sub_name v1 n v) (val_sub_name v2 n v)
+  | val_A v1 v2 D => val_A (val_sub_name v1 n v) (val_sub_name v2 n v) D
+end.
+
+Definition term_sub (t: term) (x:tmv) (v:val) : term := term_sub_name t (name_X x) v.
+Definition val_hfill (v' : val) (f : hf) : val := match f with
+  | hf_F h v => val_sub_name v' (name_HD h) v
+  end.
 }}
 
 grammar
@@ -432,7 +541,9 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | ctx_Valid G :: :: ctx_Valid {{ tex \texttt{ctx\_Valid}~[[G]] }}
   | ctx_SubsetEq G1 G2 :: :: ctx_SubsetEq {{ tex \texttt{ctx\_SubsetEq}~[[G1]]~[[G2]] }}
   | ctx_HdnmNotMem h G :: :: ctx_HdnmNotMem {{ tex \texttt{ctx\_NotMem}~[[h]]~[[G]] }}
-  | ctx_Compatible G1 G2 :: :: ctx_Compatible {{ tex \texttt{ctx\_Compatible}~[[G1]]~[[G2]] }}
+  | ctx_Compatible G b :: :: ctx_Compatible {{ tex \texttt{ctx\_Compatible}~[[G]]~[[b]] }}
+  | ctx_OnlyUr G :: :: ctx_OnlyUr {{ tex \texttt{ctx\_OnlyUr}~[[G]] }}
+  | mode_Valid m :: :: mode_Valid {{ tex \texttt{mode\_Valid}~[[m]] }}
 
   | ctx_Disjoint G1 G2 :: :: ctx_Disjoint {{ tex \texttt{ctx\_Disjoint}~[[G1]]~[[G2]] }} {{ com TODO: Just for legacy proof; remove }}
 
@@ -443,7 +554,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G ⊢ v ⋄ e : T :: :: Ty_cmd
 
   | v1 D1 | e1 ⤋ v2 D2 | e2 :: :: Sem_eff {{ tex [[v1]]_{~[[D1]]}\,|~[[e1]]~~[[⤋]]~~[[v2]]_{~[[D2]]}\,|~[[e2]] }}
-  | t ‿ d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }}
+  | t d ⇓ v ⋄ e :: :: Sem_term {{ tex [[t]]~_{\scriptscriptstyle[[d]]\!\!\!\!\!}[[⇓]][[v]][[⋄]][[e]] }}
 
 parsing
 ctx_U <= ctx_S
