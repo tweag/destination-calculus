@@ -10,8 +10,8 @@ G ⫦ e :: :: TyR_eff :: TyR_eff_ {{ com Typing of effects (raw) }} by
 G ⨄ D ⫦ v : T [[:TYRv]]
 {{ ctx_DestOnly [[G]] }}
 {{ ctx_HoleOnly [[D]] }}
-{{ mode_Valid [[m]] }}
-{{ mode_Valid [[n]] }}
+{{ mode_IsValid [[m]] }}
+{{ mode_IsValid [[n]] }}
 ------------------- :: A
 (¹↑·m·n)·G ⨄ {+h : m ⌊T⌋n} ⨄ (m·n)·D ⫦ h ≔ v
 
@@ -24,7 +24,7 @@ defn
 G ⊢ e :: :: Ty_eff :: Ty_eff_ {{ com Typing of effects (valid ones only) }} by
 
 G ⫦ e [[:TYRe]]
-{{ ctx_Valid [[G]] }}
+{{ ctx_IsValid [[G]] }}
 ----------------------- :: T
 G ⊢ e
 
@@ -56,7 +56,7 @@ G1 ⨄ G2 ⫦ (v1, v2) : T1 ⨂ T2
 % TODO: should we augment age of holes which are below an exponential?
 % TODO: yes so that they match their destination mode?
 G ⫦ v : T [[:TYRv]]
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 --------------------- :: E
 m·G ⫦ ⦆ m v : ! m T
 
@@ -69,7 +69,7 @@ G2 ⫦ v2 : T2 [[:TYRv2]]
 ---------------- :: A
 G1 ⁻⨄⁺ G2 ⫦ ⟨v1 ❟ v2⟩ -G2 : T1 ⧔ T2
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G ⨄ { x : m T1 } ⫦ t : T2 [[:TYRt]]
 ----------------- :: F
 G ⫦ λx ⟼ t : T1 m → T2
@@ -78,7 +78,7 @@ G ⫦ λx ⟼ t : T1 m → T2
 -------------------- :: Var
 G ⫦ x : T
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G1 ⫦ t : T1 [[:TYRt]]
 G2 ⫦ u : T1 m → T2 [[:TYRu]]
 ----------------- :: App
@@ -89,32 +89,32 @@ G2 ⫦ u : U [[:TYRu]]
 ----------------- :: PatU
 G1 ⨄ G2 ⫦ t ; u : U
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G1 ⫦ t : T1 ⨁ T2 [[:TYRt]]
 G2 ⨄ { x1 : m T1 } ⫦ u1 : U [[:TYRu1]]
 G2 ⨄ { x2 : m T2 } ⫦ u2 : U [[:TYRu2]]
 ----------------- :: PatS
 m·G1 ⨄ G2 ⫦ t ≻case { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G1 ⫦ t : T1 ⨂ T2 [[:TYRt]]
 G2 ⨄ { x1 : m T1, x2 : m T2 } ⫦ u : U [[:TYRu]]
 ----------------- :: PatP
 m·G1 ⨄ G2 ⫦ t ≻case (x1 , x2) ⟼ u : U
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G1 ⫦ t : !n T [[:TYRt]]
 G2 ⨄ { x : m·n T } ⫦ u : U [[:TYRu]]
 ----------------- :: PatE
 m·G1 ⨄ G2 ⫦ t ≻case ⦆ n x ⟼ u : U
 
-{{ mode_Valid [[m]] }}
+{{ mode_IsValid [[m]] }}
 G1 ⫦ t : T1 ⧔ T2 [[:TYRt]]
 ¹↑·G2 ⨄ { x : ¹ν T2 } ⫦ u : U [[:TYRu]]
 -------------------------------- :: Map
 G1 ⨄ G2 ⫦ t ≻map x ⟼ u : T1 ⧔ U
 
-{{ mode_Valid [[n]] }}
+{{ mode_IsValid [[n]] }}
 G1 ⫦ t : ⌊T1⌋n [[:TYRt]]
 G2 ⫦ u : T1 ⧔ T2 [[:TYRu]]
 ----------------------------- :: FillC
@@ -155,7 +155,7 @@ defn
 G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms (valid ones only) }} by
 
 G ⫦ t : T [[:TYRt]]
-{{ ctx_Valid [[G]] }}
+{{ ctx_IsValid [[G]] }}
 {{ ctx_NoHole [[G]] }}
 --------------------- :: T
 G ⊢ t : T
@@ -183,9 +183,9 @@ v1 G1 |e1 ⤋ v2 G2| e2 [[:EAPPv1e1]]
 --------------------- :: S
 v1 G1 | h ≔ v' » e1 ⤋ v2 G2 | h ≔ v' » e2
 
-{{ mode_Valid [[n]] }}
+{{ mode_IsValid [[n]] }}
 G0 ⫦ v0 : T [[:TYRv0]]
-{{ ctx_Valid [[G0]] }} % we don't use simple turnstile here, because we want to allow holes
+{{ ctx_IsValid [[G0]] }} % we don't use simple turnstile here, because we want to allow holes
 v1[h ≔ v0] (G1 ⨄ n·G0) | e1 ⤋ v2 G2 | e2 [[:EAPPv1sube1]]
 --------------------- :: F
 v1 G1 ⨄ { -h : n T } | h ≔ v0 » e1 ⤋ v2 G2 | e2

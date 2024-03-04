@@ -44,11 +44,11 @@ Proof.
   decide equality.
 Defined.
 
-Definition mul_IsSubtype (p1 p2: _mul) : Prop := p1 = p2 \/
-  match p1, p2 with
-  | Ur, _ => True
-  | _, _ => False
-  end.
+Inductive mul_IsSubtype : _mul -> _mul -> Type :=
+  | mul_IsSubtypeProofEq : forall (p : _mul), mul_IsSubtype p p
+  | mul_IsSubtypeProofUr : forall (p2 : _mul), mul_IsSubtype Ur p2.
+Theorem mul_IsSubtype_dec : forall (p1 p2: _mul), mul_IsSubtype p1 p2 + (notT (mul_IsSubtype p1 p2)).
+Proof. Admitted.
 
 (* Will be aliased later to ext_nat *)
 
@@ -124,6 +124,8 @@ Module Name_as_UDT <: UsualDecidableType.
 
 End Name_as_UDT.
 
+Definition name_eq_dec := Name_as_UDT.eq_dec.
+
 Module Name_as_UDTOrig := Backport_DT(Name_as_UDT).
 Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
 
@@ -132,11 +134,10 @@ Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type
 Definition age_eq_dec : forall (a1 a2: age), {a1 = a2} + {a1 <> a2} := ext_eq_dec.
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
-Definition age_IsSubtype (a1 a2: age) : Prop := a1 = a2 \/
-  match a1, a2 with
-  | Inf, _ => True
-  | _, _ => False
-  end.
+Inductive age_IsSubtype : age -> age -> Type :=
+  age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
+Theorem age_IsSubtype_dec : forall (a1 a2: age), age_IsSubtype a1 a2 + (notT (age_IsSubtype a1 a2)).
+Proof. Admitted.
 
 Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
@@ -166,17 +167,42 @@ Definition mode_times (m1 m2: mode) : mode :=
 Definition mode_times' (ml: list mode) : mode :=
   List.fold_right mode_times (Some (Lin, Fin 0)) ml.
 
-Definition mode_IsSubtype (m1 m2: mode) : Prop :=
-  match m1, m2 with
-  | _, None => True (* anything can be weakened to error *)
-  | Some (p1, a1), Some (p2, a2) => mul_IsSubtype p1 p2 /\ age_IsSubtype a1 a2
-  | _, _ => False
-  end.
+Inductive mode_IsSubtype : mode -> mode -> Type :=
+  | mode_IsSubtypeProofNone : forall (m1 : mode), mode_IsSubtype m1 None
+  | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
+Theorem mode_IsSubtype_dec : forall (m1 m2: mode), mode_IsSubtype m1 m2 + (notT (mode_IsSubtype m1 m2)).
+Proof. Admitted.
 
-Definition mode_Valid (m : mode) : Prop := match m with
-  | None => False
-  | _ => True
-  end.
+Inductive mode_IsValid : mode -> Type :=
+  mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
+Theorem mode_IsValid_dec : forall (m : mode), mode_IsValid m + (notT (mode_IsValid m)).
+Proof.
+  intros m. destruct m as [pa|].
+  - left. exact (mode_IsValidProof pa).
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive mode_IsLin : mode -> Type :=
+  mode_IsLinProof : forall (a : age), mode_IsLin (Some (Lin, a)).
+Theorem mode_IsLin_dec : forall (m : mode), mode_IsLin m + (notT (mode_IsLin m)).
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct p.
+    + left. exact (mode_IsLinProof a).
+    + right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive mode_IsUr : mode -> Type :=
+  mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
+Theorem mode_IsUr_dec : forall (m : mode), mode_IsUr m + (notT (mode_IsUr m)).
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct p.
+    + right. intros contra. inversion contra.
+    + left. exact (mode_IsUrProof a).
+  - right. intros contra. inversion contra.
+Qed.
 
 Definition bndr_name (b : bndr) : name :=
   match b with
@@ -197,114 +223,157 @@ Definition bndr_update_mode (b:bndr) (m:mode) := match b with
   | bndr_D h _ T m2 => bndr_D h m T m2
   end.
 
-Definition bndr_IsDest (b: bndr) : Prop :=
-  match b with
-    | bndr_D _ _ _ _ => True
-    | _ => False
-  end.
-Definition bndr_IsVar (b: bndr) : Prop :=
-  match b with
-    | bndr_V _ _ _ => True
-    | _ => False
-  end.
-Definition bndr_IsHole (b: bndr) : Prop :=
-  match b with
-    | bndr_H _ _ _ => True
-    | _ => False
-  end.
-Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
+Inductive bndr_IsVar : bndr -> Type :=
+  bndr_IsVarProof : forall x m T, bndr_IsVar (bndr_V x m T).
+Theorem bndr_IsVar_dec : forall (b: bndr), bndr_IsVar b + (notT (bndr_IsVar b)).
+Proof.
+  intros b. destruct b.
+  - left. exact (bndr_IsVarProof x m T).
+  - right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive bndr_IsDest : bndr -> Type :=
+  bndr_IsDestProof : forall h m T n, bndr_IsDest (bndr_D h m T n).
+Theorem bndr_IsDest_dec : forall (b: bndr), bndr_IsDest b + (notT (bndr_IsDest b)).
+Proof.
+  intros b. destruct b.
+  - right. intros contra. inversion contra.
+  - left. exact (bndr_IsDestProof h m T n).
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive bndr_IsHole : bndr -> Type :=
+  bndr_IsHoleProof : forall h m T, bndr_IsHole (bndr_H h m T).
+Theorem bndr_IsHole_dec : forall (b: bndr), bndr_IsHole b + (notT (bndr_IsHole b)).
+Proof.
+  intros b. destruct b.
+  - right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+  - left. exact (bndr_IsHoleProof h n T).
+Qed.
+
+Definition ctx_DestOnly (G : CtxM.t bndr) : Type :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
-Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
+Definition ctx_HoleOnly (G : CtxM.t bndr) : Type :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
-Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
+Definition ctx_VarOnly (G : CtxM.t bndr) : Type :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
-Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~bndr_IsDest b.
-Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~bndr_IsHole b.
-Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~bndr_IsVar b.
-Definition ctx_Valid (G: CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> exists m, bndr_mode b = Some m.
-Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
+Definition ctx_NoDest (G : CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsDest b).
+Definition ctx_NoHole (G : CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsHole b).
+Definition ctx_NoVar (G : CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsVar b).
+Definition ctx_IsValid (G: CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
+Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Type :=
   forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
-Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
+Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Type :=
   ~CtxM.In (name_HD h) G.
-Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> exists a, bndr_mode b = Some (Ur, a).
-Definition ctx_Compatible (G : CtxM.t bndr) (b' : bndr) : Prop :=
-  match CtxM.find (bndr_name b') G with
-  | None => False
-  | Some b => (* assert (bndr_name b) = (bndr_name b') *)
-    match b, b' with
-    | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
-      (* assert x1 = x2 *)
-      match type_eq_dec T1 T2 with
-      | left _ => (* true *) mode_IsSubtype m1 m2 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
-      | right _ => (* false *) False
-      end
-    | bndr_D h1 m11 T1 m12, bndr_D h2 m21 T2 m22 =>
-      (* assert h1 = h2 *)
-      match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
-      | left _, left _ => (* true *) mode_IsSubtype m11 m21 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
-      | _, _ => (* false *) False
-      end
-    | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
-      (* assert h1 = h2 *)
-      match type_eq_dec T1 T2 with
-      | left _ => (* true *) mode_IsSubtype m1 m2 /\ ctx_OnlyUr (CtxM.remove (bndr_name b') G)
-      | right _ => (* false *) False
-      end
-    | _, _ => False
-    end
-  end.
+Definition ctx_OnlyLin (G : CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
+Definition ctx_OnlyUr (G : CtxM.t bndr) : Type :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsUr (bndr_mode b).
+Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Type :=
+  | ctx_CompatibleProofV : forall G x m1 m2 T, CtxM.MapsTo (name_X x) (bndr_V x m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_X x) G) -> ctx_Compatible G (bndr_V x m2 T)
+  | ctx_CompatibleProofD : forall G h m11 m2 m21 T, CtxM.MapsTo (name_HD h) (bndr_D h m11 T m2) G -> mode_IsSubtype m11 m21 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_D h m21 T m2)
+  | ctx_CompatibleProofH : forall G h m1 m2 T, CtxM.MapsTo (name_HD h) (bndr_H h m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_H h m2 T).
 
-Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> bndr_name b = n.
+Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> (bndr_name b) = n.
 
-Definition ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr :=
-  match CtxM.find (bndr_name b') G with
-  | None => CtxM.add (bndr_name b') b' G
-  | Some b => let new_bndr := match b, b' with
-    | bndr_V x1 m1 T1, bndr_V x2 m2 T2 =>
-      (* assert x1 = x2 *)
-      match type_eq_dec T1 T2 with
-      | left _ => (* true *) bndr_V x1 (mode_plus m1 m2) T1
-      | right _ => bndr_update_mode b None
-      end
-    | bndr_D h1 m11 T1 m12, bndr_D h2 m21 T2 m22 =>
-      (* assert h1 = h2 *)
-      match mode_eq_dec m12 m22, type_eq_dec T1 T2 with
-      | left _, left _ => (* true *) bndr_D h1 (mode_plus m11 m21) T1 m12
-      | _, _ => (* false *) bndr_update_mode b None
-      end
-    | bndr_H h1 m1 T1, bndr_H h2 m2 T2 =>
-      (* assert h1 = h2 *)
-      match type_eq_dec T1 T2 with
-      | left _ => (* true *) bndr_H h1 (mode_plus m1 m2) T1
-      | right _ => bndr_update_mode b None
-      end
-    | _, _ => bndr_update_mode b None
-    end
-    in CtxM.add (bndr_name b') new_bndr G
-  end.
+Inductive bndr_CompatibleTypes : bndr -> bndr -> Type :=
+  | bndr_CompatibleTypesProofV : forall x m1 m2 T, bndr_CompatibleTypes (bndr_V x m1 T) (bndr_V x m2 T)
+  | bndr_CompatibleTypesProofD : forall h m11 m2 m21 T, bndr_CompatibleTypes (bndr_D h m11 T m2) (bndr_D h m21 T m2)
+  | bndr_CompatibleTypesProofH : forall h m1 m2 T, bndr_CompatibleTypes (bndr_H h m1 T) (bndr_H h m2 T).
 
-Definition ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr :=
-  let fallback := ctx_add b' G in
-  match CtxM.find (bndr_name b') G with
-  | None => fallback
-  | Some b => match b, b' with
-    | bndr_H h1 m1 T1, bndr_D h2 m21 T2 m22 =>
-      (* assert h1 = h2 *)
-      match mode_eq_dec (mode_plus m21 m22) m1, type_eq_dec T1 T2 with
-      | left _, left _ => (* true *) match m1 with
-        | Some (Lin, _) => CtxM.remove (bndr_name b') G
-        | _ => fallback
-        end
-      | _, _ => (* false *) fallback
-      end
-    | _, _ => fallback
-    end
-  end.
+Theorem bndr_CompatibleTypes_dec : forall (b b' : bndr), bndr_CompatibleTypes b b'+notT (bndr_CompatibleTypes b b').
+Proof.
+  intros b b'. assert ({bndr_name b = bndr_name b'} + {bndr_name b <> bndr_name b'}) by apply name_eq_dec. destruct H as [name_eq|name_neq].
+  - unfold bndr_name in name_eq. destruct b eqn:Hb in name_eq. destruct b' eqn:Hb' in name_eq. assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq].
+    * left. assert (x = x0) as x_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym x_eq). rewrite (eq_sym T_eq). exact (bndr_CompatibleTypesProofV x m m0 T).
+    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
+    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
+    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
+    * destruct b' eqn:Hb' in name_eq. congruence.
+      ** assert (h = h0) as h_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym h_eq). assert ({n = n0} + {n <> n0}) by apply mode_eq_dec. destruct H as [n_eq|n_neq]. assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq]. left. rewrite (eq_sym T_eq). rewrite (eq_sym n_eq). exact (bndr_CompatibleTypesProofD h m n m0 T).
+      right. intros contra. inversion contra. congruence. right. intros contra. inversion contra. congruence.
+      ** right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
+    * destruct b' eqn:Hb' in name_eq. congruence.
+      ** right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
+      ** assert (h = h0) as h_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym h_eq). assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq]. left. rewrite (eq_sym T_eq).  exact (bndr_CompatibleTypesProofH h n n0 T).
+      right. intros contra. inversion contra. congruence.
+  - right. intros contra. inversion contra. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence.
+Qed.
+
+Inductive bndr_IncompatibleTypes : bndr -> bndr -> Type :=
+  | bndr_IncompatibleTypesProofV : forall x m1 m2 T1 T2, T1 <> T2 -> bndr_IncompatibleTypes (bndr_V x m1 T1) (bndr_V x m2 T2)
+  | bndr_IncompatibleTypesProofD : forall h m11 m12 m21 m22 T1 T2, (type_D T1 m12) <> (type_D T2 m22) -> bndr_IncompatibleTypes (bndr_D h m11 T1 m12) (bndr_D h m21 T2 m22)
+  | bndr_IncompatibleTypesProofH : forall h m1 m2 T1 T2, T1 <> T2 -> bndr_IncompatibleTypes (bndr_H h m1 T1) (bndr_H h m2 T2).
+
+Theorem bndr_IncompatibleTypes_dec : forall (b b' : bndr), bndr_IncompatibleTypes b b'+ (notT (bndr_IncompatibleTypes b b')).
+Proof. Admitted.
+
+Inductive bndr_Interact : bndr -> bndr -> Type :=
+  bndr_InteractProof : forall h m1 m21 m22 T, (m1 = (mode_plus m21 m22)) -> mode_IsLin m1 -> bndr_Interact (bndr_H h m1 T) (bndr_D h m21 T m22). (* case bndr_DestHoleOrHoleDestProofHDInt *)
+
+Inductive bndr_DestHoleOrHoleDest : bndr -> bndr -> Type :=
+  | bndr_DestHoleOrHoleDestProofHDInt : forall b b', bndr_Interact b b' -> bndr_DestHoleOrHoleDest b b'
+  | bndr_DestHoleOrHoleDestProofHDNoInt : forall h m1 m21 m22 T1 T2, ((m1 <> (mode_plus m21 m22)) + (notT (mode_IsLin m1)) + (T1 <> T2)) -> bndr_DestHoleOrHoleDest (bndr_H h m1 T1) (bndr_D h m21 T2 m22)
+  | bndr_DestHoleOrHoleDestProofDH : forall h m11 m12 m2 T1 T2, bndr_DestHoleOrHoleDest (bndr_D h m11 T1 m12) (bndr_H h m2 T2).
+
+Theorem bndr_DestHoleOrHoleDest_dec : forall (b b' : bndr), bndr_DestHoleOrHoleDest b b'+ (notT (bndr_DestHoleOrHoleDest b b')).
+Proof. Admitted.
+
+Theorem bndr_AddCases_dec : forall (b b' : bndr), (bndr_name b = bndr_name b') ->
+    ((bndr_CompatibleTypes b b' * (notT (bndr_IncompatibleTypes b b')) * (notT (bndr_DestHoleOrHoleDest b b')))
+  + ((notT (bndr_CompatibleTypes b b')) * bndr_IncompatibleTypes b b' * (notT (bndr_DestHoleOrHoleDest b b')))
+  + ((notT (bndr_CompatibleTypes b b')) * (notT (bndr_IncompatibleTypes b b')) * bndr_DestHoleOrHoleDest b b')).
+Proof. Admitted.
+
+Theorem ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr.
+Proof.
+  destruct (CtxM.find (bndr_name b') G) eqn:Hr.
+  * (* Some b *)
+    assert (CtxM.MapsTo (bndr_name b') b G). apply CtxM.find_2. exact Hr.
+    apply ctx_Coherent in H. destruct (bndr_AddCases_dec b b') as [ [caseComp|caseIncomp]|caseDHHD]. exact H.
+    ** destruct caseComp as [ [Comp nIncomp] nDHHD]. destruct Comp.
+      (* V *) exact (CtxM.add (name_X x) (bndr_V x (mode_plus m1 m2) T) G).
+      (* D *) exact (CtxM.add (name_HD h) (bndr_D h (mode_plus m11 m21) T m2) G).
+      (* H *) exact (CtxM.add (name_HD h) (bndr_H h (mode_plus m1 m2) T) G).
+    ** destruct caseIncomp as [ [nComp Incomp] nDHHD]. destruct Incomp.
+      (* V *) exact (CtxM.add (name_X x) (bndr_V x None T1) G).
+      (* D *) exact (CtxM.add (name_HD h) (bndr_D h None T1 m12) G).
+      (* H *) exact (CtxM.add (name_HD h) (bndr_H h None T1) G).
+    ** destruct caseDHHD as [ [nComp nIncomp] DHHD]. destruct DHHD.
+      (* HDInt *) destruct b0. exact (CtxM.add (name_HD h) (bndr_H h None T) G).
+      (* HDNoInt *) exact (CtxM.add (name_HD h) (bndr_H h None T1) G).
+      (* DH *) exact (CtxM.add (name_HD h) (bndr_D h None T1 m12) G).
+  * (* None *)
+    exact (CtxM.add (bndr_name b') b' G).
+Defined.
+
+Theorem ctx_add_hdint (b':bndr) (G: CtxM.t bndr) : CtxM.t bndr.
+Proof.
+  destruct (CtxM.find (bndr_name b') G) eqn:Hr.
+  * (* Some b *)
+    assert (CtxM.MapsTo (bndr_name b') b G). apply CtxM.find_2. exact Hr.
+    apply ctx_Coherent in H. destruct (bndr_AddCases_dec b b') as [ [caseComp|caseIncomp]|caseDHHD]. exact H.
+    ** destruct caseComp as [ [Comp nIncomp] nDHHD]. destruct Comp.
+      (* V *) exact (CtxM.add (name_X x) (bndr_V x (mode_plus m1 m2) T) G).
+      (* D *) exact (CtxM.add (name_HD h) (bndr_D h (mode_plus m11 m21) T m2) G).
+      (* H *) exact (CtxM.add (name_HD h) (bndr_H h (mode_plus m1 m2) T) G).
+    ** destruct caseIncomp as [ [nComp Incomp] nDHHD]. destruct Incomp.
+      (* V *) exact (CtxM.add (name_X x) (bndr_V x None T1) G).
+      (* D *) exact (CtxM.add (name_HD h) (bndr_D h None T1 m12) G).
+      (* H *) exact (CtxM.add (name_HD h) (bndr_H h None T1) G).
+    ** destruct caseDHHD as [ [nComp nIncomp] DHHD]. destruct DHHD.
+      (* HDInt *) destruct b0. exact (CtxM.remove (name_HD h) G). (* only change compared to ctx_add *)
+      (* HDNoInt *) exact (CtxM.add (name_HD h) (bndr_H h None T1) G).
+      (* DH *) exact (CtxM.add (name_HD h) (bndr_D h None T1 m12) G).
+  * (* None *)
+    exact (CtxM.add (bndr_name b') b' G).
+Defined.
 
 Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
   List.fold_right (fun b G => ctx_add b G) (CtxM.empty bndr) bs.
@@ -376,30 +445,30 @@ Inductive hf : Type :=  (*r Hole filling *)
 Definition eff : Type := list hf.
 Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
   | term_Val v' => term_Val (val_sub_name v' n v)
-  | term_Var y => match Name_as_UDT.eq_dec n (name_X y) with
+  | term_Var y => match name_eq_dec n (name_X y) with
     | left _ => term_Val v
     | right _ => term_Var y
     end
   | term_App t1 t2 => term_App (term_sub_name t1 n v) (term_sub_name t2 n v)
   | term_PatU t1 t2 => term_PatU (term_sub_name t1 n v) (term_sub_name t2 n v)
   | term_PatS t' x1 u1 x2 u2 =>
-    let u1' := match Name_as_UDT.eq_dec n (name_X x1) with
+    let u1' := match name_eq_dec n (name_X x1) with
       | left _ => (* shadowing *) u1
       | right _ => term_sub_name u1 n v
     end in
-    let u2' := match Name_as_UDT.eq_dec n (name_X x2) with
+    let u2' := match name_eq_dec n (name_X x2) with
       | left _ => (* shadowing *) u2
       | right _ => term_sub_name u2 n v
     end in term_PatS (term_sub_name t' n v) x1 u1' x2 u2'
-  | term_PatP t' x1 x2 u => match Name_as_UDT.eq_dec n (name_X x1), Name_as_UDT.eq_dec n (name_X x2) with
+  | term_PatP t' x1 x2 u => match name_eq_dec n (name_X x1), name_eq_dec n (name_X x2) with
     | right _, right _ => term_PatP (term_sub_name t' n v) x1 x2 (term_sub_name u n v)
     | _, _ => (* at least one shadowing *) term_PatP (term_sub_name t' n v) x1 x2 u
     end
-  | term_PatE t' m x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+  | term_PatE t' m x' u => let u' := match name_eq_dec n (name_X x') with
       | left _ => (* shadowing *) u
       | right _ => term_sub_name u n v
     end in term_PatE (term_sub_name t' n v) m x' u'
-  | term_Map t' x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+  | term_Map t' x' u => let u' := match name_eq_dec n (name_X x') with
       | left _ => (* shadowing *) u
       | right _ => term_sub_name u n v
     end in term_Map (term_sub_name t' n v) x' u'
@@ -414,11 +483,11 @@ Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
   | term_FillC t u => term_FillC (term_sub_name t n v) (term_sub_name u n v)
 end
 with val_sub_name (v': val) (n:name) (v:val) : val := match v' with
-  | val_F x' u => let u' := match Name_as_UDT.eq_dec n (name_X x') with
+  | val_F x' u => let u' := match name_eq_dec n (name_X x') with
     | left _ => (* shadowing *) u
     | right _ => term_sub_name u n v
     end in val_F x' u'
-  | val_H h => match Name_as_UDT.eq_dec n (name_HD h) with
+  | val_H h => match name_eq_dec n (name_HD h) with
     | left _ => v
     | right _ => val_H h
   end
@@ -444,12 +513,15 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _ctx_NoDest (G:ctx)
  | _ctx_NoHole (G:ctx)
  | _ctx_NoVar (G:ctx)
- | _ctx_Valid (G:ctx)
+ | _ctx_IsValid (G:ctx)
  | _ctx_SubsetEq (G1:ctx) (G2:ctx)
  | _ctx_HdnmNotMem (h:hdnm) (G:ctx)
  | _ctx_Compatible (G:ctx) (b:bndr)
+ | _ctx_OnlyLin (G:ctx)
  | _ctx_OnlyUr (G:ctx)
- | _mode_Valid (m:mode)
+ | _mode_IsValid (m:mode)
+ | _mode_IsLin (m:mode)
+ | _mode_IsUr (m:mode)
  | _ctx_Disjoint (G1:ctx) (G2:ctx) (*r TODO: Just for legacy proof; remove *)
  | _TyR_eff (G:ctx) (e:eff)
  | _TyR_term (G:ctx) (t:term) (T:type)
@@ -468,8 +540,8 @@ Inductive TyR_eff : ctx -> eff -> Prop :=    (* defn TyR_eff *)
      (TYRv: TyR_term  (ctx_union  G   D )  (term_Val v) T),
      ctx_DestOnly G  ->
      ctx_HoleOnly D  ->
-     mode_Valid m  ->
-     mode_Valid n  ->
+     mode_IsValid m  ->
+     mode_IsValid n  ->
      TyR_eff  (ctx_union   (ctx_union   (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons m nil) (app (cons n nil) nil)))) )     G )     (ctx_from_list  (cons (bndr_D h m T n) nil) )  )     (ctx_stimes    (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )     D )  )   (cons  (hf_F h v)  nil) 
  | TyR_eff_C : forall (G1 G2:ctx) (e1 e2:eff)
      (TYRe1: TyR_eff G1 e1)
@@ -478,7 +550,7 @@ Inductive TyR_eff : ctx -> eff -> Prop :=    (* defn TyR_eff *)
 with Ty_eff : ctx -> eff -> Prop :=    (* defn Ty_eff *)
  | Ty_eff_T : forall (G:ctx) (e:eff)
      (TYRe: TyR_eff G e),
-     ctx_Valid G  ->
+     ctx_IsValid G  ->
      Ty_eff G e
 with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
  | TyR_term_H : forall (h:hdnm) (T:type),
@@ -499,7 +571,7 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
      TyR_term  (ctx_union  G1   G2 )  (term_Val (val_P v1 v2)) (type_P T1 T2)
  | TyR_term_E : forall (m:mode) (G:ctx) (v:val) (T:type)
      (TYRv: TyR_term G (term_Val v) T),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_stimes  m   G )  (term_Val (val_E m v)) (type_E m T)
  | TyR_term_A : forall (G1 G2:ctx) (v1 v2:val) (T1 T2:type)
      (TYRv1: TyR_term G1 (term_Val v1) T1)
@@ -509,7 +581,7 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
      TyR_term  (ctx_interact  G1   G2 )  (term_Val (val_A v1 v2  (ctx_minus  G2 ) )) (type_A T1 T2)
  | TyR_term_F : forall (G:ctx) (x:tmv) (t:term) (T1:type) (m:mode) (T2:type)
      (TYRt: TyR_term  (ctx_union  G    (ctx_from_list  (cons (bndr_V x m T1) nil) )  )  t T2),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term G (term_Val (val_F x t)) (type_F T1 m T2)
  | TyR_term_Var : forall (G:ctx) (x:tmv) (T:type),
      ctx_Compatible G (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T)  ->
@@ -517,7 +589,7 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
  | TyR_term_App : forall (m:mode) (G1 G2:ctx) (t u:term) (T2 T1:type)
      (TYRt: TyR_term G1 t T1)
      (TYRu: TyR_term G2 u (type_F T1 m T2)),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_App t u) T2
  | TyR_term_PatU : forall (G1 G2:ctx) (t u:term) (U:type)
      (TYRt: TyR_term G1 t type_U)
@@ -527,27 +599,27 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
      (TYRt: TyR_term G1 t (type_S T1 T2))
      (TYRu1: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x1 m T1) nil) )  )  u1 U)
      (TYRu2: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x2 m T2) nil) )  )  u2 U),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatS t x1 u1 x2 u2) U
  | TyR_term_PatP : forall (m:mode) (G1 G2:ctx) (t:term) (x1 x2:tmv) (u:term) (U T1 T2:type)
      (TYRt: TyR_term G1 t (type_P T1 T2))
      (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  ((app (cons (bndr_V x1 m T1) nil) (app (cons (bndr_V x2 m T2) nil) nil))) )  )  u U),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatP t x1 x2 u) U
  | TyR_term_PatE : forall (m:mode) (G1 G2:ctx) (t:term) (n:mode) (x:tmv) (u:term) (U T:type)
      (TYRt: TyR_term G1 t (type_E n T))
      (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )  u U),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatE t n x u) U
  | TyR_term_Map : forall (G1 G2:ctx) (t:term) (x:tmv) (u:term) (T1 U:type) (m:mode) (T2:type)
      (TYRt: TyR_term G1 t (type_A T1 T2))
      (TYRu: TyR_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    G2 )     (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T2) nil) )  )  u U),
-     mode_Valid m  ->
+     mode_IsValid m  ->
      TyR_term  (ctx_union  G1   G2 )  (term_Map t x u) (type_A T1 U)
  | TyR_term_FillC : forall (G1:ctx) (n:mode) (G2:ctx) (t u:term) (T2 T1:type)
      (TYRt: TyR_term G1 t (type_D T1 n))
      (TYRu: TyR_term G2 u (type_A T1 T2)),
-     mode_Valid n  ->
+     mode_IsValid n  ->
      TyR_term  (ctx_union  G1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     G2 )  )  (term_FillC t u) T2
  | TyR_term_FillU : forall (G:ctx) (t:term) (n:mode)
      (TYRt: TyR_term G t (type_D type_U n)),
@@ -575,7 +647,7 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_T : forall (G:ctx) (t:term) (T:type)
      (TYRt: TyR_term G t T),
-     ctx_Valid G  ->
+     ctx_IsValid G  ->
      ctx_NoHole G  ->
      Ty_term G t T
 with Ty_cmd : ctx -> val -> eff -> type -> Prop :=    (* defn Ty_cmd *)
@@ -597,8 +669,8 @@ Inductive Sem_eff : val -> ctx -> eff -> val -> ctx -> eff -> Prop :=    (* defn
  | Sem_eff_F : forall (v1:val) (G1:ctx) (h:hdnm) (n:mode) (T:type) (v0:val) (e1:eff) (v2:val) (G2:ctx) (e2:eff) (G0:ctx)
      (TYRv0: TyR_term G0 (term_Val v0) T)
      (EAPPv1sube1: Sem_eff  (val_hfill  v1   (hf_F h v0) )    (ctx_union  G1    (ctx_stimes  n   G0 )  )   e1 v2 G2 e2),
-     mode_Valid n  ->
-     ctx_Valid G0  ->
+     mode_IsValid n  ->
+     ctx_IsValid G0  ->
      Sem_eff v1  (ctx_union  G1    (ctx_from_list  (cons (bndr_H h n T) nil) )  )   (concat  ((app (cons  (cons  (hf_F h v0)  nil)  nil) (app (cons e1 nil) nil))) )  v2 G2 e2
 with Sem_term : term -> hddyn -> val -> eff -> Prop :=    (* defn Sem_term *)
  | Sem_term_V : forall (v:val) (d:hddyn),
