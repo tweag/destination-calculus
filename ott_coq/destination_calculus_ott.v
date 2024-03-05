@@ -173,7 +173,7 @@ Inductive mode_IsSubtype : mode -> mode -> Type :=
 Theorem mode_IsSubtype_dec : forall (m1 m2: mode), mode_IsSubtype m1 m2 + (notT (mode_IsSubtype m1 m2)).
 Proof. Admitted.
 
-Inductive mode_IsValid : mode -> Type :=
+Inductive mode_IsValid : mode -> Prop :=
   mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
 Theorem mode_IsValid_dec : forall (m : mode), mode_IsValid m + (notT (mode_IsValid m)).
 Proof.
@@ -182,7 +182,7 @@ Proof.
   - right. intros contra. inversion contra.
 Qed.
 
-Inductive mode_IsLin : mode -> Type :=
+Inductive mode_IsLin : mode -> Prop :=
   mode_IsLinProof : forall (a : age), mode_IsLin (Some (Lin, a)).
 Theorem mode_IsLin_dec : forall (m : mode), mode_IsLin m + (notT (mode_IsLin m)).
 Proof.
@@ -193,7 +193,7 @@ Proof.
   - right. intros contra. inversion contra.
 Qed.
 
-Inductive mode_IsUr : mode -> Type :=
+Inductive mode_IsUr : mode -> Prop :=
   mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
 Theorem mode_IsUr_dec : forall (m : mode), mode_IsUr m + (notT (mode_IsUr m)).
 Proof.
@@ -223,7 +223,7 @@ Definition bndr_update_mode (b:bndr) (m:mode) := match b with
   | bndr_D h _ T m2 => bndr_D h m T m2
   end.
 
-Inductive bndr_IsVar : bndr -> Type :=
+Inductive bndr_IsVar : bndr -> Prop :=
   bndr_IsVarProof : forall x m T, bndr_IsVar (bndr_V x m T).
 Theorem bndr_IsVar_dec : forall (b: bndr), bndr_IsVar b + (notT (bndr_IsVar b)).
 Proof.
@@ -233,7 +233,7 @@ Proof.
   - right. intros contra. inversion contra.
 Qed.
 
-Inductive bndr_IsDest : bndr -> Type :=
+Inductive bndr_IsDest : bndr -> Prop :=
   bndr_IsDestProof : forall h m T n, bndr_IsDest (bndr_D h m T n).
 Theorem bndr_IsDest_dec : forall (b: bndr), bndr_IsDest b + (notT (bndr_IsDest b)).
 Proof.
@@ -243,7 +243,7 @@ Proof.
   - right. intros contra. inversion contra.
 Qed.
 
-Inductive bndr_IsHole : bndr -> Type :=
+Inductive bndr_IsHole : bndr -> Prop :=
   bndr_IsHoleProof : forall h m T, bndr_IsHole (bndr_H h m T).
 Theorem bndr_IsHole_dec : forall (b: bndr), bndr_IsHole b + (notT (bndr_IsHole b)).
 Proof.
@@ -253,29 +253,29 @@ Proof.
   - left. exact (bndr_IsHoleProof h n T).
 Qed.
 
-Definition ctx_DestOnly (G : CtxM.t bndr) : Type :=
+Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
-Definition ctx_HoleOnly (G : CtxM.t bndr) : Type :=
+Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
-Definition ctx_VarOnly (G : CtxM.t bndr) : Type :=
+Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
-Definition ctx_NoDest (G : CtxM.t bndr) : Type :=
-  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsDest b).
-Definition ctx_NoHole (G : CtxM.t bndr) : Type :=
-  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsHole b).
-Definition ctx_NoVar (G : CtxM.t bndr) : Type :=
-  forall n b, CtxM.MapsTo n b G -> notT (bndr_IsVar b).
-Definition ctx_IsValid (G: CtxM.t bndr) : Type :=
+Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsDest b).
+Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsHole b).
+Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsVar b).
+Definition ctx_IsValid (G: CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
-Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Type :=
+Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
-Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Type :=
+Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
   ~CtxM.In (name_HD h) G.
-Definition ctx_OnlyLin (G : CtxM.t bndr) : Type :=
+Definition ctx_OnlyLin (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
-Definition ctx_OnlyUr (G : CtxM.t bndr) : Type :=
+Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> mode_IsUr (bndr_mode b).
-Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Type :=
+Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Prop :=
   | ctx_CompatibleProofV : forall G x m1 m2 T, CtxM.MapsTo (name_X x) (bndr_V x m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_X x) G) -> ctx_Compatible G (bndr_V x m2 T)
   | ctx_CompatibleProofD : forall G h m11 m2 m21 T, CtxM.MapsTo (name_HD h) (bndr_D h m11 T m2) G -> mode_IsSubtype m11 m21 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_D h m21 T m2)
   | ctx_CompatibleProofH : forall G h m1 m2 T, CtxM.MapsTo (name_HD h) (bndr_H h m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_H h m2 T).
