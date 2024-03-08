@@ -14,15 +14,10 @@ Require Import Coq.Structures.OrdersEx.
 Require Import Coq.FSets.FMapWeakList.
 Require Import Coq.FSets.FMapFacts.
 
-Definition tmv : Type := nat. (*r Term-level variable name *)
-Definition hdmv : Type := nat. (*r Hole or destination static name *)
+Definition var : Type := nat. (*r Term-level variable name *)
+Definition hdn : Type := nat. (*r Hole or destination static name *)
 Definition k : Type := nat. (*r Index for ranges *)
 
-Definition hddyn : Type := list nat.
-
-Inductive hdnm : Type :=  (*r Hole or destination name *)
- | hdnm_D (d:hddyn) (*r Dynamic name *)
- | hdnm_S (hdmv5:hdmv) (*r Static name *).
 (* Will be aliased later to mul *)
 Inductive _mul : Type :=
   | Lin : _mul
@@ -44,11 +39,17 @@ Proof.
   decide equality.
 Defined.
 
-Inductive mul_IsSubtype : _mul -> _mul -> Type :=
+Inductive mul_IsSubtype : _mul -> _mul -> Prop :=
   | mul_IsSubtypeProofEq : forall (p : _mul), mul_IsSubtype p p
   | mul_IsSubtypeProofUr : forall (p2 : _mul), mul_IsSubtype Ur p2.
 Theorem mul_IsSubtype_dec : forall (p1 p2: _mul), mul_IsSubtype p1 p2 + (notT (mul_IsSubtype p1 p2)).
-Proof. Admitted.
+Proof.
+  intros p1 p2. destruct p1, p2.
+  - left. exact (mul_IsSubtypeProofEq Lin).
+  - right. intros contra. inversion contra.
+  - left. exact (mul_IsSubtypeProofUr Lin).
+  - left. exact (mul_IsSubtypeProofEq Ur).
+Defined.
 
 (* Will be aliased later to ext_nat *)
 
@@ -78,17 +79,17 @@ Inductive type : Type :=  (*r Type *)
  | type_D (T:type) (m:mode) (*r Destination *).
 
 Inductive bndr : Type :=  (*r Type assignment to either variable, destination or hole *)
- | bndr_V (x:tmv) (m:mode) (T:type) (*r Variable *)
- | bndr_D (h:hdnm) (m:mode) (T:type) (n:mode) (*r Destination ($(m:mode)$ is its own modality; $(n:mode)$ is the modality for values it accepts) *)
- | bndr_H (h:hdnm) (n:mode) (T:type) (*r Hole ($(n:mode)$ is the modality for values it accepts, it doesn't have a modality on its own) *).
+ | bndr_V (x:var) (m:mode) (T:type) (*r Variable *)
+ | bndr_D (h:hdn) (m:mode) (T:type) (n:mode) (*r Destination ($(m:mode)$ is its own modality; $(n:mode)$ is the modality for values it accepts) *)
+ | bndr_H (h:hdn) (n:mode) (T:type) (*r Hole ($(n:mode)$ is the modality for values it accepts, it doesn't have a modality on its own) *).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
 Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
 Defined.
 Hint Resolve eq_type : ott_coq_equality.
 Inductive name : Type :=
-  | name_X : tmv -> name
-  | name_HD : hdnm -> name.
+  | name_X : var -> name
+  | name_HD : hdn -> name.
 
 Module Name_as_UDT <: UsualDecidableType.
   Definition t := name.
@@ -103,7 +104,7 @@ Module Name_as_UDT <: UsualDecidableType.
   Proof.
     intros x y. induction x.
     - induction y.
-        + assert ({t0 = t1} + {t0 <> t1}) by apply Nat.eq_dec. destruct H.
+        + assert ({v = v0} + {v <> v0}) by apply Nat.eq_dec. destruct H.
            * left. rewrite e. reflexivity.
            * right. congruence.
         + right. congruence.
@@ -115,7 +116,7 @@ Module Name_as_UDT <: UsualDecidableType.
             ** right. congruence.
           * right. congruence.
           * right. congruence.
-          * assert ({hdmv5 = hdmv0} + {hdmv5 <> hdmv0}) by apply Nat.eq_dec. destruct H.
+          * assert ({hdn5 = hdn0} + {hdn5 <> hdn0}) by apply Nat.eq_dec. destruct H.
             ** left. rewrite e. reflexivity.
             ** right. congruence.
     Defined.
@@ -135,9 +136,18 @@ Definition age_eq_dec : forall (a1 a2: age), {a1 = a2} + {a1 <> a2} := ext_eq_de
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
 Inductive age_IsSubtype : age -> age -> Type :=
-  age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
+  | age_IsSubtypeProofEq : forall (a : age), age_IsSubtype a a
+  | age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
 Theorem age_IsSubtype_dec : forall (a1 a2: age), age_IsSubtype a1 a2 + (notT (age_IsSubtype a1 a2)).
-Proof. Admitted.
+Proof.
+  intros a1 a2. destruct a1, a2.
+  - assert ({n = n0} + {n <> n0}) by apply Nat.eq_dec. destruct H.
+    - rewrite e. left. exact (age_IsSubtypeProofEq (Fin n0)).
+    - right. intros contra. inversion contra. congruence.
+  - right. intros contra. inversion contra.
+  - left. exact (age_IsSubtypeProofInf (Fin n)).
+  - left. exact (age_IsSubtypeProofEq Inf).
+Defined.
 
 Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
@@ -171,7 +181,9 @@ Inductive mode_IsSubtype : mode -> mode -> Type :=
   | mode_IsSubtypeProofNone : forall (m1 : mode), mode_IsSubtype m1 None
   | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
 Theorem mode_IsSubtype_dec : forall (m1 m2: mode), mode_IsSubtype m1 m2 + (notT (mode_IsSubtype m1 m2)).
-Proof. Admitted.
+Proof.
+  intros m1 m2. destruct m1 as [pa1|], m2 as [pa2|].
+  - destruct pa1 as [p1 a1], pa2 as [p2 a2]. assert ({mul_IsSubtype p1 p2} + {~mul_IsSubtype p1 p2}) as H1 by apply mul_IsSubtype_dec.
 
 Inductive mode_IsValid : mode -> Prop :=
   mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
@@ -269,7 +281,7 @@ Definition ctx_IsValid (G: CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
 Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
-Definition ctx_HdnmNotMem (h : hdnm) (G : CtxM.t bndr) : Prop :=
+Definition ctx_HdnmNotMem (h : hdn) (G : CtxM.t bndr) : Prop :=
   ~CtxM.In (name_HD h) G.
 Definition ctx_OnlyLin (G : CtxM.t bndr) : Prop :=
   forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
@@ -412,13 +424,13 @@ Definition ctx : Type := (CtxM.t bndr).
 
 Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
- | term_Var (x:tmv) (*r Variable *)
+ | term_Var (x:var) (*r Variable *)
  | term_App (t:term) (u:term) (*r Application *)
  | term_PatU (t:term) (u:term) (*r Pattern-match on unit *)
- | term_PatS (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (*r Pattern-match on sum *)
- | term_PatP (t:term) (x1:tmv) (x2:tmv) (u:term) (*r Pattern-match on product *)
- | term_PatE (t:term) (m:mode) (x:tmv) (u:term) (*r Pattern-match on exponential *)
- | term_Map (t:term) (x:tmv) (u:term) (*r Map over the right side of the ampar *)
+ | term_PatS (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (*r Pattern-match on sum *)
+ | term_PatP (t:term) (x1:var) (x2:var) (u:term) (*r Pattern-match on product *)
+ | term_PatE (t:term) (m:mode) (x:var) (u:term) (*r Pattern-match on exponential *)
+ | term_Map (t:term) (x:var) (u:term) (*r Map over the right side of the ampar *)
  | term_ToA (t:term) (*r Wrap $(t:term)$ into a trivial ampar *)
  | term_FromA (t:term) (*r Extract value from trivial ampar *)
  | term_Alloc (T:type) (*r Return a fresh "identity" ampar object *)
@@ -429,10 +441,10 @@ Inductive term : Type :=  (*r Term *)
  | term_FillE (t:term) (m:mode) (*r Fill destination with exponential constructor *)
  | term_FillC (t:term) (u:term) (*r Fill destination with root of ampar $(u:term)$ *)
 with val : Type :=  (*r Term value *)
- | val_H (h:hdnm) (*r Hole *)
- | val_D (h:hdnm) (*r Destination *)
+ | val_H (h:hdn) (*r Hole *)
+ | val_D (h:hdn) (*r Destination *)
  | val_U : val (*r Unit *)
- | val_F (x:tmv) (t:term) (*r Lambda abstraction *)
+ | val_F (x:var) (t:term) (*r Lambda abstraction *)
  | val_L (v:val) (*r Left variant for sum *)
  | val_R (v:val) (*r Right variant for sum *)
  | val_E (m:mode) (v:val) (*r Exponential *)
@@ -440,7 +452,7 @@ with val : Type :=  (*r Term value *)
  | val_A (v1:val) (v2:val) (D:ctx) (*r Ampar *).
 
 Inductive hf : Type :=  (*r Hole filling *)
- | hf_F (h:hdnm) (v:val) (*r Fill $(h:hdnm)$ with value $(v:val)$ (that may contain holes) *).
+ | hf_F (h:hdn) (v:val) (*r Fill $(h:hdn)$ with value $(v:val)$ (that may contain holes) *).
 
 Definition eff : Type := list hf.
 Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
@@ -500,7 +512,7 @@ with val_sub_name (v': val) (n:name) (v:val) : val := match v' with
   | val_A v1 v2 D => val_A (val_sub_name v1 n v) (val_sub_name v2 n v) D
 end.
 
-Definition term_sub (t: term) (x:tmv) (v:val) : term := term_sub_name t (name_X x) v.
+Definition term_sub (t: term) (x:var) (v:val) : term := term_sub_name t (name_X x) v.
 Definition val_hfill (v' : val) (f : hf) : val := match f with
   | hf_F h v => val_sub_name v' (name_HD h) v
   end.
@@ -515,7 +527,7 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _ctx_NoVar (G:ctx)
  | _ctx_IsValid (G:ctx)
  | _ctx_SubsetEq (G1:ctx) (G2:ctx)
- | _ctx_HdnmNotMem (h:hdnm) (G:ctx)
+ | _ctx_HdnmNotMem (h:hdn) (G:ctx)
  | _ctx_Compatible (G:ctx) (b:bndr)
  | _ctx_OnlyLin (G:ctx)
  | _ctx_OnlyUr (G:ctx)
@@ -536,7 +548,7 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
 Inductive TyR_eff : ctx -> eff -> Prop :=    (* defn TyR_eff *)
  | TyR_eff_N : 
      TyR_eff  (ctx_from_list  nil )   nil 
- | TyR_eff_A : forall (m n:mode) (G:ctx) (h:hdnm) (T:type) (D:ctx) (v:val)
+ | TyR_eff_A : forall (m n:mode) (G:ctx) (h:hdn) (T:type) (D:ctx) (v:val)
      (TYRv: TyR_term  (ctx_union  G   D )  (term_Val v) T),
      ctx_DestOnly G  ->
      ctx_HoleOnly D  ->
@@ -553,9 +565,9 @@ with Ty_eff : ctx -> eff -> Prop :=    (* defn Ty_eff *)
      ctx_IsValid G  ->
      Ty_eff G e
 with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
- | TyR_term_H : forall (h:hdnm) (T:type),
+ | TyR_term_H : forall (h:hdn) (T:type),
      TyR_term  (ctx_from_list  (cons (bndr_H h  (Some (pair   Lin     (Fin 0)  ))  T) nil) )  (term_Val (val_H h)) T
- | TyR_term_D : forall (h:hdnm) (T:type) (n:mode),
+ | TyR_term_D : forall (h:hdn) (T:type) (n:mode),
      TyR_term  (ctx_from_list  (cons (bndr_D h  (Some (pair   Lin     (Fin 0)  ))  T n) nil) )  (term_Val (val_D h)) (type_D T n)
  | TyR_term_U : 
      TyR_term  (ctx_from_list  nil )  (term_Val val_U) type_U
@@ -579,74 +591,74 @@ with TyR_term : ctx -> term -> type -> Prop :=    (* defn TyR_term *)
      ctx_DestOnly G2  ->
      ctx_SubsetEq  (ctx_minus  G2 )  G1  ->
      TyR_term  (ctx_interact  G1   G2 )  (term_Val (val_A v1 v2  (ctx_minus  G2 ) )) (type_A T1 T2)
- | TyR_term_F : forall (G:ctx) (x:tmv) (t:term) (T1:type) (m:mode) (T2:type)
-     (TYRt: TyR_term  (ctx_union  G    (ctx_from_list  (cons (bndr_V x m T1) nil) )  )  t T2),
+ | TyR_term_F : forall (G:ctx) (x:var) (t:term) (T1:type) (m:mode) (T2:type)
+     (TYt: TyR_term  (ctx_union  G    (ctx_from_list  (cons (bndr_V x m T1) nil) )  )  t T2),
      mode_IsValid m  ->
      TyR_term G (term_Val (val_F x t)) (type_F T1 m T2)
- | TyR_term_Var : forall (G:ctx) (x:tmv) (T:type),
+ | TyR_term_Var : forall (G:ctx) (x:var) (T:type),
      ctx_Compatible G (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T)  ->
      TyR_term G (term_Var x) T
  | TyR_term_App : forall (m:mode) (G1 G2:ctx) (t u:term) (T2 T1:type)
-     (TYRt: TyR_term G1 t T1)
-     (TYRu: TyR_term G2 u (type_F T1 m T2)),
+     (TYt: TyR_term G1 t T1)
+     (TYu: TyR_term G2 u (type_F T1 m T2)),
      mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_App t u) T2
  | TyR_term_PatU : forall (G1 G2:ctx) (t u:term) (U:type)
-     (TYRt: TyR_term G1 t type_U)
-     (TYRu: TyR_term G2 u U),
+     (TYt: TyR_term G1 t type_U)
+     (TYu: TyR_term G2 u U),
      TyR_term  (ctx_union  G1   G2 )  (term_PatU t u) U
- | TyR_term_PatS : forall (m:mode) (G1 G2:ctx) (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (U T1 T2:type)
-     (TYRt: TyR_term G1 t (type_S T1 T2))
-     (TYRu1: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x1 m T1) nil) )  )  u1 U)
-     (TYRu2: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x2 m T2) nil) )  )  u2 U),
+ | TyR_term_PatS : forall (m:mode) (G1 G2:ctx) (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (U T1 T2:type)
+     (TYt: TyR_term G1 t (type_S T1 T2))
+     (TYu1: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x1 m T1) nil) )  )  u1 U)
+     (TYu2: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x2 m T2) nil) )  )  u2 U),
      mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatS t x1 u1 x2 u2) U
- | TyR_term_PatP : forall (m:mode) (G1 G2:ctx) (t:term) (x1 x2:tmv) (u:term) (U T1 T2:type)
-     (TYRt: TyR_term G1 t (type_P T1 T2))
-     (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  ((app (cons (bndr_V x1 m T1) nil) (app (cons (bndr_V x2 m T2) nil) nil))) )  )  u U),
+ | TyR_term_PatP : forall (m:mode) (G1 G2:ctx) (t:term) (x1 x2:var) (u:term) (U T1 T2:type)
+     (TYt: TyR_term G1 t (type_P T1 T2))
+     (TYu: TyR_term  (ctx_union  G2    (ctx_from_list  ((app (cons (bndr_V x1 m T1) nil) (app (cons (bndr_V x2 m T2) nil) nil))) )  )  u U),
      mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatP t x1 x2 u) U
- | TyR_term_PatE : forall (m:mode) (G1 G2:ctx) (t:term) (n:mode) (x:tmv) (u:term) (U T:type)
-     (TYRt: TyR_term G1 t (type_E n T))
-     (TYRu: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )  u U),
+ | TyR_term_PatE : forall (m:mode) (G1 G2:ctx) (t:term) (n:mode) (x:var) (u:term) (U T:type)
+     (TYt: TyR_term G1 t (type_E n T))
+     (TYu: TyR_term  (ctx_union  G2    (ctx_from_list  (cons (bndr_V x  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )  T) nil) )  )  u U),
      mode_IsValid m  ->
      TyR_term  (ctx_union   (ctx_stimes  m   G1 )    G2 )  (term_PatE t n x u) U
- | TyR_term_Map : forall (G1 G2:ctx) (t:term) (x:tmv) (u:term) (T1 U:type) (m:mode) (T2:type)
-     (TYRt: TyR_term G1 t (type_A T1 T2))
-     (TYRu: TyR_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    G2 )     (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T2) nil) )  )  u U),
+ | TyR_term_Map : forall (G1 G2:ctx) (t:term) (x:var) (u:term) (T1 U:type) (m:mode) (T2:type)
+     (TYt: TyR_term G1 t (type_A T1 T2))
+     (TYu: TyR_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    G2 )     (ctx_from_list  (cons (bndr_V x  (Some (pair   Lin     (Fin 0)  ))  T2) nil) )  )  u U),
      mode_IsValid m  ->
      TyR_term  (ctx_union  G1   G2 )  (term_Map t x u) (type_A T1 U)
  | TyR_term_FillC : forall (G1:ctx) (n:mode) (G2:ctx) (t u:term) (T2 T1:type)
-     (TYRt: TyR_term G1 t (type_D T1 n))
-     (TYRu: TyR_term G2 u (type_A T1 T2)),
+     (TYt: TyR_term G1 t (type_D T1 n))
+     (TYu: TyR_term G2 u (type_A T1 T2)),
      mode_IsValid n  ->
      TyR_term  (ctx_union  G1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     G2 )  )  (term_FillC t u) T2
  | TyR_term_FillU : forall (G:ctx) (t:term) (n:mode)
-     (TYRt: TyR_term G t (type_D type_U n)),
+     (TYt: TyR_term G t (type_D type_U n)),
      TyR_term G (term_FillU t) type_U
  | TyR_term_FillL : forall (G:ctx) (t:term) (T1:type) (n:mode) (T2:type)
-     (TYRt: TyR_term G t (type_D (type_S T1 T2) n)),
+     (TYt: TyR_term G t (type_D (type_S T1 T2) n)),
      TyR_term G (term_FillL t) (type_D T1 n)
  | TyR_term_FillR : forall (G:ctx) (t:term) (T2:type) (n:mode) (T1:type)
-     (TYRt: TyR_term G t (type_D (type_S T1 T2) n)),
+     (TYt: TyR_term G t (type_D (type_S T1 T2) n)),
      TyR_term G (term_FillR t) (type_D T2 n)
  | TyR_term_FillP : forall (G:ctx) (t:term) (T1:type) (n:mode) (T2:type)
-     (TYRt: TyR_term G t (type_D (type_P T1 T2) n)),
+     (TYt: TyR_term G t (type_D (type_P T1 T2) n)),
      TyR_term G (term_FillP t) (type_P (type_D T1 n) (type_D T2 n))
  | TyR_term_FillE : forall (G:ctx) (t:term) (n:mode) (T:type) (m:mode)
-     (TYRt: TyR_term G t (type_D (type_E n T) m)),
+     (TYt: TyR_term G t (type_D (type_E n T) m)),
      TyR_term G (term_FillE t n) (type_D T  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) ) )
  | TyR_term_Alloc : forall (T:type),
      TyR_term  (ctx_from_list  nil )  (term_Alloc T) (type_A T (type_D T  (Some (pair   Lin     (Fin 0)  )) ))
  | TyR_term_ToA : forall (G:ctx) (t:term) (T:type)
-     (TYRt: TyR_term G t T),
+     (TYt: TyR_term G t T),
      TyR_term G (term_ToA t) (type_A T type_U)
  | TyR_term_FromA : forall (G:ctx) (t:term) (T:type)
-     (TYRt: TyR_term G t (type_A T type_U)),
+     (TYt: TyR_term G t (type_A T type_U)),
      TyR_term G (term_FromA t) T
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_T : forall (G:ctx) (t:term) (T:type)
-     (TYRt: TyR_term G t T),
+     (TYt: TyR_term G t T),
      ctx_IsValid G  ->
      ctx_NoHole G  ->
      Ty_term G t T
@@ -662,11 +674,11 @@ with Ty_cmd : ctx -> val -> eff -> type -> Prop :=    (* defn Ty_cmd *)
 Inductive Sem_eff : val -> ctx -> eff -> val -> ctx -> eff -> Prop :=    (* defn Sem_eff *)
  | Sem_eff_N : forall (v1:val) (G1:ctx),
      Sem_eff v1 G1  nil  v1 G1  nil 
- | Sem_eff_S : forall (v1:val) (G1:ctx) (h:hdnm) (v':val) (e1:eff) (v2:val) (G2:ctx) (e2:eff)
+ | Sem_eff_S : forall (v1:val) (G1:ctx) (h:hdn) (v':val) (e1:eff) (v2:val) (G2:ctx) (e2:eff)
      (EAPPv1e1: Sem_eff v1 G1 e1 v2 G2 e2),
      ctx_HdnmNotMem h G1  ->
      Sem_eff v1 G1  (concat  ((app (cons  (cons  (hf_F h v')  nil)  nil) (app (cons e1 nil) nil))) )  v2 G2  (concat  ((app (cons  (cons  (hf_F h v')  nil)  nil) (app (cons e2 nil) nil))) ) 
- | Sem_eff_F : forall (v1:val) (G1:ctx) (h:hdnm) (n:mode) (T:type) (v0:val) (e1:eff) (v2:val) (G2:ctx) (e2:eff) (G0:ctx)
+ | Sem_eff_F : forall (v1:val) (G1:ctx) (h:hdn) (n:mode) (T:type) (v0:val) (e1:eff) (v2:val) (G2:ctx) (e2:eff) (G0:ctx)
      (TYRv0: TyR_term G0 (term_Val v0) T)
      (EAPPv1sube1: Sem_eff  (val_hfill  v1   (hf_F h v0) )    (ctx_union  G1    (ctx_stimes  n   G0 )  )   e1 v2 G2 e2),
      mode_IsValid n  ->
@@ -675,7 +687,7 @@ Inductive Sem_eff : val -> ctx -> eff -> val -> ctx -> eff -> Prop :=    (* defn
 with Sem_term : term -> hddyn -> val -> eff -> Prop :=    (* defn Sem_term *)
  | Sem_term_V : forall (v:val) (d:hddyn),
      Sem_term (term_Val v) d v  nil 
- | Sem_term_App : forall (t1 t2:term) (d:hddyn) (v3:val) (e1 e2 e3:eff) (v1:val) (x:tmv) (u:term)
+ | Sem_term_App : forall (t1 t2:term) (d:hddyn) (v3:val) (e1 e2 e3:eff) (v1:val) (x:var) (u:term)
      (REDt1: Sem_term t1  ( d  ++ (cons 1 nil))  v1 e1)
      (REDt2: Sem_term t2  ( d  ++ (cons 2 nil))  (val_F x u) e2)
      (REDusub: Sem_term  (term_sub  u   x   v1 )   ( d  ++ (cons 3 nil))  v3 e3),
@@ -684,44 +696,44 @@ with Sem_term : term -> hddyn -> val -> eff -> Prop :=    (* defn Sem_term *)
      (REDt1: Sem_term t1  ( d  ++ (cons 1 nil))  val_U e1)
      (REDt2: Sem_term t2  ( d  ++ (cons 2 nil))  v2 e2),
      Sem_term (term_PatU t1 t2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
- | Sem_term_PatL : forall (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
+ | Sem_term_PatL : forall (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_L v1) e1)
      (REDu1sub: Sem_term  (term_sub  u1   x1   v1 )   ( d  ++ (cons 2 nil))  v2 e2),
      Sem_term (term_PatS t x1 u1 x2 u2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
- | Sem_term_PatR : forall (t:term) (x1:tmv) (u1:term) (x2:tmv) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
+ | Sem_term_PatR : forall (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_R v1) e1)
      (REDu2sub: Sem_term  (term_sub  u2   x2   v1 )   ( d  ++ (cons 2 nil))  v2 e2),
      Sem_term (term_PatS t x1 u1 x2 u2) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
- | Sem_term_PatP : forall (t:term) (x1 x2:tmv) (u:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
+ | Sem_term_PatP : forall (t:term) (x1 x2:var) (u:term) (d:hddyn) (v2:val) (e1 e2:eff) (v1:val)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_P v1 v2) e1)
      (REDusub: Sem_term  (term_sub   (term_sub  u   x1   v1 )    x2   v2 )   ( d  ++ (cons 2 nil))  v2 e2),
      Sem_term (term_PatP t x1 x2 u) d v2  (concat  ((app (cons e1 nil) (app (cons e2 nil) nil))) ) 
- | Sem_term_Map : forall (t:term) (x:tmv) (u:term) (d:hddyn) (v3 v4:val) (D':ctx) (e1 e3:eff) (v1 v2:val) (D:ctx) (e2:eff)
+ | Sem_term_Map : forall (t:term) (x:var) (u:term) (d:hddyn) (v3 v4:val) (D':ctx) (e1 e3:eff) (v1 v2:val) (D:ctx) (e2:eff)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_A v1 v2 D) e1)
      (REDusub: Sem_term  (term_sub  u   x   v1 )   ( d  ++ (cons 2 nil))  v3 e2)
      (EAPPv2e2: Sem_eff v2 D e2 v4 D' e3),
      Sem_term (term_Map t x u) d (val_A v3 v4 D')  (concat  ((app (cons e1 nil) (app (cons e3 nil) nil))) ) 
  | Sem_term_Alloc : forall (T:type) (d:hddyn),
-     Sem_term (term_Alloc T) d (val_A (val_D (hdnm_D d)) (val_H (hdnm_D d))  (ctx_from_list  (cons (bndr_H (hdnm_D d)  (Some (pair   Lin     (Fin 0)  ))  T) nil) ) )  nil 
+     Sem_term (term_Alloc T) d (val_A (val_D (hdn_D d)) (val_H (hdn_D d))  (ctx_from_list  (cons (bndr_H (hdn_D d)  (Some (pair   Lin     (Fin 0)  ))  T) nil) ) )  nil 
  | Sem_term_ToA : forall (t:term) (d:hddyn) (v:val) (e:eff)
      (REDt: Sem_term t d v e),
      Sem_term (term_ToA t) d (val_A val_U v  (ctx_from_list  nil ) ) e
  | Sem_term_FromA : forall (t:term) (d:hddyn) (v:val) (e:eff)
      (REDt: Sem_term t d (val_A val_U v  (ctx_from_list  nil ) ) e),
      Sem_term (term_FromA t) d v e
- | Sem_term_FillU : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
+ | Sem_term_FillU : forall (t:term) (d:hddyn) (e:eff) (h:hdn)
      (REDt: Sem_term t d (val_D h) e),
      Sem_term (term_FillU t) d val_U  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h val_U)  nil)  nil) nil))) ) 
- | Sem_term_FillL : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
+ | Sem_term_FillL : forall (t:term) (d:hddyn) (e:eff) (h:hdn)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillL t) d (val_D (hdnm_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_L (val_H (hdnm_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
- | Sem_term_FillR : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
+     Sem_term (term_FillL t) d (val_D (hdn_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_L (val_H (hdn_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
+ | Sem_term_FillR : forall (t:term) (d:hddyn) (e:eff) (h:hdn)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillR t) d (val_D (hdnm_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_R (val_H (hdnm_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
- | Sem_term_FillP : forall (t:term) (d:hddyn) (e:eff) (h:hdnm)
+     Sem_term (term_FillR t) d (val_D (hdn_D  ( d  ++ (cons 2 nil)) ))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_R (val_H (hdn_D  ( d  ++ (cons 2 nil)) ))))  nil)  nil) nil))) ) 
+ | Sem_term_FillP : forall (t:term) (d:hddyn) (e:eff) (h:hdn)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e),
-     Sem_term (term_FillP t) d (val_P (val_D (hdnm_D  ( d  ++ (cons 2 nil)) )) (val_D (hdnm_D  ( d  ++ (cons 3 nil)) )))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_P (val_H (hdnm_D  ( d  ++ (cons 2 nil)) )) (val_H (hdnm_D  ( d  ++ (cons 3 nil)) ))))  nil)  nil) nil))) ) 
- | Sem_term_FillC : forall (t u:term) (d:hddyn) (v1:val) (e1 e2:eff) (h:hdnm) (v2:val) (D:ctx)
+     Sem_term (term_FillP t) d (val_P (val_D (hdn_D  ( d  ++ (cons 2 nil)) )) (val_D (hdn_D  ( d  ++ (cons 3 nil)) )))  (concat  ((app (cons e nil) (app (cons  (cons  (hf_F h (val_P (val_H (hdn_D  ( d  ++ (cons 2 nil)) )) (val_H (hdn_D  ( d  ++ (cons 3 nil)) ))))  nil)  nil) nil))) ) 
+ | Sem_term_FillC : forall (t u:term) (d:hddyn) (v1:val) (e1 e2:eff) (h:hdn) (v2:val) (D:ctx)
      (REDt: Sem_term t  ( d  ++ (cons 1 nil))  (val_D h) e1)
      (REDu: Sem_term u  ( d  ++ (cons 2 nil))  (val_A v1 v2 D) e2),
      Sem_term (term_FillC t u) d v1  (concat  ((app (cons e1 nil) (app (cons e2 nil) (app (cons  (cons  (hf_F h v2)  nil)  nil) nil)))) ) .

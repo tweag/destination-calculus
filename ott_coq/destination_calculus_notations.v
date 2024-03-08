@@ -9,8 +9,8 @@ Notation "d '.1'" := (d ++ (cons 1 nil)) (at level 18, right associativity).
 Notation "d '.2'" := (d ++ (cons 2 nil)) (at level 18, right associativity).
 Notation "d '.3'" := (d ++ (cons 3 nil)) (at level 18, right associativity).
 
-Notation "'dyn' d" := (hdnm_D d) (at level 19, no associativity).
-Notation "'static' hdmv" := (hdnm_S hdmv) (at level 19, no associativity).
+Notation "'dyn' d" := (hdn_D d) (at level 19, no associativity).
+Notation "'static' hdn" := (hdn_S hdn) (at level 19, no associativity).
 
 (* Multiplicities : 25-29 *)
 Notation "'¹ν'" := (Some (pair Lin (Fin 0))).
@@ -41,7 +41,7 @@ Notation "'ᵛ()'" := (val_U).
 Notation "'λ' x ⟼ t" := (val_F x t) (at level 59, x at level 19, t at level 59, right associativity).
 Notation "'Inl' v" := (val_L v) (at level 31, right associativity, v at level 31).
 Notation "'Inr' v" := (val_R v) (at level 31, right associativity, v at level 31).
-Notation "'⦆' m '⁔' v" := (val_E m v) (at level 31, m at level 29, v at level 31, right associativity).
+Notation "'ᴇ' m '⁔' v" := (val_E m v) (at level 31, m at level 29, v at level 31, right associativity).
 Notation "'ᵛ(' v ',' w ')'" := (val_P v w) (at level 0, v at level 59, w at level 59, no associativity).
 Notation "'⟨' v '❟' w '⟩' D" := (val_A v w D) (at level 31, no associativity, v at level 59, w at level 59, D at next level).
 Notation "v 'ᵉ[' f ]" := (val_hfill v f) (at level 30, f at level 64, no associativity).
@@ -51,7 +51,7 @@ Notation "t ≻ u" := (term_App t u) (at level 42, left associativity, u at next
 Notation "t 'ᵗ;' u" := (term_PatU t u) (at level 45, left associativity, u at next level).
 Notation "t '≻case' 'ᵛ{' 'Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (term_PatS t x1 u1 x2 u2) (at level 59, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, right associativity).
 Notation "t '≻case' 'ᵛ(' x1 ',' x2 ')' ⟼ u" := (term_PatP t x1 x2 u) (at level 59, x1 at level 19, x2 at level 19, u at level 59, right associativity).
-Notation "t '≻case' '⦆' m '⁔' x ⟼ u" := (term_PatE t m x u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
+Notation "t '≻case' 'ᴇ' m '⁔' x ⟼ u" := (term_PatE t m x u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
 Notation "t '≻map' x ⟼ u" := (term_Map t x u) (at level 59, x at level 19, u at level 59, right associativity).
 Notation "'to⧔' t" := (term_ToA t) (at level 41, right associativity, t at level 41).
 Notation "'from⧔' t" := (term_FromA t) (at level 41, right associativity, t at level 41).
@@ -60,7 +60,7 @@ Notation "t ⨞ 'ᵛ()'" := (term_FillU t) (at level 43, left associativity).
 Notation "t ⨞ 'Inl'" := (term_FillL t) (at level 43, left associativity).
 Notation "t ⨞ 'Inr'" := (term_FillR t) (at level 43, left associativity).
 Notation "t ⨞ 'ᵛ(,)'" := (term_FillP t) (at level 43, left associativity).
-Notation "t ⨞ '⦆' m" := (term_FillE t m) (at level 43, left associativity, m at level 29).
+Notation "t ⨞ 'ᴇ' m" := (term_FillE t m) (at level 43, left associativity, m at level 29).
 Notation "t '⨞·' u" := (term_FillC t u) (at level 43, left associativity, u at next level).
 Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19, v at level 59, left associativity).
 

@@ -21,7 +21,7 @@
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
 \definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
 \definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
-\definecolor{hdmvcolor}{HTML}{F14B2D} % red, itshape
+\definecolor{hdncolor}{HTML}{F14B2D} % red, itshape
 
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
@@ -32,7 +32,7 @@
 \newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1} } }
 \newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
-\newcommand{\ottshdnm}[1]{\textcolor{hdmvcolor}{\mathtt{#1} } }
+\newcommand{\ottshdn}[1]{\textcolor{hdncolor}{\mathtt{#1} } }
 \newcommand{\ottsmode}[1]{\textcolor{modecolor}{\mathit{#1} } }
 
 % Replace normal l with fancy round l in label names
@@ -88,10 +88,11 @@
 % Lambda abstraction with and without type annotation
 % \newcommand{\lam}[3]{\ottsctor{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
 \newcommand{\lamnt}[2]{\ottsctor{\lambda}#1\,\mapsto\,#2}
+\newcommand{\lamvnt}[2]{\ottsctor{\lambda_v}#1\,\mapsto\,#2}
 % \newcommand{\Lam}[2]{\ottsctor{\Lambda}\,#1\,\textbf{.}\,#2}
 
 % Constructor for exponential
-\newcommand{\expcons}[1]{\ottsctor{\rrparenthesis }^{#1}\,}
+\newcommand{\expcons}[1]{\ottsctor{\textsc{e} }^{#1}\,}
 
 % Raised and scaled bullet for fillComp
 \newlength{\mylen}
