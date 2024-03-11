@@ -55,5 +55,5 @@ Proof.
     intros b. simpl. apply CtxM.add_1. reflexivity.
 Qed.
 
-Lemma SubLemma : forall (G1 G2 : ctx) (x : var) (m : mode) (T1 T2 : type) (t : term) (v : val), (G1 ⨄ ᶜ{ᵛ x ː m ‗ T2} ᵗ⊢ eterm_Term t ː T1) -> (G2 ᵛ⫦ v ː T2) -> mode_IsValid m -> ctx_IsValid (G1 ⨄ (m ᶜ· G2)) -> ctx_NoHole G2 -> ((G1 ⨄ (m ᶜ· G2)) ᵗ⊢ eterm_Term (t ˢ[ x ≔ v ]) ː T1).
+Lemma SubLemma : forall (G1 G2 : ctx) (x : var) (m : mode) (T1 T2 : type) (t : term) (v : val), (G1 ⨄ ᶜ{ᵛ x ː m ‗ T2} ⊢ᵗ t ː T1) -> (G2 ⫦ᵛ v ː T2) -> mode_IsValid m -> ctx_IsValid (G1 ⨄ (m ᶜ· G2)) -> ctx_NoHole G2 -> ((G1 ⨄ (m ᶜ· G2)) ⊢ᵗ (t ˢ[ x ≔ v ]) ː T1).
 Proof. Admitted.

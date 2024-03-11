@@ -10,70 +10,6 @@ Require Import Coq.FSets.FSetWeakList.
 Require Import Coq.FSets.FMapFacts.
 Require Import Coq.FSets.FSetFacts.
 
-Module Nat_as_UDTOrig := Backport_DT(Nat_as_OT).
-Module HdnsM := FSetWeakList.Make(Nat_as_UDTOrig).
-
-Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
-  match l with
-  | nil => HdnsM.empty
-  | h :: t => HdnsM.add h (hdns_from_list t)
-  end.
-
-Definition hdns_max_hnames (H : HdnsM.t) : nat :=
-  HdnsM.fold (fun k acc => max k acc) H 0.
-}}
-
-metavar var, x, y ::= {{ com Term-level variable name }}
-  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
-
-indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
-
-embed
-{{ coq
-(* Will be aliased later to mul *)
-Inductive _mul : Type :=
-  | Lin : _mul
-  | Ur : _mul.
-
-Definition mul_plus (p1 p2: _mul) : _mul := Ur.
-
-Definition mul_times (p1 p2: _mul) : _mul :=
-  match p1, p2 with
-  | Lin, Lin => Lin
-  | _, _ => Ur
-  end.
-
-Definition mul_times' (pl: list _mul) : _mul :=
-  List.fold_right mul_times Lin pl.
-
-Theorem mul_eq_dec : forall (p1 p2: _mul), {p1 = p2} + {p1 <> p2}.
-Proof.
-  decide equality.
-Defined.
-
-Inductive mul_IsSubtype : _mul -> _mul -> Prop :=
-  | mul_IsSubtypeProofEq : forall (p : _mul), mul_IsSubtype p p
-  | mul_IsSubtypeProofUr : forall (p2 : _mul), mul_IsSubtype Ur p2.
-Theorem mul_IsSubtype_dec : forall (p1 p2: _mul), mul_IsSubtype p1 p2 + (notT (mul_IsSubtype p1 p2)).
-Proof.
-  intros p1 p2. destruct p1, p2.
-  - left. exact (mul_IsSubtypeProofEq Lin).
-  - right. intros contra. inversion contra.
-  - left. exact (mul_IsSubtypeProofUr Lin).
-  - left. exact (mul_IsSubtypeProofEq Ur).
-Defined.
-
-(* Will be aliased later to ext_nat *)
-
-Theorem mode_eq_dec : forall (m1 m2: option (_mul * ext_nat)), {m1 = m2} + {m1 <> m2}.
-Proof.
-  decide equality. destruct a, p.
-  - destruct (mul_eq_dec _m _m0), (ext_eq_dec e e0); subst; auto.
-    * right. congruence.
-    * right. congruence.
-    * right. congruence.
-Defined.
-
 Inductive name : Type :=
   | name_X : nat -> name
   | name_HD : nat -> name.
@@ -96,13 +32,141 @@ Module Name_as_UDT <: UsualDecidableType.
 
 End Name_as_UDT.
 
-Definition name_eq_dec := Name_as_UDT.eq_dec.
-
+Module Nat_as_UDTOrig := Backport_DT(Nat_as_OT).
+Module HdnsM := FSetWeakList.Make(Nat_as_UDTOrig).
 Module Name_as_UDTOrig := Backport_DT(Name_as_UDT).
 Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
+
+(* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
+
+(* Will be aliased later to mul *)
+Inductive _mul : Type :=
+  | Lin : _mul
+  | Ur : _mul.
+Theorem mul_eq_dec : forall (p1 p2: _mul), {p1 = p2} + {p1 <> p2}.
+Proof.
+  decide equality.
+Defined.
+Definition age_eq_dec : forall (a1 a2: ext_nat), {a1 = a2} + {a1 <> a2} := ext_eq_dec.
+Theorem mode_eq_dec : forall (m1 m2: option (_mul * ext_nat)), {m1 = m2} + {m1 <> m2}.
+Proof.
+  decide equality. destruct a, p.
+  - destruct (mul_eq_dec _m _m0), (age_eq_dec e e0); subst; auto.
+    * right. congruence.
+    * right. congruence.
+    * right. congruence.
+Defined.
 }}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NAMES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+metavar var, x, y ::= {{ com Term-level variable name }}
+  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
+
+indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
+
 grammar
+
+hdn, h :: 'hdn_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq nat }} {{ tex \ottshdn{[[hdn]]} }}
+  | 1 :: M :: O {{ coq 1 }} {{ tex \ottshdn{1} }}
+  | 2 :: M :: T {{ coq 2 }} {{ tex \ottshdn{2} }}
+  | h + h' :: M :: S {{ com Sum }} {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshdn{+}[[h']] }}
+  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hdns_max_hnames [[H]]) }} {{ tex \ottshdn{max(}[[H]]\ottshdn{)} }}
+  | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshdn{(}[[h]]\ottshdn{)} }}
+
+hdns, H :: 'hdns_' ::= {{ com Set of hole names }} {{ coq HdnsM.t }} {{ tex \ottshdn{[[hdns]]} }}
+  | { h1 , .. , hk } :: :: L {{ coq (hdns_from_list [[h1..hk]]) }}
+  | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
+  | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ tex [[H]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
+  | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
+  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectx [[C]]) }}
+  | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LANGUAGE SYNTAX (STATIC)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+term, t, u :: 'term_' ::=                                               {{ com Term }}
+  | v :: :: Val {{ com Value }}
+  | x :: :: Var {{ com Variable }}
+  | t ≻ u                                    ::   :: App      {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
+  % | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\,\succ\,\ottkw{case}\,\ottsctor{()}\,\mapsto\,[[u]] }}
+  | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
+  | t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
+  | t ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
+  | t ≻case m ᴇ n x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }}
+  | t ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
+
+  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmode{\scriptstyle G} }$ }}
+  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmode{\scriptstyle G} }$ }}
+  | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
+  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
+
+  | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
+  | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
+  | t ⨞ ( λ x m ⟼ u ) :: :: FillF (+ bind x in u +) {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }}
+  | t ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
+  | t ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
+  | t ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
+  | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
+  | t ⨞· u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[u]] }}
+
+  | ( t )                                   :: S :: Paren {{ coq [[t]] }}
+  | t [ x ≔ v ]                             :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
+  % | b sp t b spe :: S :: BreakSpacing1
+  % | b sp t :: S :: BreakSpaacing2
+  % | t b spe : : S :: BreakSpacing3
+
+val, v :: 'val_' ::= {{ com Term value }}
+  | - h :: :: H {{ com Hole }} {{ tex \ottshdn{-}[[h]] }}
+  | + h :: :: D {{ tex \ottshdn{+}[[h]] }} {{ com Destination }}
+  | () :: :: U {{ com Unit }}
+  | λᵛ x m ⟼ t :: :: F (+ bind x in t +) {{ tex \lamvnt{[[x]]}{[[m]]}{[[t]]} }} {{ com Lambda abstraction }}
+  | Inl v :: :: L {{ com Left variant for sum }}
+  | Inr v :: :: R {{ com Right variant for sum }}
+  | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
+  | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
+  | H ⟨ v1 ❟ v2 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[v2]]\ottsctor{\rangle} }}
+  | v ⩲ h :: M :: Rename {{ com Rename hole names inside $[[v]]$ by shifting them by $[[h]]$ }} {{ tex [[v]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (val_incr_hnames [[v]] [[h]]) }}
+  | ( v ) :: S :: Paren {{ coq [[v]] }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DYNAMIC SYNTAX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eterm, j :: 'eterm_' ::= {{ com Pseudo-term }}
+  | C [ t ] :: :: ECtxApp
+  | t :: S :: TermSugar {{ coq (eterm_ECtxApp ectx_Id [[t]]) }}
+
+ectx, C :: 'ectx_' ::= {{ com Evaluation context }}
+  | [ ] :: :: Id {{ com Identity }} {{ tex \square }}
+  | H ᵒ⟨ v1 ❟ C :: :: AOpen {{ tex _{[[H]]\!}^{o\!\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar }}
+  | C ∘ C' :: :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
+  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectx_fill [[C]] [[h]] [[v]]) }}
+  | ( C ) :: S :: Paren {{ coq [[C]] }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TYPING SYNTAX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
+  | 𝟏 :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
+  | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
+  | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
+  | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
+  | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\ltimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
+  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Function }}
+  | ⌊ T ⌋ m :: :: D {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
+  | T1 ↣ T2 :: :: C {{ tex [[T1]]\ottstype{\rightarrowtail}[[T2]] }} {{ com Evaluation contexts }}
+  | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
+
+mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
+  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
+  | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
+  | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
+  | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
 
 mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (first component of modality) }} {{ coq _mul }}
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
@@ -117,42 +181,10 @@ age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (second component o
   | a1 · ... · ak :: :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
-mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
-  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
-  | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
-  | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
-  | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
-
-type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
-  | 𝟏 :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
-  | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
-  | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
-  | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
-  | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\ltimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
-  | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Function }}
-  | ⌊ T ⌋ m :: :: D {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
-  | T1 ↣ T2 :: :: C {{ tex [[T1]]\ottstype{\rightarrowtail}[[T2]] }} {{ com Evaluation contexts }}
-  | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
-
 bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or hole }}
   | x : m T :: :: V {{ com Variable }} {{ tex [[x]]:_{[[m]]}[[T]] }}
   | + h : m ⌊ T ⌋ n :: :: D {{ com Destination ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdn{+}[[h]]:_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
   | - h : T n :: :: H {{ com Hole ($[[n]]$ is the modality for values it accepts, it doesn't have a modality on its own) }} {{ tex \ottshdn{-}[[h]]:[[T]]^{[[n]]} }}
-
-hdn, h :: 'hdn_' ::= {{ com Hole or destination name }} {{ coq nat }} {{ tex \ottshdn{[[hdn]]} }}
-  | 1 :: :: O {{ coq 1 }} {{ tex \ottshdn{1} }}
-  | 2 :: :: T {{ coq 2 }} {{ tex \ottshdn{2} }}
-  | h + h' :: M :: S {{ com Sum }} {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshdn{+}[[h']] }}
-  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hdns_max_hnames [[H]]) }} {{ tex \ottshdn{max(}[[H]]\ottshdn{)} }}
-  | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshdn{(}[[h]]\ottshdn{)} }}
-
-hdns, H :: 'hdns_' ::= {{ com Set of hole or destination names }} {{ coq HdnsM.t }} {{ tex \ottshdn{[[hdns]]} }}
-  | { h1 , .. , hk } :: :: L {{ com Set of holes }} {{ coq (hdns_from_list [[h1..hk]]) }}
-  | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
-  | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ tex [[H]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
-  | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
-  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectx [[C]]) }}
-  | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
 
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
   | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }} {{ com List of bindings }}
@@ -161,311 +193,22 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context 
   | - G :: :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every dest binding into a hole binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
-term, t, u :: 'term_' ::=                                               {{ com Term }}
-  | v :: :: Val {{ com Value }}
-  | x :: :: Var {{ com Variable }}
-  | t ≻ u                                    ::   :: App      {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
-  % | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\,\succ\,\ottkw{case}\,\ottsctor{()}\,\mapsto\,[[u]] }}
-  | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
-  | t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
-  | t ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
-  | t ≻case m ᴇ n x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }}
-  | t ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the right side of the ampar }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
-
-  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmode{\scriptstyle G} }$ }}
-  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmode{\scriptstyle G} }$ }}
-  | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
-  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
-
-  | alloc T :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc}_{ [[T]]} }}
-  | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
-  | t ⨞ λ x ⟼ u :: :: FillF (+ bind x in u +) {{ com Fill destination with function }} {{ tex [[t]][[⨞]]\lamnt{[[x]]}{[[u]]} }}
-  | t ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
-  | t ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
-  | t ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
-  | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
-  | t ⨞· u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[u]] }}
-
-  | ( t )                                   :: S :: Paren {{ coq [[t]] }}
-  | t [ x ≔ v ]                             :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
-  % | b sp t b spe :: S :: BreakSpacing1
-  % | b sp t :: S :: BreakSpaacing2
-  % | t b spe : : S :: BreakSpacing3
-
-eterm, j :: 'eterm_' ::= {{ com Pseudo-term }}
-  | C [ t ] :: :: ECtxApp
-  | t :: S :: TermSugar {{ coq (eterm_ECtxApp ectx_Id [[t]]) }}
-
-val, v :: 'val_' ::= {{ com Term value }}
-  | - h :: :: H {{ com Hole }} {{ tex \ottshdn{-}[[h]] }}
-  | + h :: :: D {{ tex \ottshdn{+}[[h]] }} {{ com Destination }}
-  | () :: :: U {{ com Unit }}
-  | λᵛ x ⟼ t :: :: F (+ bind x in t +) {{ tex \lamvnt{[[x]]}{[[t]]} }} {{ com Lambda abstraction }}
-  | Inl v :: :: L {{ com Left variant for sum }}
-  | Inr v :: :: R {{ com Right variant for sum }}
-  | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
-  | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
-  | H ⟨ v1 ❟ v2 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[v2]]\ottsctor{\rangle} }}
-  | v ⩲ h :: M :: Rename {{ com Rename hole names inside $[[v]]$ by shifting them by $[[h]]$ }} {{ tex [[v]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (val_incr_hnames [[v]] [[h]]) }}
-  | ( v ) :: S :: Paren {{ coq [[v]] }}
-
-ectx, C :: 'ectx_' ::= {{ com Evaluation context }}
-  | [ ] :: :: Id {{ com Identity }} {{ tex \square }}
-  | H ᵒ⟨ v1 ❟ C :: :: AOpen {{ tex _{[[H]]\!}^{o\!\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar }}
-  | C ∘ C' :: :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
-  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectx_fill [[C]] [[h]] [[v]]) }}
-  | ( C ) :: S :: Paren {{ coq [[C]] }}
-
 embed
 {{ coq
-Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type.
+(******************************************************************************
+ * NAMES
+ *****************************************************************************)
 
-Definition age_eq_dec : forall (a1 a2: age), {a1 = a2} + {a1 <> a2} := ext_eq_dec.
-Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
-Definition age_times' (al: list age) : age := ext_plus' al.
-Inductive age_IsSubtype : age -> age -> Type :=
-  | age_IsSubtypeProofEq : forall (a : age), age_IsSubtype a a
-  | age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
-Theorem age_IsSubtype_dec : forall (a1 a2: age), age_IsSubtype a1 a2 + (notT (age_IsSubtype a1 a2)).
-Proof.
-  intros a1 a2. destruct a1, a2.
-  - assert ({n = n0} + {n <> n0}) by apply Nat.eq_dec. destruct H.
-    * rewrite e. left. exact (age_IsSubtypeProofEq (Fin n0)).
-    * right. intros contra. inversion contra. congruence.
-  - right. intros contra. inversion contra.
-  - left. exact (age_IsSubtypeProofInf (Fin n)).
-  - left. exact (age_IsSubtypeProofEq Inf).
-Defined.
+Definition name_eq_dec := Name_as_UDT.eq_dec.
 
-Definition mode_plus (m1 m2: mode) : mode :=
-  match m1, m2 with
-  | None, _ => None
-  | _, None => None
-  | Some (p1, a1), Some (p2, a2) => match a1, a2 with
-    | _, Inf => Some (mul_plus p1 p2, Inf)
-    | Inf, _ => Some (mul_plus p1 p2, Inf)
-    | _, _ => match a1, a2 with
-      | Fin n1, Fin n2 => match Nat.eq_dec n1 n2 with
-        | left _ => (* true *) Some (mul_plus p1 p2, Fin n1)
-        | right _ => (* false *) None
-        end
-      | Inf, Inf => Some (mul_plus p1 p2, Inf)
-      | _, _ => None
-      end
-    end
+Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
+  match l with
+  | nil => HdnsM.empty
+  | h :: t => HdnsM.add h (hdns_from_list t)
   end.
 
-Definition mode_times (m1 m2: mode) : mode :=
-  match m1, m2 with
-  | None, _ => None
-  | _, None => None
-  | Some (p1, a1), Some (p2, a2) => Some (mul_times p1 p2, age_times a1 a2)
-  end.
-
-Definition mode_times' (ml: list mode) : mode :=
-  List.fold_right mode_times (Some (Lin, Fin 0)) ml.
-
-Inductive mode_IsSubtype : mode -> mode -> Type :=
-  | mode_IsSubtypeProofNone : forall (m1 : mode), mode_IsSubtype m1 None
-  | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
-Theorem mode_IsSubtype_dec : forall (m1 m2: mode), mode_IsSubtype m1 m2 + (notT (mode_IsSubtype m1 m2)).
-Proof. Admitted.
-
-Inductive mode_IsValid : mode -> Prop :=
-  mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
-Theorem mode_IsValid_dec : forall (m : mode), mode_IsValid m + (notT (mode_IsValid m)).
-Proof.
-  intros m. destruct m as [pa|].
-  - left. exact (mode_IsValidProof pa).
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive mode_IsLin : mode -> Prop :=
-  mode_IsLinProof : forall (a : age), mode_IsLin (Some (Lin, a)).
-Theorem mode_IsLin_dec : forall (m : mode), mode_IsLin m + (notT (mode_IsLin m)).
-Proof.
-  intros m. destruct m as [pa|].
-  - destruct pa as [p a]. destruct p.
-    + left. exact (mode_IsLinProof a).
-    + right. intros contra. inversion contra.
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive mode_IsUr : mode -> Prop :=
-  mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
-Theorem mode_IsUr_dec : forall (m : mode), mode_IsUr m + (notT (mode_IsUr m)).
-Proof.
-  intros m. destruct m as [pa|].
-  - destruct pa as [p a]. destruct p.
-    + right. intros contra. inversion contra.
-    + left. exact (mode_IsUrProof a).
-  - right. intros contra. inversion contra.
-Qed.
-
-Definition bndr_name (b : bndr) : name :=
-  match b with
-  | bndr_V x m T => name_X x
-  | bndr_H h T m => name_HD h
-  | bndr_D h m1 T m2 => name_HD h
-  end.
-
-Definition bndr_mode (b : bndr) : mode := match b with
-  | bndr_V _ m _ => m
-  | bndr_H _ _ m => m
-  | bndr_D _ m1 _ m2 => m1
-  end.
-
-Inductive bndr_IsVar : bndr -> Prop :=
-  bndr_IsVarProof : forall x m T, bndr_IsVar (bndr_V x m T).
-Theorem bndr_IsVar_dec : forall (b: bndr), bndr_IsVar b + (notT (bndr_IsVar b)).
-Proof.
-  intros b. destruct b.
-  - left. exact (bndr_IsVarProof x m T).
-  - right. intros contra. inversion contra.
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive bndr_IsDest : bndr -> Prop :=
-  bndr_IsDestProof : forall h m T n, bndr_IsDest (bndr_D h m T n).
-Theorem bndr_IsDest_dec : forall (b: bndr), bndr_IsDest b + (notT (bndr_IsDest b)).
-Proof.
-  intros b. destruct b.
-  - right. intros contra. inversion contra.
-  - left. exact (bndr_IsDestProof h m T n).
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive bndr_IsHole : bndr -> Prop :=
-  bndr_IsHoleProof : forall h m T, bndr_IsHole (bndr_H h m T).
-Theorem bndr_IsHole_dec : forall (b: bndr), bndr_IsHole b + (notT (bndr_IsHole b)).
-Proof.
-  intros b. destruct b.
-  - right. intros contra. inversion contra.
-  - right. intros contra. inversion contra.
-  - left. exact (bndr_IsHoleProof h T n).
-Qed.
-
-Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
-Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
-Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
-Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsDest b).
-Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsHole b).
-Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsVar b).
-Definition ctx_IsValid (G: CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
-Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
-Definition ctx_HdnmNotMem (h : hdn) (G : CtxM.t bndr) : Prop :=
-  ~CtxM.In (name_HD h) G.
-Definition ctx_OnlyLin (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
-Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsUr (bndr_mode b).
-Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Prop :=
-  | ctx_CompatibleProofV : forall G x m1 m2 T, CtxM.MapsTo (name_X x) (bndr_V x m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_X x) G) -> ctx_Compatible G (bndr_V x m2 T)
-  | ctx_CompatibleProofD : forall G h m11 m2 m21 T, CtxM.MapsTo (name_HD h) (bndr_D h m11 T m2) G -> mode_IsSubtype m11 m21 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_D h m21 T m2)
-  | ctx_CompatibleProofH : forall G h m1 m2 T, CtxM.MapsTo (name_HD h) (bndr_H h T m1) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_H h T m2).
-Definition ctx_Disjoint (G1 G2 : CtxM.t bndr) : Prop :=
-  forall n, (CtxM.In n G1 -> ~CtxM.In n G2) /\ (CtxM.In n G2 -> ~CtxM.In n G1).
-
-Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> (bndr_name b) = n.
-
-Inductive bndr_CompatibleTypes : bndr -> bndr -> Type :=
-  | bndr_CompatibleTypesProofV : forall x m1 m2 T, bndr_CompatibleTypes (bndr_V x m1 T) (bndr_V x m2 T)
-  | bndr_CompatibleTypesProofD : forall h m11 m2 m21 T, bndr_CompatibleTypes (bndr_D h m11 T m2) (bndr_D h m21 T m2)
-  | bndr_CompatibleTypesProofH : forall h m1 m2 T, bndr_CompatibleTypes (bndr_H h T m1) (bndr_H h T m2).
-
-Theorem bndr_CompatibleTypes_dec : forall (b b' : bndr), bndr_CompatibleTypes b b'+notT (bndr_CompatibleTypes b b').
-Proof.
-  intros b b'. assert ({bndr_name b = bndr_name b'} + {bndr_name b <> bndr_name b'}) by apply name_eq_dec. destruct H as [name_eq|name_neq].
-  - unfold bndr_name in name_eq. destruct b eqn:Hb in name_eq. destruct b' eqn:Hb' in name_eq. assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq].
-    * left. assert (x = x0) as x_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym x_eq). rewrite (eq_sym T_eq). exact (bndr_CompatibleTypesProofV x m m0 T).
-    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
-    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
-    * right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
-    * destruct b' eqn:Hb' in name_eq. congruence.
-      ** assert (h = h0) as h_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym h_eq). assert ({n = n0} + {n <> n0}) by apply mode_eq_dec. destruct H as [n_eq|n_neq]. assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq]. left. rewrite (eq_sym T_eq). rewrite (eq_sym n_eq). exact (bndr_CompatibleTypesProofD h m n m0 T).
-      right. intros contra. inversion contra. congruence. right. intros contra. inversion contra. congruence.
-      ** right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
-    * destruct b' eqn:Hb' in name_eq. congruence.
-      ** right. intros contra. inversion contra. rewrite Hb in H. congruence. rewrite Hb in H. congruence. rewrite Hb in H. congruence.
-      ** assert (h = h0) as h_eq. injection name_eq. tauto. rewrite Hb, Hb'. rewrite (eq_sym h_eq). assert ({T = T0} + {T <> T0}) by apply type_eq_dec. destruct H as [T_eq|T_neq]. left. rewrite (eq_sym T_eq).  exact (bndr_CompatibleTypesProofH h n n0 T).
-      right. intros contra. inversion contra. congruence.
-  - right. intros contra. inversion contra. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence. rewrite (eq_sym H) in name_neq. rewrite (eq_sym H0) in name_neq. unfold bndr_name in name_neq. congruence.
-Qed.
-
-Inductive bndr_IncompatibleTypes : bndr -> bndr -> Type :=
-  | bndr_IncompatibleTypesProofV : forall x m1 m2 T1 T2, T1 <> T2 -> bndr_IncompatibleTypes (bndr_V x m1 T1) (bndr_V x m2 T2)
-  | bndr_IncompatibleTypesProofD : forall h m11 m12 m21 m22 T1 T2, (type_D T1 m12) <> (type_D T2 m22) -> bndr_IncompatibleTypes (bndr_D h m11 T1 m12) (bndr_D h m21 T2 m22)
-  | bndr_IncompatibleTypesProofH : forall h m1 m2 T1 T2, T1 <> T2 -> bndr_IncompatibleTypes (bndr_H h m1 T1) (bndr_H h m2 T2).
-
-Theorem bndr_IncompatibleTypes_dec : forall (b b' : bndr), bndr_IncompatibleTypes b b'+ (notT (bndr_IncompatibleTypes b b')).
-Proof. Admitted.
-
-Inductive bndr_DestHoleOrHoleDest : bndr -> bndr -> Type :=
-  | bndr_DestHoleOrHoleDestProofHD : forall h m1 m21 m22 T1 T2, bndr_DestHoleOrHoleDest (bndr_H h m1 T1) (bndr_D h m21 T2 m22)
-  | bndr_DestHoleOrHoleDestProofDH : forall h m11 m12 m2 T1 T2, bndr_DestHoleOrHoleDest (bndr_D h m11 T1 m12) (bndr_H h m2 T2).
-
-Theorem bndr_DestHoleOrHoleDest_dec : forall (b b' : bndr), bndr_DestHoleOrHoleDest b b'+ (notT (bndr_DestHoleOrHoleDest b b')).
-Proof. Admitted.
-
-Theorem bndr_AddCases_dec : forall (b b' : bndr), (bndr_name b = bndr_name b') ->
-    ((bndr_CompatibleTypes b b' * (notT (bndr_IncompatibleTypes b b')) * (notT (bndr_DestHoleOrHoleDest b b')))
-  + ((notT (bndr_CompatibleTypes b b')) * bndr_IncompatibleTypes b b' * (notT (bndr_DestHoleOrHoleDest b b')))
-  + ((notT (bndr_CompatibleTypes b b')) * (notT (bndr_IncompatibleTypes b b')) * bndr_DestHoleOrHoleDest b b')).
-Proof. Admitted.
-
-Theorem ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr.
-Proof.
-  destruct (CtxM.find (bndr_name b') G) eqn:Hr.
-  * (* Some b *)
-    assert (CtxM.MapsTo (bndr_name b') b G). apply CtxM.find_2. exact Hr.
-    apply ctx_Coherent in H. destruct (bndr_AddCases_dec b b') as [ [caseComp|caseIncomp]|caseDHHD]. exact H.
-    ** destruct caseComp as [ [Comp nIncomp] nDHHD]. destruct Comp.
-      (* V *) exact (CtxM.add (name_X x) (bndr_V x (mode_plus m1 m2) T) G).
-      (* D *) exact (CtxM.add (name_HD h) (bndr_D h (mode_plus m11 m21) T m2) G).
-      (* H *) exact (CtxM.add (name_HD h) (bndr_H h T (mode_plus m1 m2)) G).
-    ** destruct caseIncomp as [ [nComp Incomp] nDHHD]. destruct Incomp.
-      (* V *) exact (CtxM.add (name_X x) (bndr_V x None type_U) G).
-      (* D *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-      (* H *) exact (CtxM.add (name_HD h) (bndr_H h type_U None) G).
-    ** destruct caseDHHD as [ [nComp nIncomp] DHHD]. destruct DHHD.
-      (* HD *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-      (* DH *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-  * (* None *)
-    exact (CtxM.add (bndr_name b') b' G).
-Defined.
-
-Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
-  List.fold_right (fun b G => ctx_add b G) (CtxM.empty bndr) bs.
-
-Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
-  (* G1 is acc, G2 is iterated over *)
-  CtxM.fold (fun n b G => ctx_add b G) G2 G1.
-
-Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
-  CtxM.map (fun b =>
-    match b with
-    | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
-    | bndr_D h m2 T2 m3 => bndr_D h (mode_times m1 m2) T2 m3
-    | bndr_H h T2 m2 => bndr_H h T2 (mode_times m1 m2)
-    end
-  ) G.
-
-Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
-  CtxM.map (fun b =>
-    match b with
-    | bndr_V x m2 T2 => bndr_V x None type_U (* error *)
-    | bndr_D h m2 T2 m3 => bndr_H h T2 m3
-    | bndr_H h T2 m2 => bndr_H h type_U None (* error *)
-    end
-  ) G.
+Definition hdns_max_hnames (H : HdnsM.t) : nat :=
+  HdnsM.fold (fun k acc => max k acc) H 0.
 
 Definition hdns_incr_hnames (H : HdnsM.t) (h' : nat) : HdnsM.t :=
   HdnsM.fold (fun h acc => HdnsM.add (h + h') acc) H HdnsM.empty.
@@ -478,13 +221,17 @@ Definition hdns_from_ctx (G : CtxM.t bndr) : HdnsM.t :=
     end
   ) G HdnsM.empty.
 
-(* TODO: complete *)
+(* TODO: check definition *)
 Fixpoint hdns_from_ectx (C : ectx) : HdnsM.t :=
   match C with
   | ectx_Id => HdnsM.empty
   | ectx_AOpen H v C' => HdnsM.union H (hdns_from_ectx C')
   | ectx_Comp C1 C2 => HdnsM.union (hdns_from_ectx C1) (hdns_from_ectx C2)
   end.
+
+(******************************************************************************
+ * TERMS DYNAMIC BEHAVIOUR
+ *****************************************************************************)
 
 Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
   | term_Val v' => term_Val (val_sub_name v' n v)
@@ -517,12 +264,12 @@ Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
     end in term_Map (term_sub_name t' n v) x' u'
   | term_ToA t' => term_ToA (term_sub_name t' n v)
   | term_FromA t' => term_FromA (term_sub_name t' n v)
-  | term_Alloc T => term_Alloc T
+  | term_Alloc => term_Alloc
   | term_FillU t1 => term_FillU (term_sub_name t1 n v)
-  | term_FillF t1 x' u => let u' := match name_eq_dec n (name_X x') with
+  | term_FillF t1 x' m u => let u' := match name_eq_dec n (name_X x') with
     | left _ => (* shadowing *) u
     | right _ => term_sub_name u n v
-    end in term_FillF (term_sub_name t1 n v) x' u'
+    end in term_FillF (term_sub_name t1 n v) x' m u'
   | term_FillL t1 => term_FillL (term_sub_name t1 n v)
   | term_FillR t1 => term_FillR (term_sub_name t1 n v)
   | term_FillP t1 => term_FillP (term_sub_name t1 n v)
@@ -530,10 +277,10 @@ Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
   | term_FillC t u => term_FillC (term_sub_name t n v) (term_sub_name u n v)
 end
 with val_sub_name (v': val) (n:name) (v:val) : val := match v' with
-  | val_F x' u => let u' := match name_eq_dec n (name_X x') with
+  | val_F x' m u => let u' := match name_eq_dec n (name_X x') with
     | left _ => (* shadowing *) u
     | right _ => term_sub_name u n v
-    end in val_F x' u'
+    end in val_F x' m u'
   | val_H h => match name_eq_dec n (name_HD h) with
     | left _ => v
     | right _ => val_H h
@@ -550,6 +297,266 @@ end.
 Definition term_sub (t: term) (x:var) (v:val) : term := term_sub_name t (name_X x) v.
 Definition ectx_fill (C: ectx) (h:hdn) (v:val) : ectx := C. (* TODO complete *)
 Definition val_incr_hnames (v : val) (h : hdn) : val := v. (* TODO complete *)
+
+(******************************************************************************
+ * TYPE
+ *****************************************************************************)
+
+(* Alias to the one defined by Ott *)
+Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type.
+
+(******************************************************************************
+ * MULTIPLICITY
+ *****************************************************************************)
+
+Definition mul_plus (p1 p2: _mul) : _mul := Ur.
+Definition mul_times (p1 p2: _mul) : _mul :=
+  match p1, p2 with
+  | Lin, Lin => Lin
+  | _, _ => Ur
+  end.
+Definition mul_times' (pl: list _mul) : _mul :=
+  List.fold_right mul_times Lin pl.
+Inductive mul_IsSubtype : _mul -> _mul -> Prop :=
+  | mul_IsSubtypeProofEq : forall (p : _mul), mul_IsSubtype p p
+  | mul_IsSubtypeProofUr : forall (p2 : _mul), mul_IsSubtype Ur p2.
+Theorem mul_IsSubtype_dec : forall (p1 p2: _mul), {mul_IsSubtype p1 p2} + {~mul_IsSubtype p1 p2}.
+Proof.
+  intros p1 p2. destruct p1, p2.
+  - left. exact (mul_IsSubtypeProofEq Lin).
+  - right. intros contra. inversion contra.
+  - left. exact (mul_IsSubtypeProofUr Lin).
+  - left. exact (mul_IsSubtypeProofEq Ur).
+Defined.
+
+(******************************************************************************
+ * AGE
+ *****************************************************************************)
+
+Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
+Definition age_times' (al: list age) : age := ext_plus' al.
+Inductive age_IsSubtype : age -> age -> Prop :=
+  | age_IsSubtypeProofEq : forall (a : age), age_IsSubtype a a
+  | age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
+Theorem age_IsSubtype_dec : forall (a1 a2: age), {age_IsSubtype a1 a2} + {~(age_IsSubtype a1 a2)}.
+Proof.
+  intros a1 a2. destruct a1, a2.
+  - assert ({n = n0} + {n <> n0}) by apply Nat.eq_dec. destruct H.
+    * rewrite e. left. exact (age_IsSubtypeProofEq (Fin n0)).
+    * right. intros contra. inversion contra. congruence.
+  - right. intros contra. inversion contra.
+  - left. exact (age_IsSubtypeProofInf (Fin n)).
+  - left. exact (age_IsSubtypeProofEq Inf).
+Defined.
+
+(******************************************************************************
+ * MODE
+ *****************************************************************************)
+
+Definition mode_plus (m1 m2: mode) : mode :=
+  match m1, m2 with
+  | None, _ => None
+  | _, None => None
+  | Some (p1, a1), Some (p2, a2) => match a1, a2 with
+    | _, Inf => Some (mul_plus p1 p2, Inf)
+    | Inf, _ => Some (mul_plus p1 p2, Inf)
+    | _, _ => match a1, a2 with
+      | Fin n1, Fin n2 => match Nat.eq_dec n1 n2 with
+        | left _ => (* true *) Some (mul_plus p1 p2, Fin n1)
+        | right _ => (* false *) None
+        end
+      | Inf, Inf => Some (mul_plus p1 p2, Inf)
+      | _, _ => None
+      end
+    end
+  end.
+Definition mode_times (m1 m2: mode) : mode :=
+  match m1, m2 with
+  | None, _ => None
+  | _, None => None
+  | Some (p1, a1), Some (p2, a2) => Some (mul_times p1 p2, age_times a1 a2)
+  end.
+Definition mode_times' (ml: list mode) : mode :=
+  List.fold_right mode_times (Some (Lin, Fin 0)) ml.
+Inductive mode_IsSubtype : mode -> mode -> Prop :=
+  | mode_IsSubtypeProofNone : forall (m1 : mode), mode_IsSubtype m1 None
+  | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
+Theorem mode_IsSubtype_dec : forall (m1 m2: mode), {mode_IsSubtype m1 m2} + {~mode_IsSubtype m1 m2}.
+Proof.
+  intros m1 m2. destruct m1 as [(p1 & a1)|], m2 as [(p2 & a2)|].
+  - destruct (mul_IsSubtype_dec p1 p2), (age_IsSubtype_dec a1 a2).
+    + left. exact (mode_IsSubtypeProofPair p1 p2 a1 a2 m a).
+    + right. intros contra. inversion contra. congruence.
+    + right. intros contra. inversion contra. congruence.
+    + right. intros contra. inversion contra. congruence.
+  - left. exact (mode_IsSubtypeProofNone (Some (p1, a1))).
+  - right. intros contra. inversion contra.
+  - left. exact (mode_IsSubtypeProofNone None).
+Defined.
+Inductive mode_IsValid : mode -> Prop :=
+  mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
+Theorem mode_IsValid_dec : forall (m : mode), {mode_IsValid m} + {~mode_IsValid m}.
+Proof.
+  intros m. destruct m as [pa|].
+  - left. exact (mode_IsValidProof pa).
+  - right. intros contra. inversion contra.
+Qed.
+Inductive mode_IsLin : mode -> Prop :=
+  mode_IsLinProof : forall (a : age), mode_IsLin (Some (Lin, a)).
+Theorem mode_IsLin_dec : forall (m : mode), {mode_IsLin m} + {~mode_IsLin m}.
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct p.
+    + left. exact (mode_IsLinProof a).
+    + right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
+Inductive mode_IsUr : mode -> Prop :=
+  mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
+Theorem mode_IsUr_dec : forall (m : mode), {mode_IsUr m} + {~mode_IsUr m}.
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct p.
+    + right. intros contra. inversion contra.
+    + left. exact (mode_IsUrProof a).
+  - right. intros contra. inversion contra.
+Qed.
+
+(******************************************************************************
+ * BINDERS
+ *****************************************************************************)
+
+Definition bndr_name (b : bndr) : name :=
+  match b with
+  | bndr_V x m T => name_X x
+  | bndr_H h T m => name_HD h
+  | bndr_D h m1 T m2 => name_HD h
+  end.
+
+Definition bndr_mode (b : bndr) : mode := match b with
+  | bndr_V _ m _ => m
+  | bndr_H _ _ m => m
+  | bndr_D _ m1 _ m2 => m1
+  end.
+
+Inductive bndr_IsVar : bndr -> Prop :=
+  bndr_IsVarProof : forall x m T, bndr_IsVar (bndr_V x m T).
+Theorem bndr_IsVar_dec : forall (b: bndr), {bndr_IsVar b} + {~bndr_IsVar b}.
+Proof.
+  intros b. destruct b.
+  - left. exact (bndr_IsVarProof x m T).
+  - right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive bndr_IsDest : bndr -> Prop :=
+  bndr_IsDestProof : forall h m T n, bndr_IsDest (bndr_D h m T n).
+Theorem bndr_IsDest_dec : forall (b: bndr), {bndr_IsDest b} + {~bndr_IsDest b}.
+Proof.
+  intros b. destruct b.
+  - right. intros contra. inversion contra.
+  - left. exact (bndr_IsDestProof h m T n).
+  - right. intros contra. inversion contra.
+Qed.
+
+Inductive bndr_IsHole : bndr -> Prop :=
+  bndr_IsHoleProof : forall h m T, bndr_IsHole (bndr_H h m T).
+Theorem bndr_IsHole_dec : forall (b: bndr), {bndr_IsHole b} + {~bndr_IsHole b}.
+Proof.
+  intros b. destruct b.
+  - right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+  - left. exact (bndr_IsHoleProof h T n).
+Qed.
+
+(******************************************************************************
+ * CONTEXTS
+ *****************************************************************************)
+
+Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> (bndr_name b) = n.
+
+Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
+Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
+Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
+Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsDest b).
+Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsHole b).
+Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsVar b).
+Definition ctx_IsValid (G: CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
+Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
+Definition ctx_HdnmNotMem (h : hdn) (G : CtxM.t bndr) : Prop :=
+  ~CtxM.In (name_HD h) G.
+Definition ctx_OnlyLin (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
+Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
+  forall n b, CtxM.MapsTo n b G -> mode_IsUr (bndr_mode b).
+Definition ctx_Disjoint (G1 G2 : CtxM.t bndr) : Prop :=
+  forall n, (CtxM.In n G1 -> ~CtxM.In n G2) /\ (CtxM.In n G2 -> ~CtxM.In n G1).
+Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Prop :=
+  | ctx_CompatibleProofV : forall G x m1 m2 T, CtxM.MapsTo (name_X x) (bndr_V x m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_X x) G) -> ctx_Compatible G (bndr_V x m2 T)
+  | ctx_CompatibleProofD : forall G h m11 m2 m21 T, CtxM.MapsTo (name_HD h) (bndr_D h m11 T m2) G -> mode_IsSubtype m11 m21 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_D h m21 T m2)
+  | ctx_CompatibleProofH : forall G h m1 m2 T, CtxM.MapsTo (name_HD h) (bndr_H h T m1) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_H h T m2).
+
+(* Actually a function; not really a theorem *)
+Theorem ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr.
+Proof.
+  destruct (CtxM.find (bndr_name b') G) eqn:eq_find.
+  * (* Some b *)
+    assert (CtxM.MapsTo (bndr_name b') b G). apply CtxM.find_2. exact eq_find.
+    apply ctx_Coherent in H. destruct b as [x m1 T1 | h m11 T1 m12 | h T1 m1], b' as [x' m2 T2 | h' m21 T2 m22 | h' T2 m2].
+    all: unfold bndr_name in H, eq_find.
+    - assert (x = x') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2).
+      (* T1 = T2 *) exact (CtxM.add (name_X x) (bndr_V x (mode_plus m1 m2) T1) G).
+      (* T1 != T2 *) all: exact (CtxM.add (name_X x) (bndr_V x None type_U) G).
+    - congruence.
+    - congruence.
+    - congruence.
+    - assert (h = h') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2), (mode_eq_dec m12 m22).
+      (* T1 = T2, m12 = m22 *) exact (CtxM.add (name_HD h) (bndr_D h (mode_plus m11 m21) T1 m12) G).
+      (* T1 != T2 \/ m12 != m22 *) all: exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
+    - (* bndr_D vs bndr_H *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
+    - congruence.
+    - (* bndr_H vs bndr_D *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
+    - assert (h = h') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2).
+      (* T1 = T2 *) exact (CtxM.add (name_HD h) (bndr_H h T1 (mode_plus m1 m2)) G).
+      (* T1 != T2 *) all: exact (CtxM.add (name_HD h) (bndr_H h type_U None) G).
+  * (* None *)
+    exact (CtxM.add (bndr_name b') b' G).
+Defined.
+
+Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
+  List.fold_right (fun b G => ctx_add b G) (CtxM.empty bndr) bs.
+
+Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
+  (* G1 is acc, G2 is iterated over *)
+  CtxM.fold (fun n b G => ctx_add b G) G2 G1.
+
+Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
+  CtxM.map (fun b =>
+    match b with
+    | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
+    | bndr_D h m2 T2 m3 => bndr_D h (mode_times m1 m2) T2 m3
+    | bndr_H h T2 m2 => bndr_H h T2 (mode_times m1 m2)
+    end
+  ) G.
+
+Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
+  CtxM.map (fun b =>
+    match b with
+    | bndr_V x m2 T2 => bndr_V x None type_U (* error *)
+    | bndr_D h m2 T2 m3 => bndr_H h T2 m3
+    | bndr_H h T2 m2 => bndr_H h type_U None (* error *)
+    end
+  ) G.
+
+(*****************************************************************************)
 }}
 
 grammar
@@ -610,7 +617,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | mode_IsUr m :: :: mode_IsUr {{ tex \texttt{mode\_Ur}~[[m]] }}
 
   | G ⫦ v : T :: :: TyR_val
-  | G ⊢ j : T :: :: Ty_term
+  | G ⊢ j : T :: :: Ty_eterm
   | G ⫦ C : T :: :: TyR_ectx
 
 parsing

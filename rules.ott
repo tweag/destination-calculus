@@ -22,7 +22,7 @@ G ⫦ +h : ⌊T⌋n
 {{ ctx_DestOnly [[G]] }} % Only says that we cannot have holes inside, as well as t cannot capture extra variables
 G ⨄ { x : m T1 } ⊢ t : T2 [[:TYt]]
 ----------------- :: F
-G ⫦ λᵛ x ⟼ t : T1 m → T2
+G ⫦ λᵛ x m ⟼ t : T1 m → T2
 
 G ⫦ v : T1 [[:TYRv]]
 --------------------- :: L
@@ -64,7 +64,7 @@ G2 ⨄ G3 ⫦ v2 : T2 [[:TYRv2]]
 G1 ⨄ G2 ⫦ hnames(-G3) ⟨v1 ❟ v2⟩ : T1 ⧔ T2
 
 defn
-G ⊢ j : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
+G ⊢ j : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of (extended) terms }} by
 
 {{ ctx_NoHole [[G]] }} % Functionnally equivalent as ctx_DestOnly G as values cannot syntactically contains free variables
 G ⫦ v : T
@@ -125,7 +125,7 @@ G ⊢ t ⨞ () : 𝟏
 G1 ⊢ t : ⌊T1 m → T2⌋n [[:TYt]]
 G2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
 ---------------------------------------- :: FillF
-G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞ λ x ⟼ u : 𝟏
+G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
 
 G ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
 ------------------------------ :: FillL
@@ -149,7 +149,7 @@ G2 ⊢ u : T1 ⧔ T2 [[:TYu]]
 G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞· u : T2
 
 -------------------------------- :: Alloc
-{} ⊢ alloc T : T ⧔ ⌊T⌋¹ν
+{} ⊢ alloc : T ⧔ ⌊T⌋¹ν
 
 G ⊢ t : T [[:TYt]]
 ------------------------------- :: ToA
@@ -181,7 +181,7 @@ defn
 j ⟶ j' :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} {{ tex [[j]]~\longrightarrow~[[j']] }} by
 
 ------------------ :: App
-C[v ≻ (λᵛ x ⟼ t) ] ⟶ C[t[x ≔ v] ]
+C[v ≻ (λᵛ x m ⟼ t) ] ⟶ C[t[x ≔ v] ]
 
 ----------------------- :: PatU
 C[() ; t2] ⟶ C[t2]
@@ -206,7 +206,7 @@ C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒ⟨ v1⩲h' ❟ [])
 (C ∘ H ᵒ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
 
 -------------------------- :: Alloc
-alloc T ⟶ {1} ⟨ +1 ❟ -1 ⟩
+alloc ⟶ {1} ⟨ +1 ❟ -1 ⟩
 
 ----------------------------------------- :: ToA
 C[to⧔ v] ⟶ C[{} ⟨ v ❟ () ⟩]
@@ -216,6 +216,9 @@ C[from⧔ {} ⟨ v ❟ () ⟩] ⟶ v
 
 ------------------------------------- :: FillU
 C[+h ⨞ ()] ⟶ C[h ≔ {} ()][()]
+
+------------------------------------- :: FillF
+C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} λᵛ x m ⟼ u][()]
 
 {{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 --------------------------------------- :: FillL
