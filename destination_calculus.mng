@@ -104,7 +104,7 @@
 % Inverting \textsc{TyCmd\_Cmd} we get (5) $[[ G11 ⨄ G13 ⊢ v1 : T1 ]]$ and (6) $[[G12 ⨄ -G13 ⫦ e1]]$ where (7) $[[G1]]$ = $[[G11 ⨄ G12]]$.\\
 % Using recursion hypothesis on (2) we get (8) $[[u ‿d.2 ⇓ v2 ⋄ e2]]$ where (9) $[[G2 ⊢ v2 ⋄ e2 : T1 m → T2]]$.\\
 % Inverting \textsc{TyCmd\_Cmd} we get (10) $[[ G21 ⨄ G23 ⊢ v2 : T1 m → T2 ]]$ and (11) $[[G22 ⨄ -G23 ⫦ e2]]$ where (12) $[[G2]]$ = $[[G21 ⨄ G22]]$.\\
-% Using Lemma~\ref{lem:canonical} on (9) we get (13) $[[v2]]$ = $[[λᵥx ⟼ t']]$ and (14) $[[G21 ⨄ G23 ⨄ {x : m T1} ⊢ t' : T2]]$.
+% Using Lemma~\ref{lem:canonical} on (9) we get (13) $[[v2]]$ = $[[λᵛx ⟼ t']]$ and (14) $[[G21 ⨄ G23 ⨄ {x : m T1} ⊢ t' : T2]]$.
 
 % \textit{Typing value part of the result}
 
@@ -140,7 +140,7 @@
 % $[[G13]]$ contains dests associated to holes that may have been created when evaluating $[[t]]$ into $[[v1]]$ $[[⋄]]$ $[[e1]]$. If $[[v1]]$ is used with delay (result of multiplying its context by $[[m]]$), then should we also delay the RHS of its associated effect?
 % In other terms, if we have $[[{+h : ¹ν ⌊T1⨁T2⌋n } ⊢ +h' ⋄ h ≔ Inl -h' : ⌊T1⌋n]]$, and use $[[h']]$ with delay $[[m]]$ (e.g stored inside another dest in the body of the function), should we also type the RHS of $[[h ≔ Inl -h']]$ with delay ? I think so, if we want to keep the property that age of dests and age of the associated holes are the same. Which means a more refined substitution lemma.
 
-% $[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧔ +h1) ; x2) ≻ (λᵥx2 ⟼ +h3 ⨞· (to⧔ x2))]]$
+% $[[(+h0 ⨞ (,) ≻case (x1, x2) ⟼ x1 ⨞· (to⧔ +h1) ; x2) ≻ (λᵛx2 ⟼ +h3 ⨞· (to⧔ x2))]]$
 
 % $[[+h0 ⨞ (,) ‿d ⇓ (+dyn d.2, +dyn d.3) ⋄ h0 ≔ (-dyn d.2, -dyn d.3)]]$
 

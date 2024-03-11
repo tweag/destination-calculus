@@ -22,7 +22,7 @@ G ⫦ +h : ⌊T⌋n
 {{ ctx_DestOnly [[G]] }} % Only says that we cannot have holes inside, as well as t cannot capture extra variables
 G ⨄ { x : m T1 } ⊢ t : T2 [[:TYt]]
 ----------------- :: F
-G ⫦ λᵥ x ⟼ t : T1 m → T2
+G ⫦ λᵛ x ⟼ t : T1 m → T2
 
 G ⫦ v : T1 [[:TYRv]]
 --------------------- :: L
@@ -178,55 +178,61 @@ defns
 Sem :: '' ::=
 
 defn
-j h ⟶ h' j' :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} {{ tex [[j]]\,_{~[[h]]\!\!\!}\longrightarrow_{[[h']]~}\,[[j']] }} by
+j ⟶ j' :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} {{ tex [[j]]~\longrightarrow~[[j']] }} by
 
 ------------------ :: App
-C[v ≻ (λᵥ x ⟼ t) ] h ⟶ h C[t[x ≔ v] ]
+C[v ≻ (λᵛ x ⟼ t) ] ⟶ C[t[x ≔ v] ]
 
 ----------------------- :: PatU
-C[() ; t2] h ⟶ h C[t2]
+C[() ; t2] ⟶ C[t2]
 
 ----------------------- :: PatL
-C[(Inl v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] h ⟶ h C[u1[x ≔ v] ]
+C[(Inl v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x ≔ v] ]
 
 ----------------------- :: PatR
-C[(Inr v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] h ⟶ h C[u2[x ≔ v] ]
+C[(Inr v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x ≔ v] ]
 
 ----------------------- :: PatP
-C[(v1, v2) ≻case m (x1,x2) ⟼ u] h ⟶ h C[u[x1 ≔ v1][x2 ≔ v2] ]
+C[(v1, v2) ≻case m (x1,x2) ⟼ u] ⟶ C[u[x1 ≔ v1][x2 ≔ v2] ]
 
 ----------------------- :: PatE
-C[ᴇ n v ≻case m ᴇ n x ⟼ u] h ⟶ h C[u[x ≔ v] ]
+C[ᴇ n v ≻case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v] ]
 
+{{ [[h']] = [[max(hnames(C))]] }}
 ---------------------------------- :: MapOpen
-C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] h ⟶ max(H)+h C[ H⩲h ᵒ⟨ v1⩲h ❟ u[x ≔ v2⩲h] ]
+C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒ⟨ v1⩲h' ❟ []))[ u[x ≔ v2⩲h'] ]
 
 ---------------------------------- :: MapClose
-C[ H ᵒ⟨ v1 ❟ v2 ] h ⟶ h C[ H ⟨ v1 ❟ v2 ⟩ ]
+(C ∘ H ᵒ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
 
 -------------------------- :: Alloc
-alloc T h ⟶ h {1} ⟨ +1 ❟ -1 ⟩
+alloc T ⟶ {1} ⟨ +1 ❟ -1 ⟩
 
 ----------------------------------------- :: ToA
-C[to⧔ v] h ⟶ h C[{} ⟨ v ❟ () ⟩]
+C[to⧔ v] ⟶ C[{} ⟨ v ❟ () ⟩]
 
 -------------------------------------- :: FromA
-C[from⧔ {} ⟨ v ❟ () ⟩] h ⟶ h v
+C[from⧔ {} ⟨ v ❟ () ⟩] ⟶ v
 
 ------------------------------------- :: FillU
-C[+h ⨞ ()] h ⟶ h C[h ≔ {} ()][()]
+C[+h ⨞ ()] ⟶ C[h ≔ {} ()][()]
 
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 --------------------------------------- :: FillL
-C[+h ⨞ Inl] h ⟶ h+1 C[h ≔ {h+1} Inl -(h+1)][+(h+1)]
+C[+h ⨞ Inl] ⟶ C[h ≔ {h'+1} Inl -(h'+1)][+(h'+1)]
 
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 --------------------------------------- :: FillR
-C[+h ⨞ Inr] h ⟶ h+1 C[h ≔ {h+1} Inr -(h+1)][+(h+1)]
+C[+h ⨞ Inr] ⟶ C[h ≔ {h'+1} Inr -(h'+1)][+(h'+1)]
 
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 --------------------------------------- :: FillE
-C[+h ⨞ ᴇ m] h ⟶ h+1 C[h ≔ {h+1} ᴇ m -(h+1)][+(h+1)]
+C[+h ⨞ ᴇ m] ⟶ C[h ≔ {h'+1} ᴇ m -(h'+1)][+(h'+1)]
 
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 --------------------------------------- :: FillP
-C[+h ⨞ (,)] h ⟶ h+2 C[h ≔ {h+1,h+2} (-(h+1),-(h+2))][( +(h+1), +(h+2) )]
+C[+h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} (-(h'+1),-(h'+2))][( +(h'+1), +(h'+2) )]
 
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
 ---------------------------------------- :: FillC
-C[+h ⨞· H ⟨ v1 ❟ v2 ⟩] h ⟶ max(H)+h C[h ≔ (H⩲h) v1⩲h ][v2⩲h ]
+C[+h ⨞· H ⟨ v1 ❟ v2 ⟩] ⟶ C[h ≔ (H⩲h') v1⩲h' ][v2⩲h' ]
