@@ -99,9 +99,8 @@
     \ottalt@replace@cs\ranchor\_-{}##1\\
   }
   \renewottcomm@nd{prodline}[6]{
-    \ifthenelse{\equal{##3}{}}{
-      \\ & & $##1$ & $##2$ & & $##5$ & $##6$
-    }{}
+    \ifthenelse{\equal{##3}{\textsf{S}}}{}
+      {\\ & & $##1$ & $##2$ & $##3$ $##4$ & $##5$ & $##6$}
   }
   \renewottcomm@nd{prodnewline}{\relax}
   \renewottcomm@nd{grammartabular}[1]{%

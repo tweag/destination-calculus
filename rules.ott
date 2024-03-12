@@ -6,7 +6,7 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 
 % We must track linearity precisely, but age for received value is arbitrary
 --------------------- :: H
-{ - h : T ¹a } ⫦ -h : T
+{ - h : T ¹ν } ⫦ -h : T
 
 {{ ctx_Compatible [[G]] [[+h : ¹ν ⌊T⌋n]] }}
 ---------------- :: D
@@ -39,9 +39,9 @@ G1 ⨄ G2 ⫦ (v1, v2) : T1 ⨂ T2
 
 % we should augment age of holes which are below an exponential
 G ⫦ v : T [[:TYRv]]
-% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+% {{ mode_IsValid [[n]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 --------------------- :: E
-m·G ⫦ ᴇ m v : ! m T
+n·G ⫦ ᴇ n v : ! n T
 
 % We perform controls here on Ampar, and not on the other rules, because outside of the ampar, the hole/dests that are compensated will no longer be visible.
 % ctx_DestOnly [[G2 ⨄ G3]] ensures that v2 is just made of dests, and with ctx_DestOnly [[G1]] in G1 ⨄ (-G3) ⫦ v1 : T1 we can conclude that v2 dests compensates at least all the holes from this ampar. This forbids <<(-h0, -h), +h>, +h0> which isn't constructible through alloc anyway.
@@ -139,9 +139,9 @@ G ⊢ t : ⌊T1 ⨂ T2⌋n [[:TYt]]
 ------------------------------ :: FillP
 G ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
 
-G ⊢ t : ⌊!m T⌋n [[:TYt]]
+G ⊢ t : ⌊!n' T⌋n [[:TYt]]
 ------------------------------ :: FillE
-G ⊢ t ⨞ ᴇ m : ⌊T⌋m·n
+G ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
 
 G1 ⊢ t : ⌊T1⌋n [[:TYt]]
 G2 ⊢ u : T1 ⧔ T2 [[:TYu]]
@@ -160,7 +160,7 @@ G ⊢ t : T ⧔ 𝟏 [[:TYt]]
 G ⊢ from⧔ t : T
 
 defn
-G ⫦ C : T :: :: TyR_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} by
+G ⫦ C : T1 ↣ T2 :: :: TyR_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} by
 
 % G2 contains dests that aren't present in G1, so must have been absorbed by holes of open ampars from C
 % G3 contains dests that still appear in G1 so that aren't absorbed by holes of open ampars from C
@@ -200,10 +200,10 @@ C[ᴇ n v ≻case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v] ]
 
 {{ [[h']] = [[max(hnames(C))]] }}
 ---------------------------------- :: MapOpen
-C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒ⟨ v1⩲h' ❟ []))[ u[x ≔ v2⩲h'] ]
+C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v1⩲h' ❟ []))[ u[x ≔ v2⩲h'] ]
 
 ---------------------------------- :: MapClose
-(C ∘ H ᵒ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
+(C ∘ H ᵒᵖ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
 
 -------------------------- :: Alloc
 alloc ⟶ {1} ⟨ +1 ❟ -1 ⟩

@@ -84,7 +84,7 @@ Notation "ᶜ- G" := (ctx_minus G) (at level 61, no associativity, G at next lev
 (* Evaluation contexts and extended terms : 65-69 *)
 
 Notation "'ᵉ[' ]" := ectx_Id.
-Notation "H 'ᵒ⟨' v1 '❟' C" := (ectx_AOpen H v1 C) (at level 66, v1 at level 59, C at level 66, right associativity).
+Notation "H 'ᵒᵖ⟨' v1 '❟' C" := (ectx_AOpen H v1 C) (at level 66, v1 at level 59, C at level 66, right associativity).
 Notation "C '∘' D" := (ectx_Comp C D) (at level 67, D at level 67, right associativity).
 Notation "C 'ᶠ[' h '≔' H '‗' v ]" := (ectx_fill C h H v) (at level 65, h at level 19, H at level 24, v at level 59, left associativity).
 

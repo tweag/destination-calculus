@@ -70,8 +70,8 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 grammar
 
 hdn, h :: 'hdn_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq nat }} {{ tex \ottshdn{[[hdn]]} }}
-  | 1 :: M :: O {{ coq 1 }} {{ tex \ottshdn{1} }}
-  | 2 :: M :: T {{ coq 2 }} {{ tex \ottshdn{2} }}
+  | 1 :: S :: O {{ coq 1 }} {{ tex \ottshdn{1} }}
+  | 2 :: S :: T {{ coq 2 }} {{ tex \ottshdn{2} }}
   | h + h' :: M :: S {{ com Sum }} {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshdn{+}[[h']] }}
   | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hdns_max_hnames [[H]]) }} {{ tex \ottshdn{max(}[[H]]\ottshdn{)} }}
   | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshdn{(}[[h]]\ottshdn{)} }}
@@ -79,7 +79,7 @@ hdn, h :: 'hdn_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq na
 hdns, H :: 'hdns_' ::= {{ com Set of hole names }} {{ coq HdnsM.t }} {{ tex \ottshdn{[[hdns]]} }}
   | { h1 , .. , hk } :: :: L {{ coq (hdns_from_list [[h1..hk]]) }}
   | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
-  | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ tex [[H]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
+  | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
   | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
   | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectx [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
@@ -113,8 +113,8 @@ term, t, u :: 'term_' ::=                                               {{ com T
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
   | t ⨞· u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[u]] }}
 
-  | ( t )                                   :: S :: Paren {{ coq [[t]] }}
   | t [ x ≔ v ]                             :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
+  | ( t )                                   :: S :: Paren {{ coq [[t]] }}
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpaacing2
   % | t b spe : : S :: BreakSpacing3
@@ -129,21 +129,39 @@ val, v :: 'val_' ::= {{ com Term value }}
   | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | H ⟨ v1 ❟ v2 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[v2]]\ottsctor{\rangle} }}
-  | v ⩲ h :: M :: Rename {{ com Rename hole names inside $[[v]]$ by shifting them by $[[h]]$ }} {{ tex [[v]]\ottshdn{ {\scriptscriptstyle\stackrel{+}{=} } }{\scriptstyle [[h]]} }} {{ coq (val_incr_hnames [[v]] [[h]]) }}
+  | v ⩲ h :: M :: Rename {{ com Rename hole names inside $[[v]]$ by shifting them by $[[h]]$ }} {{ coq (val_incr_hnames [[v]] [[h]]) }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DYNAMIC SYNTAX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eterm, j :: 'eterm_' ::= {{ com Pseudo-term }}
-  | C [ t ] :: :: ECtxApp
-  | t :: S :: TermSugar {{ coq (eterm_ECtxApp ectx_Id [[t]]) }}
+eterm, j :: 'eterm_' ::= {{ com Pseudo-term }} {{ coq (ectx * term) }}
+  | C [ t ] :: :: ECtxApp {{ coq (pair [[C]] [[t]]) }}
+  | t :: S :: TermSugar {{ coq (pair ectx_Id [[t]]) }}
 
 ectx, C :: 'ectx_' ::= {{ com Evaluation context }}
   | [ ] :: :: Id {{ com Identity }} {{ tex \square }}
-  | H ᵒ⟨ v1 ❟ C :: :: AOpen {{ tex _{[[H]]\!}^{o\!\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar }}
-  | C ∘ C' :: :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
+  | C ≻ u                                    ::   :: App1      {{ com Application }} {{ tex [[C]]\,\succ[[u]] }}
+  | v ≻ C                                    ::   :: App2      {{ com Application }} {{ tex [[v]]\,\succ[[C]] }}
+  | C ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[C]]~;\,[[u]] }}
+  | C ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS (+ bind x1 in u1 +) (+ bind x2 in u2 +)     {{ com Pattern-match on sum }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }}
+  | C ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatP (+ bind x1 in u +) (+ bind x2 in u +)     {{ com Pattern-match on product }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} 
+  | C ≻case m ᴇ n x ⟼ u            ::   :: PatE (+ bind x in u +)    {{ com Pattern-match on exponential }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }}
+  | C ≻map x ⟼ u :: :: Map (+ bind x in u +) {{ com Map over the right side of ampar }} {{ tex [[C]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }}
+
+  | to⧔ C :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Wrap into a trivial ampar }}
+  | from⧔ C :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Extract value from trivial ampar }}
+  | C ⨞ () :: :: FillU {{ com Fill destination with unit }}
+  | C ⨞ ( λ x m ⟼ u ) :: :: FillF (+ bind x in u +) {{ com Fill destination with function }} {{ tex [[C]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }}
+  | C ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
+  | C ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
+  | C ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
+  | C ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[C]][[⨞]]\expcons{[[m]]} }}
+  | C ⨞· u :: :: FillC1 {{ com Fill destination with root of ampar }} {{ tex [[C]]\triangleleft\!\mybullet\,[[u]] }}
+  | v ⨞· C :: :: FillC2 {{ com Fill destination with root of ampar }} {{ tex [[v]]\triangleleft\!\mybullet\,[[C]] }}
+  | H ᵒᵖ⟨ v1 ❟ C :: :: AOpen {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar. \textcolor{red}{Only new addition to term shapes} }}
+  | C ∘ C' :: M :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
   | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectx_fill [[C]] [[h]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
@@ -159,26 +177,25 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | T1 ⧔ T2 :: :: A {{ tex [[T1]]\,\ottstype{\ltimes}\,[[T2]] }} {{ com Ampar type (consuming $[[T2]]$ yields $[[T1]]$) }}
   | T1 m1 → T2 :: :: F {{ tex [[T1]]\,_{[[m1]]}\!\ottstype{\to}\,[[T2]] }} {{ com Function }}
   | ⌊ T ⌋ m :: :: D {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
-  | T1 ↣ T2 :: :: C {{ tex [[T1]]\ottstype{\rightarrowtail}[[T2]] }} {{ com Evaluation contexts }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
 mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
   | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
   | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
-  | m1 · ... · mk :: :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
+  | m1 · ... · mk :: M :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
 
 mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (first component of modality) }} {{ coq _mul }}
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear. Neutral element of the product }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear. Absorbing for the product }} {{ coq Ur }}
-  | p1 . ... . pk :: :: P {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
+  | p1 . ... . pk :: M :: P {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
 age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (second component of modality) }} {{ coq ext_nat }}
   | ν :: :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now. Neutral element of the product }} {{ coq (Fin 0) }}
   | ↑ :: :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
   | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static. Absorbing for the product }} {{ coq Inf }}
-  | a1 · ... · ak :: :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
+  | a1 · ... · ak :: M :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
 bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or hole }}
@@ -188,9 +205,9 @@ bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or
 
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
   | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }} {{ com List of bindings }}
-  | m · G :: :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
-  | G1 ⨄ G2 :: :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicates/incompatible elements will give bindings with mode $\ottsmode{\skull}$ }}
-  | - G :: :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every dest binding into a hole binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
+  | m · G :: M :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
+  | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicates/incompatible elements will give bindings with mode $\ottsmode{\skull}$ }}
+  | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every dest binding into a hole binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 embed
@@ -587,11 +604,13 @@ terminals :: 'terminals_' ::=
   | (,) :: :: prod {{ tex \ottsctor{({,})} }}
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
+  | ⩲ :: :: rename {{ tex \pluseq }}
 
 % === Contexts ===
   | ⨄ :: :: union {{ tex \cupplus }}
 
 % === Typing & Semantics ===
+  | ↣ :: :: ectxarrow {{ tex \ottstype{\rightarrowtail} }}
   | ⟶ :: :: red {{ tex ~\longrightarrow~ }}
   | ⊢ :: :: vdash {{ tex \,\vdash\, }}
   | ⫦ :: :: dvdash {{ tex \,\Vdash\, }}
