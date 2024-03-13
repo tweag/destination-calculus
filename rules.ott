@@ -64,7 +64,7 @@ G2 ⨄ G3 ⫦ v2 : T2 [[:TYRv2]]
 G1 ⨄ G2 ⫦ hnames(-G3) ⟨v1 ❟ v2⟩ : T1 ⧔ T2
 
 defn
-G ⊢ j : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of (extended) terms }} by
+G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
 
 {{ ctx_NoHole [[G]] }} % Functionnally equivalent as ctx_DestOnly G as values cannot syntactically contains free variables
 G ⫦ v : T
@@ -117,6 +117,17 @@ G1 ⊢ t : T1 ⧔ T2 [[:TYt]]
 -------------------------------- :: Map
 G1 ⨄ G2 ⊢ t ≻map x ⟼ u : T1 ⧔ U
 
+G ⊢ t : T [[:TYt]]
+------------------------------- :: ToA
+G ⊢ to⧔ t : T ⧔ 𝟏
+
+G ⊢ t : T ⧔ 𝟏 [[:TYt]]
+------------------------------- :: FromA
+G ⊢ from⧔ t : T
+
+-------------------------------- :: Alloc
+{} ⊢ alloc : T ⧔ ⌊T⌋¹ν
+
 G ⊢ t : ⌊𝟏⌋n [[:TYt]]
 ------------------------------ :: FillU
 G ⊢ t ⨞ () : 𝟏
@@ -148,31 +159,114 @@ G2 ⊢ u : T1 ⧔ T2 [[:TYu]]
 ----------------------------- :: FillC
 G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞· u : T2
 
--------------------------------- :: Alloc
-{} ⊢ alloc : T ⧔ ⌊T⌋¹ν
-
-G ⊢ t : T [[:TYt]]
-------------------------------- :: ToA
-G ⊢ to⧔ t : T ⧔ 𝟏
-
-G ⊢ t : T ⧔ 𝟏 [[:TYt]]
-------------------------------- :: FromA
-G ⊢ from⧔ t : T
-
 defn
 G ⫦ C : T1 ↣ T2 :: :: TyR_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} by
 
-% G2 contains dests that aren't present in G1, so must have been absorbed by holes of open ampars from C
-% G3 contains dests that still appear in G1 so that aren't absorbed by holes of open ampars from C
-% {{ ctx_SubsetEq [[G3]] [[G1]] }} Should be provable; redundant
-{{ ctx_Disjoint [[G1]] [[G2]] }}
-{{ ctx_Disjoint [[G2]] [[G3]] }}
-{{ ctx_NoVar [[G2 ⨄ G3]] }} % Because t1 types as a term, it cannot contain holes, so this is equivalent to ctx_DestOnly G11 ⨄ G12
-{{ ctx_NoVar [[G1]] }} % Same here
-G2 ⨄ G3 ⊢ t : T1 [[:TYt]]
-G1 ⊢ C[t] : T2 [[:TYj]]
---------------------- :: T
-G1 ⨄ (-G2) ⫦ C : T1 ↣ T2
+-------------------- :: Id
+{} ⫦ [] : T ↣ T
+
+% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+G1 ⫦ C : T0 ↣ T1 [[:TYRC]]
+G2 ⊢ u : T1 m → T2 [[:TYu]]
+----------------- :: App1
+m·G1 ⨄ G2 ⫦ C ≻ u : T0 ↣ T2
+
+% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+G1 ⊢ v : T1 [[:TYv]]
+G2 ⫦ C : T0 ↣ (T1 m → T2) [[:TYRC]]
+----------------- :: App2
+m·G1 ⨄ G2 ⫦ C ≻ u : T0 ↣ T2
+
+G1 ⫦ C : T0 ↣ 𝟏 [[:TYRC]]
+G2 ⊢ u : U [[:TYu]]
+----------------- :: PatU
+G1 ⨄ G2 ⫦ C ; u : T0 ↣ U
+
+% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[G2]] [[{ x2 : m T2 }]] }}
+G1 ⫦ C : T0 ↣ (T1 ⨁ T2) [[:TYRC]]
+G2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
+G2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
+----------------- :: PatS
+m·G1 ⨄ G2 ⫦ C ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : T0 ↣ U
+
+% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[G2]] [[{ x2 : m T2 }]] }}
+{{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }}
+G1 ⫦ C : T0 ↣ (T1 ⨂ T2) [[:TYRC]]
+G2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
+----------------- :: PatP
+m·G1 ⨄ G2 ⫦ C ≻case m (x1 , x2) ⟼ u : T0 ↣ U
+
+% {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G2]] [[{ x : m·n T }]] }}
+G1 ⫦ C : T0 ↣ !n T [[:TYRC]]
+G2 ⨄ { x : m·n T } ⊢ u : U [[:TYu]]
+----------------- :: PatE
+m·G1 ⨄ G2 ⫦ C ≻case m ᴇ n x ⟼ u : T0 ↣ U
+
+{{ ctx_Disjoint [[G2]] [[{ x : ¹ν T2 }]] }}
+G1 ⫦ C : T0 ↣ (T1 ⧔ T2) [[:TYRC]]
+¹↑·G2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
+-------------------------------- :: Map
+G1 ⨄ G2 ⫦ C ≻map x ⟼ u : T0 ↣ (T1 ⧔ U)
+
+G ⫦ C : T0 ↣ T [[:TYRC]]
+------------------------------- :: ToA
+G ⫦ to⧔ C : T0 ↣ (T ⧔ 𝟏)
+
+G ⫦ C : T0 ↣ (T ⧔ 𝟏) [[:TYRC]]
+------------------------------- :: FromA
+G ⫦ from⧔ C : T0 ↣ T
+
+G ⫦ C : T0 ↣ ⌊𝟏⌋n [[:TYRC]]
+------------------------------ :: FillU
+G ⫦ C ⨞ () : T0 ↣ 𝟏
+
+{{ ctx_Disjoint [[G2]] [[{ x : m T1 }]] }}
+G1 ⫦ C : T0 ↣ ⌊T1 m → T2⌋n [[:TYRC]]
+G2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
+---------------------------------------- :: FillF
+G1 ⨄ (¹↑·n)·G2 ⫦ C ⨞(λ x m ⟼ u) : T0 ↣ 𝟏
+
+G ⫦ C : T0 ↣ ⌊T1 ⨁ T2⌋n [[:TYRC]]
+------------------------------ :: FillL
+G ⫦ C ⨞ Inl : T0 ↣ ⌊T1⌋n
+
+G ⫦ C : T0 ↣ ⌊T1 ⨁ T2⌋n [[:TYRC]]
+------------------------------ :: FillR
+G ⫦ C ⨞ Inr : T0 ↣ ⌊T2⌋n
+
+G ⫦ C : T0 ↣ ⌊T1 ⨂ T2⌋n [[:TYRC]]
+------------------------------ :: FillP
+G ⫦ C ⨞ (,) : T0 ↣ ⌊T1⌋n ⨂ ⌊T2⌋n
+
+G ⫦ C : T0 ↣ ⌊!n' T⌋n [[:TYRC]]
+------------------------------ :: FillE
+G ⫦ C ⨞ ᴇ n' : T0 ↣ ⌊T⌋n'·n
+
+G1 ⫦ C : T0 ↣ ⌊T1⌋n [[:TYRC]]
+G2 ⊢ u : T1 ⧔ T2 [[:TYu]]
+----------------------------- :: FillC
+G1 ⨄ (¹↑·n)·G2 ⫦ C ⨞· u : T0 ↣ T2
+
+% {{ ctx_Disjoint [[G1]] [[G2]] }}
+% {{ ctx_DestOnly [[G2 ⨄ G3]] }}
+% {{ ctx_DestOnly [[G1]] }}
+% G1 ⨄ (-G3) ⫦ v1 : T1 [[:TYRv1]]
+% G2 ⨄ G3 ⫦ v2 : T2 [[:TYRv2]]
+% ---------------- :: AOpen
+% G1 ⨄ G2 ⫦ hnames(-G3) ⟨v1 ❟ v2⟩ : T1 ⧔ T2
+
+defn
+⊢ j : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of extended terms (pair of evaluation context and term) }} by
+
+-G ⫦ C : T1 ↣ T2 [[:TYRC]]
+G ⊢ t : T1 [[:TYt]]
+--------------------- :: ClosedEterm
+⊢ C[t] : T2
 
 defns
 Sem :: '' ::=

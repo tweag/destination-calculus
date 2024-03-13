@@ -66,8 +66,9 @@
 \clearpage
 
 \ottdefnTyRXXval{}
-\ottdefnTyXXeterm{}
+\ottdefnTyXXterm{}
 \ottdefnTyRXXectx{}
+\ottdefnTyXXeterm{}
 
 \clearpage
 \section{Small-step semantics}
