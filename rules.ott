@@ -162,59 +162,80 @@ defn
 G ⫦ C : T1 m ↣ T2 :: :: TyR_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} {{ tex [[G]][[⫦]][[C]]:[[T1]]_{[[m]]}\ottstype{\rightarrowtail}[[T2]] }} by
 
 -------------------- :: Id
-{} ⫦ [] : U0 ¹ν ↣ U0
+{} ⫦ [] : U0 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
--(n·G0) ⨄ G1 ⫦ C : T2 n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⊢ u : T1 m → T2 [[:TYu]]
+{{ ctx_HoleOnly [[G1]] }}
+-G0 ⨄ G1 ⫦ C : T2 ↣ U0 [[:TYRC]]
+G1 != {} => m = ¹ν
+G0 ⊢ u : T1 m → T2 [[:TYu]]
 ----------------- :: App1
-G1 ⨄ n·G2 ⫦ C ∘ ([] ≻ u) : T1 (m·n) ↣ U0
+G1 ⫦ C ∘ ([] ≻ u) : T1 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
--((m·n)·G0) ⨄ G1 ⫦ C : T2 n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⊢ v : T1 [[:TYv]]
+{{ ctx_HoleOnly [[G1]] }}
+-G0 ⨄ G1 ⫦ C : T2 ↣ U0 [[:TYRC]]
+G0 ⊢ v : T1 [[:TYv]]
 ----------------- :: App2
-G1 ⨄ (m·n)·G2 ⫦ C ∘ (v ≻ []) : (T1 m → T2) n ↣ U0
+G1 ⫦ C ∘ (v ≻ []) : (T1 m → T2) ↣ U0
 
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
--(n·G0) ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⊢ u : U [[:TYu]]
+{{ ctx_HoleOnly [[G1]] }}
+-G0 ⨄ G1 ⫦ C : U ↣ U0 [[:TYRC]]
+G0 ⊢ u : U [[:TYu]]
 ----------------- :: PatU
-G1 ⨄ n·G2 ⫦ C ∘ ([] ; u) : 𝟏 n ↣ U0
+G1 ⫦ C ∘ ([] ; u) : 𝟏 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
-{{ ctx_Disjoint [[G0 ⨄ G2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G0 ⨄ G2]] [[{ x2 : m T2 }]] }}
--(n·G0) ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
-G0 ⨄ G2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
+{{ ctx_HoleOnly [[G1]] }}
+{{ ctx_Disjoint [[G0]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[G0]] [[{ x2 : m T2 }]] }}
+G1 != {} => m = ¹ν
+-G0 ⨄ G1 ⫦ C : U ↣ U0 [[:TYRC]]
+G0 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
+G0 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
 ----------------- :: PatS
-G1 ⨄ n·G2 ⫦ C ∘ ([] ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) (m·n) ↣ U0
+G1 ⫦ C ∘ ([] ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
-{{ ctx_Disjoint [[G0 ⨄ G2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G0 ⨄ G2]] [[{ x2 : m T2 }]] }}
+{{ ctx_HoleOnly [[G1]] }}
+{{ ctx_Disjoint [[G0]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[G0]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }}
--(n·G0) ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
+G1 != {} => m = ¹ν
+-G0 ⨄ G1 ⫦ C : U ↣ U0 [[:TYRC]]
+G0 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
 ----------------- :: PatP
-G1 ⨄ n·G2 ⫦ C ∘ ([] ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) (m·n) ↣ U0
+G1 ⫦ C ∘ ([] ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
-{{ ctx_Disjoint [[G0 ⨄ G2]] [[{ x : m·m' T }]] }}
--(n·G0) ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
-G0 ⨄ G2 ⨄ { x : m·m' T } ⊢ u : U [[:TYu]]
+{{ ctx_HoleOnly [[G1]] }}
+{{ ctx_Disjoint [[G0]] [[{ x : m·m' T }]] }}
+G1 != {} => m = ¹ν
+-G0 ⨄ G1 ⫦ C : U ↣ U0 [[:TYRC]]
+G0 ⨄ { x : m·m' T } ⊢ u : U [[:TYu]]
 ----------------- :: PatE
-G1 ⨄ n·G2 ⫦ C ∘ ([] ≻case m ᴇ m' x ⟼ u) : ! m' T (m·n) ↣ U0
+G1 ⫦ C ∘ ([] ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
+%%% STOPPED HERE
+
+{{ ctx_Disjoint [[G0]] [[G1]] }}
 {{ ctx_DestOnly [[G0]] }}
+{{ ctx_HoleOnly [[G1]] }}
+
 {{ ctx_Disjoint [[¹↑·(G0 ⨄ G2)]] [[{ x : ¹ν T2 }]] }}
--(n·G0) ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
+-G0 ⨄ G1 ⫦ C : U n ↣ U0 [[:TYRC]]
 ¹↑·(G0 ⨄ G2) ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
 -------------------------------- :: Map
 G1 ⨄ n·G2 ⫦ C ∘ ([] ≻map x ⟼ u) : (T1 ⧔ T2) n ↣ U0
