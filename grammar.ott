@@ -246,6 +246,13 @@ Fixpoint hdns_from_ectx (C : ectx) : HdnsM.t :=
   | ectx_Comp C1 C2 => HdnsM.union (hdns_from_ectx C1) (hdns_from_ectx C2)
   end.
 
+Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
+  HdnsM.Empty (HdnsM.inter H1 H2).
+
+(******************************************************************************
+ * TERMS STATIC BEHAVIOUR
+ *****************************************************************************)
+
 (******************************************************************************
  * TERMS DYNAMIC BEHAVIOUR
  *****************************************************************************)
@@ -610,7 +617,6 @@ terminals :: 'terminals_' ::=
   | ⨄ :: :: union {{ tex \cupplus }}
 
 % === Typing & Semantics ===
-  | ↣ :: :: ectxarrow {{ tex \ottstype{\rightarrowtail} }}
   | ⟶ :: :: red {{ tex ~\longrightarrow~ }}
   | ⊢ :: :: vdash {{ tex \,\vdash\, }}
   | ⫦ :: :: dvdash {{ tex \,\Vdash\, }}
