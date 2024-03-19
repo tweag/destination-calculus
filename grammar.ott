@@ -206,6 +206,7 @@ bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
   | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }} {{ com List of bindings }}
   | m · G :: M :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
+  | m ·· G :: M :: SN {{ com TODO remove later }} {{ coq (ctx_stimes [[m]] [[G]]) }}
   | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicates/incompatible elements will give bindings with mode $\ottsmode{\skull}$ }}
   | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every dest binding into a hole binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
@@ -611,6 +612,7 @@ terminals :: 'terminals_' ::=
   | (,) :: :: prod {{ tex \ottsctor{({,})} }}
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
+  | ·· :: :: semiringT {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.2ex}\cdot\hspace{-0.1ex} } }}
   | ⩲ :: :: rename {{ tex \pluseq }}
 
 % === Contexts ===
