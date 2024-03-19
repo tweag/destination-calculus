@@ -48,7 +48,7 @@
 \otthdns\ottinterrule
 \ottterm\ottinterrule
 \ottval\ottinterrule
-\otteterm\ottinterrule
+%\otteterm\ottinterrule
 \ottectx\ottafterlastrule
 }
 
@@ -63,11 +63,11 @@
 \ottctx\ottafterlastrule
 }
 
-\clearpage
+%\clearpage
 
 \ottdefnTyRXXval{}
 \ottdefnTyXXterm{}
-\ottdefnTyRXXectx{}
+\ottdefnTyXXectx{}
 \ottdefnTyXXeterm{}
 
 \clearpage

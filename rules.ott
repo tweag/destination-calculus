@@ -17,12 +17,12 @@ G ⫦ +h : ⌊T⌋n
 
 
 % {{ mode_IsValid [[m]] }} : Probably we can relax that? Application will be impossible for such a function (as it would make the resulting context invalid), but it doesn't pose a problem per se
-% {{ ctx_Disjoint [[G]] [[{ x : m T1 }]] }} : Redundant because ctx_DestOnly G => ctx_Disjoint G { x : m T1 }
-% other rules don't need ctx_NoVar G as they cannot syntactically accept vars
-{{ ctx_DestOnly [[G]] }} % Only says that we cannot have holes inside, as well as t cannot capture extra variables
-G ⨄ { x : m T1 } ⊢ t : T2 [[:TYt]]
+% {{ ctx_Disjoint [[D]] [[{ x : m T1 }]] }} : Redundant because ctx_DestOnly D => ctx_Disjoint D { x : m T1 }
+% other rules don't need ctx_NoVar D as they cannot syntactically accept vars
+{{ ctx_DestOnly [[D]] }} % Only says that we cannot have holes inside, as well as t cannot capture extra variables
+D ⨄ { x : m T1 } ⊢ t : T2 [[:TYt]]
 ----------------- :: F
-G ⫦ λᵛ x m ⟼ t : T1 m → T2
+D ⫦ λᵛ x m ⟼ t : T1 m → T2
 
 G ⫦ v : T1 [[:TYRv]]
 --------------------- :: L
@@ -55,275 +55,274 @@ n·G ⫦ ᴇ n v : ! n T
 % We would have x2 = E ↑ +h0, and res = < -h0, < -h1 , (+h1, E ↑ +h0) > >
 % If such a program typechecks, then we need the extra context G2 to v2 for dests coming from outside of this ampar (with ctx_DestOnly G2)
 % We need to make sure that an ampar will bind as many holes as possible (i.e that holes and matching dests cannot escape respectively in G1 and G2) -> ensured by {{ ctx_DestOnly [[G1]] }}, as G1 and G2 cannot interact. So we no longer need ctx_Disjoint [[G1]] [[G2]]
-{{ ctx_DestOnly [[G2 ⨄ G3]] }}
-{{ ctx_DestOnly [[G1]] }}
-G1 ⨄ (-G3) ⫦ v1 : T1 [[:TYRv1]]
-G2 ⨄ G3 ⫦ v2 : T2 [[:TYRv2]]
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_DestOnly [[D3]] }}
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_Disjoint [[D1]] [[D3]] }}
+{{ ctx_Disjoint [[D2]] [[D3]] }}
+D1 ⨄ (-D3) ⫦ v1 : T1 [[:TYRv1]]
+D2 ⨄ D3 ⫦ v2 : T2 [[:TYRv2]]
 ---------------- :: A
-G1 ⨄ G2 ⫦ hnames(-G3) ⟨v1 ❟ v2⟩ : T1 ⧔ T2
+D1 ⨄ D2 ⫦ hnames(-D3) ⟨v1 ❟ v2⟩ : T1 ⧔ T2
 
 defn
-G ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
+P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
 
-{{ ctx_DestOnly [[G]] }} % Functionnally equivalent as ctx_NoHole G as values cannot syntactically contains free variables
-G ⫦ v : T
+{{ ctx_DestOnly [[D]] }} % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
+D ⫦ v : T
 -------------------- :: Val
-G ⊢ v : T
+D ⊢ v : T
 
-{{ ctx_Compatible [[G]] [[x : ¹ν T]] }}
+{{ ctx_Compatible [[P]] [[x : ¹ν T]] }}
 -------------------- :: Var
-G ⊢ x : T
+P ⊢ x : T
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-G1 ⊢ t : T1 [[:TYt]]
-G2 ⊢ u : T1 m → T2 [[:TYu]]
+P1 ⊢ t : T1 [[:TYt]]
+P2 ⊢ u : T1 m → T2 [[:TYu]]
 ----------------- :: App
-m·G1 ⨄ G2 ⊢ t ≻ u : T2
+m·P1 ⨄ P2 ⊢ t ≻ u : T2
 
-G1 ⊢ t :𝟏 [[:TYt]]
-G2 ⊢ u : U [[:TYu]]
+P1 ⊢ t :𝟏 [[:TYt]]
+P2 ⊢ u : U [[:TYu]]
 ----------------- :: PatU
-G1 ⨄ G2 ⊢ t ; u : U
+P1 ⨄ P2 ⊢ t ; u : U
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G2]] [[{ x2 : m T2 }]] }}
-G1 ⊢ t : T1 ⨁ T2 [[:TYt]]
-G2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
-G2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
+{{ ctx_Disjoint [[P2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[P2]] [[{ x2 : m T2 }]] }}
+P1 ⊢ t : T1 ⨁ T2 [[:TYt]]
+P2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
+P2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
 ----------------- :: PatS
-m·G1 ⨄ G2 ⊢ t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
+m·P1 ⨄ P2 ⊢ t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G2]] [[{ x2 : m T2 }]] }}
+{{ ctx_Disjoint [[P2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[P2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }}
-G1 ⊢ t : T1 ⨂ T2 [[:TYt]]
-G2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
+P1 ⊢ t : T1 ⨂ T2 [[:TYt]]
+P2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
 ----------------- :: PatP
-m·G1 ⨄ G2 ⊢ t ≻case m (x1 , x2) ⟼ u : U
+m·P1 ⨄ P2 ⊢ t ≻case m (x1 , x2) ⟼ u : U
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G2]] [[{ x : m·n T }]] }}
-G1 ⊢ t : !n T [[:TYt]]
-G2 ⨄ { x : m·n T } ⊢ u : U [[:TYu]]
+{{ ctx_Disjoint [[P2]] [[{ x : m·n T }]] }}
+P1 ⊢ t : !n T [[:TYt]]
+P2 ⨄ { x : m·n T } ⊢ u : U [[:TYu]]
 ----------------- :: PatE
-m·G1 ⨄ G2 ⊢ t ≻case m ᴇ n x ⟼ u : U
+m·P1 ⨄ P2 ⊢ t ≻case m ᴇ n x ⟼ u : U
 
-{{ ctx_Disjoint [[G2]] [[{ x : ¹ν T2 }]] }}
-G1 ⊢ t : T1 ⧔ T2 [[:TYt]]
-¹↑·G2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
+{{ ctx_Disjoint [[P2]] [[{ x : ¹ν T2 }]] }}
+P1 ⊢ t : T1 ⧔ T2 [[:TYt]]
+¹↑·P2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
 -------------------------------- :: Map
-G1 ⨄ G2 ⊢ t ≻map x ⟼ u : T1 ⧔ U
+P1 ⨄ P2 ⊢ t ≻map x ⟼ u : T1 ⧔ U
 
-G ⊢ t : T [[:TYt]]
+P ⊢ t : T [[:TYt]]
 ------------------------------- :: ToA
-G ⊢ to⧔ t : T ⧔ 𝟏
+P ⊢ to⧔ t : T ⧔ 𝟏
 
-G ⊢ t : T ⧔ 𝟏 [[:TYt]]
+P ⊢ t : T ⧔ 𝟏 [[:TYt]]
 ------------------------------- :: FromA
-G ⊢ from⧔ t : T
+P ⊢ from⧔ t : T
 
 -------------------------------- :: Alloc
 {} ⊢ alloc : T ⧔ ⌊T⌋¹ν
 
-G ⊢ t : ⌊𝟏⌋n [[:TYt]]
+P ⊢ t : ⌊𝟏⌋n [[:TYt]]
 ------------------------------ :: FillU
-G ⊢ t ⨞ () : 𝟏
+P ⊢ t ⨞ () : 𝟏
 
-{{ ctx_Disjoint [[G2]] [[{ x : m T1 }]] }}
-G1 ⊢ t : ⌊T1 m → T2⌋n [[:TYt]]
-G2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
+{{ ctx_Disjoint [[P2]] [[{ x : m T1 }]] }}
+P1 ⊢ t : ⌊T1 m → T2⌋n [[:TYt]]
+P2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
 ---------------------------------------- :: FillF
-G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
+P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
 
-G ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
+P ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
 ------------------------------ :: FillL
-G ⊢ t ⨞ Inl : ⌊T1⌋n
+P ⊢ t ⨞ Inl : ⌊T1⌋n
 
-G ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
+P ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
 ------------------------------ :: FillR
-G ⊢ t ⨞ Inr : ⌊T2⌋n
+P ⊢ t ⨞ Inr : ⌊T2⌋n
 
-G ⊢ t : ⌊T1 ⨂ T2⌋n [[:TYt]]
+P ⊢ t : ⌊T1 ⨂ T2⌋n [[:TYt]]
 ------------------------------ :: FillP
-G ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
+P ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
 
-G ⊢ t : ⌊!n' T⌋n [[:TYt]]
+P ⊢ t : ⌊!n' T⌋n [[:TYt]]
 ------------------------------ :: FillE
-G ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
+P ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
 
-G1 ⊢ t : ⌊T1⌋n [[:TYt]]
-G2 ⊢ u : T1 ⧔ T2 [[:TYu]]
+P1 ⊢ t : ⌊T1⌋n [[:TYt]]
+P2 ⊢ u : T1 ⧔ T2 [[:TYu]]
 ----------------------------- :: FillC
-G1 ⨄ (¹↑·n)·G2 ⊢ t ⨞· u : T2
-
-defn G != D => m = n :: :: MultCond :: MultCond_ {{ tex [[G]]\neq[[D]]\implies[[m]]=[[n]] }} by
+P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞· u : T2
 
 defn
-G ⫦ C : T1 ↣ T2 :: :: TyR_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} {{ tex [[G]][[⫦]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }} by
+D ⊣ C : T1 ↣ T2 :: :: Ty_ectx :: TyR_ectx_ {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }} by
+
+% Idea : remove MultCond, but have a failable multiplication through good intercalation of ctx_minus and mult. This would work without fancy things with having dual modes for holes I think. Because ctx_minus will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
+% If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??
 
 -------------------- :: Id
-{} ⫦ [] : U0 ↣ U0
+{} ⊣ [] : U0 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
--G0 ⨄ G ⫦ C : T2 ↣ U0 [[:TYRC]]
-G != {} => m = ¹ν
-G0 ⊢ u : T1 m → T2 [[:TYu]]
+%{{ ctx_Empty [[D1]] \/ mode_IsLin [[m]] }} != {} => m = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TYC]]
+D2 ⊢ u : T1 m → T2 [[:TYu]]
 ----------------- :: App1
-G ⫦ C ∘ ([] ≻ u) : T1 ↣ U0
+D1 ⊣ C ∘ ([] ≻ u) : T1 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
--G0 ⨄ G ⫦ C : T2 ↣ U0 [[:TYRC]]
-G0 ⊢ v : T1 [[:TYv]]
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TYC]]
+D1 ⊢ v : T1 [[:TYv]]
 ----------------- :: App2
-G ⫦ C ∘ (v ≻ []) : (T1 m → T2) ↣ U0
+D2 ⊣ C ∘ (v ≻ []) : (T1 m → T2) ↣ U0
 
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
--G0 ⨄ G ⫦ C : U ↣ U0 [[:TYRC]]
-G0 ⊢ u : U [[:TYu]]
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
+D2 ⊢ u : U [[:TYu]]
 ----------------- :: PatU
-G ⫦ C ∘ ([] ; u) : 𝟏 ↣ U0
+D1 ⊣ C ∘ ([] ; u) : 𝟏 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-{{ ctx_Disjoint [[G0]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G0]] [[{ x2 : m T2 }]] }}
-G != {} => m = ¹ν
--G0 ⨄ G ⫦ C : U ↣ U0 [[:TYRC]]
-G0 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
-G0 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
+% D1 != {} => m = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
+m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
+D2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
+D2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
 ----------------- :: PatS
-G ⫦ C ∘ ([] ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
+D1 ⊣ C ∘ ([] ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-{{ ctx_Disjoint [[G0]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[G0]] [[{ x2 : m T2 }]] }}
+% D1 != {} => m = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }}
+{{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }}
-G != {} => m = ¹ν
--G0 ⨄ G ⫦ C : U ↣ U0 [[:TYRC]]
-G0 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
+m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
+D2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
 ----------------- :: PatP
-G ⫦ C ∘ ([] ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
+D1 ⊣ C ∘ ([] ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-{{ ctx_Disjoint [[G0]] [[{ x : m·m' T }]] }}
-G != {} => m = ¹ν
--G0 ⨄ G ⫦ C : U ↣ U0 [[:TYRC]]
-G0 ⨄ { x : m·m' T } ⊢ u : U [[:TYu]]
+% D1 != {} => m = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_Disjoint [[D2]] [[{ x : m·m' T }]] }}
+m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
+D2 ⨄ { x : m·m' T } ⊢ u : U [[:TYu]]
 ----------------- :: PatE
-G ⫦ C ∘ ([] ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
+D1 ⊣ C ∘ ([] ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
-%%% STOPPED HERE
-
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-{{ ctx_Disjoint [[¹↑·G0]] [[{ x : ¹ν T2 }]] }}
--G0 ⨄ G ⫦ C : U ↣ U0 [[:TYRC]]
-¹↑·G0 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_Disjoint [[¹↑·D2]] [[{ x : ¹ν T2 }]] }}
+D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
+¹↑·D2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
 -------------------------------- :: Map
-¹↑··G ⫦ C ∘ ([] ≻map x ⟼ u) : (T1 ⧔ T2) ↣ U0
+D1 ⊣ C ∘ ([] ≻map x ⟼ u) : (T1 ⧔ T2) ↣ U0
 
-G ⫦ C : (T ⧔ 𝟏) ↣ U0 [[:TYRC]]
+D ⊣ C : (T ⧔ 𝟏) ↣ U0 [[:TYC]]
 ------------------------------- :: ToA
-G ⫦ C ∘ (to⧔ []) : T ↣ U0
+D ⊣ C ∘ (to⧔ []) : T ↣ U0
 
-G ⫦ C : T ↣ U0 [[:TYRC]]
+D ⊣ C : T ↣ U0 [[:TYC]]
 ------------------------------- :: FromA
-G ⫦ C ∘ (from⧔ []) : (T ⧔ 𝟏) ↣ U0
+D ⊣ C ∘ (from⧔ []) : (T ⧔ 𝟏) ↣ U0
 
-G ⫦ C : 𝟏 ↣ U0 [[:TYRC]]
+D ⊣ C : 𝟏 ↣ U0 [[:TYC]]
 ------------------------------ :: FillU
-G ⫦ C ∘ ([] ⨞ ()) : ⌊𝟏⌋n ↣ U0
-
-% TODO change all G? != {} => ? = ¹ν to G? != {} => ? = ¹a and multiply resulting context by a?
+D ⊣ C ∘ ([] ⨞ ()) : ⌊𝟏⌋n ↣ U0
 
 % Elements that can be compensated by u must be from an older scope
-% Realistically dests are linear, so no dest from G0 can be stored in a non-linear function
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-{{ ctx_Disjoint [[G2]] [[{ x : m T1 }]] }}
-¹↑··-G0 ⨄ G ⫦ C : 𝟏 ↣ U0 [[:TYRC]]
-G0 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
-G0 != {} => n = ¹ν
+% Realistically dests are linear, so no dest from D2 can be stored in a non-linear function*
+% D2 != {} => n = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_Disjoint [[D2]] [[{ x : m T1 }]] }}
+D1 ⨄ (¹↑·n)·D2 ⊣ C : 𝟏 ↣ U0 [[:TYC]]
+D2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
 ---------------------------------------- :: FillF
-G ⫦ C ∘ ([] ⨞(λ x m ⟼ u)) : ⌊T1 m → T2⌋n ↣ U0
+D1 ⊣ C ∘ ([] ⨞(λ x m ⟼ u)) : ⌊T1 m → T2⌋n ↣ U0
 
-G ⫦ C : ⌊T1⌋n ↣ U0 [[:TYRC]]
+D ⊣ C : ⌊T1⌋n ↣ U0 [[:TYC]]
 ------------------------------ :: FillL
-G ⫦ C ∘ ([] ⨞ Inl) : ⌊T1 ⨁ T2⌋n ↣ U0
+D ⊣ C ∘ ([] ⨞ Inl) : ⌊T1 ⨁ T2⌋n ↣ U0
 
-G ⫦ C : ⌊T2⌋n ↣ U0 [[:TYRC]]
+D ⊣ C : ⌊T2⌋n ↣ U0 [[:TYC]]
 ------------------------------ :: FillR
-G ⫦ C ∘ ([] ⨞ Inr) : ⌊T1 ⨁ T2⌋n ↣ U0
+D ⊣ C ∘ ([] ⨞ Inr) : ⌊T1 ⨁ T2⌋n ↣ U0
 
-G ⫦ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TYRC]]
+D ⊣ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TYC]]
 ------------------------------ :: FillP
-G ⫦ C ∘ ([] ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
+D ⊣ C ∘ ([] ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
 
-G ⫦ C : ⌊T⌋m·n ↣ U0  [[:TYRC]]
+D ⊣ C : ⌊T⌋m·n ↣ U0  [[:TYC]]
 ------------------------------ :: FillE
-G ⫦ C ∘ ([] ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
+D ⊣ C ∘ ([] ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
-¹↑··-G0 ⨄ G ⫦ C : T2 ↣ U0 [[:TYRC]]
-G0 ⊢ u : T1 ⧔ T2 [[:TYu]]
-G0 != {} => n = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TYC]]
+D2 ⊢ u : T1 ⧔ T2 [[:TYu]]
 ----------------------------- :: FillC1
-G ⫦ C ∘ ([] ⨞· u) : ⌊T1⌋n ↣ U0
+D1 ⊣ C ∘ ([] ⨞· u) : ⌊T1⌋n ↣ U0
 
-% Here either we have G0 = {...}, G2 = empty, which means that v is a dest of a previous open ampar, or G0 = empty, G2 = {...} which means that v isn't bound by C
-{{ ctx_Disjoint [[G0]] [[G]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G]] }}
--G0 ⨄ ¹↑··G ⫦ C : T2 ↣ U0 [[:TYRC]]
-G0 ⊢ v : ⌊T1⌋n [[:TYu]]
-G != {} => n = ¹ν
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TYC]]
+D1 ⊢ v : ⌊T1⌋n [[:TYu]]
 ----------------------------- :: FillC2
-G ⫦ C ∘ (v ⨞· []) : T1 ⧔ T2 ↣ U0
+D2 ⊣ C ∘ (v ⨞· []) : T1 ⧔ T2 ↣ U0
 
-% -G0: Some holes of C compensated by dests from v1
-% G : remaining holes/dests from C
-% G1 : external dests from v1 (not bound by this ampar)
-% -G3 : holes from v1 (bound by this ampar)
-% We want G0 to be maximal, so G1 must be disjoint from G
-% We do not want to holes from v1 to be compensated by dests from C. That would mean having {positive part of G} and -G3 to interact.
-% {{ ctx_IsValid [[-(n·G0)]] }} % TODO: check that ctx_minus enforces linearity+now
-{{ ctx_Disjoint [[G0]] [[G1]] }}
-{{ ctx_DestOnly [[G0]] }}
-{{ ctx_HoleOnly [[G1]] }}
-{{ ctx_Disjoint [[G0]] [[G2]] }}
-{{ ctx_DestOnly [[G2]] }}
-{{ hdns_Disjoint [[hnames(C)]] [[hnames(-G2)]] }} % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by ctx_Disjoint G1 G3)
--G0 ⨄ G1 ⫦ C : (T1 ⧔ U) ↣ U0 [[:TYRC]]
-G0 ⨄ -G2 ⫦ v1 : T1 [[:TYRv1]]
+% -D2: Some holes of C compensated by dests from v1
+% D1 : remaining holes/dests from C
+% D1 : external dests from v1 (not bound by this ampar)
+% -D3 : holes from v1 (bound by this ampar)
+% We want D2 to be maximal, so D1 must be disjoint from D1
+% We do not want to holes from v1 to be compensated by dests from C. That would mean having {positive part of D1} and -D3 to interact.
+% {{ ctx_IsValid [[-(n·D2)]] }} % TODO: check that ctx_minus enforces linearity+now
+
+{{ ctx_Disjoint [[D1]] [[D2]] }}
+{{ ctx_Disjoint [[D1]] [[D3]] }}
+{{ hdns_Disjoint [[hnames(C)]] [[hnames(-D3)]] }} % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by ctx_Disjoint D2 D3). In particular, that predicate implies ctx_Disjoint D2 D3
+{{ ctx_DestOnly [[D1]] }}
+{{ ctx_DestOnly [[D2]] }}
+{{ ctx_DestOnly [[D3]] }}
+D1 ⨄ D2 ⊣ C : (T1 ⧔ U) ↣ U0 [[:TYC]]
+D1 ⨄ -D3 ⫦ v1 : T1 [[:TYRv1]]
 ---------------- :: AOpen
-G1 ⨄ -G2 ⫦ C ∘ (hnames(-G2) ᵒᵖ⟨v1 ❟ []) : U ↣ U0
+¹↑·D2 ⨄ D3 ⊣ C ∘ (hnames(-D3) ᵒᵖ⟨v1 ❟ []) : U ↣ U0
 
 defn
-⊢ j : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of extended terms (pair of evaluation context and term) }} by
+⊢ C [ t ] : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of extended terms (pair of evaluation context and term) }} by
 
--G ⫦ C : T ↣ U0 [[:TYRC]]
+G ⊣ C : T ↣ U0 [[:TYRC]]
 G ⊢ t : T [[:TYt]]
 --------------------- :: ClosedEterm
 ⊢ C[t] : U0
@@ -331,8 +330,10 @@ G ⊢ t : T [[:TYt]]
 defns
 Sem :: '' ::=
 
+% TODO: add explicit focusing rules (stack way)
+
 defn
-j ⟶ j' :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} {{ tex [[j]]~\longrightarrow~[[j']] }} by
+C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} by
 
 ------------------ :: App
 C[v ≻ (λᵛ x m ⟼ t) ] ⟶ C[t[x ≔ v] ]
@@ -360,13 +361,13 @@ C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v1⩲h' ❟ 
 (C ∘ H ᵒᵖ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
 
 -------------------------- :: Alloc
-alloc ⟶ {1} ⟨ +1 ❟ -1 ⟩
+C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
 
 ----------------------------------------- :: ToA
 C[to⧔ v] ⟶ C[{} ⟨ v ❟ () ⟩]
 
 -------------------------------------- :: FromA
-C[from⧔ {} ⟨ v ❟ () ⟩] ⟶ v
+C[from⧔ {} ⟨ v ❟ () ⟩] ⟶ C[v]
 
 ------------------------------------- :: FillU
 C[+h ⨞ ()] ⟶ C[h ≔ {} ()][()]
