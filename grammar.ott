@@ -106,11 +106,11 @@ term, t, u :: 'term_' ::=                                               {{ com T
 
   | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
-  | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
   | t ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
-  | t ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
+  | t ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
+  | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[u]] }}
 
   | t [ x ≔ v ]                             :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
@@ -142,25 +142,25 @@ val, v :: 'val_' ::= {{ com Term value }}
 
 ectx, C :: 'ectx_' ::= {{ com Evaluation context }}
   | [ ] :: :: Id {{ com Identity }} {{ tex \square }}
-  | C ≻ u                                    ::   :: App1      {{ com Application }} {{ tex [[C]]\,\succ[[u]] }}
-  | v ≻ C                                    ::   :: App2      {{ com Application }} {{ tex [[v]]\,\succ[[C]] }}
-  | C ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[C]]~;\,[[u]] }}
-  | C ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS      {{ com Pattern-match on sum }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | C ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatP    {{ com Pattern-match on product }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +) 
-  | C ≻case m ᴇ n x ⟼ u            ::   :: PatE     {{ com Pattern-match on exponential }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | C ≻map x ⟼ u :: :: Map  {{ com Map over the right side of ampar }} {{ tex [[C]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +)
+  | C ≻ u                                    ::   :: AppFoc1      {{ com Application }} {{ tex [[C]]\,\succ[[u]] }}
+  | v ≻ C                                    ::   :: AppFoc2      {{ com Application }} {{ tex [[v]]\,\succ[[C]] }}
+  | C ; u                   ::   :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[C]]~;\,[[u]] }}
+  | C ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatSFoc      {{ com Pattern-match on sum }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | C ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatPFoc    {{ com Pattern-match on product }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +) 
+  | C ≻case m ᴇ n x ⟼ u            ::   :: PatEFoc     {{ com Pattern-match on exponential }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | C ≻map x ⟼ u :: :: MapFoc  {{ com Map over the right side of ampar }} {{ tex [[C]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +)
 
-  | to⧔ C :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Wrap into a trivial ampar }}
-  | from⧔ C :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Extract value from trivial ampar }}
-  | C ⨞ () :: :: FillU {{ com Fill destination with unit }}
-  | C ⨞ ( λ x m ⟼ u ) :: :: FillF  {{ com Fill destination with function }} {{ tex [[C]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | C ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
-  | C ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
-  | C ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
-  | C ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[C]][[⨞]]\expcons{[[m]]} }}
-  | C ⨞· u :: :: FillC1 {{ com Fill destination with root of ampar }} {{ tex [[C]]\triangleleft\!\mybullet\,[[u]] }}
-  | v ⨞· C :: :: FillC2 {{ com Fill destination with root of ampar }} {{ tex [[v]]\triangleleft\!\mybullet\,[[C]] }}
-  | H ᵒᵖ⟨ v1 ❟ C :: :: AOpen {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar. \textcolor{red}{Only new addition to term shapes} }}
+  | to⧔ C :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Wrap into a trivial ampar }}
+  | from⧔ C :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Extract value from trivial ampar }}
+  | C ⨞ () :: :: FillUFoc {{ com Fill destination with unit }}
+  | C ⨞ Inl                          ::   :: FillLFoc   {{ com Fill destination with left variant }}
+  | C ⨞ Inr                          ::   :: FillRFoc   {{ com Fill destination with right variant }}
+  | C ⨞ ᴇ m :: :: FillEFoc {{ com Fill destination with exponential constructor }} {{ tex [[C]][[⨞]]\expcons{[[m]]} }}
+  | C ⨞ (,)                              ::   :: FillPFoc    {{ com Fill destination with product constructor }}
+  | C ⨞ ( λ x m ⟼ u ) :: :: FillFFoc  {{ com Fill destination with function }} {{ tex [[C]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
+  | C ⨞· u :: :: FillC1Foc {{ com Fill destination with root of ampar }} {{ tex [[C]]\triangleleft\!\mybullet\,[[u]] }}
+  | v ⨞· C :: :: FillC2Foc {{ com Fill destination with root of ampar }} {{ tex [[v]]\triangleleft\!\mybullet\,[[C]] }}
+  | H ᵒᵖ⟨ v1 ❟ C :: :: AOpenFoc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar. \textcolor{red}{Only new addition to term shapes} }}
   | C ∘ C' :: M :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
   | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectx_fill [[C]] [[h]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}

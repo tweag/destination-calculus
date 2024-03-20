@@ -135,12 +135,6 @@ P ⊢ t : ⌊𝟏⌋n [[:TYt]]
 ------------------------------ :: FillU
 P ⊢ t ⨞ () : 𝟏
 
-{{ ctx_Disjoint [[P2]] [[{ x : m T1 }]] }}
-P1 ⊢ t : ⌊T1 m → T2⌋n [[:TYt]]
-P2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
----------------------------------------- :: FillF
-P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
-
 P ⊢ t : ⌊T1 ⨁ T2⌋n [[:TYt]]
 ------------------------------ :: FillL
 P ⊢ t ⨞ Inl : ⌊T1⌋n
@@ -156,6 +150,12 @@ P ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
 P ⊢ t : ⌊!n' T⌋n [[:TYt]]
 ------------------------------ :: FillE
 P ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
+
+{{ ctx_Disjoint [[P2]] [[{ x : m T1 }]] }}
+P1 ⊢ t : ⌊T1 m → T2⌋n [[:TYt]]
+P2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
+---------------------------------------- :: FillF
+P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
 
 P1 ⊢ t : ⌊T1⌋n [[:TYt]]
 P2 ⊢ u : T1 ⧔ T2 [[:TYu]]
@@ -178,7 +178,7 @@ D ⊣ C : T1 ↣ T2 :: :: Ty_ectx :: TyR_ectx_ {{ com Typing of evaluation conte
 {{ ctx_DestOnly [[D2]] }}
 m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TYC]]
 D2 ⊢ u : T1 m → T2 [[:TYu]]
------------------ :: App1
+----------------- :: AppFoc1
 D1 ⊣ C ∘ ([] ≻ u) : T1 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
@@ -187,7 +187,7 @@ D1 ⊣ C ∘ ([] ≻ u) : T1 ↣ U0
 {{ ctx_DestOnly [[D2]] }}
 m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TYC]]
 D1 ⊢ v : T1 [[:TYv]]
------------------ :: App2
+----------------- :: AppFoc2
 D2 ⊣ C ∘ (v ≻ []) : (T1 m → T2) ↣ U0
 
 {{ ctx_Disjoint [[D1]] [[D2]] }}
@@ -195,101 +195,99 @@ D2 ⊣ C ∘ (v ≻ []) : (T1 m → T2) ↣ U0
 {{ ctx_DestOnly [[D2]] }}
 D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
 D2 ⊢ u : U [[:TYu]]
------------------ :: PatU
+----------------- :: PatUFoc
 D1 ⊣ C ∘ ([] ; u) : 𝟏 ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 % D1 != {} => m = ¹ν
+% {{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }} useless with DestOnly
+% {{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[D1]] [[D2]] }}
-{{ ctx_DestOnly [[D1]] }}
-{{ ctx_DestOnly [[D2]] }}
-{{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
+{{ ctx_DestOnly [[D1]] /\ ctx_DestOnly [[D2]] }}
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
 D2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:TYu1]]
 D2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:TYu2]]
------------------ :: PatS
+----------------- :: PatSFoc
 D1 ⊣ C ∘ ([] ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 % D1 != {} => m = ¹ν
+% {{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }} useless with DestOnly
+% {{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[D1]] [[D2]] }}
-{{ ctx_DestOnly [[D1]] }}
-{{ ctx_DestOnly [[D2]] }}
-{{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }}
-{{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
+{{ ctx_DestOnly [[D1]] /\ ctx_DestOnly [[D2]] }}
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }}
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
 D2 ⨄ { x1 : m T1, x2 : m T2 } ⊢ u : U [[:TYu]]
------------------ :: PatP
+----------------- :: PatPFoc
 D1 ⊣ C ∘ ([] ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
 % {{ mode_IsValid [[m]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 % D1 != {} => m = ¹ν
+% {{ ctx_Disjoint [[D2]] [[{ x : m·m' T }]] }} useless with DestOnly
 {{ ctx_Disjoint [[D1]] [[D2]] }}
 {{ ctx_DestOnly [[D1]] }}
 {{ ctx_DestOnly [[D2]] }}
-{{ ctx_Disjoint [[D2]] [[{ x : m·m' T }]] }}
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
 D2 ⨄ { x : m·m' T } ⊢ u : U [[:TYu]]
------------------ :: PatE
+----------------- :: PatEFoc
 D1 ⊣ C ∘ ([] ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
+% {{ ctx_Disjoint [[¹↑·D2]] [[{ x : ¹ν T2 }]] }} useless with DestOnly
 {{ ctx_Disjoint [[D1]] [[D2]] }}
 {{ ctx_DestOnly [[D1]] }}
 {{ ctx_DestOnly [[D2]] }}
-{{ ctx_Disjoint [[¹↑·D2]] [[{ x : ¹ν T2 }]] }}
 D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TYC]]
 ¹↑·D2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:TYu]]
--------------------------------- :: Map
+-------------------------------- :: MapFoc
 D1 ⊣ C ∘ ([] ≻map x ⟼ u) : (T1 ⧔ T2) ↣ U0
 
 D ⊣ C : (T ⧔ 𝟏) ↣ U0 [[:TYC]]
-------------------------------- :: ToA
+------------------------------- :: ToAFoc
 D ⊣ C ∘ (to⧔ []) : T ↣ U0
 
 D ⊣ C : T ↣ U0 [[:TYC]]
-------------------------------- :: FromA
+------------------------------- :: FromAFoc
 D ⊣ C ∘ (from⧔ []) : (T ⧔ 𝟏) ↣ U0
 
 D ⊣ C : 𝟏 ↣ U0 [[:TYC]]
------------------------------- :: FillU
+------------------------------ :: FillUFoc
 D ⊣ C ∘ ([] ⨞ ()) : ⌊𝟏⌋n ↣ U0
+
+D ⊣ C : ⌊T1⌋n ↣ U0 [[:TYC]]
+------------------------------ :: FillLFoc
+D ⊣ C ∘ ([] ⨞ Inl) : ⌊T1 ⨁ T2⌋n ↣ U0
+
+D ⊣ C : ⌊T2⌋n ↣ U0 [[:TYC]]
+------------------------------ :: FillRFoc
+D ⊣ C ∘ ([] ⨞ Inr) : ⌊T1 ⨁ T2⌋n ↣ U0
+
+D ⊣ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TYC]]
+------------------------------ :: FillPFoc
+D ⊣ C ∘ ([] ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
+
+D ⊣ C : ⌊T⌋m·n ↣ U0  [[:TYC]]
+------------------------------ :: FillEFoc
+D ⊣ C ∘ ([] ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
 % Elements that can be compensated by u must be from an older scope
 % Realistically dests are linear, so no dest from D2 can be stored in a non-linear function*
 % D2 != {} => n = ¹ν
+% {{ ctx_Disjoint [[D2]] [[{ x : m T1 }]] }} useless with DestOnly
 {{ ctx_Disjoint [[D1]] [[D2]] }}
 {{ ctx_DestOnly [[D1]] }}
 {{ ctx_DestOnly [[D2]] }}
-{{ ctx_Disjoint [[D2]] [[{ x : m T1 }]] }}
 D1 ⨄ (¹↑·n)·D2 ⊣ C : 𝟏 ↣ U0 [[:TYC]]
 D2 ⨄ { x : m T1 } ⊢ u : T2 [[:TYu]]
----------------------------------------- :: FillF
+---------------------------------------- :: FillFFoc
 D1 ⊣ C ∘ ([] ⨞(λ x m ⟼ u)) : ⌊T1 m → T2⌋n ↣ U0
-
-D ⊣ C : ⌊T1⌋n ↣ U0 [[:TYC]]
------------------------------- :: FillL
-D ⊣ C ∘ ([] ⨞ Inl) : ⌊T1 ⨁ T2⌋n ↣ U0
-
-D ⊣ C : ⌊T2⌋n ↣ U0 [[:TYC]]
------------------------------- :: FillR
-D ⊣ C ∘ ([] ⨞ Inr) : ⌊T1 ⨁ T2⌋n ↣ U0
-
-D ⊣ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TYC]]
------------------------------- :: FillP
-D ⊣ C ∘ ([] ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
-
-D ⊣ C : ⌊T⌋m·n ↣ U0  [[:TYC]]
------------------------------- :: FillE
-D ⊣ C ∘ ([] ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
 {{ ctx_Disjoint [[D1]] [[D2]] }}
 {{ ctx_DestOnly [[D1]] }}
 {{ ctx_DestOnly [[D2]] }}
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TYC]]
 D2 ⊢ u : T1 ⧔ T2 [[:TYu]]
------------------------------ :: FillC1
+----------------------------- :: FillCFoc1
 D1 ⊣ C ∘ ([] ⨞· u) : ⌊T1⌋n ↣ U0
 
 {{ ctx_Disjoint [[D1]] [[D2]] }}
@@ -297,16 +295,10 @@ D1 ⊣ C ∘ ([] ⨞· u) : ⌊T1⌋n ↣ U0
 {{ ctx_DestOnly [[D2]] }}
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TYC]]
 D1 ⊢ v : ⌊T1⌋n [[:TYu]]
------------------------------ :: FillC2
+----------------------------- :: FillCFoc2
 D2 ⊣ C ∘ (v ⨞· []) : T1 ⧔ T2 ↣ U0
 
-% -D2: Some holes of C compensated by dests from v1
-% D1 : remaining holes/dests from C
-% D1 : external dests from v1 (not bound by this ampar)
-% -D3 : holes from v1 (bound by this ampar)
-% We want D2 to be maximal, so D1 must be disjoint from D1
-% We do not want to holes from v1 to be compensated by dests from C. That would mean having {positive part of D1} and -D3 to interact.
-% {{ ctx_IsValid [[-(n·D2)]] }} % TODO: check that ctx_minus enforces linearity+now
+% TODO: check that ctx_minus enforces linearity+now
 
 {{ ctx_Disjoint [[D1]] [[D2]] }}
 {{ ctx_Disjoint [[D1]] [[D3]] }}
@@ -316,7 +308,7 @@ D2 ⊣ C ∘ (v ⨞· []) : T1 ⧔ T2 ↣ U0
 {{ ctx_DestOnly [[D3]] }}
 D1 ⨄ D2 ⊣ C : (T1 ⧔ U) ↣ U0 [[:TYC]]
 D1 ⨄ -D3 ⫦ v1 : T1 [[:TYRv1]]
----------------- :: AOpen
+---------------- :: AOpenFoc
 ¹↑·D2 ⨄ D3 ⊣ C ∘ (hnames(-D3) ᵒᵖ⟨v1 ❟ []) : U ↣ U0
 
 defn
@@ -330,67 +322,194 @@ G ⊢ t : T [[:TYt]]
 defns
 Sem :: '' ::=
 
-% TODO: add explicit focusing rules (stack way)
+% If ectx composition is not a meta instruction but a syntactic rule for context formation, then all unfoc rules can be merged as a single "pop & reform term" instruction ?
+% Not really for AOpenUnfoc because it is transformed back to a closed ampar instead of just being ectx substitution.
 
 defn
 C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} by
 
------------------- :: App
+{{ term_NotVal [[t]] }}
+----------------------------- :: AppFoc1
+C[t ≻ u] ⟶ (C ∘ ([] ≻ u))[t]
+
+----------------------------- :: AppUnfoc1
+(C ∘ ([] ≻ u))[v] ⟶ C[v ≻ u]
+
+{{ term_NotVal [[u]] }}
+----------------------------- :: AppFoc2
+C[v ≻ u] ⟶ (C ∘ (v ≻ []))[u]
+
+----------------------------- :: AppUnfoc2
+(C ∘ (v ≻ []))[v'] ⟶ C[v ≻ v']
+
+------------------ :: AppRed
 C[v ≻ (λᵛ x m ⟼ t) ] ⟶ C[t[x ≔ v] ]
 
------------------------ :: PatU
-C[() ; t2] ⟶ C[t2]
+{{ term_NotVal [[t]] }}
+----------------------- :: PatUFoc
+C[t ; u] ⟶ (C ∘ ([] ; u))[t]
 
------------------------ :: PatL
+----------------------- :: PatUUnfoc
+(C ∘ ([] ; u))[v] ⟶ C[v ; u]
+
+----------------------- :: PatURed
+C[() ; u] ⟶ C[u]
+
+{{ term_NotVal [[t]] }}
+----------------------- :: PatLFoc
+C[t ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ ([] ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
+
+----------------------- :: PatLUnfoc
+(C ∘ ([] ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
+
+----------------------- :: PatLRed
 C[(Inl v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x ≔ v] ]
 
------------------------ :: PatR
+{{ term_NotVal [[t]] }}
+----------------------- :: PatRFoc
+C[t ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ ([] ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
+
+----------------------- :: PatRUnfoc
+(C ∘ ([] ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
+
+----------------------- :: PatRRed
 C[(Inr v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x ≔ v] ]
 
------------------------ :: PatP
+{{ term_NotVal [[t]] }}
+----------------------- :: PatPFoc
+C[t ≻case m (x1,x2) ⟼ u] ⟶ (C ∘ ([] ≻case m (x1,x2) ⟼ u))[t]
+
+----------------------- :: PatPUnfoc
+(C ∘ ([] ≻case m (x1,x2) ⟼ u))[v] ⟶ C[v ≻case m (x1,x2) ⟼ u]
+
+----------------------- :: PatPRed
 C[(v1, v2) ≻case m (x1,x2) ⟼ u] ⟶ C[u[x1 ≔ v1][x2 ≔ v2] ]
 
------------------------ :: PatE
+{{ term_NotVal [[t]] }}
+----------------------- :: PatEFoc
+C[t ≻case m ᴇ n x ⟼ u] ⟶ (C ∘ ([] ≻case m ᴇ n x ⟼ u))[t]
+
+----------------------- :: PatEUnfoc
+(C ∘ ([] ≻case m ᴇ n x ⟼ u))[v] ⟶ C[v ≻case m ᴇ n x ⟼ u]
+
+----------------------- :: PatERed
 C[ᴇ n v ≻case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v] ]
 
+{{ term_NotVal [[t]] }}
+----------------------- :: MapFoc
+C[t ≻map x ⟼ u] ⟶ (C ∘ ([] ≻map x ⟼ u))[t]
+
+----------------------- :: MapUnfoc
+(C ∘ ([] ≻map x ⟼ u))[v] ⟶ C[v ≻map x ⟼ u]
+
 {{ [[h']] = [[max(hnames(C))]] }}
----------------------------------- :: MapOpen
+---------------------------------- :: MapRedAOpenFoc
 C[ H ⟨ v1 ❟ v2 ⟩ ≻map x ⟼ u] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v1⩲h' ❟ []))[ u[x ≔ v2⩲h'] ]
 
----------------------------------- :: MapClose
+---------------------------------- :: AOpenUnfoc
 (C ∘ H ᵒᵖ⟨ v1 ❟ [])[v2] ⟶ C[ H ⟨ v1 ❟ v2 ⟩ ]
 
--------------------------- :: Alloc
+-------------------------- :: AllocRed
 C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
 
------------------------------------------ :: ToA
+{{ term_NotVal [[t]] }}
+-------------------------- :: ToAFoc
+C[to⧔ t] ⟶ (C ∘ (to⧔ []))[t]
+
+% No shape control here, so could be totally merged with ToARed
+-------------------------- :: ToAUnfoc
+(C ∘ (to⧔ []))[v] ⟶ C[to⧔ v]
+
+----------------------------------------- :: ToARed
 C[to⧔ v] ⟶ C[{} ⟨ v ❟ () ⟩]
 
--------------------------------------- :: FromA
+{{ term_NotVal [[t]] }}
+-------------------------- :: FromAFoc
+C[from⧔ t] ⟶ (C ∘ (from⧔ []))[t]
+
+-------------------------- :: FromAUnfoc
+(C ∘ (from⧔ []))[v] ⟶ C[from⧔ v]
+
+-------------------------------------- :: FromARed
 C[from⧔ {} ⟨ v ❟ () ⟩] ⟶ C[v]
 
-------------------------------------- :: FillU
+{{ term_NotVal [[t]] }}
+-------------------------- :: FillUFoc
+C[t ⨞ ()] ⟶ (C ∘ ([] ⨞ () ))[t]
+
+-------------------------- :: FillUUnfoc
+(C ∘ ([] ⨞ () ))[v] ⟶ C[v ⨞ ()]
+
+------------------------------------- :: FillURed
 C[+h ⨞ ()] ⟶ C[h ≔ {} ()][()]
 
-------------------------------------- :: FillF
-C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} λᵛ x m ⟼ u][()]
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillLFoc
+C[t ⨞ Inl] ⟶ (C ∘ ([] ⨞ Inl))[t]
+
+------------------------------------- :: FillLUnfoc
+(C ∘ ([] ⨞ Inl))[v] ⟶ C[v ⨞ Inl]
 
 {{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
---------------------------------------- :: FillL
+--------------------------------------- :: FillLRed
 C[+h ⨞ Inl] ⟶ C[h ≔ {h'+1} Inl -(h'+1)][+(h'+1)]
 
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillRFoc
+C[t ⨞ Inr] ⟶ (C ∘ ([] ⨞ Inr))[t]
+
+------------------------------------- :: FillRUnfoc
+(C ∘ ([] ⨞ Inr))[v] ⟶ C[v ⨞ Inr]
+
 {{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
---------------------------------------- :: FillR
+--------------------------------------- :: FillRRed
 C[+h ⨞ Inr] ⟶ C[h ≔ {h'+1} Inr -(h'+1)][+(h'+1)]
 
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillEFoc
+C[t ⨞ ᴇ m] ⟶ (C ∘ ([] ⨞ ᴇ m))[t]
+
+------------------------------------- :: FillEUnfoc
+(C ∘ ([] ⨞ ᴇ m))[v] ⟶ C[v ⨞ ᴇ m]
+
 {{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
---------------------------------------- :: FillE
+--------------------------------------- :: FillERed
 C[+h ⨞ ᴇ m] ⟶ C[h ≔ {h'+1} ᴇ m -(h'+1)][+(h'+1)]
 
-{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
---------------------------------------- :: FillP
-C[+h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} (-(h'+1),-(h'+2))][( +(h'+1), +(h'+2) )]
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillPFoc
+C[t ⨞ (,)] ⟶ (C ∘ ([] ⨞ (,)))[t]
+
+------------------------------------- :: FillPUnfoc
+(C ∘ ([] ⨞ (,)))[v] ⟶ C[v ⨞ (,)]
 
 {{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
----------------------------------------- :: FillC
+--------------------------------------- :: FillPRed
+C[+h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} (-(h'+1),-(h'+2))][( +(h'+1), +(h'+2) )]
+
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillFFoc
+C[t ⨞(λ x m ⟼ u)] ⟶ (C ∘ ([] ⨞(λ x m ⟼ u)))[t]
+
+------------------------------------- :: FillFUnfoc
+(C ∘ ([] ⨞(λ x m ⟼ u)))[v] ⟶ C[v ⨞(λ x m ⟼ u)]
+
+------------------------------------- :: FillFRed
+C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} λᵛ x m ⟼ u][()]
+
+{{ term_NotVal [[t]] }}
+------------------------------------- :: FillCFoc1
+C[t ⨞· u] ⟶ (C ∘ ([] ⨞· u))[t]
+
+------------------------------------- :: FillCUnfoc1
+(C ∘ ([] ⨞· u))[v] ⟶ C[v ⨞· u]
+
+------------------------------------- :: FillCFoc2
+C[v ⨞· u] ⟶ (C ∘ (v ⨞· []))[u]
+
+------------------------------------- :: FillCUnfoc2
+(C ∘ (v ⨞· []))[v'] ⟶ C[v ⨞· v']
+
+{{ [[h']] = [[max(hnames(C) ∪ {h})]] }}
+---------------------------------------- :: FillCRed
 C[+h ⨞· H ⟨ v1 ❟ v2 ⟩] ⟶ C[h ≔ (H⩲h') v1⩲h' ][v2⩲h' ]

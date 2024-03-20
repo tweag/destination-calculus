@@ -2,7 +2,7 @@
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[a4paper,left=0.75cm,right=0.75cm,top=1.25cm,bottom=2cm]{geometry}
+\usepackage[a4paper,left=0.75cm,right=0.75cm,top=1.4cm,bottom=1.4cm]{geometry}
 \usepackage{lmodern}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{graphicx}
@@ -48,7 +48,9 @@
 \otthdns\ottinterrule
 \ottterm\ottinterrule
 \ottval\ottinterrule
-%\otteterm\ottinterrule
+%\otteterm\ottafterlastrule
+}
+\ottgrammartabular{
 \ottectx\ottafterlastrule
 }
 
