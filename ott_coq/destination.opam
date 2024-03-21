@@ -5,4 +5,5 @@ depends: [
   "coq-hammer"
   "coq-aac-tactics"
   "coq-smtcoq"
+  "coq-mmaps"
 ]
