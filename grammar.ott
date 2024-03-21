@@ -5,40 +5,16 @@ Require Import Coq.Structures.Equalities.
 Require Import Coq.Structures.Orders.
 Require Import Coq.Structures.OrdersAlt.
 Require Import Coq.Structures.OrdersEx.
-Require Import Coq.FSets.FMapWeakList.
-Require Import Coq.FSets.FSetWeakList.
+Require Import Coq.FSets.FMapList.
+Require Import Coq.FSets.FSetList.
 Require Import Coq.FSets.FMapFacts.
 Require Import Coq.FSets.FSetFacts.
 
-Inductive name : Type :=
-  | name_X : nat -> name
-  | name_HD : nat -> name.
-
-Module Name_as_UDT <: UsualDecidableType.
-  Definition t := name.
-
-  Definition eq := @eq name.
-  Definition eq_refl := @eq_refl name.
-  Definition eq_sym := @eq_sym name.
-  Definition eq_trans := @eq_trans name.
-
-  (* Define the eq_dec function *)
-  Theorem eq_dec : forall x y : name, {x = y} + {x <> y}.
-  Proof.
-    intros x y. decide equality. apply Nat.eq_dec. apply Nat.eq_dec.
-  Defined.
-
-  Instance eq_equiv : Equivalence Name_as_UDT.eq. split. exact eq_refl. exact eq_sym. exact eq_trans. Defined.
-
-End Name_as_UDT.
-
-Module Nat_as_UDTOrig := Backport_DT(Nat_as_OT).
-Module HdnsM := FSetWeakList.Make(Nat_as_UDTOrig).
-Module Name_as_UDTOrig := Backport_DT(Name_as_UDT).
-Module CtxM := FMapWeakList.Make(Name_as_UDTOrig).
+Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
+Module HdnsM := FSetList.Make(Nat_as_OTOrig).
+Module NmapM := FMapList.Make(Nat_as_OTOrig).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
-
 (* Will be aliased later to mul *)
 Inductive _mul : Type :=
   | Lin : _mul
@@ -63,7 +39,7 @@ Defined.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 metavar var, x, y ::= {{ com Term-level variable name }}
-  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
+ {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 
@@ -81,40 +57,36 @@ hdns, H :: 'hdns_' ::= {{ com Set of hole names }} {{ coq HdnsM.t }} {{ tex \ott
   | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
   | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
   | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
-  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectx [[C]]) }}
+  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LANGUAGE SYNTAX (STATIC)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-term, t, u :: 'term_' ::=                                               {{ com Term }}
+term, t, u :: 'term_' ::= {{ com Term }}
   | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
-  | t ≻ u                                    ::   :: App      {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
-  % | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\,\succ\,\ottkw{case}\,\ottsctor{()}\,\mapsto\,[[u]] }}
-  | t ; u                   ::   :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
-  | t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatS      {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatP      {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
-  | t ≻case m ᴇ n x ⟼ u            ::   :: PatE     {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | t ≻map x ⟼ u :: :: Map  {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +)
-
-  % | toGlobal t :: :: ToGlobal {{ tex \ottkw{to}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion to ${\ottsmode{\scriptstyle G} }$ }}
-  % | fromGlobal t :: :: FromGlobal {{ tex \ottkw{from}_{\ottsmode{\scriptstyle G} } }} {{ com Mode coercion from ${\ottsmode{\scriptstyle G} }$ }}
+  | t ≻ u :: :: App {{ com Application }} {{ tex [[t]]\,\succ[[u]] }}
+  | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
+  | t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t ≻case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t ≻case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | t ≻map x ⟼ u :: :: Map {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +
   | to⧔ t :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Wrap $[[t]]$ into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
 
   | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
-  | t ⨞ Inl                          ::   :: FillL   {{ com Fill destination with left variant }}
-  | t ⨞ Inr                          ::   :: FillR   {{ com Fill destination with right variant }}
+  | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
+  | t ⨞ Inr :: :: FillR {{ com Fill destination with right variant }}
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
-  | t ⨞ (,)                              ::   :: FillP    {{ com Fill destination with product constructor }}
+  | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· u :: :: FillC {{ com Fill destination with root of ampar $[[u]]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[u]] }}
 
-  | t [ x ≔ v ]                             :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
-  | ( t )                                   :: S :: Paren {{ coq [[t]] }}
+  | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
+  | ( t ) :: S :: Paren {{ coq [[t]] }}
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpaacing2
   % | t b spe : : S :: BreakSpacing3
@@ -123,7 +95,7 @@ val, v :: 'val_' ::= {{ com Term value }}
   | - h :: :: H {{ com Hole }} {{ tex \ottshdn{-}[[h]] }}
   | + h :: :: D {{ tex \ottshdn{+}[[h]] }} {{ com Destination }}
   | () :: :: U {{ com Unit }}
-  | λᵛ x m ⟼ t :: :: F  {{ tex \lamvnt{[[x]]}{[[m]]}{[[t]]} }} {{ com Lambda abstraction }} % (+ bind x in t +)
+  | λᵛ x m ⟼ t :: :: F {{ tex \lamvnt{[[x]]}{[[m]]}{[[t]]} }} {{ com Lambda abstraction }} % (+ bind x in t +)
   | Inl v :: :: L {{ com Left variant for sum }}
   | Inr v :: :: R {{ com Right variant for sum }}
   | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
@@ -136,34 +108,34 @@ val, v :: 'val_' ::= {{ com Term value }}
 % DYNAMIC SYNTAX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% eterm, j :: 'eterm_' ::= {{ com Pseudo-term }} {{ coq (ectx * term) }}
-%   | C [ t ] :: :: ECtxApp {{ coq (pair [[C]] [[t]]) }}
-%   | t :: S :: TermSugar {{ coq (pair ectx_Id [[t]]) }}
-
-ectx, C :: 'ectx_' ::= {{ com Evaluation context }}
-  | [ ] :: :: Id {{ com Identity }} {{ tex \square }}
-  | C ≻ u                                    ::   :: AppFoc1      {{ com Application }} {{ tex [[C]]\,\succ[[u]] }}
-  | v ≻ C                                    ::   :: AppFoc2      {{ com Application }} {{ tex [[v]]\,\succ[[C]] }}
-  | C ; u                   ::   :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[C]]~;\,[[u]] }}
-  | C ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }   ::   :: PatSFoc      {{ com Pattern-match on sum }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | C ≻case m ( x1 , x2 ) ⟼ u            ::   :: PatPFoc    {{ com Pattern-match on product }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +) 
-  | C ≻case m ᴇ n x ⟼ u            ::   :: PatEFoc     {{ com Pattern-match on exponential }} {{ tex [[C]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | C ≻map x ⟼ u :: :: MapFoc  {{ com Map over the right side of ampar }} {{ tex [[C]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +)
-
-  | to⧔ C :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Wrap into a trivial ampar }}
-  | from⧔ C :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[C]] }} {{ com Extract value from trivial ampar }}
-  | C ⨞ () :: :: FillUFoc {{ com Fill destination with unit }}
-  | C ⨞ Inl                          ::   :: FillLFoc   {{ com Fill destination with left variant }}
-  | C ⨞ Inr                          ::   :: FillRFoc   {{ com Fill destination with right variant }}
-  | C ⨞ ᴇ m :: :: FillEFoc {{ com Fill destination with exponential constructor }} {{ tex [[C]][[⨞]]\expcons{[[m]]} }}
-  | C ⨞ (,)                              ::   :: FillPFoc    {{ com Fill destination with product constructor }}
-  | C ⨞ ( λ x m ⟼ u ) :: :: FillFFoc  {{ com Fill destination with function }} {{ tex [[C]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | C ⨞· u :: :: FillC1Foc {{ com Fill destination with root of ampar }} {{ tex [[C]]\triangleleft\!\mybullet\,[[u]] }}
-  | v ⨞· C :: :: FillC2Foc {{ com Fill destination with root of ampar }} {{ tex [[v]]\triangleleft\!\mybullet\,[[C]] }}
-  | H ᵒᵖ⟨ v1 ❟ C :: :: AOpenFoc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[C]] }} {{ com Open ampar. \textcolor{red}{Only new addition to term shapes} }}
-  | C ∘ C' :: M :: Comp {{ com Compose evaluation contexts }} {{ tex [[C]]\circ\,[[C']] }}
-  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectx_fill [[C]] [[h]] [[v]]) }}
+ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }}
+  | ⬜ :: :: N {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
+%  | c :: S :: S {{ coq (cons [[c]] nil) }}
+  | C ∘ c :: :: C {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\,\circ\,[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
+  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}
+
+ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
+  | ⬜ ≻ u :: :: AppFoc1 {{ com Application }} {{ tex [[⬜]]\,\succ[[u]] }}
+  | v ≻ ⬜ :: :: AppFoc2 {{ com Application }} {{ tex [[v]]\,\succ[[⬜]] }}
+  | ⬜ ; u :: :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[⬜]]~;\,[[u]] }}
+  | ⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatSFoc {{ com Pattern-match on sum }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | ⬜ ≻case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ com Pattern-match on product }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +) 
+  | ⬜ ≻case m ᴇ n x ⟼ u :: :: PatEFoc {{ com Pattern-match on exponential }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | ⬜ ≻map x ⟼ u :: :: MapFoc {{ com Map over the right side of ampar }} {{ tex [[⬜]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[u]] }} % (+ bind x in u +)
+
+  | to⧔ ⬜ :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Wrap into a trivial ampar }}
+  | from⧔ ⬜ :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Extract value from trivial ampar }}
+  | ⬜ ⨞ () :: :: FillUFoc {{ com Fill destination with unit }}
+  | ⬜ ⨞ Inl :: :: FillLFoc {{ com Fill destination with left variant }}
+  | ⬜ ⨞ Inr :: :: FillRFoc {{ com Fill destination with right variant }}
+  | ⬜ ⨞ ᴇ m :: :: FillEFoc {{ com Fill destination with exponential constructor }} {{ tex [[⬜]][[⨞]]\expcons{[[m]]} }}
+  | ⬜ ⨞ (,) :: :: FillPFoc {{ com Fill destination with product constructor }}
+  | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillFFoc {{ com Fill destination with function }} {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
+  | ⬜ ⨞· u :: :: FillCFoc1 {{ com Fill destination with root of ampar }} {{ tex [[⬜]]\triangleleft\!\mybullet\,[[u]] }}
+  | v ⨞· ⬜ :: :: FillCFoc2 {{ com Fill destination with root of ampar }} {{ tex [[v]]\triangleleft\!\mybullet\,[[⬜]] }}
+  | H ᵒᵖ⟨ v1 ❟ ⬜ :: :: AOpenFoc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v1]]\,\ottsctor{\bbcomma}~[[⬜]] }} {{ com Open ampar. \textcolor{red}{Only new addition to term shapes} }}
+  | ( c ) :: S :: Paren {{ coq [[c]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TYPING SYNTAX
@@ -198,16 +170,49 @@ age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (second component o
   | a1 · ... · ak :: M :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
-bndr, b :: 'bndr_' ::= {{ com Type assignment to either variable, destination or hole }}
-  | x : m T :: :: V {{ com Variable }} {{ tex [[x]]:_{[[m]]}[[T]] }}
-  | + h : m ⌊ T ⌋ n :: :: D {{ com Destination ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdn{+}[[h]]:_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
-  | - h : T n :: :: H {{ com Hole ($[[n]]$ is the modality for values it accepts, it doesn't have a modality on its own) }} {{ tex \ottshdn{-}[[h]]:[[T]]^{[[n]]} }}
 
-ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }} {{ coq (CtxM.t bndr) }}
-  | { b1 , .. , bk } :: :: L {{ coq (ctx_from_list [[b1..bk]]) }} {{ com List of bindings }}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Hidden in final document, just for Coq generation
+
+tyb_var :: 'tyb_' ::=
+  | m T :: :: Var {{ tex \,\!_{[[m]]}[[T]] }}
+tyb_dest :: 'tyb_' ::=
+  | m ⌊ T ⌋ n :: :: Dest {{ tex \,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
+tyb_hole :: 'tyb_' ::=
+  | T n :: :: Hole {{ tex [[T]]^{[[n]]} }}
+
+% For ctx_Compatible
+bndr, b :: 'bndr_' ::=
+  | ᵥ bndr_var :: :: Var {{ tex [[bndr_var]] }}
+  | ₊ bndr_dest :: :: Dest {{ tex [[bndr_dest]] }}
+  | ₋ bndr_hole :: :: Hole {{ tex [[bndr_hole]] }}
+
+% Cheat for OTT ordering issue
+map_var, mvar :: 'map_var_' ::= {{ coq (NmapM.t tyb_var) }}
+  | _create_dep tyb_var :: :: CreateDep {{ coq (NmapM.empty) }}
+map_dest, mdest :: 'map_dest_' ::= {{ coq (NmapM.t tyb_dest) }}
+  | _create_dep tyb_dest :: :: CreateDep {{ coq (NmapM.empty) }}
+map_hole, mhole :: ''map_hole_'' ::= {{ coq (NmapM.t tyb_hole) }}
+  | _create_dep tyb_hole :: :: CreateDep {{ coq (NmapM.empty) }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+bndr_var :: 'bndr_var_' ::= {{ coq (var * tyb_var) }}
+  | x : m T :: :: V {{ com Variable binding }} {{ tex [[x]]:_{[[m]]}[[T]] }} {{ coq (pair [[x]] (tyb_Var [[m]] [[T]])) }}
+bndr_dest :: 'bndr_dest_' ::= {{ coq (hdn * tyb_dest) }}
+  | + h : m ⌊ T ⌋ n :: :: D {{ com Dest binding ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdn{+}[[h]]:_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }} {{ coq (pair [[h]] (tyb_Dest [[m]] [[T]] [[n]])) }}
+bndr_hole :: 'bndr_hole_' ::= {{ coq (hdn * tyb_hole) }}
+  | - h : T n :: :: H {{ com Hole binding ($[[n]]$ is the modality for values it accepts, it doesn't have a modality on its own) }} {{ tex \ottshdn{-}[[h]]:[[T]]^{[[n]]} }} {{ coq (pair [[h]] (tyb_Hole [[T]] [[n]])) }}
+
+ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }}
+  | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
+  | { } :: S :: E {{ coq (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)) }}
+  | { bndr_var } :: S :: V {{ coq (ctx_Maps (nmap_from_pair [[bndr_var]]) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)) }}
+  | { bndr_dest } :: S :: D {{ coq (ctx_Maps (NmapM.empty tyb_var) (nmap_from_pair [[bndr_dest]]) (NmapM.empty tyb_hole)) }}
+  | { bndr_hole } :: S :: H {{ coq (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (nmap_from_pair [[bndr_hole]])) }}
   | m · G :: M :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
-  | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicates/incompatible elements will give bindings with mode $\ottsmode{\skull}$ }}
-  | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms every dest binding into a hole binding (requires \texttt{ctx\_DestOnly} $[[G]]$) }}
+  | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
+  | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 embed
@@ -215,8 +220,6 @@ embed
 (******************************************************************************
  * NAMES
  *****************************************************************************)
-
-Definition name_eq_dec := Name_as_UDT.eq_dec.
 
 Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
   match l with
@@ -230,21 +233,9 @@ Definition hdns_max_hnames (H : HdnsM.t) : nat :=
 Definition hdns_incr_hnames (H : HdnsM.t) (h' : nat) : HdnsM.t :=
   HdnsM.fold (fun h acc => HdnsM.add (h + h') acc) H HdnsM.empty.
 
-Definition hdns_from_ctx (G : CtxM.t bndr) : HdnsM.t :=
-  CtxM.fold (fun n b acc =>
-    match b with
-    | bndr_H h _ _ => HdnsM.add h acc
-    | _ => acc
-    end
-  ) G HdnsM.empty.
+Definition hdns_from_ctx (G : ctx) : HdnsM.t. Admitted. (* TODO complete *)
 
-(* TODO: check definition *)
-Fixpoint hdns_from_ectx (C : ectx) : HdnsM.t :=
-  match C with
-  | ectx_Id => HdnsM.empty
-  | ectx_AOpen H v C' => HdnsM.union H (hdns_from_ectx C')
-  | ectx_Comp C1 C2 => HdnsM.union (hdns_from_ectx C1) (hdns_from_ectx C2)
-  end.
+Definition hdns_from_ectxs (C : ectxs) : HdnsM.t. Admitted. (* TODO complete *)
 
 Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
   HdnsM.Empty (HdnsM.inter H1 H2).
@@ -257,70 +248,11 @@ Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
  * TERMS DYNAMIC BEHAVIOUR
  *****************************************************************************)
 
-Fixpoint term_sub_name (t: term) (n : name) (v : val) : term := match t with
-  | term_Val v' => term_Val (val_sub_name v' n v)
-  | term_Var y => match name_eq_dec n (name_X y) with
-    | left _ => term_Val v
-    | right _ => term_Var y
-    end
-  | term_App t1 t2 => term_App (term_sub_name t1 n v) (term_sub_name t2 n v)
-  | term_PatU t1 t2 => term_PatU (term_sub_name t1 n v) (term_sub_name t2 n v)
-  | term_PatS t' m x1 u1 x2 u2 =>
-    let u1' := match name_eq_dec n (name_X x1) with
-      | left _ => (* shadowing *) u1
-      | right _ => term_sub_name u1 n v
-    end in
-    let u2' := match name_eq_dec n (name_X x2) with
-      | left _ => (* shadowing *) u2
-      | right _ => term_sub_name u2 n v
-    end in term_PatS (term_sub_name t' n v) m x1 u1' x2 u2'
-  | term_PatP t' m x1 x2 u => match name_eq_dec n (name_X x1), name_eq_dec n (name_X x2) with
-    | right _, right _ => term_PatP (term_sub_name t' n v) m x1 x2 (term_sub_name u n v)
-    | _, _ => (* at least one shadowing *) term_PatP (term_sub_name t' n v) m x1 x2 u
-    end
-  | term_PatE t' m m' x' u => let u' := match name_eq_dec n (name_X x') with
-      | left _ => (* shadowing *) u
-      | right _ => term_sub_name u n v
-    end in term_PatE (term_sub_name t' n v) m m' x' u'
-  | term_Map t' x' u => let u' := match name_eq_dec n (name_X x') with
-      | left _ => (* shadowing *) u
-      | right _ => term_sub_name u n v
-    end in term_Map (term_sub_name t' n v) x' u'
-  | term_ToA t' => term_ToA (term_sub_name t' n v)
-  | term_FromA t' => term_FromA (term_sub_name t' n v)
-  | term_Alloc => term_Alloc
-  | term_FillU t1 => term_FillU (term_sub_name t1 n v)
-  | term_FillF t1 x' m u => let u' := match name_eq_dec n (name_X x') with
-    | left _ => (* shadowing *) u
-    | right _ => term_sub_name u n v
-    end in term_FillF (term_sub_name t1 n v) x' m u'
-  | term_FillL t1 => term_FillL (term_sub_name t1 n v)
-  | term_FillR t1 => term_FillR (term_sub_name t1 n v)
-  | term_FillP t1 => term_FillP (term_sub_name t1 n v)
-  | term_FillE t1 m => term_FillE (term_sub_name t1 n v) m
-  | term_FillC t u => term_FillC (term_sub_name t n v) (term_sub_name u n v)
-end
-with val_sub_name (v': val) (n:name) (v:val) : val := match v' with
-  | val_F x' m u => let u' := match name_eq_dec n (name_X x') with
-    | left _ => (* shadowing *) u
-    | right _ => term_sub_name u n v
-    end in val_F x' m u'
-  | val_H h => match name_eq_dec n (name_HD h) with
-    | left _ => v
-    | right _ => val_H h
-  end
-  | val_D h => val_D h
-  | val_U => val_U
-  | val_L v'' => val_L (val_sub_name v'' n v)
-  | val_R v'' => val_R (val_sub_name v'' n v)
-  | val_E m v'' => val_E m (val_sub_name v'' n v)
-  | val_P v1 v2 => val_P (val_sub_name v1 n v) (val_sub_name v2 n v)
-  | val_A H v1 v2 => val_A H (val_sub_name v1 n v) (val_sub_name v2 n v) (* TODO: false, need to update H by removing name (maybe) and adding new ones *)
-end.
+Definition term_sub (t: term) (x:var) (v:val) : term. Admitted. (* TODO complete *)
+Definition ectxs_fill (C: ectxs) (h:hdn) (v:val) : ectxs. Admitted. (* TODO complete *)
+Definition val_incr_hnames (v : val) (h : hdn) : val. Admitted. (* TODO complete *)
 
-Definition term_sub (t: term) (x:var) (v:val) : term := term_sub_name t (name_X x) v.
-Definition ectx_fill (C: ectx) (h:hdn) (v:val) : ectx := C. (* TODO complete *)
-Definition val_incr_hnames (v : val) (h : hdn) : val := v. (* TODO complete *)
+Definition term_NotVal (t: term) : Prop. Admitted. (* put it to Type instead for shape info? *) (* TODO complete *)
 
 (******************************************************************************
  * TYPE
@@ -403,7 +335,7 @@ Definition mode_times (m1 m2: mode) : mode :=
 Definition mode_times' (ml: list mode) : mode :=
   List.fold_right mode_times (Some (Lin, Fin 0)) ml.
 Inductive mode_IsSubtype : mode -> mode -> Prop :=
-  | mode_IsSubtypeProofNone : forall (m1 : mode), mode_IsSubtype m1 None
+  | mode_IsSubtypeProofNone : forall (m2 : mode), mode_IsSubtype None m2 (* skull represents contradictory requirements, so we must never be able to provide a value with multiplicity skull *)
   | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
 Theorem mode_IsSubtype_dec : forall (m1 m2: mode), {mode_IsSubtype m1 m2} + {~mode_IsSubtype m1 m2}.
 Proof.
@@ -413,8 +345,8 @@ Proof.
     + right. intros contra. inversion contra. congruence.
     + right. intros contra. inversion contra. congruence.
     + right. intros contra. inversion contra. congruence.
-  - left. exact (mode_IsSubtypeProofNone (Some (p1, a1))).
   - right. intros contra. inversion contra.
+  - left. exact (mode_IsSubtypeProofNone (Some (p2, a2))).
   - left. exact (mode_IsSubtypeProofNone None).
 Defined.
 Inductive mode_IsValid : mode -> Prop :=
@@ -450,135 +382,29 @@ Qed.
  * BINDERS
  *****************************************************************************)
 
-Definition bndr_name (b : bndr) : name :=
-  match b with
-  | bndr_V x m T => name_X x
-  | bndr_H h T m => name_HD h
-  | bndr_D h m1 T m2 => name_HD h
-  end.
+(******************************************************************************
+ * NMAPS
+ *****************************************************************************)
 
-Definition bndr_mode (b : bndr) : mode := match b with
-  | bndr_V _ m _ => m
-  | bndr_H _ _ m => m
-  | bndr_D _ m1 _ m2 => m1
-  end.
-
-Inductive bndr_IsVar : bndr -> Prop :=
-  bndr_IsVarProof : forall x m T, bndr_IsVar (bndr_V x m T).
-Theorem bndr_IsVar_dec : forall (b: bndr), {bndr_IsVar b} + {~bndr_IsVar b}.
-Proof.
-  intros b. destruct b.
-  - left. exact (bndr_IsVarProof x m T).
-  - right. intros contra. inversion contra.
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive bndr_IsDest : bndr -> Prop :=
-  bndr_IsDestProof : forall h m T n, bndr_IsDest (bndr_D h m T n).
-Theorem bndr_IsDest_dec : forall (b: bndr), {bndr_IsDest b} + {~bndr_IsDest b}.
-Proof.
-  intros b. destruct b.
-  - right. intros contra. inversion contra.
-  - left. exact (bndr_IsDestProof h m T n).
-  - right. intros contra. inversion contra.
-Qed.
-
-Inductive bndr_IsHole : bndr -> Prop :=
-  bndr_IsHoleProof : forall h m T, bndr_IsHole (bndr_H h m T).
-Theorem bndr_IsHole_dec : forall (b: bndr), {bndr_IsHole b} + {~bndr_IsHole b}.
-Proof.
-  intros b. destruct b.
-  - right. intros contra. inversion contra.
-  - right. intros contra. inversion contra.
-  - left. exact (bndr_IsHoleProof h T n).
-Qed.
+Definition nmap_from_pair {A: Type} (p: nat * A) : NmapM.t A :=
+  NmapM.add (fst p) (snd p) (NmapM.empty A).
 
 (******************************************************************************
  * CONTEXTS
  *****************************************************************************)
 
-Axiom ctx_Coherent: forall (G : CtxM.t bndr) n b, CtxM.MapsTo n b G -> (bndr_name b) = n.
+(******************************************************************************
+ * CONTEXTS
+ *****************************************************************************)
 
-Definition ctx_DestOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsDest b.
-Definition ctx_HoleOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsHole b.
-Definition ctx_VarOnly (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> bndr_IsVar b.
-Definition ctx_NoDest (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsDest b).
-Definition ctx_NoHole (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsHole b).
-Definition ctx_NoVar (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> ~ (bndr_IsVar b).
-Definition ctx_IsValid (G: CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsValid (bndr_mode b).
-Definition ctx_SubsetEq (G1 G2 : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G1 -> CtxM.MapsTo n b G2.
-Definition ctx_HdnmNotMem (h : hdn) (G : CtxM.t bndr) : Prop :=
-  ~CtxM.In (name_HD h) G.
-Definition ctx_OnlyLin (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsLin (bndr_mode b).
-Definition ctx_OnlyUr (G : CtxM.t bndr) : Prop :=
-  forall n b, CtxM.MapsTo n b G -> mode_IsUr (bndr_mode b).
-Definition ctx_Disjoint (G1 G2 : CtxM.t bndr) : Prop :=
-  forall n, (CtxM.In n G1 -> ~CtxM.In n G2) /\ (CtxM.In n G2 -> ~CtxM.In n G1).
-Inductive ctx_Compatible : CtxM.t bndr -> bndr -> Prop :=
-  | ctx_CompatibleProofV : forall G x m1 m2 T, CtxM.MapsTo (name_X x) (bndr_V x m1 T) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_X x) G) -> ctx_Compatible G (bndr_V x m2 T)
-  | ctx_CompatibleProofD : forall G h m11 m2 m21 T, CtxM.MapsTo (name_HD h) (bndr_D h m11 T m2) G -> mode_IsSubtype m11 m21 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_D h m21 T m2)
-  | ctx_CompatibleProofH : forall G h m1 m2 T, CtxM.MapsTo (name_HD h) (bndr_H h T m1) G -> mode_IsSubtype m1 m2 -> ctx_OnlyUr (CtxM.remove (name_HD h) G) -> ctx_Compatible G (bndr_H h T m2).
-
-(* Actually a function; not really a theorem *)
-Theorem ctx_add (b' : bndr) (G : CtxM.t bndr) : CtxM.t bndr.
-Proof.
-  destruct (CtxM.find (bndr_name b') G) eqn:eq_find.
-  * (* Some b *)
-    assert (CtxM.MapsTo (bndr_name b') b G). apply CtxM.find_2. exact eq_find.
-    apply ctx_Coherent in H. destruct b as [x m1 T1 | h m11 T1 m12 | h T1 m1], b' as [x' m2 T2 | h' m21 T2 m22 | h' T2 m2].
-    all: unfold bndr_name in H, eq_find.
-    - assert (x = x') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2).
-      (* T1 = T2 *) exact (CtxM.add (name_X x) (bndr_V x (mode_plus m1 m2) T1) G).
-      (* T1 != T2 *) all: exact (CtxM.add (name_X x) (bndr_V x None type_U) G).
-    - congruence.
-    - congruence.
-    - congruence.
-    - assert (h = h') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2), (mode_eq_dec m12 m22).
-      (* T1 = T2, m12 = m22 *) exact (CtxM.add (name_HD h) (bndr_D h (mode_plus m11 m21) T1 m12) G).
-      (* T1 != T2 \/ m12 != m22 *) all: exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-    - (* bndr_D vs bndr_H *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-    - congruence.
-    - (* bndr_H vs bndr_D *) exact (CtxM.add (name_HD h) (bndr_D h None type_U None) G).
-    - assert (h = h') as name_eq by (injection H ; tauto). rewrite (eq_sym name_eq) in eq_find. destruct (type_eq_dec T1 T2).
-      (* T1 = T2 *) exact (CtxM.add (name_HD h) (bndr_H h T1 (mode_plus m1 m2)) G).
-      (* T1 != T2 *) all: exact (CtxM.add (name_HD h) (bndr_H h type_U None) G).
-  * (* None *)
-    exact (CtxM.add (bndr_name b') b' G).
-Defined.
-
-Definition ctx_from_list (bs : list bndr) : CtxM.t bndr :=
-  List.fold_right (fun b G => ctx_add b G) (CtxM.empty bndr) bs.
-
-Definition ctx_union (G1 G2 : CtxM.t bndr) : CtxM.t bndr :=
-  (* G1 is acc, G2 is iterated over *)
-  CtxM.fold (fun n b G => ctx_add b G) G2 G1.
-
-Definition ctx_stimes (m1 : mode) (G : CtxM.t bndr) : CtxM.t bndr :=
-  CtxM.map (fun b =>
-    match b with
-    | bndr_V x m2 T2 => bndr_V x (mode_times m1 m2) T2
-    | bndr_D h m2 T2 m3 => bndr_D h (mode_times m1 m2) T2 m3
-    | bndr_H h T2 m2 => bndr_H h T2 (mode_times m1 m2)
-    end
-  ) G.
-
-Definition ctx_minus (G : CtxM.t bndr) : CtxM.t bndr :=
-  CtxM.map (fun b =>
-    match b with
-    | bndr_V x m2 T2 => bndr_V x None type_U (* error *)
-    | bndr_D h m2 T2 m3 => bndr_H h T2 m3
-    | bndr_H h T2 m2 => bndr_H h type_U None (* error *)
-    end
-  ) G.
+Definition ctx_DestOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_Disjoint (G1 G2 : ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_Compatible (G: ctx) (b: bndr) : Prop. Admitted. (* TODO complete *)
+Definition ctx_union (G1 G2 : ctx) : ctx. Admitted. (* TODO complete *)
+Definition ctx_stimes (m1 : mode) (G : ctx) : ctx. Admitted. (* TODO complete *)
+Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
 
 (*****************************************************************************)
 }}
@@ -604,14 +430,14 @@ grammar
 terminals :: 'terminals_' ::=
 
 % === Term syntax ===
-  | ⟼                                     ::   :: Mapsto       {{ tex \mapsto }}
+  | ⬜ :: :: idectx {{ tex \square }}
+  | ⟼ :: :: mapsto {{ tex \mapsto }}
   | () :: :: unit {{ tex \ottsctor{()} }}
   | Inl :: :: inl {{ tex \ottsctor{Inl} }}
   | Inr :: :: inr {{ tex \ottsctor{Inr} }}
   | (,) :: :: prod {{ tex \ottsctor{({,})} }}
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
-  | ·· :: :: semiringT {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.2ex}\cdot\hspace{-0.1ex} } }}
   | ⩲ :: :: rename {{ tex \pluseq }}
 
 % === Contexts ===
@@ -627,25 +453,18 @@ terminals :: 'terminals_' ::=
 
 pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules }}
   | ctx_DestOnly G :: :: ctx_DestOnly {{ tex \texttt{ctx\_DestOnly}~[[G]] }}
-  | ctx_HoleOnly G :: :: ctx_HoleOnly {{ tex \texttt{ctx\_HoleOnly}~[[G]] }}
-  | ctx_VarOnly G :: :: ctx_VarOnly {{ tex \texttt{ctx\_VarOnly}~[[G]] }}
-  | ctx_NoDest G :: :: ctx_NoDest {{ tex \texttt{ctx\_NoDest}~[[G]] }}
-  | ctx_NoHole G :: :: ctx_NoHole {{ tex \texttt{ctx\_NoHole}~[[G]] }}
-  | ctx_NoVar G :: :: ctx_NoVar {{ tex \texttt{ctx\_NoVar}~[[G]] }}
+  | ctx_LinOnly G :: :: ctx_LinOnly {{ tex \texttt{ctx\_LinOnly}~[[G]] }}
   | ctx_IsValid G :: :: ctx_IsValid {{ tex \texttt{ctx\_Valid}~[[G]] }}
-  | ctx_SubsetEq G1 G2 :: :: ctx_SubsetEq {{ tex \texttt{ctx\_SubsetEq}~[[G1]]~[[G2]] }}
-  | ctx_HdnmNotMem h G :: :: ctx_HdnmNotMem {{ tex \texttt{ctx\_NotMem}~[[h]]~[[G]] }}
   | ctx_Compatible G b :: :: ctx_Compatible {{ tex \texttt{ctx\_Compatible}~[[G]]~[[b]] }}
-  | ctx_OnlyLin G :: :: ctx_OnlyLin {{ tex \texttt{ctx\_OnlyLin}~[[G]] }}
-  | ctx_OnlyUr G :: :: ctx_OnlyUr {{ tex \texttt{ctx\_OnlyUr}~[[G]] }}
   | ctx_Disjoint G1 G2 :: :: ctx_Disjoint {{ tex \texttt{ctx\_Disjoint}~[[G1]]~[[G2]] }}
   | mode_IsValid m :: :: mode_IsValid {{ tex \texttt{mode\_Valid}~[[m]] }}
   | mode_IsLin m :: :: mode_IsLin {{ tex \texttt{mode\_Lin}~[[m]] }}
   | mode_IsUr m :: :: mode_IsUr {{ tex \texttt{mode\_Ur}~[[m]] }}
+  | term_NotVal t :: :: term_NotVal {{ tex \texttt{NotVal}~[[t]] }}
 
   | G ⫦ v : T :: :: TyR_val
   | P ⊢ t : T :: :: Ty_term
-  | D ⊣ C : T1 ↣ T2 :: :: Ty_ectx {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }}
+  | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }}
   | ⊢ C [ t ] : T :: :: Ty_eterm
   | C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm
 

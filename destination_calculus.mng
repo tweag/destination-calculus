@@ -2,7 +2,7 @@
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[a4paper,left=0.75cm,right=0.75cm,top=1.4cm,bottom=1.4cm]{geometry}
+\usepackage[a4paper,left=0.75cm,right=0.75cm,top=1cm,bottom=1.70cm]{geometry}
 \usepackage{lmodern}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{graphicx}
@@ -51,7 +51,8 @@
 %\otteterm\ottafterlastrule
 }
 \ottgrammartabular{
-\ottectx\ottafterlastrule
+\ottectx\ottinterrule
+\ottectxs\ottafterlastrule
 }
 
 \section{Type system}
@@ -61,7 +62,9 @@
 \ottmode\ottinterrule
 \ottmul\ottinterrule
 \ottage\ottinterrule
-\ottbndr\ottinterrule
+\ottbndrXXvar\ottinterrule
+\ottbndrXXdest\ottinterrule
+\ottbndrXXhole\ottinterrule
 \ottctx\ottafterlastrule
 }
 
@@ -69,7 +72,7 @@
 
 \ottdefnTyRXXval{}
 \ottdefnTyXXterm{}
-\ottdefnTyXXectx{}
+\ottdefnTyXXectxs{}
 \ottdefnTyXXeterm{}
 
 \clearpage
