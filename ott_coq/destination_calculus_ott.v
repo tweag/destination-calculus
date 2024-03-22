@@ -18,7 +18,8 @@ Require Import Coq.FSets.FSetFacts.
 
 Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
 Module HdnsM := FSetList.Make(Nat_as_OTOrig).
-Module NmapM := FMapList.Make(Nat_as_OTOrig).
+
+Parameter _ctx: Type.
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -42,24 +43,15 @@ Defined.
 Definition var : Type := nat. (*r Term-level variable name *)
 Definition k : Type := nat. (*r Index for ranges *)
 
+Definition hdn : Type := nat.
+
 Definition age : Type := ext_nat.
 
 Definition mul : Type := _mul.
 
-Definition hdn : Type := nat.
-
-Definition mode : Type := option (mul * age).
-
 Definition hdns : Type := HdnsM.t.
 
-Inductive type : Type :=  (*r Type *)
- | type_U : type (*r Unit *)
- | type_S (T1:type) (T2:type) (*r Sum *)
- | type_P (T1:type) (T2:type) (*r Product *)
- | type_E (m:mode) (T:type) (*r Exponential *)
- | type_A (T1:type) (T2:type) (*r Ampar type (consuming $(T2:type)$ yields $(T1:type)$) *)
- | type_F (T1:type) (m1:mode) (T2:type) (*r Function *)
- | type_D (T:type) (m:mode) (*r Destination *).
+Definition mode : Type := option (mul * age).
 
 Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
@@ -91,15 +83,6 @@ with val : Type :=  (*r Term value *)
  | val_P (v1:val) (v2:val) (*r Product *)
  | val_A (H:hdns) (v1:val) (v2:val) (*r Ampar *).
 
-Inductive tyb_var : Type := 
- | tyb_Var (m:mode) (T:type).
-
-Inductive tyb_dest : Type := 
- | tyb_Dest (m:mode) (T:type) (n:mode).
-
-Inductive tyb_hole : Type := 
- | tyb_Hole (T:type) (n:mode).
-
 Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_AppFoc1 (u:term) (*r Application *)
  | ectx_AppFoc2 (v:val) (*r Application *)
@@ -120,27 +103,29 @@ Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_FillCFoc2 (v:val) (*r Fill destination with root of ampar *)
  | ectx_AOpenFoc (H:hdns) (v1:val) (*r Open ampar. \textcolor{red}{Only new addition to term shapes} *).
 
-Definition map_var : Type := (NmapM.t tyb_var).
-
-Definition map_dest : Type := (NmapM.t tyb_dest).
-
-Definition map_hole : Type := (NmapM.t tyb_hole).
-
-Definition bndr_hole : Type := (hdn * tyb_hole).
-
-Definition bndr_dest : Type := (hdn * tyb_dest).
-
-Definition bndr_var : Type := (var * tyb_var).
+Inductive type : Type :=  (*r Type *)
+ | type_U : type (*r Unit *)
+ | type_S (T1:type) (T2:type) (*r Sum *)
+ | type_P (T1:type) (T2:type) (*r Product *)
+ | type_E (m:mode) (T:type) (*r Exponential *)
+ | type_A (T1:type) (T2:type) (*r Ampar type (consuming $(T2:type)$ yields $(T1:type)$) *)
+ | type_F (T1:type) (m1:mode) (T2:type) (*r Function *)
+ | type_D (T:type) (m:mode) (*r Destination *).
 
 Definition ectxs : Type := (list ectx).
 
-Inductive ctx : Type :=  (*r Typing context *)
- | ctx_Maps (mvar:map_var) (mdest:map_dest) (mhole:map_hole) (*r Actual representation of contexts for Coq proofs (cannot hide) *).
+Definition ctx : Type := _ctx.
 
-Inductive bndr : Type := 
- | bndr_Var (bndr_var5:bndr_var)
- | bndr_Dest (bndr_dest5:bndr_dest)
- | bndr_Hole (bndr_hole5:bndr_hole).
+Inductive tyb_var : Type := 
+ | tyb_Var (m:mode) (T:type).
+
+Inductive tyb_dh : Type := 
+ | tyb_Dest (m:mode) (T:type) (n:mode)
+ | tyb_Hole (T:type) (n:mode).
+
+Inductive name : Type := 
+ | name_Var (x:var)
+ | name_DH (h:hdn).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
 Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
@@ -312,13 +297,6 @@ Qed.
  *****************************************************************************)
 
 (******************************************************************************
- * NMAPS
- *****************************************************************************)
-
-Definition nmap_from_pair {A: Type} (p: nat * A) : NmapM.t A :=
-  NmapM.add (fst p) (snd p) (NmapM.empty A).
-
-(******************************************************************************
  * CONTEXTS
  *****************************************************************************)
 
@@ -330,10 +308,19 @@ Definition ctx_DestOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop. Admitted. (* TODO complete *)
-Definition ctx_Compatible (G: ctx) (b: bndr) : Prop. Admitted. (* TODO complete *)
+Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop. Admitted. (* TODO complete *)
+Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop. Admitted. (* TODO complete *)
 Definition ctx_union (G1 G2 : ctx) : ctx. Admitted. (* TODO complete *)
 Definition ctx_stimes (m1 : mode) (G : ctx) : ctx. Admitted. (* TODO complete *)
 Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
+Definition NameTypeB (v : name) : Type :=
+  match v with
+  | name_Var x => tyb_var
+  | name_DH h => tyb_dh
+  end.
+
+Definition ctx_singleton (v : name) (tyb: NameTypeB v): ctx. Admitted.
+Definition ctx_empty : ctx. Admitted.
 
 (*****************************************************************************)
 
@@ -342,7 +329,7 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _ctx_DestOnly (G:ctx)
  | _ctx_LinOnly (G:ctx)
  | _ctx_IsValid (G:ctx)
- | _ctx_Compatible (G:ctx) (b:bndr)
+ | _ctx_Compatible (G:ctx)
  | _ctx_Disjoint (G1:ctx) (G2:ctx)
  | _mode_IsValid (m:mode)
  | _mode_IsLin (m:mode)
@@ -358,14 +345,14 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
 (* defns Ty *)
 Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
  | TyR_val_H : forall (h:hdn) (T:type),
-     TyR_val  (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (nmap_from_pair   (pair  h  (tyb_Hole  T    (Some (pair   Lin     (Fin 0)  ))  ))  ))  (val_H h) T
+     TyR_val  (ctx_singleton (name_DH  h ) (tyb_Hole  T    (Some (pair   Lin     (Fin 0)  ))  ))  (val_H h) T
  | TyR_val_D : forall (G:ctx) (h:hdn) (T:type) (n:mode)
-     (CompatGh: ctx_Compatible G (bndr_Dest  (pair  h  (tyb_Dest   (Some (pair   Lin     (Fin 0)  ))    T   n )) ) ),
+     (CompatGh: ctx_CompatibleDH G h (tyb_Dest  (Some (pair   Lin     (Fin 0)  ))  T n) ),
      TyR_val G (val_D h) (type_D T n)
  | TyR_val_U : 
-     TyR_val  (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  val_U type_U
+     TyR_val  ctx_empty  val_U type_U
  | TyR_val_F : forall (D:ctx) (x:var) (m:mode) (t:term) (T1 T2:type)
-     (Tyt: Ty_term  (ctx_union  D    (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  t T2),
+     (Tyt: Ty_term  (ctx_union  D    (ctx_singleton (name_Var  x ) (tyb_Var  m   T1 ))  )  t T2),
      ctx_DestOnly D  ->
      TyR_val D (val_F x m t) (type_F T1 m T2)
  | TyR_val_L : forall (G:ctx) (v:val) (T1 T2:type)
@@ -399,7 +386,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      TyR_val D v T ->
      Ty_term D (term_Val v) T
  | Ty_term_Var : forall (P:ctx) (x:var) (T:type)
-     (CompatPx: ctx_Compatible P (bndr_Var  (pair  x  (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T )) ) ),
+     (CompatPx: ctx_CompatibleVar P x (tyb_Var  (Some (pair   Lin     (Fin 0)  ))  T) ),
      Ty_term P (term_Var x) T
  | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t u:term) (T2 T1:type)
      (Tyt: Ty_term P1 t T1)
@@ -410,28 +397,28 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyu: Ty_term P2 u U),
      Ty_term  (ctx_union  P1   P2 )  (term_PatU t u) U
  | Ty_term_PatS : forall (m:mode) (P1 P2:ctx) (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (U T1 T2:type)
-     (DisjointP2x1: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
-     (DisjointP2x2: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (DisjointP2x1: ctx_Disjoint P2  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )
+     (DisjointP2x2: ctx_Disjoint P2  (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Tyt: Ty_term P1 t (type_S T1 T2))
-     (Tyu1: Ty_term  (ctx_union  P2    (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u1 U)
-     (Tyu2: Ty_term  (ctx_union  P2    (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u2 U),
+     (Tyu1: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )  u1 U)
+     (Tyu2: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u2 U),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_PatS t m x1 u1 x2 u2) U
  | Ty_term_PatP : forall (m:mode) (P1 P2:ctx) (t:term) (x1 x2:var) (u:term) (U T1 T2:type)
-     (DisjointP2x1: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
-     (DisjointP2x2: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
-     (Disjointx1x2: ctx_Disjoint  (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))   (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (DisjointP2x1: ctx_Disjoint P2  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )
+     (DisjointP2x2: ctx_Disjoint P2  (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
+     (Disjointx1x2: ctx_Disjoint  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))   (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Tyt: Ty_term P1 t (type_P T1 T2))
-     (Tyu: Ty_term  (ctx_union   (ctx_union  P2    (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )     (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union   (ctx_union  P2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )     (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u U),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_PatP t m x1 x2 u) U
  | Ty_term_PatE : forall (m:mode) (P1 P2:ctx) (t:term) (n:mode) (x:var) (u:term) (U T:type)
-     (DisjointP2x: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (DisjointP2x: ctx_Disjoint P2  (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  )
      (Tyt: Ty_term P1 t (type_E n T))
-     (Tyu: Ty_term  (ctx_union  P2    (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  )  u U),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_PatE t m n x u) U
  | Ty_term_Map : forall (P1 P2:ctx) (t:term) (x:var) (u:term) (T1 U T2:type)
-     (DisjointP2x: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (DisjointP2x: ctx_Disjoint P2  (ctx_singleton (name_Var  x ) (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  )
      (Tyt: Ty_term P1 t (type_A T1 T2))
-     (Tyu: Ty_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    P2 )     (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    P2 )     (ctx_singleton (name_Var  x ) (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  )  u U),
      Ty_term  (ctx_union  P1   P2 )  (term_Map t x u) (type_A T1 U)
  | Ty_term_ToA : forall (P:ctx) (t:term) (T:type)
      (Tyt: Ty_term P t T),
@@ -440,7 +427,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P t (type_A T type_U)),
      Ty_term P (term_FromA t) T
  | Ty_term_Alloc : forall (T:type),
-     Ty_term  (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  term_Alloc (type_A T (type_D T  (Some (pair   Lin     (Fin 0)  )) ))
+     Ty_term  ctx_empty  term_Alloc (type_A T (type_D T  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
      (Tyt: Ty_term P t (type_D type_U n)),
      Ty_term P (term_FillU t) type_U
@@ -457,9 +444,9 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P t (type_D (type_E n' T) n)),
      Ty_term P (term_FillE t n') (type_D T  (mode_times'  ((app (cons n' nil) (app (cons n nil) nil))) ) )
  | Ty_term_FillF : forall (P1:ctx) (n:mode) (P2:ctx) (t:term) (x:var) (m:mode) (u:term) (T1 T2:type)
-     (DisjointP2x: ctx_Disjoint P2  (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (DisjointP2x: ctx_Disjoint P2  (ctx_singleton (name_Var  x ) (tyb_Var  m   T1 ))  )
      (Tyt: Ty_term P1 t (type_D (type_F T1 m T2) n))
-     (Tyu: Ty_term  (ctx_union  P2    (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u T2),
+     (Tyu: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x ) (tyb_Var  m   T1 ))  )  u T2),
      Ty_term  (ctx_union  P1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillF t x m u) type_U
  | Ty_term_FillC : forall (P1:ctx) (n:mode) (P2:ctx) (t u:term) (T2 T1:type)
      (Tyt: Ty_term P1 t (type_D T1 n))
@@ -467,7 +454,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      Ty_term  (ctx_union  P1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillC t u) T2
 with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
  | Ty_ectxs_Id : forall (U0:type),
-     Ty_ectxs  (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))   nil  U0 U0
+     Ty_ectxs  ctx_empty   nil  U0 U0
  | Ty_ectxs_AppFoc1 : forall (D1:ctx) (C:ectxs) (u:term) (T1 U0:type) (D2:ctx) (m:mode) (T2:type)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
@@ -500,18 +487,18 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (Validm: mode_IsValid m )
      (ValidD2: ctx_IsValid D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
-     (Tyu1: Ty_term  (ctx_union  D2    (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u1 U)
-     (Tyu2: Ty_term  (ctx_union  D2    (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u2 U),
+     (Tyu1: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )  u1 U)
+     (Tyu2: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u2 U),
      Ty_ectxs D1  (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   (type_S T1 T2)  U0
  | Ty_ectxs_PatPFoc : forall (D1:ctx) (C:ectxs) (m:mode) (x1 x2:var) (u:term) (T1 T2 U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (Disjointx1x2: ctx_Disjoint  (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))   (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )
+     (Disjointx1x2: ctx_Disjoint  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))   (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Validm: mode_IsValid m )
      (ValidD2: ctx_IsValid D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
-     (Tyu: Ty_term  (ctx_union   (ctx_union  D2    (ctx_Maps (nmap_from_pair   (pair  x1  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )     (ctx_Maps (nmap_from_pair   (pair  x2  (tyb_Var  m   T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union   (ctx_union  D2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )     (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_PatPFoc m x1 x2 u)    C )   (type_P T1 T2)  U0
  | Ty_ectxs_PatEFoc : forall (D1:ctx) (C:ectxs) (m m':mode) (x:var) (u:term) (T U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
@@ -520,7 +507,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (Validm: mode_IsValid m )
      (ValidD2: ctx_IsValid D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
-     (Tyu: Ty_term  (ctx_union  D2    (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons m' nil) nil))) )    T ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons m' nil) nil))) )    T ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_PatEFoc m m' x u)    C )  (type_E m' T) U0
  | Ty_ectxs_MapFoc : forall (D1:ctx) (C:ectxs) (x:var) (u:term) (T1 T2 U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
@@ -528,7 +515,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (ValidD2: ctx_IsValid D2 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C U U0)
-     (Tyu: Ty_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )     (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u U),
+     (Tyu: Ty_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )     (ctx_singleton (name_Var  x ) (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_MapFoc x u)    C )   (type_A T1 T2)  U0
  | Ty_ectxs_ToAFoc : forall (D:ctx) (C:ectxs) (T U0:type)
      (TyC: Ty_ectxs D C  (type_A T type_U)  U0),
@@ -557,7 +544,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (ValidsnD2: ctx_IsValid  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_U U0)
-     (Tyu: Ty_term  (ctx_union  D2    (ctx_Maps (nmap_from_pair   (pair  x  (tyb_Var  m   T1 ))  ) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole))  )  u T2),
+     (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var  m   T1 ))  )  u T2),
      Ty_ectxs D1  (cons   (ectx_FillFFoc x m u)    C )  (type_D (type_F T1 m T2) n) U0
  | Ty_ectxs_FillCFoc1 : forall (D1:ctx) (C:ectxs) (u:term) (T1:type) (n:mode) (U0:type) (D2:ctx) (T2:type)
      (DisjointD1D2: ctx_Disjoint D1 D2 )

@@ -6,9 +6,9 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 
 % We must track linearity precisely, but age for received value is arbitrary
 --------------------- :: H
-{ - h : T ¹ν } ⫦ -h : T
+{ -h : T ¹ν } ⫦ -h : T
 
-{{ ctx_Compatible [[G]] [[₊+h : ¹ν ⌊T⌋n]] }} [[:CompatGh]]
+{{ ctx_CompatibleDH [[G]] [[h]] [[₊ ¹ν ⌊T⌋n]] }} [[:CompatGh]]
 ---------------- :: D
 G ⫦ +h : ⌊T⌋n
 
@@ -76,7 +76,7 @@ D ⫦ v : T
 -------------------- :: Val
 D ⊢ v : T
 
-{{ ctx_Compatible [[P]] [[ᵥx : ¹ν T]] }} [[:CompatPx]]
+{{ ctx_CompatibleVar [[P]] [[x]] [[ₓ ¹ν T]] }} [[:CompatPx]]
 -------------------- :: Var
 P ⊢ x : T
 

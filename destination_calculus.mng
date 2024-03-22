@@ -62,9 +62,6 @@
 \ottmode\ottinterrule
 \ottmul\ottinterrule
 \ottage\ottinterrule
-\ottbndrXXvar\ottinterrule
-\ottbndrXXdest\ottinterrule
-\ottbndrXXhole\ottinterrule
 \ottctx\ottafterlastrule
 }
 

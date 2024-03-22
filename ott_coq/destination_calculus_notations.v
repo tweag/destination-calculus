@@ -6,10 +6,10 @@ Require Import Ott.ext_nat.
 (* Var, holes and dests names : 15-19 *)
 Notation "'ʰmax(' H ')'" := (hdns_max_hnames H) (at level 0, no associativity).
 
-(* Hole names sets : 20-24 *)
+(* Hole names sets : 21-24 *)
 Notation "'ᴴ{' b , .. , c '}'" := (hdns_from_list (cons b .. (cons c nil) ..)) (at level 0, no associativity).
 Notation "H1 '∪' H2" := (HdnsM.union H1 H2) (at level 24, left associativity, H2 at next level).
-Notation "H 'ᴴ⩲' h" := (hdns_incr_hnames H h) (at level 20, h at level 19, no associativity).
+Notation "H 'ᴴ⩲' h" := (hdns_incr_hnames H h) (at level 21, h at level 19, no associativity).
 Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity).
 Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C) (at level 0, no associativity).
 
@@ -95,18 +95,17 @@ Infix "·" := mode_times (at level 25, right associativity).
 
 (* Bindings and contexts : 60 - 64 *)
 
-Notation "'ᵀᵛ' m '‗' T" := (tyb_Var m T) (at level 60, m at level 29, T at level 59, no associativity).
-Notation "'ᵀ⁺' m '⌊' T '⌋' n" := (tyb_Dest m T n) (at level 60, m at level 29, T at level 59, n at level 29, no associativity).
-Notation "'ᵀ⁻' T '‗' n" := (tyb_Hole T n) (at level 60, T at level 59, n at level 29, no associativity).
+Notation "'ˣ' x" := (name_Var x) (at level 20, x at level 19, no associativity).
+Notation "'ʰ' h" := (name_DH h) (at level 20, h at level 19, no associativity).
 
-Notation "'ᵛ' x ':' m '‗' T" := (pair x (tyb_Var m T)) (at level 60, x at level 19, m at level 29, T at level 59, no associativity).
-Notation "'⁺' h ':' m ⌊ T ⌋ n" := (pair h (tyb_Dest m T n)) (at level 60, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
-Notation "'⁻' h ':' T '‗' n" := (pair h (tyb_Hole T n)) (at level 60, h at level 19, n at level 29, T at level 59, no associativity).
+Notation "'ₓ' m '‗' T" := (tyb_Var m T) (at level 60, m at level 29, T at level 59, no associativity).
+Notation "'₊' m '⌊' T '⌋' n" := (tyb_Dest m T n) (at level 60, m at level 29, T at level 59, n at level 29, no associativity).
+Notation "'₋' T '‗' n" := (tyb_Hole T n) (at level 60, T at level 59, n at level 29, no associativity).
 
-Notation "'ᴳ{}'" := (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)).
-Notation "'ᴳᵛ{' bv '}'" := (ctx_Maps (nmap_from_pair bv) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)) (at level 0, bv at level 64, no associativity).
-Notation "'ᴳ⁺{' bd '}'" := (ctx_Maps (NmapM.empty tyb_var) (nmap_from_pair bd) (NmapM.empty tyb_hole)) (at level 0, bd at level 64, no associativity).
-Notation "'ᴳ⁻{' bh '}'" := (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (nmap_from_pair bh)) (at level 0, bh at level 64, no associativity).
+Notation "'ᴳ{}'" := (ctx_empty).
+Notation "'ᴳ{ₓ' x ':' m '‗' T '}'" := (ctx_singleton (name_Var x) (tyb_Var m T)) (at level 0, x at level 19, m at level 29, T at level 59, no associativity).
+Notation "'ᴳ{₊' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (tyb_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
+Notation "'ᴳ{₋'  h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (tyb_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
 Notation "m 'ᴳ·' G" := (ctx_stimes m G) (at level 62, G at level 62, right associativity).
 Notation "G '⨄' H" := (ctx_union G H) (at level 63, left associativity, H at next level).
 Notation "ᴳ- G" := (ctx_minus G) (at level 61, no associativity, G at next level).

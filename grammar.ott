@@ -12,7 +12,8 @@ Require Import Coq.FSets.FSetFacts.
 
 Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
 Module HdnsM := FSetList.Make(Nat_as_OTOrig).
-Module NmapM := FMapList.Make(Nat_as_OTOrig).
+
+Parameter _ctx: Type.
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -175,41 +176,23 @@ age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (second component o
 % Hidden in final document, just for Coq generation
 
 tyb_var :: 'tyb_' ::=
-  | m T :: :: Var {{ tex \,\!_{[[m]]}[[T]] }}
-tyb_dest :: 'tyb_' ::=
-  | m ⌊ T ⌋ n :: :: Dest {{ tex \,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
-tyb_hole :: 'tyb_' ::=
-  | T n :: :: Hole {{ tex [[T]]^{[[n]]} }}
+  | ₓ m T :: :: Var {{ tex \,\!_{[[m]]}[[T]] }}
+tyb_dh :: 'tyb_' ::=
+  | ₊ m ⌊ T ⌋ n :: :: Dest {{ tex \,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
+  | ₋ T n :: :: Hole {{ tex [[T]]^{[[n]]} }}
 
-% For ctx_Compatible
-bndr, b :: 'bndr_' ::=
-  | ᵥ bndr_var :: :: Var {{ tex [[bndr_var]] }}
-  | ₊ bndr_dest :: :: Dest {{ tex [[bndr_dest]] }}
-  | ₋ bndr_hole :: :: Hole {{ tex [[bndr_hole]] }}
-
-% Cheat for OTT ordering issue
-map_var, mvar :: 'map_var_' ::= {{ coq (NmapM.t tyb_var) }}
-  | _create_dep tyb_var :: :: CreateDep {{ coq (NmapM.empty) }}
-map_dest, mdest :: 'map_dest_' ::= {{ coq (NmapM.t tyb_dest) }}
-  | _create_dep tyb_dest :: :: CreateDep {{ coq (NmapM.empty) }}
-map_hole, mhole :: ''map_hole_'' ::= {{ coq (NmapM.t tyb_hole) }}
-  | _create_dep tyb_hole :: :: CreateDep {{ coq (NmapM.empty) }}
+name :: 'name_' ::=
+  | ˣ x :: :: Var {{ tex [[x]] }}
+  | ʰ h :: :: DH {{ tex [[h]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-bndr_var :: 'bndr_var_' ::= {{ coq (var * tyb_var) }}
-  | x : m T :: :: V {{ com Variable binding }} {{ tex [[x]]:_{[[m]]}[[T]] }} {{ coq (pair [[x]] (tyb_Var [[m]] [[T]])) }}
-bndr_dest :: 'bndr_dest_' ::= {{ coq (hdn * tyb_dest) }}
-  | + h : m ⌊ T ⌋ n :: :: D {{ com Dest binding ($[[m]]$ is its own modality; $[[n]]$ is the modality for values it accepts) }} {{ tex \ottshdn{+}[[h]]:_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }} {{ coq (pair [[h]] (tyb_Dest [[m]] [[T]] [[n]])) }}
-bndr_hole :: 'bndr_hole_' ::= {{ coq (hdn * tyb_hole) }}
-  | - h : T n :: :: H {{ com Hole binding ($[[n]]$ is the modality for values it accepts, it doesn't have a modality on its own) }} {{ tex \ottshdn{-}[[h]]:[[T]]^{[[n]]} }} {{ coq (pair [[h]] (tyb_Hole [[T]] [[n]])) }}
-
-ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }}
-  | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
-  | { } :: S :: E {{ coq (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)) }}
-  | { bndr_var } :: S :: V {{ coq (ctx_Maps (nmap_from_pair [[bndr_var]]) (NmapM.empty tyb_dest) (NmapM.empty tyb_hole)) }}
-  | { bndr_dest } :: S :: D {{ coq (ctx_Maps (NmapM.empty tyb_var) (nmap_from_pair [[bndr_dest]]) (NmapM.empty tyb_hole)) }}
-  | { bndr_hole } :: S :: H {{ coq (ctx_Maps (NmapM.empty tyb_var) (NmapM.empty tyb_dest) (nmap_from_pair [[bndr_hole]])) }}
+ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }} {{ coq _ctx }}
+  % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
+  | { } :: S :: E {{ coq ctx_empty }}
+  | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (tyb_Var [[m]] [[T]])) }} {{ tex \{[[x]]:\,\!_{[[m]]}[[T]]\} }}
+  | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (tyb_Dest [[m]] [[T]] [[n]])) }} {{ tex \{\ottshdn{+}[[h]]:\,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]}\} }}
+  | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (tyb_Hole [[T]] [[n]])) }} {{ tex \{\ottshdn{-}[[h]]:[[T]]^{[[n]]}\} }}
   | m · G :: M :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
   | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
   | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
@@ -383,13 +366,6 @@ Qed.
  *****************************************************************************)
 
 (******************************************************************************
- * NMAPS
- *****************************************************************************)
-
-Definition nmap_from_pair {A: Type} (p: nat * A) : NmapM.t A :=
-  NmapM.add (fst p) (snd p) (NmapM.empty A).
-
-(******************************************************************************
  * CONTEXTS
  *****************************************************************************)
 
@@ -401,10 +377,19 @@ Definition ctx_DestOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop. Admitted. (* TODO complete *)
-Definition ctx_Compatible (G: ctx) (b: bndr) : Prop. Admitted. (* TODO complete *)
+Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop. Admitted. (* TODO complete *)
+Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop. Admitted. (* TODO complete *)
 Definition ctx_union (G1 G2 : ctx) : ctx. Admitted. (* TODO complete *)
 Definition ctx_stimes (m1 : mode) (G : ctx) : ctx. Admitted. (* TODO complete *)
 Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
+Definition NameTypeB (v : name) : Type :=
+  match v with
+  | name_Var x => tyb_var
+  | name_DH h => tyb_dh
+  end.
+
+Definition ctx_singleton (v : name) (tyb: NameTypeB v): ctx. Admitted.
+Definition ctx_empty : ctx. Admitted.
 
 (*****************************************************************************)
 }}

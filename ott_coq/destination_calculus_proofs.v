@@ -6,6 +6,8 @@ Require Import Ott.ext_nat.
 Require Import Coq.Program.Equality.
 From Hammer Require Import Tactics.
 
+(* Todo : add equivalences *)
+
 Lemma ValidUnionBackward : forall (G1 G2 : ctx), ctx_IsValid (G1 ⨄ G2) -> ctx_IsValid G1 /\ ctx_IsValid G2. Proof. Admitted.
 Lemma ValidUnionForward : forall (G1 G2 : ctx), ctx_IsValid G1 -> ctx_IsValid G2 -> ctx_Disjoint G1 G2 -> ctx_IsValid (G1 ⨄ G2). Proof. Admitted.
 Lemma ValidStimesBackward : forall (m : mode) (G : ctx), ctx_IsValid (m ᴳ· G) -> ctx_IsValid G /\ mode_IsValid m. Proof. Admitted.
