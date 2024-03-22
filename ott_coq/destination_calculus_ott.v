@@ -605,7 +605,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_AppUnfoc1 : forall (C:ectxs) (u:term) (v:val),
      Sem_eterm   (cons   (ectx_AppFoc1 u)    C )   (term_Val v) C (term_App (term_Val v) u)
  | Sem_eterm_AppFoc2 : forall (C:ectxs) (v:val) (u:term)
-     (NotValt: term_NotVal u ),
+     (NotValu: term_NotVal u ),
      Sem_eterm C (term_App (term_Val v) u)   (cons   (ectx_AppFoc2 v)    C )   u
  | Sem_eterm_AppUnfoc2 : forall (C:ectxs) (v v':val),
      Sem_eterm   (cons   (ectx_AppFoc2 v)    C )   (term_Val v') C (term_App (term_Val v) (term_Val v'))

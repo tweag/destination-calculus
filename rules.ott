@@ -360,7 +360,7 @@ C[t ≻ u] ⟶ (C ∘ (⬜ ≻ u))[t]
 ----------------------------- :: AppUnfoc1
 (C ∘ (⬜ ≻ u))[v] ⟶ C[v ≻ u]
 
-{{ term_NotVal [[u]] }} [[:NotValt]]
+{{ term_NotVal [[u]] }} [[:NotValu]]
 ----------------------------- :: AppFoc2
 C[v ≻ u] ⟶ (C ∘ (v ≻ ⬜))[u]
 
