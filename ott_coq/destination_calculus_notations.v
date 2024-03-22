@@ -14,6 +14,8 @@ Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity
 Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C) (at level 0, no associativity).
 
 (* Terms : 40-59 *)
+Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).
+Notation "'ₓ₎' x" := (term_Var x) (at level 40, no associativity).
 Notation "t ≻ u" := (term_App t u) (at level 42, left associativity, u at next level).
 Notation "t 'ᵗ;' u" := (term_PatU t u) (at level 45, left associativity, u at next level).
 Notation "t '≻caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (term_PatS t m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, right associativity).
