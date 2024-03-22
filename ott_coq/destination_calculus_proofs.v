@@ -93,8 +93,8 @@ Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[
 Proof.
     intros C C' t t' T (Tyj & Redj). destruct Tyj. destruct Redj.
     - (* Sem-eterm-AppFoc1 *)
-      inversion Tyt.
-      rewrite <- H in DestOnlyD, ValidD, TyC, Tyt. clear H. clear H0. clear H1. clear H2. clear D. clear T2. clear t0. clear u0. rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
+      inversion Tyt; subst.
+      rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (ctx_DestOnly (m ᴳ· D1) /\ ctx_DestOnly D2)
         as (DestOnlymD1 & DestOnlyD2)
         by apply (DestOnlyUnionBackward (m ᴳ· D1) D2 DestOnlyD).
@@ -118,7 +118,8 @@ Proof.
         by apply (Ty_ectxs_AppFoc1 D1 C u T1 U0 D2 m T2 DisjointD1D2 DestOnlyD1 DestOnlyD2 (IsLinIsValid m IsLinm) (LinOnlyIsValid D2 LinOnlyD2) TyC Tyu).
       exact (Ty_eterm_ClosedEterm (C ∘ ⬜≻ u) t U0 D1 T1 (LinOnlyIsValid D1 LinOnlyD1) DestOnlyD1 TyCc Tyt).
     - (* Sem-eterm-AppUnfoc1 *)
-      inversion Tyt. rename H2 into TyRv, TyC into TyCc, D into D1, ValidD into ValidD1, DestOnlyD into DestOnlyD1. inversion TyCc. clear H. clear H0. clear H1. clear H2. clear H3. clear H4. clear H5. clear H6. clear H7. clear D2. clear D0. clear v0. clear T0. clear C0. clear u0. clear T1. clear U1. clear DestOnlyD0. rename D3 into D2, T into T1.
+      inversion Tyt; subst. rename H2 into TyRv, TyC into TyCc, D into D1, ValidD into ValidD1, DestOnlyD into DestOnlyD1. clear H0.
+      inversion TyCc; subst. clear DestOnlyD0. rename T into T1.
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ u : T2)
         as TyApp
         by apply (Ty_term_App m D1 D2 (ᵥ₎ v) u T2 T1 Tyt Tyu).
@@ -136,8 +137,8 @@ Proof.
         by apply (DestOnlyUnionForward (m ᴳ· D1) D2 DestOnlymD DestOnlyD2).
       exact (Ty_eterm_ClosedEterm C (ᵥ₎ v ≻ u) U0 (m ᴳ· D1 ⨄ D2) T2 ValidmD1D2 DestOnlymD1D2 TyC TyApp).
     - (* Sem-eterm-AppFoc2 *)
-      inversion Tyt.
-      rewrite <- H in DestOnlyD, ValidD, TyC, Tyt. clear H. clear H0. clear H1. clear H2. clear t. clear u0. clear T2. rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
+      inversion Tyt; subst.
+      rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (ctx_DestOnly (m ᴳ· D1) /\ ctx_DestOnly D2)
         as (DestOnlymD1 & DestOnlyD2)
         by apply (DestOnlyUnionBackward (m ᴳ· D1) D2 DestOnlyD).
@@ -161,7 +162,8 @@ Proof.
         by apply (Ty_ectxs_AppFoc2 D2 C v T1 m T2 U0 D1 DisjointD1D2 DestOnlyD1 DestOnlyD2 (LinOnlyIsValid (m ᴳ· D1) LinOnlymD1) TyC Tyt).
       exact (Ty_eterm_ClosedEterm (C ∘ v ≻⬜) u U0 D2 (T1 ⁔ m → T2) (LinOnlyIsValid D2 LinOnlyD2) DestOnlyD2 TyCc Tyu).
     - (* Sem-eterm-AppUnfoc2 *)
-      inversion Tyt. rename H2 into TyRv, TyC into TyCc, D into D2, ValidD into ValidD2, DestOnlyD into DestOnlyD2. inversion TyCc. rewrite <- H4 in Tyt, TyRv, TyCc. clear H. clear H0. clear H1. clear H2. clear H3. clear H4. clear H5. clear H6. clear H7. clear D1. clear D0. clear v0. clear T0. clear C0. clear v1. clear T. clear U1. clear DestOnlyD0. rename D3 into D1, Tyt into Tyu, Tyv into Tyt.
+      inversion Tyt; subst. rename H2 into TyRv, TyC into TyCc, D into D2, ValidD into ValidD2, DestOnlyD into DestOnlyD2. clear H0.
+      inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tyu, Tyv into Tyt.
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ ᵥ₎ v' : T2)
         as TyApp
         by apply (Ty_term_App m D1 D2 (ᵥ₎ v) (ᵥ₎ v') T2 T1 Tyt Tyu).
@@ -179,12 +181,12 @@ Proof.
         by apply (DestOnlyUnionForward (m ᴳ· D1) D2 DestOnlymD DestOnlyD2).
       exact (Ty_eterm_ClosedEterm C ((ᵥ₎ v) ≻ (ᵥ₎ v')) U0 (m ᴳ· D1 ⨄ D2) T2 ValidmD1D2 DestOnlymD1D2 TyC TyApp).
     - (* Sem-eterm-AppRed *)
-      inversion Tyt.
+      inversion Tyt; subst.
       assert (m = m0) as Eqmm0.
-        inversion Tyu. inversion H6. tauto.
-      rewrite <- Eqmm0 in Tyu, H. rename P1 into D1, P2 into D2. rewrite <- H in ValidD, DestOnlyD, Tyt, TyC. clear H. clear H0. clear H1. clear H2. clear t0. clear u. clear T2. clear D. clear Eqmm0. clear m0. rename Tyt into TyApp, Tyt0 into Tyt, T into T2, t into t'.
-      inversion Tyu. clear H. clear H0. clear H1. rename H2 into TyRv'. clear H3. clear D. clear v0. clear T.
-      inversion TyRv'. rename Tyt0 into Tyt'. clear H. clear H0. rename H1 into DestOnlyD2. clear H2. clear H3. clear H4. clear H5. clear D. clear x0. clear m0. clear t. clear T0. clear T3.
+        inversion_clear Tyu. inversion_clear H0. tauto.
+      rewrite <- Eqmm0 in Tyu, Tyt, TyC, DestOnlyD, ValidD. clear Eqmm0. clear m0. rename P1 into D1, P2 into D2. rename Tyt into TyApp, Tyt0 into Tyt, T into T2, t into t'.
+      inversion Tyu; subst. clear H0. rename H2 into TyRv'.
+      inversion TyRv'; subst. rename Tyt0 into Tyt'. rename H1 into DestOnlyD2.
       assert (m ᴳ· D1 ⨄ D2 ⊢ t' ᵗ[ x ≔ v] : T2)
         as Tytpsub
         by (apply (tSubLemma D1 D2 m T1 T2 t' x v DestOnlyD2 Tyt' Tyt)).
