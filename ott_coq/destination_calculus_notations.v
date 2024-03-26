@@ -103,9 +103,9 @@ Notation "'₊' m '⌊' T '⌋' n" := (tyb_Dest m T n) (at level 60, m at level 
 Notation "'₋' T '‗' n" := (tyb_Hole T n) (at level 60, T at level 59, n at level 29, no associativity).
 
 Notation "'ᴳ{}'" := (ctx_empty).
-Notation "'ᴳ{ₓ' x ':' m '‗' T '}'" := (ctx_singleton (name_Var x) (tyb_Var m T)) (at level 0, x at level 19, m at level 29, T at level 59, no associativity).
-Notation "'ᴳ{₊' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (tyb_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
-Notation "'ᴳ{₋'  h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (tyb_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
+Notation "'ᴳ{' x ':' m '‗' T '}'" := (ctx_singleton (name_Var x) (tyb_Var m T)) (at level 1, x at level 19, m at level 29, T at level 59, no associativity).
+Notation "'ᴳ{+' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (tyb_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
+Notation "'ᴳ{-' h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (tyb_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
 Notation "m 'ᴳ·' G" := (ctx_stimes m G) (at level 62, G at level 62, right associativity).
 Notation "G '⨄' H" := (ctx_union G H) (at level 63, left associativity, H at next level).
 Notation "ᴳ- G" := (ctx_minus G) (at level 61, no associativity, G at next level).
