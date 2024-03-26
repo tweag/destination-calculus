@@ -178,7 +178,7 @@ Definition term_sub (t: term) (x:var) (v:val) : term. Admitted. (* TODO complete
 Definition ectxs_fill (C: ectxs) (h:hdn) (v:val) : ectxs. Admitted. (* TODO complete *)
 Definition val_incr_hnames (v : val) (h : hdn) : val. Admitted. (* TODO complete *)
 
-Definition term_NotVal (t: term) : Prop. Admitted. (* put it to Type instead for shape info? *) (* TODO complete *)
+Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v. (* put it to Type instead for shape info? *) (* TODO complete *)
 
 (******************************************************************************
  * TYPE
@@ -293,6 +293,11 @@ Proof.
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
+Definition mode_IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
+Theorem mode_IsLinNu_dec : forall (m : mode), {mode_IsLinNu m} + {~mode_IsLinNu m}.
+Proof.
+  unfold mode_IsLinNu. intros m. apply mode_eq_dec.
+Qed.
 Inductive mode_IsUr : mode -> Prop :=
   mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
 Theorem mode_IsUr_dec : forall (m : mode), {mode_IsUr m} + {~mode_IsUr m}.
@@ -307,6 +312,17 @@ Qed.
 (******************************************************************************
  * BINDERS
  *****************************************************************************)
+
+Definition tyb_mode {n : name} (tyb: binding_type_of n): mode :=
+  match n return (binding_type_of n) -> mode with
+  | name_Var _ => fun tyb => match tyb with
+    | tyb_Var m _ => m
+    end
+  | name_DH _ => fun tyb => match tyb with
+    | tyb_Dest m _ _ => m
+    | tyb_Hole _ n => n
+    end
+  end tyb.
 
 (******************************************************************************
  * CONTEXTS
@@ -328,16 +344,33 @@ Definition ctx_DestOnly (G : ctx) : Prop :=
     | _ => False
     end.
 
-Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
-Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
+Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
+Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
 
 Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop. Admitted. (* TODO complete *)
 Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop. Admitted. (* TODO complete *)
 
-Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var. Admitted. (* TODO complete *)
-Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var := match b1, b2 with
+  | tyb_Var m1 T1, tyb_Var m2 T2 => match type_eq_dec T1 T2 with
+    | left _ => tyb_Var (mode_plus m1 m2) T1
+    | right _ => tyb_Var None type_U
+    end
+  end.
+
+Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh := match b1, b2 with
+  | tyb_Dest m11 T1 m12, tyb_Dest m21 T2 m22 => match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
+    | left _, left _ => tyb_Dest (mode_plus m11 m21) T1 m12
+    | _, _ => tyb_Dest None type_U None
+    end
+  | tyb_Hole T1 n1, tyb_Hole T2 n2 => match type_eq_dec T1 T2 with
+    | left _ => tyb_Hole T1 (mode_plus n1 n2)
+    | right _ => tyb_Hole type_U None
+    end
+  | _, _ => tyb_Hole type_U None
+  end.
 
 Definition ctx_union (G1 G2 : ctx) : ctx :=
   Finitely.merge_with (fun n =>
@@ -347,18 +380,33 @@ Definition ctx_union (G1 G2 : ctx) : ctx :=
     end
   ) G1 G2.
 
-Definition stimes_tyb_var (b : tyb_var) : tyb_var. Admitted. (* TODO complete *)
-Definition stimes_tyb_dh (b : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+Definition stimes_tyb_var (m' : mode) (b : tyb_var) : tyb_var := match b with
+  | tyb_Var m T => tyb_Var (mode_times m' m) T
+end.
+Definition stimes_tyb_dh (m' : mode) (b : tyb_dh) : tyb_dh := match b with
+  | tyb_Dest m T n => tyb_Dest (mode_times m' m) T n
+  | tyb_Hole T n => tyb_Hole T (mode_times m' n)
+end.
 
-Definition ctx_stimes (m1 : mode) (G : ctx) : ctx :=
+Definition ctx_stimes (m' : mode) (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => stimes_tyb_var
-    | name_DH _ => stimes_tyb_dh
+    | name_Var _ => stimes_tyb_var m'
+    | name_DH _ => stimes_tyb_dh m'
     end
   ) G.
 
-Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
+Definition ctx_minus (G : ctx) : ctx :=
+  Finitely.map (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => fun tyb => tyb_Var None type_U
+    | name_DH _ => fun tyb => match tyb with
+      | tyb_Dest (Some (Lin, (Fin 0))) T n => tyb_Hole T n
+      | tyb_Dest _ _ _ => tyb_Dest None type_U None
+      | tyb_Hole _ _ => tyb_Hole type_U None
+      end
+    end
+  ) G.
 
 Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx. Admitted.
 
@@ -370,7 +418,7 @@ Definition ctx_empty : ctx := Finitely.empty.
 Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual rules *)
  | _ctx_DestOnly (G:ctx)
  | _ctx_LinOnly (G:ctx)
- | _ctx_IsValid (G:ctx)
+ | _ctx_ValidOnly (G:ctx)
  | _ctx_Compatible (G:ctx)
  | _ctx_Disjoint (G1:ctx) (G2:ctx)
  | _mode_IsValid (m:mode)
@@ -415,7 +463,7 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (DestOnlyD3: ctx_DestOnly D3 )
      (LinOnlyD3: ctx_LinOnly D3 )
-     (ValidD3: ctx_IsValid D3 )
+     (ValidOnlyD3: ctx_ValidOnly D3 )
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DisjointD1D3: ctx_Disjoint D1 D3 )
      (DisjointD2D3: ctx_Disjoint D2 D3 )
@@ -502,7 +550,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
      (Validm: mode_IsValid m )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C T2 U0)
      (Tyu: Ty_term D2 u (type_F T1 m T2)),
      Ty_ectxs D1  (cons   (ectx_AppFoc1 u)    C )  T1 U0
@@ -510,7 +558,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidmD1: ctx_IsValid  (ctx_stimes  m   D1 )  )
+     (ValidmD1: ctx_ValidOnly  (ctx_stimes  m   D1 )  )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C T2 U0)
      (Tyv: Ty_term D1 (term_Val v) T1),
      Ty_ectxs D2  (cons   (ectx_AppFoc2 v)    C )   (type_F T1 m T2)  U0
@@ -518,7 +566,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C U U0)
      (Tyu: Ty_term D2 u U),
      Ty_ectxs D1  (cons   (ectx_PatUFoc u)    C )  type_U U0
@@ -527,7 +575,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
      (Validm: mode_IsValid m )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
      (Tyu1: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )  u1 U)
      (Tyu2: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u2 U),
@@ -538,7 +586,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (Disjointx1x2: ctx_Disjoint  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))   (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Validm: mode_IsValid m )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
      (Tyu: Ty_term  (ctx_union   (ctx_union  D2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )     (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_PatPFoc m x1 x2 u)    C )   (type_P T1 T2)  U0
@@ -547,7 +595,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
      (Validm: mode_IsValid m )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
      (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons m' nil) nil))) )    T ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_PatEFoc m m' x u)    C )  (type_E m' T) U0
@@ -555,7 +603,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidD2: ctx_IsValid D2 )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C U U0)
      (Tyu: Ty_term  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )     (ctx_singleton (name_Var  x ) (tyb_Var   (Some (pair   Lin     (Fin 0)  ))    T2 ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_MapFoc x u)    C )   (type_A T1 T2)  U0
@@ -584,7 +632,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD2: ctx_IsValid  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
+     (ValidsnD2: ctx_ValidOnly  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_U U0)
      (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var  m   T1 ))  )  u T2),
      Ty_ectxs D1  (cons   (ectx_FillFFoc x m u)    C )  (type_D (type_F T1 m T2) n) U0
@@ -592,7 +640,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD2: ctx_IsValid  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
+     (ValidsnD2: ctx_ValidOnly  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T2 U0)
      (Tyu: Ty_term D2 u (type_A T1 T2)),
      Ty_ectxs D1  (cons   (ectx_FillCFoc1 u)    C )  (type_D T1 n) U0
@@ -600,7 +648,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD1: ctx_IsValid D1 )
+     (ValidsnD1: ctx_ValidOnly D1 )
      (Validsn: mode_IsValid   (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )   )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T2 U0)
      (Tyu: Ty_term D1 (term_Val v) (type_D T1 n)),
@@ -612,14 +660,14 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (DestOnlyD3: ctx_DestOnly D3 )
      (LinOnlyD3: ctx_LinOnly D3 )
-     (ValidD1: ctx_IsValid D1 )
+     (ValidOnlyD1: ctx_ValidOnly D1 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C  (type_A T1 U)  U0)
      (TyRv1: TyR_val  (ctx_union  D1    (ctx_minus  D3 )  )  v1 T1),
      hdns_Disjoint  (hdns_from_ectxs  C )   (hdns_from_ctx   (ctx_minus  D3 )  )   ->
      Ty_ectxs  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )    D3 )   (cons   (ectx_AOpenFoc  (hdns_from_ctx   (ctx_minus  D3 )  )  v1)    C )  U U0
 with Ty_eterm : ectxs -> term -> type -> Prop :=    (* defn Ty_eterm *)
  | Ty_eterm_ClosedEterm : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)
-     (ValidD: ctx_IsValid D )
+     (ValidOnlyD: ctx_ValidOnly D )
      (DestOnlyD: ctx_DestOnly D )
      (TyC: Ty_ectxs D C T U0)
      (Tyt: Ty_term D t T),
@@ -647,20 +695,15 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
      Sem_eterm   (cons   (ectx_PatUFoc u)    C )   (term_Val v) C (term_PatU (term_Val v) u)
  | Sem_eterm_PatURed : forall (C:ectxs) (u:term),
      Sem_eterm C (term_PatU (term_Val val_U) u) C u
- | Sem_eterm_PatLFoc : forall (C:ectxs) (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
+ | Sem_eterm_PatSFoc : forall (C:ectxs) (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_PatS t m x1 u1 x2 u2)   (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   t
- | Sem_eterm_PatLUnfoc : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
+ | Sem_eterm_PatSUnfoc : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
      Sem_eterm   (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   (term_Val v) C (term_PatS (term_Val v) m x1 u1 x2 u2)
- | Sem_eterm_PatLRed : forall (C:ectxs) (v:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (x:var),
-     Sem_eterm C (term_PatS (term_Val  (val_L v) ) m x1 u1 x2 u2) C  (term_sub  u1   x   v ) 
- | Sem_eterm_PatRFoc : forall (C:ectxs) (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
-     (NotValt: term_NotVal t ),
-     Sem_eterm C (term_PatS t m x1 u1 x2 u2)   (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   t
- | Sem_eterm_PatRUnfoc : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
-     Sem_eterm   (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   (term_Val v) C (term_PatS (term_Val v) m x1 u1 x2 u2)
- | Sem_eterm_PatRRed : forall (C:ectxs) (v:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (x:var),
-     Sem_eterm C (term_PatS (term_Val  (val_R v) ) m x1 u1 x2 u2) C  (term_sub  u2   x   v ) 
+ | Sem_eterm_PatLRed : forall (C:ectxs) (v:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
+     Sem_eterm C (term_PatS (term_Val  (val_L v) ) m x1 u1 x2 u2) C  (term_sub  u1   x1   v ) 
+ | Sem_eterm_PatRRed : forall (C:ectxs) (v:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
+     Sem_eterm C (term_PatS (term_Val  (val_R v) ) m x1 u1 x2 u2) C  (term_sub  u2   x2   v ) 
  | Sem_eterm_PatPFoc : forall (C:ectxs) (t:term) (m:mode) (x1 x2:var) (u:term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_PatP t m x1 x2 u)   (cons   (ectx_PatPFoc m x1 x2 u)    C )   t

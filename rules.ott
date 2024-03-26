@@ -59,7 +59,7 @@ n·G ⫦ ᴇ n v : ! n T
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ctx_DestOnly [[D3]] }} [[:DestOnlyD3]]
 {{ ctx_LinOnly [[D3]] }} [[:LinOnlyD3]]
-{{ ctx_IsValid [[D3]] }} [[:ValidD3]]
+{{ ctx_ValidOnly [[D3]] }} [[:ValidOnlyD3]]
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_Disjoint [[D1]] [[D3]] }} [[:DisjointD1D3]]
 {{ ctx_Disjoint [[D2]] [[D3]] }} [[:DisjointD2D3]]
@@ -179,7 +179,7 @@ D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing of evaluation cont
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ mode_IsValid [[m]] }} [[:Validm]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TyC]]
 D2 ⊢ u : T1 m → T2 [[:Tyu]]
 ----------------- :: AppFoc1
@@ -189,7 +189,7 @@ D1 ⊣ C ∘ (⬜ ≻ u) : T1 ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[m·D1]] }} [[:ValidmD1]]
+{{ ctx_ValidOnly [[m·D1]] }} [[:ValidmD1]]
 m·D1 ⨄ D2 ⊣ C : T2 ↣ U0 [[:TyC]]
 D1 ⊢ v : T1 [[:Tyv]]
 ----------------- :: AppFoc2
@@ -198,7 +198,7 @@ D2 ⊣ C ∘ (v ≻ ⬜) : (T1 m → T2) ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatUFoc
@@ -212,7 +212,7 @@ D1 ⊣ C ∘ (⬜ ; u) : 𝟏 ↣ U0
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ mode_IsValid [[m]] }} [[:Validm]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⨄ { x1 : m T1 } ⊢ u1 : U [[:Tyu1]]
 D2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
@@ -228,7 +228,7 @@ D1 ⊣ C ∘ (⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }} [[:Disjointx1x2]]
 {{ mode_IsValid [[m]] }} [[:Validm]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⨄ { x1 : m T1 } ⨄ { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatPFoc
@@ -241,7 +241,7 @@ D1 ⊣ C ∘ (⬜ ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ mode_IsValid [[m]] }} [[:Validm]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⨄ { x : m·m' T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatEFoc
@@ -251,7 +251,7 @@ D1 ⊣ C ∘ (⬜ ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[D2]] }} [[:ValidD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 ¹↑·D2 ⨄ { x : ¹ν T2 } ⊢ u : U [[:Tyu]]
 -------------------------------- :: MapFoc
@@ -292,7 +292,7 @@ D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
+{{ ctx_ValidOnly [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : 𝟏 ↣ U0 [[:TyC]]
 D2 ⨄ { x : m T1 } ⊢ u : T2 [[:Tyu]]
 ---------------------------------------- :: FillFFoc
@@ -301,7 +301,7 @@ D1 ⊣ C ∘ (⬜ ⨞(λ x m ⟼ u)) : ⌊T1 m → T2⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
+{{ ctx_ValidOnly [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TyC]]
 D2 ⊢ u : T1 ⧔ T2 [[:Tyu]]
 ----------------------------- :: FillCFoc1
@@ -310,7 +310,7 @@ D1 ⊣ C ∘ (⬜ ⨞· u) : ⌊T1⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_IsValid [[D1]] }} [[:ValidsnD1]]
+{{ ctx_ValidOnly [[D1]] }} [[:ValidsnD1]]
 {{ mode_IsValid [[(¹↑·n)]] }} [[:Validsn]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T2 ↣ U0 [[:TyC]]
 D1 ⊢ v : ⌊T1⌋n [[:Tyu]]
@@ -326,7 +326,7 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : T1 ⧔ T2 ↣ U0
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ctx_DestOnly [[D3]] }} [[:DestOnlyD3]]
 {{ ctx_LinOnly [[D3]] }} [[:LinOnlyD3]]
-{{ ctx_IsValid [[D1]] }} [[:ValidD1]]
+{{ ctx_ValidOnly [[D1]] }} [[:ValidOnlyD1]]
 D1 ⨄ D2 ⊣ C : (T1 ⧔ U) ↣ U0 [[:TyC]]
 D1 ⨄ -D3 ⫦ v1 : T1 [[:TyRv1]]
 ---------------- :: AOpenFoc
@@ -335,7 +335,7 @@ D1 ⨄ -D3 ⫦ v1 : T1 [[:TyRv1]]
 defn
 ⊢ C [ t ] : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of extended terms (pair of evaluation context and term) }} by
 
-{{ ctx_IsValid [[D]] }} [[:ValidD]]
+{{ ctx_ValidOnly [[D]] }} [[:ValidOnlyD]]
 {{ ctx_DestOnly [[D]] }} [[:DestOnlyD]]
 D ⊣ C : T ↣ U0 [[:TyC]]
 D ⊢ t : T [[:Tyt]]
@@ -381,24 +381,17 @@ C[t ; u] ⟶ (C ∘ (⬜ ; u))[t]
 C[() ; u] ⟶ C[u]
 
 {{ term_NotVal [[t]] }} [[:NotValt]]
------------------------ :: PatLFoc
+----------------------- :: PatSFoc
 C[t ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ (⬜ ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
 
------------------------ :: PatLUnfoc
+----------------------- :: PatSUnfoc
 (C ∘ (⬜ ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
 
 ----------------------- :: PatLRed
-C[(Inl v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x ≔ v] ]
-
-{{ term_NotVal [[t]] }} [[:NotValt]]
------------------------ :: PatRFoc
-C[t ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ (⬜ ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
-
------------------------ :: PatRUnfoc
-(C ∘ (⬜ ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
+C[(Inl v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x1 ≔ v] ]
 
 ----------------------- :: PatRRed
-C[(Inr v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x ≔ v] ]
+C[(Inr v) ≻case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x2 ≔ v] ]
 
 {{ term_NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: PatPFoc

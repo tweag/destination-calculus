@@ -251,7 +251,7 @@ Definition term_sub (t: term) (x:var) (v:val) : term. Admitted. (* TODO complete
 Definition ectxs_fill (C: ectxs) (h:hdn) (v:val) : ectxs. Admitted. (* TODO complete *)
 Definition val_incr_hnames (v : val) (h : hdn) : val. Admitted. (* TODO complete *)
 
-Definition term_NotVal (t: term) : Prop. Admitted. (* put it to Type instead for shape info? *) (* TODO complete *)
+Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v. (* put it to Type instead for shape info? *) (* TODO complete *)
 
 (******************************************************************************
  * TYPE
@@ -366,6 +366,11 @@ Proof.
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
+Definition mode_IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
+Theorem mode_IsLinNu_dec : forall (m : mode), {mode_IsLinNu m} + {~mode_IsLinNu m}.
+Proof.
+  unfold mode_IsLinNu. intros m. apply mode_eq_dec.
+Qed.
 Inductive mode_IsUr : mode -> Prop :=
   mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
 Theorem mode_IsUr_dec : forall (m : mode), {mode_IsUr m} + {~mode_IsUr m}.
@@ -380,6 +385,17 @@ Qed.
 (******************************************************************************
  * BINDERS
  *****************************************************************************)
+
+Definition tyb_mode {n : name} (tyb: binding_type_of n): mode :=
+  match n return (binding_type_of n) -> mode with
+  | name_Var _ => fun tyb => match tyb with
+    | tyb_Var m _ => m
+    end
+  | name_DH _ => fun tyb => match tyb with
+    | tyb_Dest m _ _ => m
+    | tyb_Hole _ n => n
+    end
+  end tyb.
 
 (******************************************************************************
  * CONTEXTS
@@ -401,16 +417,33 @@ Definition ctx_DestOnly (G : ctx) : Prop :=
     | _ => False
     end.
 
-Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
-Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
+Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
+Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
 
 Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop. Admitted. (* TODO complete *)
 Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop. Admitted. (* TODO complete *)
 
-Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var. Admitted. (* TODO complete *)
-Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var := match b1, b2 with
+  | tyb_Var m1 T1, tyb_Var m2 T2 => match type_eq_dec T1 T2 with
+    | left _ => tyb_Var (mode_plus m1 m2) T1
+    | right _ => tyb_Var None type_U
+    end
+  end.
+
+Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh := match b1, b2 with
+  | tyb_Dest m11 T1 m12, tyb_Dest m21 T2 m22 => match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
+    | left _, left _ => tyb_Dest (mode_plus m11 m21) T1 m12
+    | _, _ => tyb_Dest None type_U None
+    end
+  | tyb_Hole T1 n1, tyb_Hole T2 n2 => match type_eq_dec T1 T2 with
+    | left _ => tyb_Hole T1 (mode_plus n1 n2)
+    | right _ => tyb_Hole type_U None
+    end
+  | _, _ => tyb_Hole type_U None
+  end.
 
 Definition ctx_union (G1 G2 : ctx) : ctx :=
   Finitely.merge_with (fun n =>
@@ -420,18 +453,33 @@ Definition ctx_union (G1 G2 : ctx) : ctx :=
     end
   ) G1 G2.
 
-Definition stimes_tyb_var (b : tyb_var) : tyb_var. Admitted. (* TODO complete *)
-Definition stimes_tyb_dh (b : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+Definition stimes_tyb_var (m' : mode) (b : tyb_var) : tyb_var := match b with
+  | tyb_Var m T => tyb_Var (mode_times m' m) T
+end.
+Definition stimes_tyb_dh (m' : mode) (b : tyb_dh) : tyb_dh := match b with
+  | tyb_Dest m T n => tyb_Dest (mode_times m' m) T n
+  | tyb_Hole T n => tyb_Hole T (mode_times m' n)
+end.
 
-Definition ctx_stimes (m1 : mode) (G : ctx) : ctx :=
+Definition ctx_stimes (m' : mode) (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => stimes_tyb_var
-    | name_DH _ => stimes_tyb_dh
+    | name_Var _ => stimes_tyb_var m'
+    | name_DH _ => stimes_tyb_dh m'
     end
   ) G.
 
-Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
+Definition ctx_minus (G : ctx) : ctx :=
+  Finitely.map (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => fun tyb => tyb_Var None type_U
+    | name_DH _ => fun tyb => match tyb with
+      | tyb_Dest (Some (Lin, (Fin 0))) T n => tyb_Hole T n
+      | tyb_Dest _ _ _ => tyb_Dest None type_U None
+      | tyb_Hole _ _ => tyb_Hole type_U None
+      end
+    end
+  ) G.
 
 Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx. Admitted.
 
@@ -485,7 +533,7 @@ terminals :: 'terminals_' ::=
 pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules }}
   | ctx_DestOnly G :: :: ctx_DestOnly {{ tex \texttt{ctx\_DestOnly}~[[G]] }}
   | ctx_LinOnly G :: :: ctx_LinOnly {{ tex \texttt{ctx\_LinOnly}~[[G]] }}
-  | ctx_IsValid G :: :: ctx_IsValid {{ tex \texttt{ctx\_Valid}~[[G]] }}
+  | ctx_ValidOnly G :: :: ctx_ValidOnly {{ tex \texttt{ctx\_Valid}~[[G]] }}
   | ctx_Compatible G b :: :: ctx_Compatible {{ tex \texttt{ctx\_Compatible}~[[G]]~[[b]] }}
   | ctx_Disjoint G1 G2 :: :: ctx_Disjoint {{ tex \texttt{ctx\_Disjoint}~[[G1]]~[[G2]] }}
   | mode_IsValid m :: :: mode_IsValid {{ tex \texttt{mode\_Valid}~[[m]] }}
