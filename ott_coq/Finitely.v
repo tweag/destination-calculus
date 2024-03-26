@@ -1,0 +1,293 @@
+Require List.
+Require FMapList.
+Require MSetList.
+Require Import Psatz.
+Require Import Coq.Structures.OrderedType.
+From Hammer Require Import Tactics.
+From Hammer Require Import Hammer.
+From SMTCoq Require Import SMTCoq.
+Require MMaps.OrdList.
+
+Set Primitive Projections.
+
+(* Plan: we're making a cheap dependent map out of three component
+   maps. For extensibility purposes, we're not going to assume that
+   the type of names is the same in each variant.
+
+   I [aspiwack] am a little worried about changing our minds about
+   details later. This is why I'm organising proofs in reference to a
+   functional semantics. The interface to reprove will be smaller. *)
+
+Module Fun.
+
+  (* Note: this mirrors the design of MMaps. Except that we're
+     ignoring everything about setoids since we won't be needing them
+     for our use-case. *)
+
+  (* TODO: map, merge (already done), proof of support for each. Then
+     make a type of finitely supported map (don't care about
+     equality). Implement the Admitted/Parameter definitions in
+     grammar.ott. *)
+
+Definition In {A B} (x:A) (f:forall x:A, option (B x)) : Prop := exists y, f x = Some y.
+
+Lemma In_None1 : forall {A B} (x:A) (f:forall x:A, option (B x)), In x f <-> f x <> None.
+Proof.
+  unfold In.
+  intros *. split.
+  - intros [y ->].
+    discriminate.
+  - intros h. unfold In.
+    destruct (f x).
+    + eexists.
+      reflexivity.
+    + contradiction h.
+      reflexivity.
+Qed.
+
+Lemma In_None2 : forall {A B} (x:A) (f:forall x:A, option (B x)), ~(In x f) <-> f x = None.
+Proof.
+  intros *.
+  rewrite In_None1.
+  destruct (f x).
+  - sfirstorder.
+  - sfirstorder.
+Qed.
+
+Definition Support {A B} (l : list A) (f : forall x:A, option (B x)) : Prop :=
+  forall (x:A) (y:B x), f x = Some y -> List.In x l.
+
+Lemma In_supported : forall {A B} (f:forall x:A, option (B x)) l, Support l f <-> forall x, In x f -> List.In x l.
+Proof.
+  firstorder.
+Qed.
+
+Lemma In_supported_r : forall {A B} (f:forall x:A, option (B x)) l, Support l f -> forall x, impl (In x f) (List.In x l).
+Proof.
+  firstorder.
+Qed.
+
+Lemma out_of_support_is_None : forall {A B} (f:forall x:A, option (B x)) l, Support l f -> forall x, ~List.In x l -> f x = None.
+Proof.
+  intros * h x hnin.
+  apply In_None2.
+  hauto lq: on use: In_supported.
+Qed.
+
+Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (x : A) : option (B2 x) :=
+  match f x with
+  | Some y => Some (m x y)
+  | None => None
+  end.
+
+Definition map_support : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) l, Support l f -> Support l (map m f).
+Proof.
+  intros * h. unfold Support, map in *.
+  intros x. specialize (h x).
+  destruct (f x) as [|y].
+  - eauto.
+  - intros ? [=].
+Qed.
+
+Definition merge {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A) : option (B3 x) :=
+  match f x, g x with
+  | None, None => None
+  | fx, gx => m x fx gx
+  end.
+
+Lemma merge_spec1 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
+    In x f \/ In x g -> merge m f g x = m x (f x) (g x).
+Proof.
+  unfold merge.
+  hauto lq: on.
+Qed.
+
+Lemma merge_spec2 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
+    In x (merge m f g) -> In x f \/ In x g.
+Proof.
+  unfold merge.
+  hauto lq: on.
+Qed.
+
+Lemma merge_support : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) lf lg, Support lf f -> Support lg g -> Support (lf ++ lg) (merge m f g).
+Proof.
+  intros * h_suppf h_suppg.
+  apply In_supported. intros x h_in.
+  qauto l: on use: In_supported, in_or_app, merge_spec2.
+Qed.
+
+
+Definition merge_fun_of_with {A B} (m : forall x:A, B x -> B x -> B x) (x:A) (y1 : option (B x)) (y2 : option (B x)) : option (B x) :=
+  match y1, y2 with
+  | Some y1', Some y2' => Some (m x y1' y2')
+  | Some y, None | None, Some y => Some y
+  | None, None => None
+  end.
+
+(* A most common instance of merge. *)
+Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) : option (B x) :=
+  merge (merge_fun_of_with m) f g x.
+
+Lemma merge_with_spec_1 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1 y2:B x),
+    f x = Some y1 /\ g x = Some y2 -> merge_with m f g x = Some (m x y1 y2).
+Proof.
+  unfold merge_with.
+  hauto lq: on use: @merge_spec1.
+Qed.
+
+Lemma merge_with_spec_2 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1:B x),
+    f x = Some y1 /\ g x = None -> merge_with m f g x = Some y1.
+Proof.
+  unfold merge_with.
+  hauto lq: on use: @merge_spec1.
+Qed.
+
+Lemma merge_with_spec_3 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y2:B x),
+    f x = None /\ g x = Some y2 -> merge_with m f g x = Some y2.
+Proof.
+  unfold merge_with.
+  hauto lq: on use: @merge_spec1.
+Qed.
+
+Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
+    In x (merge_with m f g) <-> In x f \/ In x g.
+Proof.
+  split.
+  - hauto lq: on use :@merge_spec2.
+  - unfold merge_with, merge, In.
+    hauto.
+Qed.
+
+End Fun.
+
+(* Optionally, we could make a notation for this type. Something like "finitely (x:A), B". *)
+Record T A B := {
+    underlying :> forall x:A, option (B x);
+    support : list A;
+    support_supports : Fun.Support support underlying
+  }.
+Arguments underlying {A B}.
+Arguments support {A B}.
+
+Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
+
+Lemma In_spec : forall {A B} (x : A) (f : T A B), In x f <-> exists y, f x = Some y.
+Proof.
+  sfirstorder.
+Qed.
+
+Definition dom {A B} (f : T A B) : list A :=
+  List.filter (fun x => match f x with Some _ => true | None => false end) f.(support).
+
+Lemma dom_spec : forall {A B} (f : T A B) (x : A), List.In x (dom f) <-> In x f.
+Proof.
+  intros *. unfold dom.
+  split.
+  - rewrite filter_In.
+    hauto l: on.
+  - rewrite filter_In.
+    rewrite <- (Fun.In_supported_r f).
+    + sauto.
+    + apply support_supports.
+Qed.
+
+Lemma dom_Support : forall {A B} (f : T A B), Fun.Support (dom f) f.
+Proof.
+  intros *.
+  rewrite Fun.In_supported.
+  hauto lq: on use: dom_spec.
+Qed.
+
+#[program]
+Definition empty {A B} : T A B :=
+  {|
+    underlying := fun _ => None;
+    support := nil
+  |}.
+
+#[program]
+Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) : T A B2 :=
+  {|
+    underlying := Fun.map m f;
+    support := f.(support);
+  |}.
+Next Obligation.
+  hauto lq: on use: support_supports, Fun.map_support.
+Qed.
+
+Lemma map_spec0 : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = Fun.map m f x.
+Proof.
+  trivial.
+Qed.
+
+#[program]
+Definition merge {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) : T A B3 :=
+  {|
+    underlying := Fun.merge m f g;
+    support := f.(support) ++ g.(support);
+  |}.
+Next Obligation.
+  hauto lq: on use: support_supports, Fun.merge_support.
+Qed.
+
+Lemma merge_spec0 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x : A),
+    merge m f g x = Fun.merge m f g x.
+Proof.
+  trivial.
+Qed.
+
+Lemma merge_spec1 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
+    In x f \/ In x g -> merge m f g x = m x (f x) (g x).
+Proof.
+  intros *.
+  rewrite merge_spec0.
+  apply Fun.merge_spec1.
+Qed.
+
+Lemma merge_spec2 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
+    In x (merge m f g) -> In x f \/ In x g.
+Proof.
+  intros *.
+  rewrite In_spec, merge_spec0.
+  apply Fun.merge_spec2.
+Qed.
+
+Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) : T A B :=
+  merge (Fun.merge_fun_of_with m) f g.
+
+Lemma merge_with_spec0 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x : A), merge_with m f g x = Fun.merge_with m f g x.
+Proof.
+  trivial.
+Qed.
+
+Lemma merge_with_spec_1 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1 y2:B x),
+    f x = Some y1 /\ g x = Some y2 -> merge_with m f g x = Some (m x y1 y2).
+Proof.
+  intros *.
+  rewrite merge_with_spec0.
+  apply Fun.merge_with_spec_1.
+Qed.
+
+Lemma merge_with_spec_2 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1:B x),
+    f x = Some y1 /\ g x = None -> merge_with m f g x = Some y1.
+Proof.
+  intros *.
+  rewrite merge_with_spec0.
+  apply Fun.merge_with_spec_2.
+Qed.
+
+Lemma merge_with_spec_3 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y2:B x),
+    f x = None /\ g x = Some y2 -> merge_with m f g x = Some y2.
+Proof.
+  intros *.
+  rewrite merge_with_spec0.
+  apply Fun.merge_with_spec_3.
+Qed.
+
+Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
+    In x (merge_with m f g) <-> In x f \/ In x g.
+Proof.
+  intros *.
+  rewrite !In_spec, merge_with_spec0.
+  hauto lq: on use: Fun.merge_with_spec_4.
+Qed.

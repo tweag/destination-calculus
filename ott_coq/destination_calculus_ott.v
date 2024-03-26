@@ -15,11 +15,13 @@ Require Import Coq.FSets.FMapList.
 Require Import Coq.FSets.FSetList.
 Require Import Coq.FSets.FMapFacts.
 Require Import Coq.FSets.FSetFacts.
+Require List.
+(* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
+   we don't we can't use the coercions. *)
+Require Import Ott.Finitely.
 
 Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
 Module HdnsM := FSetList.Make(Nat_as_OTOrig).
-
-Parameter _ctx: Type.
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -112,9 +114,11 @@ Inductive type : Type :=  (*r Type *)
  | type_F (T1:type) (m1:mode) (T2:type) (*r Function *)
  | type_D (T:type) (m:mode) (*r Destination *).
 
-Definition ectxs : Type := (list ectx).
+Inductive name : Type := 
+ | name_Var (x:var)
+ | name_DH (h:hdn).
 
-Definition ctx : Type := _ctx.
+Definition ectxs : Type := (list ectx).
 
 Inductive tyb_var : Type := 
  | tyb_Var (m:mode) (T:type).
@@ -122,15 +126,21 @@ Inductive tyb_var : Type :=
 Inductive tyb_dh : Type := 
  | tyb_Dest (m:mode) (T:type) (n:mode)
  | tyb_Hole (T:type) (n:mode).
-
-Inductive name : Type := 
- | name_Var (x:var)
- | name_DH (h:hdn).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
 Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
 Defined.
 Hint Resolve eq_type : ott_coq_equality.
+
+Definition binding_type_of (n : name) : Type :=
+  match n with
+  | name_Var   => tyb_var
+  | name_DH _ => tyb_dh
+  end.
+
+
+
+Definition ctx : Type := Finitely.T name binding_type_of.
 (******************************************************************************
  * NAMES
  *****************************************************************************)
@@ -147,7 +157,9 @@ Definition hdns_max_hnames (H : HdnsM.t) : nat :=
 Definition hdns_incr_hnames (H : HdnsM.t) (h' : nat) : HdnsM.t :=
   HdnsM.fold (fun h acc => HdnsM.add (h + h') acc) H HdnsM.empty.
 
-Definition hdns_from_ctx (G : ctx) : HdnsM.t. Admitted. (* TODO complete *)
+Definition hdns_from_ctx (G : ctx) : HdnsM.t :=
+  (* TODO: This outputs both holes and destination names. Is it the intention? *)
+  List.fold_right HdnsM.add HdnsM.empty (List.fold_right (fun n hs => match n with name_DH h => h::hs | _ => hs end) nil (Finitely.dom G)).
 
 Definition hdns_from_ectxs (C : ectxs) : HdnsM.t. Admitted. (* TODO complete *)
 
@@ -304,23 +316,53 @@ Qed.
  * CONTEXTS
  *****************************************************************************)
 
-Definition ctx_DestOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_DestOnly (G : ctx) : Prop :=
+  forall n, List.In n (Finitely.dom G) ->
+    match n with
+    | name_DH h =>
+      (* TODO: give a name fo the property below*)
+      match G (name_DH h) with
+      | Some (tyb_Dest _ _ _) => True
+      | _ => False
+      end
+    | _ => False
+    end.
+
 Definition ctx_LinOnly (G : ctx) : Prop. Admitted. (* TODO complete *)
 Definition ctx_IsValid (G: ctx) : Prop. Admitted. (* TODO complete *)
-Definition ctx_Disjoint (G1 G2 : ctx) : Prop. Admitted. (* TODO complete *)
+Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
+  forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
+
 Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop. Admitted. (* TODO complete *)
 Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop. Admitted. (* TODO complete *)
-Definition ctx_union (G1 G2 : ctx) : ctx. Admitted. (* TODO complete *)
-Definition ctx_stimes (m1 : mode) (G : ctx) : ctx. Admitted. (* TODO complete *)
-Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
-Definition NameTypeB (v : name) : Type :=
-  match v with
-  | name_Var x => tyb_var
-  | name_DH h => tyb_dh
-  end.
 
-Definition ctx_singleton (v : name) (tyb: NameTypeB v): ctx. Admitted.
-Definition ctx_empty : ctx. Admitted.
+Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var. Admitted. (* TODO complete *)
+Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+
+Definition ctx_union (G1 G2 : ctx) : ctx :=
+  Finitely.merge_with (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => union_tyb_var
+    | name_DH _ => union_tyb_dh
+    end
+  ) G1 G2.
+
+Definition stimes_tyb_var (b : tyb_var) : tyb_var. Admitted. (* TODO complete *)
+Definition stimes_tyb_dh (b : tyb_dh) : tyb_dh. Admitted. (* TODO complete *)
+
+Definition ctx_stimes (m1 : mode) (G : ctx) : ctx :=
+  Finitely.map (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => stimes_tyb_var
+    | name_DH _ => stimes_tyb_dh
+    end
+  ) G.
+
+Definition ctx_minus (G : ctx) : ctx. Admitted. (* TODO complete *)
+
+Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx. Admitted.
+
+Definition ctx_empty : ctx := Finitely.empty.
 
 (*****************************************************************************)
 

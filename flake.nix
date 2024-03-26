@@ -35,12 +35,52 @@
         packages.default = main;
 
         devShells.default = pkgs.mkShell {
+          # These are the Coq dependencies. The whole `main` stuff is
+          # a little silly. It's because there's a corresponding .opam
+          # file. It's a little easier this way.
           inputsFrom = [ main ];
           buildInputs = [
-            #additional packages from nixpkgs
+            # Theorem provers for CoqHammer and SMTCoq.
             pkgs.eprover
-            pkgs.cvc5
+            pkgs.cvc4
             pkgs.vampire
+            # dev utilities
+            pkgs.entr
+            # Latex stuff
+            pkgs.ott
+            pkgs.biber
+            pkgs.haskellPackages.lhs2tex
+            (pkgs.texlive.combine {
+              inherit (pkgs.texlive)
+                scheme-small
+                cleveref
+                latexmk
+                biblatex biblatex-software
+                stmaryrd
+                unicode-math lm lm-math
+                logreq xstring
+                xargs todonotes
+                mathpartir
+                bbold
+                halloweenmath
+                pict2e
+                # newunicodechar
+
+                # for lhs2tex
+                lazylist polytable
+
+                # for ott
+                supertabular
+
+                # acmart and dependencies
+                # acmart totpages trimspaces
+                # libertine environ hyperxmp
+                # ifmtarg comment ncctools
+                # inconsolata newtx txfonts
+                # xpatch xurl
+                ;
+            })
+
           ];
         };
       });
