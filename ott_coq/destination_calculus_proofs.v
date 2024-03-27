@@ -30,8 +30,69 @@ Proof. Admitted.
 Lemma DestOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_DestOnly G <-> ctx_DestOnly (m ᴳ· G).
 Proof. Admitted.
 
+Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
+Proof.
+  intros [[q1 [a1|]]|].
+  2:{ cbn. hauto lq: on. }
+  2:{ cbn. hauto lq: on. }
+  intros [[q2 [a2|]]|].
+  2:{ cbn. hauto lq: on. }
+  2:{ cbn. hauto lq: on. }
+  cbn.
+  destruct (HdnsM.MF.eq_dec a1 a2) as [?|?].
+  2:{ cbn. hauto lq: on. }
+  inversion 1.
+Qed.
+
 Lemma LinNuOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinNuOnly (G1 ⨄ G2) <-> ctx_LinNuOnly G1 /\ ctx_LinNuOnly G2 /\ ctx_Disjoint G1 G2.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_LinNuOnly.
+  split.
+  - intros h. unfold ctx_union in h.
+    assert (forall n,
+               (forall (tyb : binding_type_of n), G1 n = Some tyb -> mode_IsLinNu (tyb_mode tyb)) /\
+               (forall (tyb : binding_type_of n), G2 n = Some tyb -> mode_IsLinNu (tyb_mode tyb)) /\
+               (In n G1 -> In n G2 -> False)).
+    2:{ hauto lq: on unfold: ctx_Disjoint. }
+    intros n. specialize (h n).
+    destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
+    2:{ fcrush use: merge_with_spec_2. }
+    2:{ fcrush use: merge_with_spec_3. }
+    2:{ (* The hammer gets lost for some reason*)
+        erewrite merge_with_spec_4 in h.
+        2: { eauto. }
+        sauto. }
+    erewrite merge_with_spec_1 in h.
+    2:{ eauto. }
+    destruct n as [xx|xh]. all: cbn in *.
+    + assert (mode_IsLinNu match union_tyb_var b1 b2 with ₓ m ‗ _ => m end) as h'.
+      { eauto. }
+      destruct b1 as [m1 t1]; destruct b2 as [m2 t2]. cbn in *.
+      destruct (type_eq_dec t1 t2) as [?|?].
+      2:{ inversion h'. }
+      apply mode_plus_not_lin_nu in h'.
+      destruct h'.
+    + assert (mode_IsLinNu match union_tyb_dh b1 b2 with ₊ m ⌊ _ ⌋ _ => m | ₋ _ ‗ n => n end) as h'.
+      { eauto. }
+      destruct b1 as [m1 t1 n1|t1 n1]; destruct b2 as [m2 t2 n2|t2 n2]. all: cbn in *.
+      all: destruct (type_eq_dec t1 t2) as [?|?].
+      (* disgusting: *)
+      all: try solve [inversion h'].
+      * destruct (mode_eq_dec n1 n2) as [?|?].
+        2:{ inversion h'. }
+        apply mode_plus_not_lin_nu in h'.
+        destruct h'.
+      * apply mode_plus_not_lin_nu in h'.
+        destruct h'.
+  - intros [h_G1 [h_G2 h_disjoint]] n b h_union.
+    unfold ctx_union in *.
+    destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
+    + sfirstorder unfold: ctx_Disjoint.
+    + hauto lq: on use: merge_with_spec_2.
+    + hauto lq: on use: merge_with_spec_3.
+    + hauto lq: on use: merge_with_spec_4.
+Qed.
+
 Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
 Proof. Admitted.
 
