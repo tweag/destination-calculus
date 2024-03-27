@@ -11,7 +11,16 @@ From Hammer Require Import Tactics.
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof. Admitted.
 Lemma ValidOnlyUnionForward : forall (G1 G2 : ctx), ctx_ValidOnly G1 -> ctx_ValidOnly G2 -> ctx_Disjoint G1 G2 -> ctx_ValidOnly (G1 ⨄ G2).
-Proof. Admitted.
+Proof.
+  intros * valid_G1 valid_G2 disjoint_G1G2. unfold ctx_ValidOnly in *.
+  intros n b h. unfold ctx_union in *.
+  destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
+  - sfirstorder unfold: ctx_Disjoint.
+  - hauto lq: on use: merge_with_spec_2.
+  - hauto lq: on use: merge_with_spec_3.
+  - hauto lq: on use: merge_with_spec_4.
+Qed.
+
 Lemma ValidOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) <-> ctx_ValidOnly G /\ mode_IsValid m.
 Proof. Admitted.
 Lemma ValidOnlyMinusEquiv : forall (G : ctx), ctx_ValidOnly (ᴳ-G) <-> ctx_LinNuOnly G /\ ctx_DestOnly G.

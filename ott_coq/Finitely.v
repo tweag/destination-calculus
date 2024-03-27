@@ -150,6 +150,13 @@ Proof.
 Qed.
 
 Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
+    f x = None /\ g x = None -> merge_with m f g x = None.
+Proof.
+  unfold merge_with, merge.
+  hauto lq: on.
+Qed.
+
+Lemma merge_with_spec_5 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
     In x (merge_with m f g) <-> In x f \/ In x g.
 Proof.
   split.
@@ -174,6 +181,25 @@ Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
 Lemma In_spec : forall {A B} (x : A) (f : T A B), In x f <-> exists y, f x = Some y.
 Proof.
   sfirstorder.
+Qed.
+
+Lemma In_None1 : forall {A B} (x:A) (f:T A B), In x f <-> f x <> None.
+Proof.
+  intros *.
+  hauto lq: on unfold: In use: Fun.In_None1.
+Qed.
+
+Lemma In_None2 : forall {A B} (x:A) (f: T A B), ~(In x f) <-> f x = None.
+Proof.
+  intros *.
+  hauto lq: on unfold: In use: Fun.In_None2.
+Qed.
+
+Lemma In_dec :  forall {A B} (x : A) (f : T A B), In x f \/ ~In x f.
+Proof.
+  intros *. rewrite !In_spec.
+  destruct (f x) as [y|].
+  all:sfirstorder.
 Qed.
 
 Definition dom {A B} (f : T A B) : list A :=
@@ -285,9 +311,17 @@ Proof.
 Qed.
 
 Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
+    f x = None /\ g x = None -> merge_with m f g x = None.
+Proof.
+  intros *.
+  rewrite merge_with_spec0.
+  apply Fun.merge_with_spec_4.
+Qed.
+
+Lemma merge_with_spec_5 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
     In x (merge_with m f g) <-> In x f \/ In x g.
 Proof.
   intros *.
   rewrite !In_spec, merge_with_spec0.
-  hauto lq: on use: Fun.merge_with_spec_4.
+  hauto lq: on use: Fun.merge_with_spec_5.
 Qed.
