@@ -190,7 +190,8 @@ Proof. Admitted.
 
 Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m · n) ᴳ· G.
 Proof. Admitted.
-
+Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 ⨄ G2) = m ᴳ· G1 ⨄ m ᴳ· G2.
+Proof. Admitted.
 Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
 Proof. Admitted.
 
@@ -209,10 +210,16 @@ Proof. Admitted.
 Lemma hnames_DisjointToDisjoint : forall (D D' : ctx), ctx_DestOnly D -> ctx_DestOnly D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
 
-Lemma hdns_max_hnames_Disjoint : forall (H H' : hdns), hdns_Disjoint H (H' ᴴ⩲ ʰmax(H)).
+Lemma hdns_max_hnames_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) <= h' -> hdns_Disjoint H (H' ᴴ⩲ h').
 Proof. Admitted.
 
-Lemma hnamesMinusEq : forall (D D' : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
+Lemma SubsetCtxUnionBackward : forall (G G': ctx) (H: hdns), HdnsM.Subset hnamesᴳ(G ⨄ G') H -> HdnsM.Subset hnamesᴳ(G) H /\ HdnsM.Subset hnamesᴳ(G') H.
+Proof. Admitted.
+
+Lemma HmaxSubset : forall (H H' : hdns), HdnsM.Subset H H' -> ʰmax(H) <= ʰmax(H').
+Proof. Admitted.
+
+Lemma hnamesMinusEq : forall (D : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
 Proof. Admitted.
 Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
@@ -222,7 +229,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq.
 
 Ltac crush :=
   solve
@@ -232,7 +239,7 @@ Ltac crush :=
 
 
 
-Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), ctx_DestOnly D' -> hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
+Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
 
 Lemma Ty_ectxs_LinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_LinOnly D.
@@ -451,36 +458,94 @@ Proof.
       inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13.
       assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] : T) as Tyt1.
         { apply Ty_term_Val. apply TyR_v_hdn_shift. all: crush. }
-      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ]).
-      (* Lemma *)
-
-
-      assert (¹↑ ᴳ· D2 ⨄ (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] ⊢ t' ᵗ[ x ≔ v1 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]] : T') as Tytpsub.
-        { rewrite (StimesIdentity ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
-          rewrite <- (UnionCommutative (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2)).
-          apply (tSubLemma ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2) (¹ν) T T' t' x (v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))])). all: crush. }
-      (* lemma *)
-
+      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ]); swap 3 4;
+        assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush );
+        assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
+        rewrite D11Eq.
+        { assert (ctx_ValidOnly (¹↑ ᴳ· (D2 ⨄ D11))).
+          { rewrite ValidOnlyStimesEquiv. split.
+            - rewrite (UnionCommutative (D11 ⨄ D12) D2) in ValidOnlyD.
+              rewrite UnionAssociative in ValidOnlyD.
+              apply ValidOnlyUnionBackward in ValidOnlyD.
+              tauto.
+            - exact (mode_IsValidProof (Lin, Fin 1)).
+          }
+          assert (ctx_ValidOnly (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+          { apply ValidOnlyHdnShiftEquiv; tauto. }
+          assert (ctx_Disjoint (¹↑ ᴳ· (D2 ⨄ D11)) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+          { apply DisjointStimesLeftEquiv.
+            assert (ctx_Disjoint (D2 ⨄ D11) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])). {
+          {  apply DisjointNestedLeftEquiv. assert (HdnsM.Subset hnamesᴳ(D11 ⨄ D12 ⨄ D2) hnamesꟲ(C)).
+              { apply hnames_CWkhnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
+            { assert (HdnsM.Subset hnamesᴳ(D2) hnamesꟲ(C)).
+              { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnamesꟲ(C)). tauto. }
+              assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnamesꟲ(C))).
+              { apply HmaxSubset. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnamesꟲ( C)))).
+              { apply hdns_max_hnames_Disjoint. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+              { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
+              apply hnames_DisjointToDisjoint; crush.
+            }
+            { assert (HdnsM.Subset hnamesᴳ(D11) hnamesꟲ(C)).
+              { apply SubsetCtxUnionBackward in H1. destruct H1. apply SubsetCtxUnionBackward in H1. tauto. }
+              assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnamesꟲ(C))).
+              { apply HmaxSubset. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnamesꟲ( C)))).
+              { apply hdns_max_hnames_Disjoint. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+              { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
+              apply hnames_DisjointToDisjoint; crush.
+            }
+          } } tauto. }
+          apply ValidOnlyUnionForward; crush.
+        }
+        { rewrite (UnionCommutative D2 D11). apply DestOnlyUnionEquiv. split.
+          { crush. }
+          { crush. }
+        }
+        { assert (¹↑ ᴳ· (D2 ⨄ D11) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ ¹↑ ᴳ· D2) as ctxEq.
+          { rewrite <- StimesIdentity.
+            rewrite UnionHdnShiftEq.
+            rewrite StimesHdnShiftEq.
+            rewrite D11Eq.
+            rewrite UnionCommutative with (G2 := ¹↑ ᴳ· D2).
+            rewrite UnionAssociative.
+            rewrite StimesUnionDistributive. tauto. }
+          rewrite ctxEq.
+          apply tSubLemma with (T := T) (D2 := ¹↑ ᴳ· D2). all: crush. }
       rewrite <- hnamesFullShiftEq.
       rewrite MinusHdnShiftEq.
-      constructor 19 with (D1 := D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T' := T') (U0 := U0) (U := U) (D2 := 
+      assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD. { apply (Ty_ectxs_LinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0). tauto. }
+      constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T' := T') (U0 := U0) (U := U) (D2 := 
       D12).
-      assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0); tauto. }
-      all: assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush ); try rewrite D11Eq.
-      all: assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush ); try rewrite D12Eq.
-      all: try crush.
-
-      assert (D1 ᴳ[H ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩ : U ⧔ T) as Tytps.
-        { assert ((H ⟨ v2 ❟ v1 ⟩) ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] = (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩) as aEq.
-          { apply val_A_hdn_shift. }
-          rewrite <- aEq. constructor; swap 1 2. crush.
-          apply TyR_v_hdn_shift. tauto. }
-      inversion Tytps; subst. rename TyRv0 into TyRvs, H2 into DestOnlyD1s.
-      inversion TyRvs; subst.
-      assert (¹ν ·  ¹↑ ᴳ· D2 )
-      
-       constructor 9 with (D1 := D1) (D2 := D2) (H := H) (v1 := v1) (v2 := v2) (U := U) (T := T). all: crush.
+        { apply LinOnlyUnionEquiv. rewrite <- UnionAssociative. rewrite UnionCommutative. tauto. }
+        {
+          {  apply DisjointNestedLeftEquiv. assert (HdnsM.Subset hnamesᴳ(D11 ⨄ D12 ⨄ D2) hnamesꟲ(C)).
+              { apply hnames_CWkhnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
+            { assert (HdnsM.Subset hnamesᴳ(D2) hnamesꟲ(C)).
+              { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnamesꟲ(C)). tauto. }
+              assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnamesꟲ(C))).
+              { apply HmaxSubset. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnamesꟲ( C)))).
+              { apply hdns_max_hnames_Disjoint. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+              { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
+              apply hnames_DisjointToDisjoint; crush.
+            }
+            { assert (HdnsM.Subset hnamesᴳ(D11) hnamesꟲ(C)).
+              { apply SubsetCtxUnionBackward in H. destruct H. apply SubsetCtxUnionBackward in H. tauto. }
+              assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnamesꟲ(C))).
+              { apply HmaxSubset. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnamesꟲ( C)))).
+              { apply hdns_max_hnames_Disjoint. tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+              { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
+              apply hnames_DisjointToDisjoint; crush.
+            }
+          } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. }
+          { rewrite <- D12Eq. rewrite <- MinusHdnShiftEq. rewrite <- UnionHdnShiftEq. apply TyR_v_hdn_shift. tauto.  }
+          { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hnames_Disjoint with (h' := ʰmax( hnamesꟲ( C))). reflexivity. }
     - give_up.
 Admitted.
 
