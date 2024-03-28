@@ -224,6 +224,14 @@ Ltac hauto_ctx :=
     depth: 3
     use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq.
 
+Ltac crush :=
+  solve
+    [ autorewrite with propagate_down in *; hauto lq: on
+    (* ⬇️ should really be the last case because it can be quite slow. *)
+    | hauto_ctx ].
+
+
+
 Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), ctx_DestOnly D' -> hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
 
@@ -281,7 +289,7 @@ Proof.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := T) (t := t); swap 1 3. constructor 2 with (D2 := D2) (m := m) (t' := t') (U := U).
-      all: autorewrite with propagate_down in *; hauto lq: on.
+      all: crush.
     - (* Sem-eterm-AppUnfoc1 *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
@@ -290,16 +298,14 @@ Proof.
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ t' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) t' U T); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻ t').
-      all: try solve [autorewrite with propagate_down in *; hauto lq: on].
-      (* TODO: I[aspiwack] didn't analyse the remaining case, maybe it just means that I'm missing some rewrite rules. *)
-      all: hauto_ctx.
+      all: crush.
     - (* Sem-eterm-AppFoc2 *)
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
         constructor 1 with (D := D2) (T := T ⁔ m → U) (t := t'); swap 1 3. constructor 3 with (D1 := D1) (m := m) (v := v) (T := T) (U := U).
-      all: autorewrite with propagate_down in *; hauto lq: on.
+      all: crush.
     - (* Sem-eterm-AppUnfoc2 *)
       inversion Tyt; subst. rename TyRv into TyRvp, TyC into TyCc, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
@@ -308,8 +314,7 @@ Proof.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := (ᵥ₎ v) ≻ (ᵥ₎ v')).
-      all: try solve[autorewrite with propagate_down in *; hauto lq: on].
-      all: hauto_ctx.
+      all: crush.
     - (* Sem-eterm-AppRed *)
       inversion Tyt; subst.
       assert (m = m0) as Eqmm0.
@@ -318,17 +323,15 @@ Proof.
       inversion Tytp; subst. clear H1. rename TyRv into TyRv'.
       inversion TyRv'; subst. rename H1 into DestOnlyD2.
       assert (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U) as Tyusub.
-      { apply (tSubLemma D1 D2 m T U u x v).
-        all: autorewrite with propagate_down in *; hauto lq: on. }
+      { apply (tSubLemma D1 D2 m T U u x v). all: crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v]).
-      all: try solve[autorewrite with propagate_down in *; hauto lq: on].
-      all: hauto_ctx.
+      all: crush.
     - (* Sem-eterm-PatUFoc *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
-      constructor 1 with (D := D1) (T := 𝟏) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: hauto_ctx.
+        constructor 1 with (D := D1) (T := 𝟏) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: crush.
     - (* Sem-eterm-PatUUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename U into T2.
@@ -336,27 +339,27 @@ Proof.
         { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
       assert (D1 ⨄ D2 ⊢ ᵥ₎ v ᵗ; u : T2) as TyPat.
         { apply (Ty_term_PatU D1 D2 (ᵥ₎ v) u T2); tauto. }
-      constructor 1 with (D := (D1 ⨄ D2)) (T := T2) (t := ᵥ₎ v ᵗ; u). all: hauto_ctx.
+      constructor 1 with (D := (D1 ⨄ D2)) (T := T2) (t := ᵥ₎ v ᵗ; u). all: crush.
     - (* Sem-eterm-PatURed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into T2.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion TyRv; subst.
-      constructor 1 with (D := D2) (T := T2) (t := u). all: hauto_ctx.
+      constructor 1 with (D := D2) (T := T2) (t := u). all: crush.
     - (* Sem-eterm-PatSFoc *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
-      constructor 1 with (D := D1) (T := (T1 ⨁ T2)) (t := t) ; swap 1 3. constructor 5 with (D1 := D1) (D2 := D2) (m := m) (u1 := u1) (x1 := x1) (u2 := u2) (x2 := x2) (U := U). all: hauto_ctx.
+      constructor 1 with (D := D1) (T := (T1 ⨁ T2)) (t := t) ; swap 1 3. constructor 5 with (D1 := D1) (D2 := D2) (m := m) (u1 := u1) (x1 := x1) (u2 := u2) (x2 := x2) (U := U). all: crush.
     - (* Sem-eterm-PatSUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2} : U) as TyPat.
-        { apply (Ty_term_PatS m D1 D2 (ᵥ₎ v) x1 u1 x2 u2 U T1 T2); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). all: hauto_ctx.
+        { apply (Ty_term_PatS m D1 D2 (ᵥ₎ v) x1 u1 x2 u2 U T1 T2); crush. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). all: crush.
     - (* Sem-eterm-PatLRed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U.
@@ -365,8 +368,8 @@ Proof.
       assert (D1 ⊢ ᵥ₎ v1 : T1) as Tyt'.
         { apply Ty_term_Val; tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ u1 ᵗ[ x1 ≔ v1] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 m T1 U u1 x1 v1); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u1 ᵗ[ x1 ≔ v1]). all: hauto_ctx.
+        { apply (tSubLemma D1 D2 m T1 U u1 x1 v1); crush. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u1 ᵗ[ x1 ≔ v1]). all: crush.
     - (* Sem-eterm-PatRRed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U.
@@ -375,79 +378,79 @@ Proof.
       assert (D1 ⊢ ᵥ₎ v2 : T2) as Tyt'.
         { apply Ty_term_Val; tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ u2 ᵗ[ x2 ≔ v2] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 m T2 U u2 x2 v2); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u2 ᵗ[ x2 ≔ v2]). all: hauto_ctx.
+        { apply (tSubLemma D1 D2 m T2 U u2 x2 v2); crush. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u2 ᵗ[ x2 ≔ v2]). all: crush.
     - (* Sem-eterm-PatPFoc *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
-      constructor 1 with (D := D1) (T := (T1 ⨂ T2)) (t := t) ; swap 1 3. constructor 6 with (D1 := D1) (D2 := D2) (u := u) (x1 := x1) (x2 := x2) (U := U). all: hauto_ctx.
+      constructor 1 with (D := D1) (T := (T1 ⨂ T2)) (t := t) ; swap 1 3. constructor 6 with (D1 := D1) (D2 := D2) (u := u) (x1 := x1) (x2 := x2) (U := U). all: crush.
     - (* Sem-eterm-PatPUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u : U) as TyPat.
-        { apply (Ty_term_PatP m D1 D2 (ᵥ₎ v) x1 x2 u U T1 T2); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u). all: hauto_ctx.
+        { apply (Ty_term_PatP m D1 D2 (ᵥ₎ v) x1 x2 u U T1 T2); crush. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u). all: crush.
     - (* Sem-eterm-PatPRed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion TyRv; subst. rename G1 into D11, G2 into D12.
       assert (D11 ⊢ ᵥ₎ v1 : T1) as Tyt1.
-        { apply Ty_term_Val; hauto_ctx. }
+        { apply Ty_term_Val; crush. }
       assert (D12 ⊢ ᵥ₎ v2 : T2) as Tyt2.
-        { apply Ty_term_Val; hauto_ctx. }
+        { apply Ty_term_Val; crush. }
       assert (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2] : U) as Tyusub.
-        { apply (tSubLemma2 D11 D12 D2 m T1 T2 U u x1 x2 v1 v2); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· (D11 ⨄ D12) ⨄ D2)) (T := U) (t := u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2]). all: hauto_ctx.
+        { apply (tSubLemma2 D11 D12 D2 m T1 T2 U u x1 x2 v1 v2); crush. }
+      constructor 1 with (D := (m ᴳ· (D11 ⨄ D12) ⨄ D2)) (T := U) (t := u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2]). all: crush.
     - (* Sem-eterm-PatEFoc *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
-      constructor 1 with (D := D1) (T := (! n ⁔ T)) (t := t) ; swap 1 3. constructor 7 with (D1 := D1) (D2 := D2) (u := u) (x := x) (U := U). all: hauto_ctx.
+      constructor 1 with (D := D1) (T := (! n ⁔ T)) (t := t) ; swap 1 3. constructor 7 with (D1 := D1) (D2 := D2) (u := u) (x := x) (U := U). all: crush.
     - (* Sem-eterm-PatEUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u : U) as TyPat.
-        { apply (Ty_term_PatE m D1 D2 (ᵥ₎ v) n x u U T); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u). all: hauto_ctx.
+        { apply (Ty_term_PatE m D1 D2 (ᵥ₎ v) n x u U T); crush. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u). all: crush.
     - (* Sem-eterm-PatERed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U, T0 into T.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion TyRv; subst.
       assert (G ⊢ ᵥ₎ v' : T) as Tyt'.
-        { apply Ty_term_Val; hauto_ctx. }
+        { apply Ty_term_Val; crush. }
       assert ((m · n) ᴳ· G ⨄ D2 ⊢ u ᵗ[ x ≔ v'] : U) as Tyusub.
-        { apply (tSubLemma G D2 (m · n) T U u x v'). all: try hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· (n ᴳ· G) ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v']). all: hauto_ctx.
+        { apply (tSubLemma G D2 (m · n) T U u x v'). all: try crush. }
+      constructor 1 with (D := (m ᴳ· (n ᴳ· G) ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v']). all: crush.
     - (* Sem-eterm-MapFoc *)
       inversion Tyt; subst. rename T0 into T.
       rename Tyt into TyMap, Tyt0 into Tyt, P1 into D1, P2 into D2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
-      constructor 1 with (D := D1) (T := U ⧔ T) (t := t); swap 1 3. constructor 8 with (D1 := D1) (D2 := D2) (t' := t') (x := x) (T := T) (T' := T') (U := U). all: hauto_ctx.
+      constructor 1 with (D := D1) (T := U ⧔ T) (t := t); swap 1 3. constructor 8 with (D1 := D1) (D2 := D2) (t' := t') (x := x) (T := T) (T' := T') (U := U). all: crush.
     - (* Sem-eterm-MapUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
       assert (D1 ⨄ D2 ⊢ ᵥ₎ v ≻map x ⟼ t' : U ⧔ T') as TyMap.
-        { apply (Ty_term_Map D1 D2 (ᵥ₎ v) x t' U T' T); hauto_ctx. }
-      constructor 1 with (D := (D1 ⨄ D2)) (T := U ⧔ T') (t := ᵥ₎ v ≻map x ⟼ t'). all: hauto_ctx.
+        { apply (Ty_term_Map D1 D2 (ᵥ₎ v) x t' U T' T); crush. }
+      constructor 1 with (D := (D1 ⨄ D2)) (T := U ⧔ T') (t := ᵥ₎ v ≻map x ⟼ t'). all: crush.
     - (* Sem-eterm-MapRedAOpenFoc *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
       inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13.
       assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] : T) as Tyt1.
-        { apply Ty_term_Val. apply TyR_v_hdn_shift. all: hauto_ctx. }
+        { apply Ty_term_Val. apply TyR_v_hdn_shift. all: crush. }
       constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ]).
       (* Lemma *)
 
@@ -455,7 +458,7 @@ Proof.
       assert (¹↑ ᴳ· D2 ⨄ (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] ⊢ t' ᵗ[ x ≔ v1 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]] : T') as Tytpsub.
         { rewrite (StimesIdentity ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
           rewrite <- (UnionCommutative (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2)).
-          apply (tSubLemma ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2) (¹ν) T T' t' x (v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))])). all: hauto_ctx. }
+          apply (tSubLemma ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2) (¹ν) T T' t' x (v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))])). all: crush. }
       (* lemma *)
 
       rewrite <- hnamesFullShiftEq.
@@ -464,20 +467,20 @@ Proof.
       D12).
       assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0); tauto. }
-      all: assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; hauto_ctx ); try rewrite D11Eq.
-      all: assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; hauto_ctx ); try rewrite D12Eq.
-      all: try hauto_ctx.
+      all: assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush ); try rewrite D11Eq.
+      all: assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush ); try rewrite D12Eq.
+      all: try crush.
 
       assert (D1 ᴳ[H ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩ : U ⧔ T) as Tytps.
         { assert ((H ⟨ v2 ❟ v1 ⟩) ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] = (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩) as aEq.
           { apply val_A_hdn_shift. }
-          rewrite <- aEq. constructor; swap 1 2. hauto_ctx.
+          rewrite <- aEq. constructor; swap 1 2. crush.
           apply TyR_v_hdn_shift. tauto. }
       inversion Tytps; subst. rename TyRv0 into TyRvs, H2 into DestOnlyD1s.
       inversion TyRvs; subst.
       assert (¹ν ·  ¹↑ ᴳ· D2 )
       
-       constructor 9 with (D1 := D1) (D2 := D2) (H := H) (v1 := v1) (v2 := v2) (U := U) (T := T). all: hauto_ctx.
+       constructor 9 with (D1 := D1) (D2 := D2) (H := H) (v1 := v1) (v2 := v2) (U := U) (T := T). all: crush.
     - give_up.
 Admitted.
 
