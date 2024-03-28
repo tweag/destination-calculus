@@ -254,7 +254,8 @@ Proof.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
-      constructor 1 with (D := D2) (T := T ⁔ m → U) (t := t'); swap 1 3. constructor 3 with (D1 := D1) (m := m) (v := v) (T := T) (U := U). all: hauto_ctx.
+        constructor 1 with (D := D2) (T := T ⁔ m → U) (t := t'); swap 1 3. constructor 3 with (D1 := D1) (m := m) (v := v) (T := T) (U := U).
+      all: autorewrite with propagate_down in *; hauto lq: on.
     - (* Sem-eterm-AppUnfoc2 *)
       inversion Tyt; subst. rename TyRv into TyRvp, TyC into TyCc, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
@@ -262,7 +263,9 @@ Proof.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) (ᵥ₎ v') U T); tauto. }
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := (ᵥ₎ v) ≻ (ᵥ₎ v')). all: hauto_ctx.
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := (ᵥ₎ v) ≻ (ᵥ₎ v')).
+      all: try solve[autorewrite with propagate_down in *; hauto lq: on].
+      all: hauto_ctx.
     - (* Sem-eterm-AppRed *)
       inversion Tyt; subst.
       assert (m = m0) as Eqmm0.
@@ -271,8 +274,11 @@ Proof.
       inversion Tytp; subst. clear H1. rename TyRv into TyRv'.
       inversion TyRv'; subst. rename H1 into DestOnlyD2.
       assert (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 m T U u x v); hauto_ctx. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v]). all: hauto_ctx.
+      { apply (tSubLemma D1 D2 m T U u x v).
+        all: autorewrite with propagate_down in *; hauto lq: on. }
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v]).
+      all: try solve[autorewrite with propagate_down in *; hauto lq: on].
+      all: hauto_ctx.
     - (* Sem-eterm-PatUFoc *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
