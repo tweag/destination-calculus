@@ -7,9 +7,17 @@ Require Import Coq.Program.Equality.
 Require Import Ott.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
+(* ⬇️ for the `impl` relation. *)
+Require Coq.Program.Basics.
 
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof. Admitted.
+Lemma ValidOnlyUnionBackward' : forall (G1 G2 : ctx), Basics.impl (ctx_ValidOnly (G1 ⨄ G2)) (ctx_ValidOnly G1 /\ ctx_ValidOnly G2).
+Proof.
+  exact ValidOnlyUnionBackward.
+Qed.
+Hint Rewrite ValidOnlyUnionBackward' : propagate_down.
+
 Lemma ValidOnlyUnionForward : forall (G1 G2 : ctx), ctx_ValidOnly G1 -> ctx_ValidOnly G2 -> ctx_Disjoint G1 G2 -> ctx_ValidOnly (G1 ⨄ G2).
 Proof.
   intros * valid_G1 valid_G2 disjoint_G1G2. unfold ctx_ValidOnly in *.
@@ -23,12 +31,16 @@ Qed.
 
 Lemma ValidOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) <-> ctx_ValidOnly G /\ mode_IsValid m.
 Proof. Admitted.
+Hint Rewrite ValidOnlyStimesEquiv : propagate_down.
 Lemma ValidOnlyMinusEquiv : forall (G : ctx), ctx_ValidOnly (ᴳ-G) <-> ctx_LinNuOnly G /\ ctx_DestOnly G.
 Proof. Admitted.
+Hint Rewrite ValidOnlyMinusEquiv : propagate_down.
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
 Proof. Admitted.
+Hint Rewrite DestOnlyUnionEquiv : propagate_down.
 Lemma DestOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_DestOnly G <-> ctx_DestOnly (m ᴳ· G).
 Proof. Admitted.
+Hint Rewrite <- DestOnlyStimesEquiv : propagate_down.
 
 Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
 Proof.
@@ -92,14 +104,19 @@ Proof.
     + hauto lq: on use: merge_with_spec_3.
     + hauto lq: on use: merge_with_spec_4.
 Qed.
+Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
 
 Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
 Proof. Admitted.
+Hint Rewrite LinNuOnlyStimesEquiv : propagate_down.
 
 Lemma LinOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinOnly (G1 ⨄ G2) <-> ctx_LinOnly G1 /\ ctx_LinOnly G2 /\ ctx_Disjoint G1 G2.
 Proof. Admitted.
+Hint Rewrite LinOnlyUnionEquiv : propagate_down.
+
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
+Hint Rewrite LinOnlyStimesEquiv : propagate_down.
 
 Lemma LinNuOnlyWkLinOnly : forall (G : ctx), ctx_LinNuOnly G -> ctx_LinOnly G.
 Proof. Admitted.
@@ -114,16 +131,27 @@ Qed.
 
 Lemma DisjointStimesLeftEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint (m ᴳ· D) D' <-> ctx_Disjoint D D'.
 Proof. Admitted.
+Hint Rewrite DisjointStimesLeftEquiv : propagate_down.
+
 Lemma DisjointStimesRightEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint D (m ᴳ· D') <-> ctx_Disjoint D D'.
 Proof. Admitted.
+Hint Rewrite DisjointStimesRightEquiv : propagate_down.
+
 Lemma DisjointMinusLeftEquiv : forall (D D' : ctx), ctx_Disjoint D D' <-> ctx_Disjoint (ᴳ-D) D'.
 Proof. Admitted.
+Hint Rewrite <- DisjointMinusLeftEquiv : propagate_down.
+
 Lemma DisjointMinusRightEquiv : forall (D D' : ctx), ctx_Disjoint D D' <-> ctx_Disjoint D (ᴳ-D').
 Proof. Admitted.
+Hint Rewrite <- DisjointMinusRightEquiv : propagate_down.
+
 Lemma DisjointNestedLeftEquiv : forall (D D' D'' : ctx), ctx_Disjoint (D ⨄ D') D'' <-> ctx_Disjoint D D'' /\ ctx_Disjoint D' D''.
 Proof. Admitted.
+Hint Rewrite DisjointNestedLeftEquiv : propagate_down.
+
 Lemma DisjointNestedRightEquiv : forall (D D' D'' : ctx), ctx_Disjoint D  (D' ⨄ D'') <-> ctx_Disjoint D D' /\ ctx_Disjoint D D''.
 Proof. Admitted.
+Hint Rewrite DisjointNestedRightEquiv : propagate_down.
 
 Lemma hdns_DisjointImpliesDisjoint : forall (D D' : ctx) (C : ectxs) (T U0: type) (TyC: D ⊣ C : T ↣ U0) (DisjointCD': hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D')), ctx_Disjoint D D'.
 Proof. Admitted.
@@ -209,7 +237,7 @@ Proof.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := T) (t := t); swap 1 3. constructor 2 with (D2 := D2) (m := m) (t' := t') (U := U).
-      all: hauto_ctx.
+      all: autorewrite with propagate_down in *; hauto lq: on.
     - (* Sem-eterm-AppUnfoc1 *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
@@ -217,7 +245,10 @@ Proof.
         { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ t' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) t' U T); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻ t'). all: hauto_ctx.
+      constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻ t').
+      all: try solve [autorewrite with propagate_down in *; hauto lq: on].
+      (* TODO: I[aspiwack] didn't analyse the remaining case, maybe it just means that I'm missing some rewrite rules. *)
+      all: hauto_ctx.
     - (* Sem-eterm-AppFoc2 *)
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
