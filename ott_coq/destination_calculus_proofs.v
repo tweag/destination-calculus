@@ -165,23 +165,23 @@ Lemma Ty_ectxs_LinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣
 Proof.
   intros D C T U0 H. induction H.
   - apply EmptyIsLinOnly.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
-  - hauto_ctx.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
   - assert (ctx_LinOnly (¹↑ ᴳ· D1)).
       { hauto l: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, (mode_IsLinProof (Fin 1)). }
     assert (ctx_Disjoint (D1 ⨄ D2) (ᴳ-D3)).
