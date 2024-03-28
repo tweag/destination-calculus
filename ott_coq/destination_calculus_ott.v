@@ -479,7 +479,7 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DisjointD1D3: ctx_Disjoint D1 D3 )
      (DisjointD2D3: ctx_Disjoint D2 D3 )
-     (TyRv1: TyR_val  (ctx_union  D1   D3 )  v1 T)
+     (TyRv1: TyR_val  (ctx_union   (ctx_stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )  v1 T)
      (TyRv2: TyR_val  (ctx_union  D2     (ctx_minus  D3 )   )  v2 U),
      TyR_val  (ctx_union  D1   D2 )  (val_A  (hdns_from_ctx   (ctx_minus  D3 )  )  v2 v1) (type_A U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)

@@ -63,7 +63,7 @@ n·G ⫦ ᴇ n v' : ! n T
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_Disjoint [[D1]] [[D3]] }} [[:DisjointD1D3]]
 {{ ctx_Disjoint [[D2]] [[D3]] }} [[:DisjointD2D3]]
-D1 ⨄ D3 ⫦ v1 : T [[:TyRv1]]
+¹↑·D1 ⨄ D3 ⫦ v1 : T [[:TyRv1]]
 D2 ⨄ (-D3) ⫦ v2 : U [[:TyRv2]]
 ---------------- :: A
 D1 ⨄ D2 ⫦ hnames(-D3) ⟨v2 ❟ v1⟩ : U ⧔ T

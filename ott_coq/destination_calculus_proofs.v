@@ -28,19 +28,25 @@ Proof.
   - hauto lq: on use: merge_with_spec_3.
   - hauto lq: on use: merge_with_spec_4.
 Qed.
-
 Lemma ValidOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) <-> ctx_ValidOnly G /\ mode_IsValid m.
 Proof. Admitted.
 Hint Rewrite ValidOnlyStimesEquiv : propagate_down.
 Lemma ValidOnlyMinusEquiv : forall (G : ctx), ctx_ValidOnly (ᴳ-G) <-> ctx_LinNuOnly G /\ ctx_DestOnly G.
 Proof. Admitted.
 Hint Rewrite ValidOnlyMinusEquiv : propagate_down.
+Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
 Proof. Admitted.
 Hint Rewrite DestOnlyUnionEquiv : propagate_down.
 Lemma DestOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_DestOnly G <-> ctx_DestOnly (m ᴳ· G).
 Proof. Admitted.
 Hint Rewrite <- DestOnlyStimesEquiv : propagate_down.
+Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
 
 Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
 Proof.
@@ -109,6 +115,9 @@ Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
 Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
 Proof. Admitted.
 Hint Rewrite LinNuOnlyStimesEquiv : propagate_down.
+Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
 
 Lemma LinOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinOnly (G1 ⨄ G2) <-> ctx_LinOnly G1 /\ ctx_LinOnly G2 /\ ctx_Disjoint G1 G2.
 Proof. Admitted.
@@ -117,6 +126,9 @@ Hint Rewrite LinOnlyUnionEquiv : propagate_down.
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
 Hint Rewrite LinOnlyStimesEquiv : propagate_down.
+Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
 
 Lemma LinNuOnlyWkLinOnly : forall (G : ctx), ctx_LinNuOnly G -> ctx_LinOnly G.
 Proof. Admitted.
@@ -152,8 +164,7 @@ Hint Rewrite DisjointNestedLeftEquiv : propagate_down.
 Lemma DisjointNestedRightEquiv : forall (D D' D'' : ctx), ctx_Disjoint D  (D' ⨄ D'') <-> ctx_Disjoint D D' /\ ctx_Disjoint D D''.
 Proof. Admitted.
 Hint Rewrite DisjointNestedRightEquiv : propagate_down.
-
-Lemma hdns_DisjointImpliesDisjoint : forall (D D' : ctx) (C : ectxs) (T U0: type) (TyC: D ⊣ C : T ↣ U0) (DisjointCD': hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D')), ctx_Disjoint D D'.
+Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
 Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
@@ -172,7 +183,15 @@ Proof. Admitted.
 Lemma UnionAssociative : forall (G1 G2 G3 : ctx), G1 ⨄ (G2 ⨄ G3) = (G1 ⨄ G2) ⨄ G3.
 Proof. Admitted.
 
+Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
+Proof. Admitted.
+Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+
 Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m · n) ᴳ· G.
+Proof. Admitted.
+
+Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
 Proof. Admitted.
 
 Lemma TimesCommutative : forall (m n : mode), m · n = n · m.
@@ -184,10 +203,29 @@ Proof. Admitted.
 Lemma TimesIdentityLeft : forall (m : mode), ¹ν · m = m.
 Proof. Admitted.
 
+Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnamesꟲ(C).
+Proof. Admitted.
+
+Lemma hnames_DisjointToDisjoint : forall (D D' : ctx), ctx_DestOnly D -> ctx_DestOnly D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D') -> ctx_Disjoint D D'.
+Proof. Admitted.
+
+Lemma hdns_max_hnames_Disjoint : forall (H H' : hdns), hdns_Disjoint H (H' ᴴ⩲ ʰmax(H)).
+Proof. Admitted.
+
+Lemma hnamesMinusEq : forall (D D' : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
+Proof. Admitted.
+Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
+Proof. Admitted.
+Lemma MinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ- G) ᴳ[ H ⩲ h' ] = ᴳ- (G ᴳ[ H ⩲ h' ]).
+Proof. Admitted.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, hdns_DisjointImpliesDisjoint, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, StimesIsAction, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq.
+
+Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), ctx_DestOnly D' -> hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
+Proof. Admitted.
 
 Lemma Ty_ectxs_LinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_LinOnly D.
 Proof.
@@ -211,21 +249,27 @@ Proof.
   - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
   - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
   - assert (ctx_LinOnly (¹↑ ᴳ· D1)).
-      { hauto l: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, (mode_IsLinProof (Fin 1)). }
+      { hauto use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, (mode_IsLinProof (Fin 1)). }
     assert (ctx_Disjoint (D1 ⨄ D2) (ᴳ-D3)).
-      { apply (hdns_DisjointImpliesDisjoint (D1 ⨄ D2) (ᴳ-D3) C (U ⧔ T') U0); tauto. }
+      { apply (Ty_ectxs_hnames_Disjoint C (D1 ⨄ D2) (ᴳ-D3) (U ⧔ T') U0); tauto. }
     assert (ctx_Disjoint (¹↑ ᴳ· D1) D3).
       { sblast use: DisjointNestedLeftEquiv, DisjointMinusRightEquiv, DisjointStimesLeftEquiv. }
     rewrite (LinOnlyUnionEquiv (¹↑ ᴳ· D1) D3). split; tauto.
 Qed.
+
+Lemma Ty_ectxs_DestOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_DestOnly D.
+Proof. Admitted.
+
+Lemma TyR_v_hdn_shift : forall (G : ctx) (v : val) (T : type) (H: hdns) (h': hdn), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T).
+Proof. Admitted.
+Lemma val_A_hdn_shift : forall (H : hdns) (v1 v2: val) (h': hdn), (H ⟨ v2 ❟ v1 ⟩)ᵛ[H⩲h'] = (H ᴴ⩲ h' ⟨ v2 ᵛ[H⩲h'] ❟ v1 ᵛ[H⩲h'] ⟩).
+Proof. Admitted. (* TODO: remove when val_hdn_shift is defined *)
 
 Lemma tSubLemma : forall (D1 D2 : ctx) (m : mode) (T U : type) (u : term) (x : var) (v : val), ctx_DestOnly D1 -> ctx_DestOnly D2 -> (D2 ⨄ ᴳ{ x : m ‗ T} ⊢ u : U) -> (D1 ⊢ ᵥ₎ v : T) -> (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U).
 Proof. Admitted.
 
 Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
 Proof. Admitted.
-
-(* TODO: bump only internal names of ampar *)
 
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
   C ʲ[t] ⟶ C' ʲ[t'] -> ⊢ C' ʲ[t'] : T.
@@ -401,9 +445,39 @@ Proof.
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
-      assert (D1 ⊢ ᵥ₎ H ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as Tyt'.
-        { apply Ty_term_Val; hauto_ctx. }
-      admit.
+      inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13.
+      assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] : T) as Tyt1.
+        { apply Ty_term_Val. apply TyR_v_hdn_shift. all: hauto_ctx. }
+      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ]).
+      (* Lemma *)
+
+
+      assert (¹↑ ᴳ· D2 ⨄ (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] ⊢ t' ᵗ[ x ≔ v1 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]] : T') as Tytpsub.
+        { rewrite (StimesIdentity ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))])).
+          rewrite <- (UnionCommutative (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2)).
+          apply (tSubLemma ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (¹↑ ᴳ· D2) (¹ν) T T' t' x (v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))])). all: hauto_ctx. }
+      (* lemma *)
+
+      rewrite <- hnamesFullShiftEq.
+      rewrite MinusHdnShiftEq.
+      constructor 19 with (D1 := D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T' := T') (U0 := U0) (U := U) (D2 := 
+      D12).
+      assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0); tauto. }
+      all: assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; hauto_ctx ); try rewrite D11Eq.
+      all: assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; hauto_ctx ); try rewrite D12Eq.
+      all: try hauto_ctx.
+
+      assert (D1 ᴳ[H ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩ : U ⧔ T) as Tytps.
+        { assert ((H ⟨ v2 ❟ v1 ⟩) ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] = (H ᴴ⩲ ʰmax(hnamesꟲ(C))) ⟨ v2 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ❟ v1 ᵛ[H ⩲ ʰmax(hnamesꟲ(C))] ⟩) as aEq.
+          { apply val_A_hdn_shift. }
+          rewrite <- aEq. constructor; swap 1 2. hauto_ctx.
+          apply TyR_v_hdn_shift. tauto. }
+      inversion Tytps; subst. rename TyRv0 into TyRvs, H2 into DestOnlyD1s.
+      inversion TyRvs; subst.
+      assert (¹ν ·  ¹↑ ᴳ· D2 )
+      
+       constructor 9 with (D1 := D1) (D2 := D2) (H := H) (v1 := v1) (v2 := v2) (U := U) (T := T). all: hauto_ctx.
     - give_up.
 Admitted.
 
