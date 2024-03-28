@@ -51,14 +51,15 @@ grammar
 hdn, h :: 'hdn_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq nat }} {{ tex \ottshdn{[[hdn]]} }}
   | 1 :: S :: O {{ coq 1 }} {{ tex \ottshdn{1} }}
   | 2 :: S :: T {{ coq 2 }} {{ tex \ottshdn{2} }}
-  | h + h' :: M :: S {{ com Sum }} {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshdn{+}[[h']] }}
+  | h + h' :: M :: A {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshdn{+}[[h']] }}
+  | h [ H ⩲ h' ] :: M :: S {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hdn_shift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshdn{[}[[H]][[⩲]][[h']]\ottshdn{]} }}
   | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hdns_max_hnames [[H]]) }} {{ tex \ottshdn{max(}[[H]]\ottshdn{)} }}
   | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshdn{(}[[h]]\ottshdn{)} }}
 
 hdns, H :: 'hdns_' ::= {{ com Set of hole names }} {{ coq HdnsM.t }} {{ tex \ottshdn{[[hdns]]} }}
   | { h1 , .. , hk } :: :: L {{ coq (hdns_from_list [[h1..hk]]) }}
   | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
-  | H ⩲ h :: M :: S {{ com Increase all names from $[[H]]$ by $[[h]]$. }} {{ coq (hdns_incr_hnames [[H]] [[h]]) }}
+  | H ⩲ h' :: M :: S {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hdns_shift [[H]] [[h']]) }}
   | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
   | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
@@ -104,7 +105,7 @@ val, v :: 'val_' ::= {{ com Term value }}
   | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | H ⟨ v2 ❟ v1 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
-  | v ⩲ h :: M :: Rename {{ com Rename hole names inside $[[v]]$ by shifting them by $[[h]]$ }} {{ coq (val_incr_hnames [[v]] [[h]]) }}
+  | v [ H ⩲ h' ] :: M :: S {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_hdn_shift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshdn{[}[[H]][[⩲]][[h']]\ottshdn{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -207,9 +208,10 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ co
   | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (tyb_Var [[m]] [[T]])) }} {{ tex \{[[x]]:\,\!_{[[m]]}[[T]]\} }}
   | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (tyb_Dest [[m]] [[T]] [[n]])) }} {{ tex \{\ottshdn{+}[[h]]:\,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]}\} }}
   | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (tyb_Hole [[T]] [[n]])) }} {{ tex \{\ottshdn{-}[[h]]:[[T]]^{[[n]]}\} }}
-  | m · G :: M :: S {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
+  | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
   | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
   | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
+  | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_hdn_shift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshdn{[}[[H]][[⩲]][[h']]\ottshdn{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 embed
@@ -217,6 +219,12 @@ embed
 (******************************************************************************
  * NAMES
  *****************************************************************************)
+
+Definition hdn_shift (h : hdn) (H : HdnsM.t) (h' : hdn) : hdn :=
+  match HdnsM.mem h H with
+  | true => h + h'
+  | false => h
+  end.
 
 Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
   match l with
@@ -227,7 +235,7 @@ Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
 Definition hdns_max_hnames (H : HdnsM.t) : nat :=
   HdnsM.fold (fun k acc => max k acc) H 0.
 
-Definition hdns_incr_hnames (H : HdnsM.t) (h' : nat) : HdnsM.t :=
+Definition hdns_shift (H : HdnsM.t) (h' : nat) : HdnsM.t :=
   HdnsM.fold (fun h acc => HdnsM.add (h + h') acc) H HdnsM.empty.
 
 Definition hdns_from_ctx (G : ctx) : HdnsM.t :=
@@ -249,7 +257,7 @@ Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
 
 Definition term_sub (t: term) (x:var) (v:val) : term. Admitted. (* TODO complete *)
 Definition ectxs_fill (C: ectxs) (h:hdn) (v:val) : ectxs. Admitted. (* TODO complete *)
-Definition val_incr_hnames (v : val) (h : hdn) : val. Admitted. (* TODO complete *)
+Definition val_hdn_shift (v : val) (H : hdns) (h' : hdn) : val. Admitted. (* TODO complete *)
 
 Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v. (* put it to Type instead for shape info? *) (* TODO complete *)
 
@@ -481,6 +489,12 @@ Definition ctx_minus (G : ctx) : ctx :=
     end
   ) G.
 
+Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
+
+(******************************************************************************
+ * EVALUATION CONTEXTS
+ *****************************************************************************)
+
 Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx. Admitted.
 
 Definition ctx_empty : ctx := Finitely.empty.
@@ -548,7 +562,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm
 
 parsing
-ctx_U <= ctx_S
-ctx_S <= ctx_M
+ctx_U <= ctx_P
+ctx_P <= ctx_M
 ctx_U left ctx_U
 term_Val <= term_Paren

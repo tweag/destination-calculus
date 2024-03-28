@@ -5,11 +5,12 @@ Require Import Ott.ext_nat.
 
 (* Var, holes and dests names : 15-19 *)
 Notation "'ʰmax(' H ')'" := (hdns_max_hnames H) (at level 0, no associativity).
+Notation "h 'ʰ[' H '⩲' k ] " := (hdn_shift h H k) (at level 15, H at level 24, k at level 19, no associativity).
 
 (* Hole names sets : 21-24 *)
 Notation "'ᴴ{' b , .. , c '}'" := (hdns_from_list (cons b .. (cons c nil) ..)) (at level 0, no associativity).
 Notation "H1 '∪' H2" := (HdnsM.union H1 H2) (at level 24, left associativity, H2 at next level).
-Notation "H 'ᴴ⩲' h" := (hdns_incr_hnames H h) (at level 21, h at level 19, no associativity).
+Notation "H 'ᴴ⩲' h" := (hdns_shift H h) (at level 21, h at level 19, no associativity).
 Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity).
 Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C) (at level 0, no associativity).
 
@@ -44,7 +45,7 @@ Notation "'Inr' v" := (val_R v) (at level 31, right associativity, v at level 31
 Notation "'ᴇ' m '⁔' v" := (val_E m v) (at level 31, m at level 29, v at level 31, right associativity).
 Notation "'ᵛ(' v ',' w ')'" := (val_P v w) (at level 0, v at level 59, w at level 59, no associativity).
 Notation "H '⟨' v '❟' w '⟩'" := (val_A H v w) (at level 31, no associativity, v at level 59, w at level 59).
-Notation "v 'ᵛ⩲' h " := (val_incr_hnames v h) (at level 30, h at level 19, no associativity).
+Notation "v 'ᵛ[' H '⩲' k ] " := (val_hdn_shift v H k) (at level 30, H at level 24, k at level 19, no associativity).
 
 (* Evaluation context stack : 60 - 64 *)
 Notation "'ꟲ⬜'" := nil.
@@ -106,9 +107,10 @@ Notation "'ᴳ{}'" := (ctx_empty).
 Notation "'ᴳ{' x ':' m '‗' T '}'" := (ctx_singleton (name_Var x) (tyb_Var m T)) (at level 1, x at level 19, m at level 29, T at level 59, no associativity).
 Notation "'ᴳ{+' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (tyb_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
 Notation "'ᴳ{-' h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (tyb_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
-Notation "m 'ᴳ·' G" := (ctx_stimes m G) (at level 62, G at level 62, right associativity).
-Notation "G '⨄' H" := (ctx_union G H) (at level 63, left associativity, H at next level).
-Notation "ᴳ- G" := (ctx_minus G) (at level 61, no associativity, G at next level).
+Notation "m 'ᴳ·' G" := (ctx_stimes m G) (at level 63, G at level 63, right associativity).
+Notation "G '⨄' H" := (ctx_union G H) (at level 64, left associativity, H at next level).
+Notation "ᴳ- G" := (ctx_minus G) (at level 62, no associativity, G at next level).
+Notation "G 'ᴳ[' H '⩲' k ]" := (ctx_hdn_shift G H k) (at level 61, H at level 24, k at level 19, no associativity).
 
 (* Typing and semantics : 70 - 79 *)
 
