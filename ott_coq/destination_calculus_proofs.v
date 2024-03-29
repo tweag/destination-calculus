@@ -126,12 +126,25 @@ Lemma LinOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinOnly (G1 ⨄ G2) <-> ctx_
 Proof. Admitted.
 Hint Rewrite LinOnlyUnionEquiv : propagate_down.
 
+Lemma FinAgeOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_FinAgeOnly (G1 ⨄ G2) <-> ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2 /\ ctx_Disjoint G1 G2.
+Proof. Admitted.
+Hint Rewrite FinAgeOnlyUnionEquiv : propagate_down.
+
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
 Hint Rewrite LinOnlyStimesEquiv : propagate_down.
+
+Lemma FinAgeOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_FinAgeOnly (m ᴳ· G) <-> ctx_FinAgeOnly G /\ mode_IsFinAge m.
+Proof. Admitted.
+Hint Rewrite FinAgeOnlyStimesEquiv : propagate_down.
+
 Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
+
+Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
 
 Lemma LinNuOnlyWkLinOnly : forall (G : ctx), ctx_LinNuOnly G -> ctx_LinOnly G.
 Proof. Admitted.
@@ -174,6 +187,8 @@ Lemma DisjointCommutative : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 <-> ctx_Dis
 Proof. Admitted.
 
 Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
+Proof. Admitted.
+Lemma EmptyIsFinAgeOnly : ctx_FinAgeOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_FinAgeOnly *)
 Proof. Admitted.
 Lemma EmptyIsDestOnly : ctx_DestOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_DestOnly *)
 Proof. Admitted.
@@ -252,7 +267,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly.
 
 Ltac crush :=
   solve
@@ -266,34 +281,36 @@ Proof. Admitted.
 Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
 
-Lemma Ty_ectxs_LinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_LinOnly D.
+Lemma Ty_ectxs_LinFinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_LinOnly D /\ ctx_FinAgeOnly D.
 Proof.
   intros D C T U0 H. induction H.
-  - apply EmptyIsLinOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - split. apply EmptyIsLinOnly. apply EmptyIsFinAgeOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
   - assert (ctx_LinOnly (¹↑ ᴳ· D1)).
       { hauto use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, (mode_IsLinProof (Fin 1)). }
+    assert (ctx_FinAgeOnly (¹↑ ᴳ· D1)).
+      { hauto use: FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, (mode_IsFinAgeProof Lin 1). }
     assert (ctx_Disjoint (D1 ⨄ D2) (ᴳ-D3)).
       { apply (Ty_ectxs_hnames_Disjoint C (D1 ⨄ D2) (ᴳ-D3) (U ⧔ T') U0); tauto. }
     assert (ctx_Disjoint (¹↑ ᴳ· D1) D3).
       { sblast use: DisjointNestedLeftEquiv, DisjointMinusRightEquiv, DisjointStimesLeftEquiv. }
-    rewrite (LinOnlyUnionEquiv (¹↑ ᴳ· D1) D3). split; tauto.
+    rewrite LinOnlyUnionEquiv, FinAgeOnlyUnionEquiv. repeat split. all: tauto.
 Qed.
 
 Lemma Ty_ectxs_DestOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), ctx_DestOnly D.
@@ -310,7 +327,7 @@ Proof. Admitted.
 Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
 Proof. Admitted.
 
-Lemma CompatibleLinOnlyIsExact : forall (D : ctx) (h : hdn) (T : type) (n : mode), ctx_CompatibleDH D h (₊ ¹ν ⌊ T ⌋ n) -> D = ᴳ{+ h : ¹ν ⌊ T ⌋ n}.
+Lemma CompatibleLinFinOnlyIsExact : forall (D : ctx) (h : hdn) (T : type) (n : mode), ctx_LinOnly D -> ctx_FinAgeOnly D -> ctx_CompatibleDH D h (₊ ¹ν ⌊ T ⌋ n) -> D = ᴳ{+ h : ¹ν ⌊ T ⌋ n}.
 Proof. Admitted.
 
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
@@ -321,14 +338,14 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := T) (t := t); swap 1 3. constructor 2 with (D2 := D2) (m := m) (t' := t') (U := U).
       all: crush.
     - (* Sem-eterm-AppUnfoc1 *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ t' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) t' U T); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻ t').
@@ -337,7 +354,7 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
         constructor 1 with (D := D2) (T := T ⁔ m → U) (t := t'); swap 1 3. constructor 3 with (D1 := D1) (m := m) (v := v) (T := T) (U := U).
       all: crush.
     - (* Sem-eterm-AppUnfoc2 *)
@@ -346,7 +363,7 @@ Proof.
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻ ᵥ₎ v' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) (ᵥ₎ v') U T); tauto. }
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := (ᵥ₎ v) ≻ (ᵥ₎ v')).
       all: crush.
     - (* Sem-eterm-AppRed *)
@@ -364,13 +381,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
         constructor 1 with (D := D1) (T := ①) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: crush.
     - (* Sem-eterm-PatUUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename U into T2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
       assert (D1 ⨄ D2 ⊢ ᵥ₎ v ᵗ; u : T2) as TyPat.
         { apply (Ty_term_PatU D1 D2 (ᵥ₎ v) u T2); tauto. }
       constructor 1 with (D := (D1 ⨄ D2)) (T := T2) (t := ᵥ₎ v ᵗ; u). all: crush.
@@ -384,13 +401,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (T1 ⨁ T2)) (t := t) ; swap 1 3. constructor 5 with (D1 := D1) (D2 := D2) (m := m) (u1 := u1) (x1 := x1) (u2 := u2) (x2 := x2) (U := U). all: crush.
     - (* Sem-eterm-PatSUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2} : U) as TyPat.
         { apply (Ty_term_PatS m D1 D2 (ᵥ₎ v) x1 u1 x2 u2 U T1 T2); crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). all: crush.
@@ -418,13 +435,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (T1 ⨂ T2)) (t := t) ; swap 1 3. constructor 6 with (D1 := D1) (D2 := D2) (u := u) (x1 := x1) (x2 := x2) (U := U). all: crush.
     - (* Sem-eterm-PatPUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u : U) as TyPat.
         { apply (Ty_term_PatP m D1 D2 (ᵥ₎ v) x1 x2 u U T1 T2); crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u). all: crush.
@@ -444,13 +461,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (! n ⁔ T)) (t := t) ; swap 1 3. constructor 7 with (D1 := D1) (D2 := D2) (u := u) (x := x) (U := U). all: crush.
     - (* Sem-eterm-PatEUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u : U) as TyPat.
         { apply (Ty_term_PatE m D1 D2 (ᵥ₎ v) n x u U T); crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u). all: crush.
@@ -468,13 +485,13 @@ Proof.
       inversion Tyt; subst. rename T0 into T.
       rename Tyt into TyMap, Tyt0 into Tyt, P1 into D1, P2 into D2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
       constructor 1 with (D := D1) (T := U ⧔ T) (t := t); swap 1 3. constructor 8 with (D1 := D1) (D2 := D2) (t' := t') (x := x) (T := T) (T' := T') (U := U). all: crush.
     - (* Sem-eterm-MapUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (D1 ⨄ D2) C (U ⧔ T') U0); tauto. }
       assert (D1 ⨄ D2 ⊢ ᵥ₎ v ≻map x ⟼ t' : U ⧔ T') as TyMap.
         { apply (Ty_term_Map D1 D2 (ᵥ₎ v) x t' U T' T); crush. }
       constructor 1 with (D := (D1 ⨄ D2)) (T := U ⧔ T') (t := ᵥ₎ v ≻map x ⟼ t'). all: crush.
@@ -482,7 +499,7 @@ Proof.
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
-      inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13.
+      inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
       assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] : T) as Tyt1.
         { apply Ty_term_Val. apply TyR_v_hdn_shift. all: crush. }
       constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnamesꟲ(C))] ]); swap 3 4;
@@ -543,7 +560,7 @@ Proof.
           apply tSubLemma with (T := T) (D2 := ¹↑ ᴳ· D2). all: crush. }
       rewrite <- hnamesFullShiftEq.
       rewrite MinusHdnShiftEq.
-      assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD. { apply (Ty_ectxs_LinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0). tauto. }
+      assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD. { apply (Ty_ectxs_LinFinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0). tauto. }
       constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnamesꟲ( C))]) (T' := T') (U0 := U0) (U := U) (D2 := 
       D12).
         { apply LinOnlyUnionEquiv. rewrite <- UnionAssociative. rewrite UnionCommutative. tauto. }
@@ -570,17 +587,17 @@ Proof.
               { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
-          } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. }
+          } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite UnionCommutative in TyC. rewrite UnionAssociative in TyC. tauto. }
           { rewrite <- D12Eq. rewrite <- MinusHdnShiftEq. rewrite <- UnionHdnShiftEq. apply TyR_v_hdn_shift. tauto.  }
           { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hnames_Disjoint with (h' := ʰmax( hnamesꟲ( C))). reflexivity. }
     - (* Sem-eterm-AOpenUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, TyRv into TyRv1. clear H2.
       inversion TyCc; subst. rename H6 into hdnsDisjoint.
       assert (D1 ⨄ D2 ⊢ ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
-        { apply Ty_term_Val. apply TyR_val_A; swap 8 1. apply Ty_ectxs_hnames_Disjoint with (D := D1 ⨄ D2) (D' := ᴳ- D3) (C := C) (T := U ⧔ T) (U0 := U0) in hdnsDisjoint. all: crush.
+        { apply Ty_term_Val. apply TyR_val_A; swap 8 1. all: apply Ty_ectxs_hnames_Disjoint with (D := D1 ⨄ D2) (D' := ᴳ- D3) (C := C) (T := U ⧔ T) (U0 := U0) in hdnsDisjoint. all: crush.
          }
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T) U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD (D1 ⨄ D2) C (U ⧔ T) U0). tauto. }
       constructor 1 with (D := (D1 ⨄ D2)) (T := U ⧔ T) (t := ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩). all: crush.
     - (* Sem-eterm-AllocRed *)
       inversion Tyt; subst.
@@ -591,6 +608,9 @@ Proof.
           - crush.
           - crush.
           - intros n. unfold ctx_singleton. rewrite in_singleton. intros H; subst. cbv; tauto.
+          - intros n tyb. unfold ctx_singleton. rewrite mapsto_singleton. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
+          assert (tyb = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+            constructor.
           - intros n tyb. unfold ctx_singleton. rewrite mapsto_singleton. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
           assert (tyb = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
             constructor.
@@ -609,13 +629,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyToA.
       assert (ctx_LinOnly D) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD D C (U ⧔ ①) U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D C (U ⧔ ①) U0). tauto. }
       constructor 1 with (D := D) (t := u) (T := U); swap 1 3. constructor 9. all: crush.
     - (* Sem-eterm-ToAUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst.
       assert (ctx_LinOnly D) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD D C (U ⧔ ①) U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D C (U ⧔ ①) U0). tauto. }
       assert (D ⊢ to⧔ ᵥ₎ v2 : U ⧔ ①) as TyToA.
         { apply (Ty_term_ToA D (ᵥ₎ v2) U). tauto. }
       constructor 1 with (D := D) (T := U ⧔ ①) (t := to⧔ ᵥ₎ v2). all: crush.
@@ -624,7 +644,7 @@ Proof.
       rename Tyt into TyToA, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
       inversion Tyu; subst.
       assert (ᴳ{} ⨄ D2 ⊢ ᵥ₎ hdns_from_list nil ⟨ v2 ❟ ᵛ() ⟩ : U ⧔ ①).
-        { apply Ty_term_Val. assert (hnamesᴳ( ᴳ- ᴳ{}) = hdns_from_list nil) by crush. rewrite <- H. apply TyR_val_A; swap 1 10; swap 2 9.
+        { apply Ty_term_Val. assert (hnamesᴳ( ᴳ- ᴳ{}) = hdns_from_list nil) by crush. rewrite <- H. apply TyR_val_A; swap 1 11; swap 2 10.
           rewrite MinusEmptyEq. rewrite <- UnionIdentityRight; tauto.
           rewrite StimesEmptyEq. rewrite <- UnionIdentityRight. constructor.
           all:crush. }
@@ -634,13 +654,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyFromA, T into U.
       assert (ctx_LinOnly D) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD D C U U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D C U U0). tauto. }
       constructor 1 with (D := D) (t := t) (T := U ⧔ ①); swap 1 3. constructor 10. all: crush.
     - (* Sem-eterm-FromAUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename U1 into U, v into v2, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
       assert (ctx_LinOnly D2) as LinOnlyD2.
-        { apply (Ty_ectxs_LinOnlyD D2 C U U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D2 C U U0). tauto. }
       assert (D2 ⊢ from⧔ ᵥ₎ v2 : U) as TyFromA.
         { apply (Ty_term_FromA D2 (ᵥ₎ v2) U). tauto. }
       constructor 1 with (D := D2) (T := U) (t := from⧔ ᵥ₎ v2). all: crush.
@@ -657,13 +677,13 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyFillU, Tyt0 into Tyt.
       assert (ctx_LinOnly D) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD D C ① U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D C ① U0). tauto. }
       constructor 1 with (D := D) (t := t) (T := ⌊ ① ⌋ n); swap 1 3. constructor 11. all: crush.
     - (* Sem-eterm-FillUUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst.
       assert (ctx_LinOnly D) as LinOnlyD.
-        { apply (Ty_ectxs_LinOnlyD D C ① U0). tauto. }
+        { apply (Ty_ectxs_LinFinOnlyD D C ① U0). tauto. }
       assert (D ⊢ ᵥ₎ v⨞() : ①) as TyFillU.
         { apply (Ty_term_FillU D (ᵥ₎ v) n). tauto. }
       constructor 1 with (D := D) (T := ①) (t := ᵥ₎ v⨞()). all: crush.

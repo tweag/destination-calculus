@@ -299,6 +299,16 @@ Proof.
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
+Inductive mode_IsFinAge : mode -> Prop :=
+  mode_IsFinAgeProof : forall (p : mul) (k : nat), mode_IsFinAge (Some (p, Fin k)).
+Theorem mode_IsFinAge_dec : forall (m : mode), {mode_IsFinAge m} + {~mode_IsFinAge m}.
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct a.
+    + left. exact (mode_IsFinAgeProof p n).
+    + right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
 Definition mode_IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
 Theorem mode_IsLinNu_dec : forall (m : mode), {mode_IsLinNu m} + {~mode_IsLinNu m}.
 Proof.
@@ -352,6 +362,7 @@ Definition ctx_DestOnly (G : ctx) : Prop :=
 
 Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
 Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
+Definition ctx_FinAgeOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsFinAge (tyb_mode tyb).
 Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
@@ -476,6 +487,7 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (DestOnlyD3: ctx_DestOnly D3 )
      (LinOnlyD3: ctx_LinOnly D3 )
+     (FinAgeOnlyD3: ctx_FinAgeOnly D3 )
      (ValidOnlyD3: ctx_ValidOnly D3 )
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DisjointD1D3: ctx_Disjoint D1 D3 )
@@ -673,6 +685,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD2: ctx_DestOnly D2 )
      (DestOnlyD3: ctx_DestOnly D3 )
      (LinOnlyD3: ctx_LinOnly D3 )
+     (FinAgeOnlyD3: ctx_FinAgeOnly D3 )
      (ValidOnlyD1: ctx_ValidOnly D1 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C  (type_A U T')  U0)
      (TyRv2: TyR_val  (ctx_union  D2    (ctx_minus  D3 )  )  v2 U),

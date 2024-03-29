@@ -374,6 +374,16 @@ Proof.
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
+Inductive mode_IsFinAge : mode -> Prop :=
+  mode_IsFinAgeProof : forall (p : mul) (k : nat), mode_IsFinAge (Some (p, Fin k)).
+Theorem mode_IsFinAge_dec : forall (m : mode), {mode_IsFinAge m} + {~mode_IsFinAge m}.
+Proof.
+  intros m. destruct m as [pa|].
+  - destruct pa as [p a]. destruct a.
+    + left. exact (mode_IsFinAgeProof p n).
+    + right. intros contra. inversion contra.
+  - right. intros contra. inversion contra.
+Qed.
 Definition mode_IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
 Theorem mode_IsLinNu_dec : forall (m : mode), {mode_IsLinNu m} + {~mode_IsLinNu m}.
 Proof.
@@ -427,6 +437,7 @@ Definition ctx_DestOnly (G : ctx) : Prop :=
 
 Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
 Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
+Definition ctx_FinAgeOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsFinAge (tyb_mode tyb).
 Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
 Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
