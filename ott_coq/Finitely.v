@@ -88,6 +88,12 @@ Proof.
   hauto lq: on.
 Qed.
 
+Lemma in_singleton : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Proof.
+  intros *. unfold In, singleton.
+  hauto q: on.
+Qed.
+
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (x : A) : option (B2 x) :=
   match f x with
   | Some y => Some (m x y)
@@ -253,6 +259,19 @@ Definition singleton {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x
   |}.
 Next Obligation.
   hauto lq: on use: Fun.singleton_support.
+Qed.
+
+Lemma singleton_spec0 : forall {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) (y : A),
+    singleton x discr v y = Fun.singleton x discr v y.
+Proof.
+  intros *.
+  sfirstorder.
+Qed.
+
+Lemma in_singleton : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Proof.
+  intros *.
+  hauto lq: on use: In_spec, singleton_spec0, Fun.in_singleton.
 Qed.
 
 #[program]
