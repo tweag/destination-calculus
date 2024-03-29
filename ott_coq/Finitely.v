@@ -74,6 +74,20 @@ Proof.
   hauto lq: on use: In_supported.
 Qed.
 
+Definition singleton {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) (y : A) : option (B y) :=
+  match discr y with
+  | left e =>
+      (* Silly, but deep pattern-matching confuses Coq here. *)
+      match e with eq_refl => Some v end
+  | right _ => None
+  end.
+
+Lemma singleton_support : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x), Support (x :: nil) (singleton x discr v).
+Proof.
+  intros *. unfold Support, singleton. intros y w.
+  hauto lq: on.
+Qed.
+
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (x : A) : option (B2 x) :=
   match f x with
   | Some y => Some (m x y)
@@ -230,6 +244,16 @@ Definition empty {A B} : T A B :=
     underlying := fun _ => None;
     support := nil
   |}.
+
+#[program]
+Definition singleton {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) : T A B :=
+  {|
+    underlying := Fun.singleton x discr v;
+    support := x::nil;
+  |}.
+Next Obligation.
+  hauto lq: on use: Fun.singleton_support.
+Qed.
 
 #[program]
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) : T A B2 :=

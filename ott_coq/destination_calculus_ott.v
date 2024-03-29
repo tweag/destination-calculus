@@ -138,7 +138,12 @@ Definition binding_type_of (n : name) : Type :=
   | name_DH _ => tyb_dh
   end.
 
-
+Definition name_eq_dec (x y : name) : {x = y} + {x<>y}.
+Proof.
+  decide equality.
+  - apply Nat.eq_dec.
+  - apply Nat.eq_dec.
+Defined.
 
 Definition ctx : Type := Finitely.T name binding_type_of.
 (******************************************************************************
@@ -420,7 +425,8 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
-Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx. Admitted.
+Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx :=
+  Finitely.singleton v (name_eq_dec v) tyb.
 
 Definition ctx_empty : ctx := Finitely.empty.
 
