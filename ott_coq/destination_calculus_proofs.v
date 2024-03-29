@@ -9,6 +9,9 @@ From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
 (* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
+Require Import Coq.Logic.Eqdep_dec.
+Require Import Coq.Logic.EqdepFacts.
+Require Import Coq.Logic.FunctionalExtensionality.
 
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof. Admitted.
@@ -167,12 +170,26 @@ Hint Rewrite DisjointNestedRightEquiv : propagate_down.
 Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
-Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
+Lemma DisjointCommutative : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 <-> ctx_Disjoint G2 G1.
 Proof. Admitted.
 
-Lemma EmptyUnionRight : forall (G : ctx), G = G ⨄ ᴳ{}.
+Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
 Proof. Admitted.
-Lemma EmptyUnionLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
+Lemma EmptyIsDestOnly : ctx_DestOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_DestOnly *)
+Proof. Admitted.
+Lemma EmptyIsDisjointLeft : forall (G : ctx), ctx_Disjoint ᴳ{} G.
+Proof. Admitted.
+Lemma EmptyIsDisjointRight : forall (G : ctx), ctx_Disjoint G ᴳ{}.
+Proof. Admitted.
+
+Lemma StimesEmptyEq : forall (m : mode), m ᴳ· ᴳ{} = ᴳ{}.
+Proof. Admitted.
+Lemma MinusEmptyEq : ᴳ- ᴳ{} = ᴳ{}.
+Proof. Admitted.
+
+Lemma UnionIdentityRight : forall (G : ctx), G = G ⨄ ᴳ{}.
+Proof. Admitted.
+Lemma UnionIdentityLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
 Proof. Admitted.
 
 Lemma DisjointDestOnlyVar : forall (G : ctx) (x : var) (m : mode) (T : type), ctx_DestOnly G -> ctx_Disjoint G (ᴳ{ x : m ‗ T}).
@@ -226,10 +243,16 @@ Proof. Admitted.
 Lemma MinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ- G) ᴳ[ H ⩲ h' ] = ᴳ- (G ᴳ[ H ⩲ h' ]).
 Proof. Admitted.
 
+Lemma CompatibleDestSingleton : forall (h : hdn) (m : mode) (T : type) (n : mode), ctx_CompatibleDH (ᴳ{+ h : m ⌊ T ⌋ n}) h (₊ m ⌊ T ⌋ n).
+Proof. Admitted.
+
+Lemma MinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ- ᴳ{+ h : ¹ν ⌊ T ⌋ n} = ᴳ{- h : T ‗ n }.
+Proof. Admitted.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, EmptyIsLinOnly, EmptyUnionLeft, EmptyUnionRight, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq.
 
 Ltac crush :=
   solve
@@ -237,7 +260,8 @@ Ltac crush :=
     (* ⬇️ should really be the last case because it can be quite slow. *)
     | hauto_ctx ].
 
-
+Lemma empty_support_Empty : forall (G : ctx), support G = nil -> G = ᴳ{}.
+Proof. Admitted.
 
 Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), hdns_Disjoint hnamesꟲ( C) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
@@ -284,6 +308,9 @@ Lemma tSubLemma : forall (D1 D2 : ctx) (m : mode) (T U : type) (u : term) (x : v
 Proof. Admitted.
 
 Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
+Proof. Admitted.
+
+Lemma CompatibleLinOnlyIsExact : forall (D : ctx) (h : hdn) (T : type) (n : mode), ctx_CompatibleDH D h (₊ ¹ν ⌊ T ⌋ n) -> D = ᴳ{+ h : ¹ν ⌊ T ⌋ n}.
 Proof. Admitted.
 
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
@@ -338,7 +365,7 @@ Proof.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
         { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C T2 U0); tauto. }
-        constructor 1 with (D := D1) (T := 𝟏) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: crush.
+        constructor 1 with (D := D1) (T := ①) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: crush.
     - (* Sem-eterm-PatUUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, D into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename U into T2.
@@ -546,7 +573,99 @@ Proof.
           } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. }
           { rewrite <- D12Eq. rewrite <- MinusHdnShiftEq. rewrite <- UnionHdnShiftEq. apply TyR_v_hdn_shift. tauto.  }
           { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hnames_Disjoint with (h' := ʰmax( hnamesꟲ( C))). reflexivity. }
+    - (* Sem-eterm-AOpenUnfoc *)
+      inversion Tyt; subst. rename TyC into TyCc, TyRv into TyRv1. clear H2.
+      inversion TyCc; subst. rename H6 into hdnsDisjoint.
+      assert (D1 ⨄ D2 ⊢ ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
+        { apply Ty_term_Val. apply TyR_val_A; swap 8 1. apply Ty_ectxs_hnames_Disjoint with (D := D1 ⨄ D2) (D' := ᴳ- D3) (C := C) (T := U ⧔ T) (U0 := U0) in hdnsDisjoint. all: crush.
+         }
+      assert (ctx_LinOnly (D1 ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD (D1 ⨄ D2) C (U ⧔ T) U0). tauto. }
+      constructor 1 with (D := (D1 ⨄ D2)) (T := U ⧔ T) (t := ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩). all: crush.
+    - (* Sem-eterm-AllocRed *)
+      inversion Tyt; subst.
+      assert (hnamesᴳ(ᴳ- ᴳ{+ 1 : ¹ν ⌊ U ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
+        { cbn. reflexivity. }
+      assert (ᴳ{} ⊢ ᵥ₎ ᴴ{ 1} ⟨ ᵛ- 1 ❟ ᵛ+ 1 ⟩ : U ⧔ ⌊ U ⌋ ¹ν) as Tytp.
+        { rewrite <- hnamesD3Eq. apply Ty_term_Val. rewrite (UnionIdentityLeft ᴳ{}). apply TyR_val_A.
+          - crush.
+          - crush.
+          - intros n. unfold ctx_singleton. rewrite in_singleton. intros H; subst. cbv; tauto.
+          - intros n tyb. unfold ctx_singleton. rewrite mapsto_singleton. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
+          assert (tyb = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+            constructor.
+          - intros n tyb. unfold ctx_singleton. rewrite mapsto_singleton. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
+          assert (tyb = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+            constructor.
+          - crush.
+          - crush.
+          - crush.
+          - rewrite StimesEmptyEq. rewrite <- UnionIdentityLeft. constructor. crush.
+          - rewrite <- UnionIdentityLeft. rewrite MinusSingletonEq. constructor.
+          - crush.
+        }
+      constructor 1 with (D := ᴳ{}) (T := U ⧔ ⌊ U ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ- 1 ❟ ᵛ+ 1 ⟩). all: crush.
+    - (* Sem-eterm-ToAFoc *)
+      inversion Tyt; subst.
+      rename Tyt into TyToA.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD D C (U ⧔ ①) U0). tauto. }
+      constructor 1 with (D := D) (t := u) (T := U); swap 1 3. constructor 9. all: crush.
+    - (* Sem-eterm-ToAUnfoc *)
+      inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
+      inversion TyCc; subst.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD D C (U ⧔ ①) U0). tauto. }
+      assert (D ⊢ to⧔ ᵥ₎ v2 : U ⧔ ①) as TyToA.
+        { apply (Ty_term_ToA D (ᵥ₎ v2) U). tauto. }
+      constructor 1 with (D := D) (T := U ⧔ ①) (t := to⧔ ᵥ₎ v2). all: crush.
+    - (* Sem-eterm-ToARed *)
+      inversion Tyt; subst.
+      rename Tyt into TyToA, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
+      inversion Tyu; subst.
+      assert (ᴳ{} ⨄ D2 ⊢ ᵥ₎ hdns_from_list nil ⟨ v2 ❟ ᵛ() ⟩ : U ⧔ ①).
+        { apply Ty_term_Val. assert (hnamesᴳ( ᴳ- ᴳ{}) = hdns_from_list nil) by crush. rewrite <- H. apply TyR_val_A; swap 1 10; swap 2 9.
+          rewrite MinusEmptyEq. rewrite <- UnionIdentityRight; tauto.
+          rewrite StimesEmptyEq. rewrite <- UnionIdentityRight. constructor.
+          all:crush. }
+      rewrite <- UnionIdentityLeft in H.
+      constructor 1 with (D := D2) (T := U ⧔ ①) (t := ᵥ₎ hdns_from_list nil ⟨ v2 ❟ ᵛ() ⟩). all: crush.
+    - (* Sem-eterm-FromAFoc *)
+      inversion Tyt; subst.
+      rename Tyt into TyFromA, T into U.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD D C U U0). tauto. }
+      constructor 1 with (D := D) (t := t) (T := U ⧔ ①); swap 1 3. constructor 10. all: crush.
+    - (* Sem-eterm-FromAUnfoc *)
+      inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
+      inversion TyCc; subst. rename U1 into U, v into v2, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
+      assert (ctx_LinOnly D2) as LinOnlyD2.
+        { apply (Ty_ectxs_LinOnlyD D2 C U U0). tauto. }
+      assert (D2 ⊢ from⧔ ᵥ₎ v2 : U) as TyFromA.
+        { apply (Ty_term_FromA D2 (ᵥ₎ v2) U). tauto. }
+      constructor 1 with (D := D2) (T := U) (t := from⧔ ᵥ₎ v2). all: crush.
+    - (* Sem-eterm-FromARed *)
+      inversion Tyt; subst.
+      rename Tyt0 into Tytp, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2, T into U.
+      inversion Tytp; subst.
+      inversion TyRv; subst. rename D0 into D2.
+      inversion TyRv1. apply eq_sym in H3. apply (app_eq_nil (support D1) (support D3)) in H3. destruct H3. apply empty_support_Empty in H, H3. subst. rewrite StimesEmptyEq in *. rewrite <- UnionIdentityLeft in *. rewrite MinusEmptyEq in *. rewrite <- UnionIdentityRight in *.
+      assert (D2 ⊢ ᵥ₎ v2 : U).
+        { apply Ty_term_Val; tauto. }
+      constructor 1 with (D := D2) (T := U) (t := ᵥ₎ v2). all: crush.
+    - (* Sem-eterm-FillUFoc *)
+      inversion Tyt; subst.
+      rename Tyt into TyFillU, Tyt0 into Tyt.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD D C ① U0). tauto. }
+      constructor 1 with (D := D) (t := t) (T := ⌊ ① ⌋ n); swap 1 3. constructor 11. all: crush.
+    - (* Sem-eterm-FillUUnfoc *)
+      inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
+      inversion TyCc; subst.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinOnlyD D C ① U0). tauto. }
+      assert (D ⊢ ᵥ₎ v⨞() : ①) as TyFillU.
+        { apply (Ty_term_FillU D (ᵥ₎ v) n). tauto. }
+      constructor 1 with (D := D) (T := ①) (t := ᵥ₎ v⨞()). all: crush.
     - give_up.
 Admitted.
-
-

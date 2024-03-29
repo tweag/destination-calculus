@@ -13,7 +13,7 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 G ⫦ +h : ⌊T⌋n
 
 --------------------- :: U
-{} ⫦ () :𝟏
+{} ⫦ () :①
 
 
 % {{ mode_IsValid [[m]] }} [[:Validm]] : Probably we can relax that? Application will be impossible for such a function (as it would make the resulting context invalid), but it doesn't pose a problem per se
@@ -86,7 +86,7 @@ P2 ⊢ t' : T m → U [[:Tytp]]
 ----------------- :: App
 m·P1 ⨄ P2 ⊢ t ≻ t' : U
 
-P1 ⊢ t : 𝟏 [[:Tyt]]
+P1 ⊢ t : ① [[:Tyt]]
 P2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatU
 P1 ⨄ P2 ⊢ t ; u : U
@@ -124,18 +124,18 @@ P1 ⨄ P2 ⊢ t ≻map x ⟼ t' : U ⧔ T'
 
 P ⊢ u : U [[:Tyu]]
 ------------------------------- :: ToA
-P ⊢ to⧔ u : U ⧔ 𝟏
+P ⊢ to⧔ u : U ⧔ ①
 
-P ⊢ t : U ⧔ 𝟏 [[:Tyt]]
+P ⊢ t : U ⧔ ① [[:Tyt]]
 ------------------------------- :: FromA
 P ⊢ from⧔ t : U
 
 -------------------------------- :: Alloc
 {} ⊢ alloc : U ⧔ ⌊U⌋¹ν
 
-P ⊢ t : ⌊𝟏⌋n [[:Tyt]]
+P ⊢ t : ⌊①⌋n [[:Tyt]]
 ------------------------------ :: FillU
-P ⊢ t ⨞ () : 𝟏
+P ⊢ t ⨞ () : ①
 
 P ⊢ t : ⌊T1 ⨁ T2⌋n [[:Tyt]]
 ------------------------------ :: FillL
@@ -157,7 +157,7 @@ P ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
 P1 ⊢ t : ⌊T m → U⌋n [[:Tyt]]
 P2 ⨄ { x : m T } ⊢ u : U [[:Tyu]]
 ---------------------------------------- :: FillF
-P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : 𝟏
+P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : ①
 
 P1 ⊢ t : ⌊U⌋n [[:Tyt]]
 P2 ⊢ t' : U ⧔ T [[:Tytp]]
@@ -202,7 +202,7 @@ D2 ⊣ C ∘ (v ≻ ⬜) : (T m → U) ↣ U0
 D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatUFoc
-D1 ⊣ C ∘ (⬜ ; u) : 𝟏 ↣ U0
+D1 ⊣ C ∘ (⬜ ; u) : ① ↣ U0
 
 % {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 % D1 != {} => m = ¹ν
@@ -257,17 +257,17 @@ D1 ⨄ D2 ⊣ C : U ⧔ T' ↣ U0 [[:TyC]]
 -------------------------------- :: MapFoc
 D1 ⊣ C ∘ (⬜ ≻map x ⟼ t') : (U ⧔ T) ↣ U0
 
-D ⊣ C : (U ⧔ 𝟏) ↣ U0 [[:TyC]]
+D ⊣ C : (U ⧔ ①) ↣ U0 [[:TyC]]
 ------------------------------- :: ToAFoc
 D ⊣ C ∘ (to⧔ ⬜) : U ↣ U0
 
 D ⊣ C : U ↣ U0 [[:TyC]]
 ------------------------------- :: FromAFoc
-D ⊣ C ∘ (from⧔ ⬜) : (U ⧔ 𝟏) ↣ U0
+D ⊣ C ∘ (from⧔ ⬜) : (U ⧔ ①) ↣ U0
 
-D ⊣ C : 𝟏 ↣ U0 [[:TyC]]
+D ⊣ C : ① ↣ U0 [[:TyC]]
 ------------------------------ :: FillUFoc
-D ⊣ C ∘ (⬜ ⨞ ()) : ⌊𝟏⌋n ↣ U0
+D ⊣ C ∘ (⬜ ⨞ ()) : ⌊①⌋n ↣ U0
 
 D ⊣ C : ⌊T1⌋n ↣ U0 [[:TyC]]
 ------------------------------ :: FillLFoc
@@ -293,7 +293,7 @@ D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ctx_ValidOnly [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
-D1 ⨄ (¹↑·n)·D2 ⊣ C : 𝟏 ↣ U0 [[:TyC]]
+D1 ⨄ (¹↑·n)·D2 ⊣ C : ① ↣ U0 [[:TyC]]
 D2 ⨄ { x : m T } ⊢ u : U [[:Tyu]]
 ---------------------------------------- :: FillFFoc
 D1 ⊣ C ∘ (⬜ ⨞(λ x m ⟼ u)) : ⌊T m → U⌋n ↣ U0
@@ -428,7 +428,7 @@ C[ H ⟨ v2 ❟ v1 ⟩ ≻map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] 
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
 -------------------------- :: AllocRed
-C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
+C[alloc] ⟶ C[{1} ⟨ -1 ❟ +1 ⟩]
 
 {{ term_NotVal [[u]] }} [[:NotValu]]
 -------------------------- :: ToAFoc

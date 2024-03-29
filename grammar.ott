@@ -116,7 +116,7 @@ ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }
   | ⬜ :: :: N {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
 %  | c :: S :: S {{ coq (cons [[c]] nil) }}
   | C ∘ c :: :: C {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\,\circ\,[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
-  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[v]]) }}
+  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
@@ -146,7 +146,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
-  | 𝟏 :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
+  | ① :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
   | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
   | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
@@ -263,7 +263,7 @@ Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
  *****************************************************************************)
 
 Definition term_sub (t: term) (x:var) (v:val) : term. Admitted. (* TODO complete *)
-Definition ectxs_fill (C: ectxs) (h:hdn) (v:val) : ectxs. Admitted. (* TODO complete *)
+Definition ectxs_fill (C: ectxs) (h:hdn) (H : hdns) (v:val) : ectxs. Admitted. (* TODO complete *)
 Definition val_hdn_shift (v : val) (H : hdns) (h' : hdn) : val. Admitted. (* TODO complete *)
 
 Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v. (* put it to Type instead for shape info? *) (* TODO complete *)
@@ -305,6 +305,11 @@ Defined.
 
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
+Definition age_plus (a1 a2: age) : age :=
+  match age_eq_dec a1 a2 with
+  | left _ => a1
+  | right _ => Inf
+  end.
 Inductive age_IsSubtype : age -> age -> Prop :=
   | age_IsSubtypeProofEq : forall (a : age), age_IsSubtype a a
   | age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
@@ -327,19 +332,7 @@ Definition mode_plus (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
   | _, None => None
-  | Some (p1, a1), Some (p2, a2) => match a1, a2 with
-    | _, Inf => Some (mul_plus p1 p2, Inf)
-    | Inf, _ => Some (mul_plus p1 p2, Inf)
-    | _, _ => match a1, a2 with
-      | Fin n1, Fin n2 => match Nat.eq_dec n1 n2 with
-        | left _ => (* true *) Some (mul_plus p1 p2, Fin n1)
-        | right _ => (* false *) None
-        end
-      | Inf, Inf => Some (mul_plus p1 p2, Inf)
-      | _, _ => None
-      end
-    end
-  end.
+  | Some (p1, a1), Some (p2, a2) => Some (mul_plus p1 p2, age_plus a1 a2)end.
 Definition mode_times (m1 m2: mode) : mode :=
   match m1, m2 with
   | None, _ => None
@@ -421,7 +414,7 @@ Definition tyb_mode {n : name} (tyb: binding_type_of n): mode :=
  *****************************************************************************)
 
 Definition ctx_DestOnly (G : ctx) : Prop :=
-  forall n, List.In n (Finitely.dom G) ->
+  forall n, Finitely.In n G ->
     match n with
     | name_DH h =>
       (* TODO: give a name fo the property below*)
@@ -503,7 +496,7 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
  *****************************************************************************)
 
 Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx :=
-  Finitely.singleton v (name_eq_dec v) tyb.
+  Finitely.singleton v (name_eq_dec) tyb.
 
 Definition ctx_empty : ctx := Finitely.empty.
 

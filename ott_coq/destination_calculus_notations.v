@@ -73,7 +73,7 @@ Notation "v '⨞·⬜'" := (ectx_FillCFoc2 v) (at level 43, no associativity).
 Notation "H 'ᵒᵖ⟨' v1 '❟⬜'" := (ectx_AOpenFoc H v1) (at level 31, v1 at level 59, no associativity).
 
 (* Types : 30-59 *)
-Notation "𝟏" := (type_U).
+Notation "①" := (type_U).
 Notation "T ⨁ U" := (type_S T U) (at level 50, left associativity, U at next level).
 Notation "T ⨂ U" := (type_P T U) (at level 40, left associativity, U at next level).
 Notation "! m '⁔' T" := (type_E m T) (at level 30, m at level 29, right associativity, T at level 30).

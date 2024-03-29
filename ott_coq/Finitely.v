@@ -7,6 +7,7 @@ From Hammer Require Import Tactics.
 From Hammer Require Import Hammer.
 From SMTCoq Require Import SMTCoq.
 Require MMaps.OrdList.
+Require Import Coq.Logic.Eqdep_dec.
 
 Set Primitive Projections.
 
@@ -74,24 +75,36 @@ Proof.
   hauto lq: on use: In_supported.
 Qed.
 
-Definition singleton {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) (y : A) : option (B y) :=
-  match discr y with
+Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) (y : A) : option (B y) :=
+  match discr x y with
   | left e =>
       (* Silly, but deep pattern-matching confuses Coq here. *)
       match e with eq_refl => Some v end
   | right _ => None
   end.
 
-Lemma singleton_support : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x), Support (x :: nil) (singleton x discr v).
+Lemma singleton_support : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), Support (x :: nil) (singleton x discr v).
 Proof.
   intros *. unfold Support, singleton. intros y w.
   hauto lq: on.
 Qed.
 
-Lemma in_singleton : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Lemma in_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
 Proof.
   intros *. unfold In, singleton.
   hauto q: on.
+Qed.
+
+Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Proof.
+  intros *. unfold singleton.
+  destruct (discr x y) as [e|c].
+  - destruct e. split.
+    * intros eq. inversion eq; subst. tauto.
+    * intros eq. apply inj_pair2_eq_dec in eq. subst. all: tauto.
+  - split.
+    * intros h. inversion h.
+    * intros h. contradiction c. inversion h; tauto.
 Qed.
 
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (x : A) : option (B2 x) :=
@@ -252,7 +265,7 @@ Definition empty {A B} : T A B :=
   |}.
 
 #[program]
-Definition singleton {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) : T A B :=
+Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) : T A B :=
   {|
     underlying := Fun.singleton x discr v;
     support := x::nil;
@@ -261,17 +274,22 @@ Next Obligation.
   hauto lq: on use: Fun.singleton_support.
 Qed.
 
-Lemma singleton_spec0 : forall {A B} (x : A) (discr : forall y, {x = y} + {x<>y}) (v : B x) (y : A),
+Lemma singleton_spec0 : forall {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) (y : A),
     singleton x discr v y = Fun.singleton x discr v y.
 Proof.
   intros *.
   sfirstorder.
 Qed.
 
-Lemma in_singleton : forall {A B} (x : A) (discr : forall y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Lemma in_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
 Proof.
   intros *.
   hauto lq: on use: In_spec, singleton_spec0, Fun.in_singleton.
+Qed.
+
+Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Proof.
+  intros *. rewrite singleton_spec0. apply Fun.mapsto_singleton.
 Qed.
 
 #[program]
