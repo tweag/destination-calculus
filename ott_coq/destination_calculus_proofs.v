@@ -687,5 +687,18 @@ Proof.
       assert (D ⊢ ᵥ₎ v⨞() : ①) as TyFillU.
         { apply (Ty_term_FillU D (ᵥ₎ v) n). tauto. }
       constructor 1 with (D := D) (T := ①) (t := ᵥ₎ v⨞()). all: crush.
+    - (* Sem-eterm-FillURed *)
+      inversion Tyt; subst.
+      rename Tyt into TyFillU, Tyt0 into Tytp.
+      assert (ctx_LinOnly D /\ ctx_FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinFinOnlyD D C ① U0). tauto. }
+      inversion Tytp; subst. clear H1.
+      inversion TyRv; subst.
+      assert (D = ᴳ{+ h : ¹ν ⌊ ① ⌋ n}) as EqD.
+        { apply CompatibleLinFinOnlyIsExact. all:tauto. }
+      subst.
+      assert (ᴳ{} ⊣ C ꟲ[ h ≔ hdns_from_list nil ‗ ᵛ()] : ① ↣ U0).
+        { admit. } (* need ectxsSubLemma *)
+      admit.
     - give_up.
 Admitted.
