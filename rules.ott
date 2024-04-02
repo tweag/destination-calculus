@@ -311,7 +311,7 @@ D1 ⊣ C ∘ (⬜ ⨞· t') : ⌊U⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_ValidOnly [[D1]] }} [[:ValidsnD1]]
+{{ ctx_ValidOnly [[D1]] }} [[:ValidD1]]
 {{ mode_IsValid [[(¹↑·n)]] }} [[:Validsn]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T ↣ U0 [[:TyC]]
 D1 ⊢ v : ⌊U⌋n [[:Tyt]]

@@ -258,7 +258,7 @@ Lemma hnamesMinusEq : forall (D : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
 Proof. Admitted.
 Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
-Lemma hnamesEmpty : forall (G : ctx), hnamesᴳ(ᴳ{}) = HdnsM.empty.
+Lemma hnamesEmpty : hnamesᴳ(ᴳ{}) = HdnsM.empty.
 Proof. Admitted.
 Lemma EmptyIshdns_DisjointRight : forall (H : hdns), hdns_Disjoint H HdnsM.empty.
 Proof. Admitted.
@@ -270,13 +270,16 @@ Proof. Admitted.
 Lemma CompatibleDestSingleton : forall (h : hdn) (m : mode) (T : type) (n : mode), ctx_CompatibleDH (ᴳ{+ h : m ⌊ T ⌋ n}) h (₊ m ⌊ T ⌋ n).
 Proof. Admitted.
 
+Lemma IncompatibleVarDestOnly : forall (D : ctx) (x : var) (m : mode) (T : type), ctx_DestOnly D -> ~ctx_CompatibleVar D x (ₓ m ‗ T).
+Proof. Admitted.
+
 Lemma MinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ- ᴳ{+ h : ¹ν ⌊ T ⌋ n} = ᴳ{- h : T ‗ n }.
 Proof. Admitted.
 
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly.
 
 Ltac crush :=
   solve
@@ -770,3 +773,123 @@ Proof.
       apply Ty_term_Val. apply TyR_val_L. all: crush. *)
     - give_up.
 Admitted.
+
+Lemma exists_impl_to_forall : forall (A : Type) (H1 : A -> Prop) (H2 : Prop),
+  Basics.impl ((exists n, H1 n) -> H2) (forall n, H1 n -> H2).
+Proof.
+  intros A H1 H2.
+  - intros H_exist_impl_H2 n H_n. (* Assuming (exists n, H1 n) -> H2 *)
+    apply H_exist_impl_H2. (* Applying the hypothesis *)
+    exists n. (* Proving the existential statement *)
+    apply H_n. (* Applying H1 n -> H2 *)
+Qed.
+
+Lemma DestOnlyValHole : forall (D : ctx) (h : hdn) (T : type), (D ⫦ ᵛ- h : T) -> ctx_DestOnly D -> False.
+Proof.
+  intros D h T TyRv DestOnlyD. inversion TyRv; subst.
+  specialize (DestOnlyD (ʰ h)). unfold ctx_DestOnly, ctx_singleton, In, Fun.In in DestOnlyD. rewrite exists_impl_to_forall in DestOnlyD. specialize (DestOnlyD (₋ T ‗ ¹ν)). rewrite mapsto_singleton in DestOnlyD. specialize (DestOnlyD eq_refl). destruct (singleton (ʰ h) name_eq_dec (₋ T ‗ ¹ν) (ʰ h)) eqn:H' in DestOnlyD. rewrite mapsto_singleton in H'. assert (b = ₋ T‗ ¹ν) as Eqb. { apply inj_pair2_eq_dec. exact name_eq_dec. apply (eq_sym H'). } rewrite Eqb in DestOnlyD. all: tauto.
+Qed.
+
+Lemma term_NotVal_dec : forall (t : term), {exists v, t = ᵥ₎ v} + {term_NotVal t}.
+Proof.
+  intros t. destruct t.
+  { left. exists v; tauto. }
+  all: right; congruence.
+Qed.
+
+Theorem Progress : forall (C : ectxs) (t : term) (U0 : type), ⊢ C ʲ[t] : U0 -> ((exists v, t = ᵥ₎ v) -> C <> ꟲ⬜) -> exists (C' : ectxs) (t' : term), C ʲ[t] ⟶ C' ʲ[t'].
+Proof.
+  intros C t U0 Tyj CNilOrNotValt. inversion Tyj; subst. inversion Tyt; subst.
+  inversion TyC; subst. all: try rename TyC into TyCc. all: try rename C0 into C. all: try rename TyC0 into TyC. all: try rename T0 into T.
+  - exfalso. apply CNilOrNotValt. exists v. all: reflexivity.
+  - exists C, (ᵥ₎ v ≻ t'). constructor.
+  - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v ≻ ᵥ₎ v'). constructor.
+  - exists C, (ᵥ₎ v ᵗ; u). constructor.
+  - exists C, (ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). constructor.
+  - exists C, (ᵥ₎ v ≻caseᵖ m ᵗ( x1, x2) ⟼ u). constructor.
+  - exists C, (ᵥ₎ v ≻caseᵉ m ᴇ m' ⁔ x ⟼ u). constructor.
+  - exists C, (ᵥ₎ v ≻map x ⟼ t'). constructor.
+  - exists C, (to⧔ (ᵥ₎ v)). constructor.
+  - exists C, (from⧔ (ᵥ₎ v)). constructor.
+  - exists C, (ᵥ₎ v ⨞()). constructor.
+  - exists C, (ᵥ₎ v ⨞Inl). constructor.
+  - exists C, (ᵥ₎ v ⨞Inr). constructor.
+  - exists C, (ᵥ₎ v ⨞(,)). constructor.
+  - exists C, (ᵥ₎ v ⨞ᴇ m). constructor.
+  - exists C, (ᵥ₎ v ⨞(λ x ⁔ m ⟼ u)). constructor.
+  - exists C, (ᵥ₎ v ⨞· t'). constructor.
+  - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v ⨞· ᵥ₎ v'). constructor.
+  - rename v into v1, TyRv into TyRv1. exists C, (ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩). constructor.
+  - exfalso. apply (IncompatibleVarDestOnly D x ¹ν T (DestOnlyD)); tauto.
+  - rename Tyt into TyApp, T into U, T0 into T, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2.
+    destruct (term_NotVal_dec t). all: try destruct e; subst. all: try rename x into v.
+    * destruct (term_NotVal_dec t'). all: try destruct e; subst. all: try rename x into v'.
+      + inversion Tytp; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : T ⁔ m → U ‗ ¹ν}) (h := h) (T := T ⁔ m → U); tauto. }
+      exists C, (u ᵗ[x ≔ v]). constructor.
+      + exists (C ∘ (v ≻⬜)), t'. constructor; tauto.
+    * exists (C ∘ ⬜≻ t'), t. constructor; tauto.
+  - rename Tyt into TyPatU, T into U, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ① ‗ ¹ν}) (h := h) (T := ①); tauto. } exists C, u. constructor.
+    * exists (C ∘ ⬜; u), t. constructor; tauto.
+  - rename Tyt into TyPatS, T into U, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : T1 ⨁ T2 ‗ ¹ν}) (h := h) (T := T1 ⨁ T2); tauto. }
+      { exists C, (u1 ᵗ[x1 ≔ v1]). constructor. }
+      { exists C, (u2 ᵗ[x2 ≔ v2]). constructor. }
+    * exists (C ∘ (⬜≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2})), t. constructor; tauto.
+  - rename Tyt into TyPatP, T into U, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : T1 ⨂ T2 ‗ ¹ν}) (h := h) (T := T1 ⨂ T2); tauto. }
+      { exists C, (u ᵗ[x1 ≔ v1] ᵗ[x2 ≔ v2]). constructor. }
+    * exists (C ∘ ⬜≻caseᵖ m ᵗ( x1, x2)⟼ u), t. constructor; tauto.
+  - rename Tyt into TyPatE, T into U, T0 into T, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ! n ⁔ T ‗ ¹ν}) (h := h) (T := ! n ⁔ T); tauto. }
+      { exists C, (u ᵗ[x ≔ v']). constructor. }
+    * exists (C ∘ ⬜≻caseᵉ m ᴇ n ⁔ x ⟼ u), t. constructor; tauto.
+  - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
+      rename D0 into D1, D2 into D', D3 into D2, D4 into D3.
+      exists (C ∘ hnamesᴳ( ᴳ- D3) ᴴ⩲ ʰmax(hnamesꟲ(C)) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax(hnamesꟲ(C))] ❟⬜), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax(hnamesꟲ(C))]]). constructor; tauto.
+    * exists (C ∘ ⬜≻map x ⟼ t'), t. constructor; tauto.
+  - rename Tyt into TyToA. destruct (term_NotVal_dec u).
+    * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HdnsM.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.
+    * exists (C ∘ to⧔⬜), u. constructor; tauto.
+  - rename Tyt into TyToA, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : T ⧔ ① ‗ ¹ν}) (h := h) (T := T ⧔ ①); tauto. }
+      inversion TyRv1; subst. { assert (ctx_DestOnly (¹↑ ᴳ· D1 ⨄ D3)) by crush. exfalso. apply DestOnlyValHole with (D := (¹↑ ᴳ· D1 ⨄ D3)) (h := h) (T := ①). all:tauto. }
+      assert (D3 = ᴳ{}) as EmptyD3. { apply eq_sym in H2. apply (app_eq_nil (support D1) (support D3)) in H2. destruct H2. apply empty_support_Empty in H, H2. tauto. } subst. rewrite hnamesMinusEq, hnamesEmpty.
+      exists C, (ᵥ₎ v2). constructor.
+    * exists (C ∘ from⧔⬜), t. constructor; tauto.
+  - rename Tyt into TyAlloc. exists C, (ᵥ₎ ᴴ{ 1 } ⟨ ᵛ-1 ❟ ᵛ+1 ⟩ ). constructor.
+  - rename Tyt into TyFillU, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ ① ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ ① ⌋ n); tauto. }
+      exists (C ꟲ[ h ≔ HdnsM.empty ‗ ᵛ()]), (ᵥ₎ ᵛ()). constructor.
+    * exists (C ∘ ⬜⨞()), t. constructor; tauto.
+  - rename Tyt into TyFillL, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨁ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨁ T2 ⌋ n); tauto. }
+    exists (C ꟲ[ h ≔ ᴴ{ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1} ‗ Inl ᵛ- (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    * exists (C ∘ ⬜⨞Inl), t. constructor; tauto.
+  - rename Tyt into TyFillR, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨁ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨁ T2 ⌋ n); tauto. }
+    exists (C ꟲ[ h ≔ ᴴ{ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1} ‗ Inr ᵛ- (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    * exists (C ∘ ⬜⨞Inr), t. constructor; tauto.
+  - rename Tyt into TyFillP, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨂ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨂ T2 ⌋ n); tauto. }
+    exists (C ꟲ[ h ≔ ᴴ{ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1 , ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 2} ‗ ᵛ( ᵛ- (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1), ᵛ- (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 2))]), (ᵥ₎ ᵛ( ᵛ+ (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1), ᵛ+ (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 2))). constructor; tauto.
+    * exists (C ∘ ⬜⨞(,)), t. constructor; tauto.
+  - rename Tyt into TyFillE, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ ! n' ⁔ T ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ ! n' ⁔ T ⌋ n); tauto. }
+    exists (C ꟲ[ h ≔ ᴴ{ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1} ‗ ᴇ n' ⁔ ᵛ- (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    * exists (C ∘ ⬜⨞ᴇ n'), t. constructor; tauto.
+  - rename Tyt into TyFillF, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T ⁔ m → U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⁔ m → U ⌋ n); tauto. }
+    exists (C ꟲ[ h ≔ HdnsM.empty ‗ λᵛ x ⁔ m ⟼ u ]), (ᵥ₎ ᵛ()). constructor; tauto.
+    * exists (C ∘ ⬜⨞(λ x ⁔ m ⟼ u)), t. constructor; tauto.
+  - rename Tyt into TyFillC, Tyt0 into Tyt, t0 into t, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
+    * destruct e; subst. rename x into v. destruct (term_NotVal_dec t').
+      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ n); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename TyRv0 into TyRvp. inversion TyRvp; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } rename D1 into D', D0 into D1, D3 into D2, D4 into D3. 
+      exists
+        ( C ꟲ[ h ≔ hnamesᴳ( ᴳ- D3) ᴴ⩲ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h}) ‗  v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h})] ] ),
+        (ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnamesꟲ( C) ∪ ᴴ{ h})]).
+      constructor; tauto.
+      + exists (C ∘ v ⨞·⬜), t'. constructor; tauto.
+    * exists (C ∘ ⬜⨞· t'), t. constructor; tauto.
+Qed.

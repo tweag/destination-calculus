@@ -673,7 +673,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD1: ctx_ValidOnly D1 )
+     (ValidD1: ctx_ValidOnly D1 )
      (Validsn: mode_IsValid   (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )   )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
      (Tyt: Ty_term D1 (term_Val v) (type_D U n)),
