@@ -242,6 +242,9 @@ Proof. Admitted.
 Lemma hnames_DisjointToDisjoint : forall (D D' : ctx), ctx_DestOnly D -> ctx_DestOnly D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
 
+Lemma DisjointTohdns_Disjoint : forall (D D' : ctx), ctx_Disjoint D D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D').
+Proof. Admitted.
+
 Lemma hdns_max_hnames_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) <= h' -> hdns_Disjoint H (H' ᴴ⩲ h').
 Proof. Admitted.
 
@@ -255,6 +258,12 @@ Lemma hnamesMinusEq : forall (D : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
 Proof. Admitted.
 Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
+Lemma hnamesEmpty : forall (G : ctx), hnamesᴳ(ᴳ{}) = HdnsM.empty.
+Proof. Admitted.
+Lemma EmptyIshdns_DisjointRight : forall (H : hdns), hdns_Disjoint H HdnsM.empty.
+Proof. Admitted.
+Lemma EmptyIshdns_DisjointLeft : forall (H : hdns), hdns_Disjoint HdnsM.empty H.
+Proof. Admitted.
 Lemma MinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ- G) ᴳ[ H ⩲ h' ] = ᴳ- (G ᴳ[ H ⩲ h' ]).
 Proof. Admitted.
 
@@ -267,7 +276,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, ValidOnlyMinusEquiv, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hnames_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, hnamesMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, CompatibleDestSingleton, MinusSingletonEq, FinAgeOnlyUnionEquiv, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly.
 
 Ltac crush :=
   solve
@@ -325,6 +334,24 @@ Lemma tSubLemma : forall (D1 D2 : ctx) (m : mode) (T U : type) (u : term) (x : v
 Proof. Admitted.
 
 Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
+Proof. Admitted.
+
+Lemma ectxsSubLemma : forall (D1 D2 D3 : ctx) (h : hdn) (C : ectxs) (n : mode) (T U U0 : type) (v : val),
+  ctx_Disjoint D1 D2 ->
+  ctx_Disjoint D1 D3 ->
+  hdns_Disjoint hnamesꟲ(C) hnamesᴳ(ᴳ- D3) ->
+  ctx_DestOnly D1 ->
+  ctx_DestOnly D2 ->
+  ctx_DestOnly D3 ->
+  ctx_LinOnly D3 ->
+  ctx_FinAgeOnly D3 ->
+  ctx_ValidOnly D3 ->
+  ctx_Disjoint D1 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
+  ctx_Disjoint D2 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
+  ctx_Disjoint D3 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
+ D1 ⨄ n ᴳ· D2 ⨄ ᴳ{+ h : ¹ν ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
+ D2 ⨄ ᴳ- D3 ⫦ v : U ->
+ D1 ⨄ n ᴳ· D3 ⊣ C ꟲ[ h ≔ hnamesᴳ( n ᴳ· (ᴳ- D3)) ‗ v ] : T ↣ U0.
 Proof. Admitted.
 
 Lemma CompatibleLinFinOnlyIsExact : forall (D : ctx) (h : hdn) (T : type) (n : mode), ctx_LinOnly D -> ctx_FinAgeOnly D -> ctx_CompatibleDH D h (₊ ¹ν ⌊ T ⌋ n) -> D = ᴳ{+ h : ¹ν ⌊ T ⌋ n}.
@@ -698,7 +725,48 @@ Proof.
         { apply CompatibleLinFinOnlyIsExact. all:tauto. }
       subst.
       assert (ᴳ{} ⊣ C ꟲ[ h ≔ hdns_from_list nil ‗ ᵛ()] : ① ↣ U0).
-        { admit. } (* need ectxsSubLemma *)
-      admit.
+        { assert (ᴳ{} ⨄ n ᴳ· ᴳ{} = ᴳ{}) as e1 by crush. rewrite <- e1.
+          assert (hnamesᴳ(n ᴳ· (ᴳ- ᴳ{})) = hdns_from_list nil) as e2 by crush. rewrite <- e2.
+          assert (ᴳ{} ⨄ n ᴳ· ᴳ{} ⨄ ᴳ{+ h : ¹ν ⌊ ① ⌋ n} = ᴳ{+ h : ¹ν ⌊ ① ⌋ n}) as e3 by crush. rewrite <- e3 in TyC.
+          apply ectxsSubLemma with (D2 := ᴳ{}) (U := ①); swap 1 14.
+          rewrite <- UnionIdentityLeft. rewrite MinusEmptyEq. apply TyR_val_U.
+          all: crush. }
+      constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
+      apply Ty_term_Val. apply TyR_val_U. all: crush.
+    - (* Sem-eterm-FillLFoc *)
+      inversion Tyt; subst.
+      rename Tyt into TyFillL, Tyt0 into Tyt.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD D C (⌊ T1 ⌋ n) U0). tauto. }
+      constructor 1 with (D := D) (t := t) (T := ⌊ T1 ⨁ T2 ⌋ n); swap 1 3. constructor 12. all: crush.
+    - (* Sem-eterm-FillLUnfoc *)
+      inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
+      inversion TyCc; subst.
+      assert (ctx_LinOnly D) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD D C (⌊ T1 ⌋ n) U0). tauto. }
+      assert (D ⊢ ᵥ₎ v ⨞Inl : ⌊ T1 ⌋ n) as TyFillL.
+        { apply (Ty_term_FillL D (ᵥ₎ v) T1 n T2). tauto. }
+      constructor 1 with (D := D) (T := ⌊ T1 ⌋ n) (t := ᵥ₎ v ⨞Inl). all: crush.
+    - (* Sem-eterm-FillLRed *)
+      inversion Tyt; revert hpMaxCh; subst.
+      rename Tyt into TyFillL, Tyt0 into Tytp.
+      assert (ctx_LinOnly D /\ ctx_FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinFinOnlyD D C (⌊ T1 ⌋ n) U0). tauto. }
+      inversion Tytp; subst. clear H1.
+      inversion TyRv; subst; intros hpMaxCh.
+      assert (D = ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n}) as EqD.
+        { apply CompatibleLinFinOnlyIsExact. all:tauto. }
+      rewrite EqD in *. clear EqD.
+      (* ectxsSubLemma is false because we need to shift n mode of dests by n, which we cannot do with just minus and shift *)
+      give_up.
+      (* assert (ᴳ{} ⊣ C ꟲ[ h ≔ ᴴ{ h' + 1} ‗ Inl ᵛ- (h' + 1)] : ⌊ T1 ⌋ n ↣ U0).
+        { assert (ᴳ{} ⨄ n ᴳ· ᴳ{} = ᴳ{}) as e1 by crush. rewrite <- e1.
+          assert (hnamesᴳ(n ᴳ· (ᴳ- ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν})) = ᴴ{ h' + 1}) as e2 by admit. rewrite <- e2.
+          assert (ᴳ{} ⨄ n ᴳ· ᴳ{} ⨄ ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n} = ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n}) as e3 by crush. rewrite <- e3 in TyC.
+          apply ectxsSubLemma with (D2 := ᴳ{}) (D3 := ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (U := ⌊ T1 ⨁ T2 ⌋ n); swap 1 14.
+          rewrite <- UnionIdentityLeft. rewrite MinusEmptyEq. apply TyR_val_L.
+          all: crush. }
+      constructor 1 with (D := ᴳ{}) (T := ⌊ T1 ⌋ n) (t := ᵥ₎ ᵛ()); swap 1 4.
+      apply Ty_term_Val. apply TyR_val_L. all: crush. *)
     - give_up.
 Admitted.

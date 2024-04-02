@@ -686,7 +686,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD3: ctx_DestOnly D3 )
      (LinOnlyD3: ctx_LinOnly D3 )
      (FinAgeOnlyD3: ctx_FinAgeOnly D3 )
-     (ValidOnlyD1: ctx_ValidOnly D1 )
+     (ValidOnlyD3: ctx_ValidOnly D3 )
      (TyC: Ty_ectxs  (ctx_union  D1   D2 )  C  (type_A U T')  U0)
      (TyRv2: TyR_val  (ctx_union  D2    (ctx_minus  D3 )  )  v2 U),
      hdns_Disjoint  (hdns_from_ectxs  C )   (hdns_from_ctx   (ctx_minus  D3 )  )   ->
