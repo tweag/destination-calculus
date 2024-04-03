@@ -87,42 +87,24 @@ Lemma LinNuOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinNuOnly (G1 ⨄ G2) <-> 
 Proof.
   intros *. unfold ctx_LinNuOnly.
   split.
-  - intros h. unfold ctx_union in h.
-    assert (forall n,
-               (forall (tyb : binding_type_of n), G1 n = Some tyb -> mode_IsLinNu (tyb_mode tyb)) /\
-               (forall (tyb : binding_type_of n), G2 n = Some tyb -> mode_IsLinNu (tyb_mode tyb)) /\
-               (In n G1 -> In n G2 -> False)).
-    2:{ hauto lq: on unfold: ctx_Disjoint. }
-    intros n. specialize (h n).
-    destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
-    2:{ fcrush use: merge_with_spec_2. }
-    2:{ fcrush use: merge_with_spec_3. }
-    2:{ (* The hammer gets lost for some reason*)
-        erewrite merge_with_spec_4 in h.
-        2: { eauto. }
-        sauto. }
-    erewrite merge_with_spec_1 in h.
-    2:{ eauto. }
-    destruct n as [xx|xh]. all: cbn in *.
-    + assert (mode_IsLinNu match union_tyb_var b1 b2 with ₓ m ‗ _ => m end) as h'.
-      { eauto. }
-      destruct b1 as [m1 t1]; destruct b2 as [m2 t2]. cbn in *.
-      destruct (type_eq_dec t1 t2) as [?|?].
-      2:{ inversion h'. }
-      apply mode_plus_not_lin_nu in h'.
-      destruct h'.
-    + assert (mode_IsLinNu match union_tyb_dh b1 b2 with ₊ m ⌊ _ ⌋ _ => m | ₋ _ ‗ n => n end) as h'.
-      { eauto. }
-      destruct b1 as [m1 t1 n1|t1 n1]; destruct b2 as [m2 t2 n2|t2 n2]. all: cbn in *.
-      all: destruct (type_eq_dec t1 t2) as [?|?].
-      (* disgusting: *)
-      all: try solve [inversion h'].
-      * destruct (mode_eq_dec n1 n2) as [?|?].
-        2:{ inversion h'. }
-        apply mode_plus_not_lin_nu in h'.
-        destruct h'.
-      * apply mode_plus_not_lin_nu in h'.
-        destruct h'.
+  - apply merge_with_propagate_backward_disjoint.
+    intros [xx|xh].
+    + intros [[[p1 a1]|] ?] [[[p2 a2]|] ?]. all: cbn. all:unfold mul_plus.
+      all: let rec t := solve
+                          [ discriminate
+                          | match goal with
+                            |  |- context [if ?x then _ else _] => destruct x
+                            end; t
+                          ]
+           in t.
+    + intros [[[? ?]|] ? ?|? [[? ?]|]] [[[? ?]|] ? ?|? [[? ?]|]]. all: cbn. all:unfold mul_plus.
+      all: let rec t := solve
+                          [ discriminate
+                          | match goal with
+                            |  |- context [if ?x then _ else _] => destruct x
+                            end; t
+                          ]
+           in t.
   - hfcrush use: merge_with_propagate_forward_disjoint.
 Qed.
 Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
