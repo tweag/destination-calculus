@@ -227,6 +227,37 @@ Proof.
     all: hfcrush.
 Qed.
 
+Lemma merge_with_propagate_forward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
+     (forall x b1 b2, P x b1 /\ P x b2 -> P x (m x b1 b2)) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
+Proof.
+  intros * h h1 h2 x b h_merge.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
+  - erewrite merge_with_spec_1 in h_merge.
+    2:{ eauto. }
+    hauto l: on.
+  - erewrite merge_with_spec_2 in h_merge.
+    2:{ eauto. }
+    hauto l: on.
+  - erewrite merge_with_spec_3 in h_merge.
+    2:{ eauto. }
+    hauto l: on.
+  - erewrite merge_with_spec_4 in h_merge.
+    2:{ eauto. }
+    hauto l: on.
+Qed.
+
+Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
+    (forall x b1 b2, P x (m x b1 b2) <-> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) <-> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).
+Proof.
+  intros * h.
+  split.
+  - eapply merge_with_propagate_backward.
+    sfirstorder.
+  - intros [? ?].
+    eapply merge_with_propagate_forward.
+    all: sfirstorder.
+Qed.
+
 End Fun.
 
 (* Optionally, we could make a notation for this type. Something like "finitely (x:A), B". *)
@@ -424,4 +455,24 @@ Proof.
   { sfirstorder use: merge_with_spec0. }
   apply Fun.merge_with_propagate_backward with (m:=m).
   all: sfirstorder.
+Qed.
+
+Lemma merge_with_propagate_forward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+     (forall x b1 b2, P x b1 /\ P x b2 -> P x (m x b1 b2)) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
+Proof.
+  intros * h h1 h2 x b.
+  erewrite merge_with_spec0.
+  sfirstorder use: Fun.merge_with_propagate_forward.
+Qed.
+
+
+Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+    (forall x b1 b2, P x (m x b1 b2) <-> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) <-> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).
+  intros * h.
+  split.
+  - eapply merge_with_propagate_backward.
+    sfirstorder.
+  - intros [? ?].
+    eapply merge_with_propagate_forward.
+    all: sfirstorder.
 Qed.

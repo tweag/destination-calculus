@@ -39,6 +39,8 @@ Hint Rewrite ValidOnlyUnionBackward' : propagate_down.
 
 Lemma ValidOnlyUnionForward : forall (G1 G2 : ctx), ctx_ValidOnly G1 -> ctx_ValidOnly G2 -> ctx_Disjoint G1 G2 -> ctx_ValidOnly (G1 ⨄ G2).
 Proof.
+  (* Note: merge_with_propagate_forward doesn't apply to this. Which is why the
+     hypothesis `ctx_Disjoint G1 G2` is needed. *)
   intros * valid_G1 valid_G2 disjoint_G1G2. unfold ctx_ValidOnly in *.
   intros n b h. unfold ctx_union in *.
   destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
