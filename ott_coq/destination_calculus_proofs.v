@@ -15,27 +15,22 @@ Require Import Coq.Logic.FunctionalExtensionality.
 
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof.
-  intros * h. unfold ctx_ValidOnly, ctx_union in *.
-  (* factoring of conclusion to avoid duplicating the proof. *)
-  assert (forall n, (forall tyb, G1 n = Some tyb -> mode_IsValid (tyb_mode tyb)) /\ (forall tyb, G2 n = Some tyb -> mode_IsValid (tyb_mode tyb))).
-  2:{ hauto lq: on. }
-  intros n.
-  specialize (h n).
-  destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
-  2:{ erewrite merge_with_spec_2 in h.
-      2: { eauto. }
-      hauto l: on. }
-  2:{ erewrite merge_with_spec_3 in h.
-      2: { eauto. }
-      hauto l: on. }
-  2: { erewrite merge_with_spec_4 in h.
-       all: hauto l: on. }
-  erewrite merge_with_spec_1 in h.
-  2:{ eauto. }
-  destruct n as [xx|xh].
-  - specialize (h (union_tyb_var b1 b2)).
-    destruct tyb. cbn in *.
+  assert (forall m1 m2, mode_IsValid (mode_plus m1 m2) -> mode_IsValid m1 /\ mode_IsValid m2) as h_mode_plus.
+  { intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
+    all: sfirstorder. }
+  unfold ctx_ValidOnly, ctx_union in *. intros *.
+  eapply (merge_with_propagate_backward).
+  intros [xx|xh] [] []. all: cbn.
+  all: let rec t := solve
+                      [ inversion 1
+                      | eauto
+                      | match goal with
+                        |  |- context [if ?x then _ else _] => destruct x
+                        end; t
+                      ]
+       in t.
 Qed.
+
 Lemma ValidOnlyUnionBackward' : forall (G1 G2 : ctx), Basics.impl (ctx_ValidOnly (G1 ⨄ G2)) (ctx_ValidOnly G1 /\ ctx_ValidOnly G2).
 Proof.
   exact ValidOnlyUnionBackward.

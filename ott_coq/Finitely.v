@@ -55,6 +55,13 @@ Proof.
   - sfirstorder.
 Qed.
 
+Lemma In_dec :  forall {A B} (x : A) (f : forall x:A, option (B x)), In x f \/ ~In x f.
+Proof.
+  intros *. unfold In.
+  destruct (f x) as [b|].
+  all: sfirstorder.
+Qed.
+
 Definition Support {A B} (l : list A) (f : forall x:A, option (B x)) : Prop :=
   forall (x:A) (y:B x), f x = Some y -> List.In x l.
 
@@ -196,6 +203,28 @@ Proof.
   - hauto lq: on use :@merge_spec2.
   - unfold merge_with, merge, In.
     hauto.
+Qed.
+
+Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
+    (forall x b1 b2, P x (m x b1 b2) -> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) -> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).
+Proof.
+  intros * h h0.
+  (* factoring of conclusion to avoid duplicating the proof. *)
+  assert (forall x, (forall (b : B x), f x = Some b -> P x b) /\ (forall (b : B x), g x = Some b -> P x b)).
+  2:{ sfirstorder. }
+  intros x. specialize (h0 x).
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
+  - erewrite merge_with_spec_1 in h0.
+    2:{ eauto. }
+    hecrush.
+  - erewrite merge_with_spec_2 in h0.
+    2: { eauto. }
+    hecrush.
+  - erewrite merge_with_spec_3 in h0.
+    2: { eauto. }
+    hecrush.
+  - erewrite merge_with_spec_4 in h0.
+    all: hfcrush.
 Qed.
 
 End Fun.
@@ -385,4 +414,14 @@ Proof.
   intros *.
   rewrite !In_spec, merge_with_spec0.
   hauto lq: on use: Fun.merge_with_spec_5.
+Qed.
+
+Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+    (forall x b1 b2, P x (m x b1 b2) -> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) -> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).
+Proof.
+  intros * h h0.
+  assert (forall (x : A) (b : B x), Fun.merge_with m f g x = Some b -> P x b) as h0'.
+  { sfirstorder use: merge_with_spec0. }
+  apply Fun.merge_with_propagate_backward with (m:=m).
+  all: sfirstorder.
 Qed.
