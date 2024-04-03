@@ -241,9 +241,22 @@ Proof.
   - erewrite merge_with_spec_3 in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - erewrite merge_with_spec_4 in h_merge.
+  - sblast use: merge_with_spec_4.
+Qed.
+
+Lemma merge_with_propagate_forward_disjoint : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
+    (forall x, In x f -> In x g -> False) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
+Proof.
+  intros * h h1 h2 x b h_merge.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
+  - hauto l: on.
+  - erewrite merge_with_spec_2 in h_merge.
     2:{ eauto. }
     hauto l: on.
+  - erewrite merge_with_spec_3 in h_merge.
+    2:{ eauto. }
+    hauto l: on.
+  - hauto lq: on use: merge_with_spec_4.
 Qed.
 
 Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
@@ -465,6 +478,13 @@ Proof.
   sfirstorder use: Fun.merge_with_propagate_forward.
 Qed.
 
+Lemma merge_with_propagate_forward_disjoint : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+    (forall x, In x f -> In x g -> False) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
+Proof.
+  intros * h h1 h2 x b.
+  erewrite merge_with_spec0.
+  sfirstorder use: Fun.merge_with_propagate_forward_disjoint.
+Qed.
 
 Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
     (forall x b1 b2, P x (m x b1 b2) <-> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) <-> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).

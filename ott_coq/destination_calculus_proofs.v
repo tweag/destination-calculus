@@ -123,13 +123,7 @@ Proof.
         destruct h'.
       * apply mode_plus_not_lin_nu in h'.
         destruct h'.
-  - intros [h_G1 [h_G2 h_disjoint]] n b h_union.
-    unfold ctx_union in *.
-    destruct (In_dec n G1) as [[b1 h_inG1]|h_ninG1]; destruct (In_dec n G2) as [[b2 h_inG2]|h_ninG2]. all: rewrite ?In_None2 in *.
-    + sfirstorder unfold: ctx_Disjoint.
-    + hauto lq: on use: merge_with_spec_2.
-    + hauto lq: on use: merge_with_spec_3.
-    + hauto lq: on use: merge_with_spec_4.
+  - hfcrush use: merge_with_propagate_forward_disjoint.
 Qed.
 Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
 
