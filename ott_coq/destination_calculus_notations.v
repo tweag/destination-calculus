@@ -4,7 +4,7 @@ Require Import Ott.destination_calculus_ott.
 Require Import Ott.ext_nat.
 
 (* Var, holes and dests names : 15-19 *)
-Notation "'ʰmax(' H ')'" := (hdns_max_hnames H) (at level 0, no associativity).
+Notation "'ʰmax(' H ')'" := (hdns_max H) (at level 0, no associativity).
 Notation "h 'ʰ[' H '⩲' k ] " := (hdn_shift h H k) (at level 15, H at level 24, k at level 19, no associativity).
 
 (* Hole names sets : 21-24 *)
@@ -12,7 +12,7 @@ Notation "'ᴴ{' b , .. , c '}'" := (hdns_from_list (cons b .. (cons c nil) ..))
 Notation "H1 '∪' H2" := (HdnsM.union H1 H2) (at level 24, left associativity, H2 at next level).
 Notation "H 'ᴴ⩲' h" := (hdns_shift H h) (at level 21, h at level 19, no associativity).
 Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity).
-Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C) (at level 0, no associativity).
+Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C HdnsM.empty) (at level 0, no associativity).
 
 (* Terms : 40-59 *)
 Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).
