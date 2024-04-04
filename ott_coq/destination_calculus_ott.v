@@ -260,7 +260,7 @@ Fixpoint val_fill (va: val) (h':hdn) (H':hdns) (v':val) : val := match va with
 end.
 
 Definition ectxs_fill (C: ectxs) (h':hdn) (H' : hdns) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_AOpenFoc H v => ectx_AOpenFoc H (val_fill v h' H' v')
+  | ectx_AOpenFoc H v => ectx_AOpenFoc H (val_fill v h' H' v') (* TODO we need to update H!! *)
   | _ => c
 end) C.
 
@@ -526,10 +526,10 @@ Definition ctx_minus (G : ctx) : ctx :=
 Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
 
 Axiom ctx_hdn_shift_spec: forall (G : ctx) (H : hdns) (h': hdn), hdns_max H <= h' ->
-  forall (n : name) (tyb: binding_type_of n), let (n', tyb') := match n as e return binding_type_of e -> { n' : name & binding_type_of n' } with
+  forall (n : name) (tyb: binding_type_of n), (G n = Some tyb <-> let (n', tyb') := match n as e return binding_type_of e -> { n' : name & binding_type_of n' } with
     | name_Var x as nx => fun tyb => existT binding_type_of nx tyb
     | name_DH h as nh => fun tyb => if HdnsM.mem h H then existT binding_type_of (name_DH (h+h')) (cast_binding_rename h (h+h') tyb) else existT binding_type_of nh tyb
-    end tyb in (G n = Some tyb <-> (ctx_hdn_shift G H h') n' = Some tyb').
+    end tyb in (ctx_hdn_shift G H h') n' = Some tyb').
 
 (******************************************************************************
  * EVALUATION CONTEXTS

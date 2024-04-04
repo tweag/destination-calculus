@@ -444,7 +444,7 @@ Proof. Admitted.
 Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
 Proof. Admitted.
 
-Lemma ectxsSubLemma : forall (D1 D2 D3 : ctx) (h : hdn) (C : ectxs) (n : mode) (T U U0 : type) (v : val),
+Lemma ectxsSubLemma : forall (D1 D2 D3 : ctx) (h : hdn) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
   ctx_Disjoint D1 D2 ->
   ctx_Disjoint D1 D3 ->
   hdns_Disjoint hnamesꟲ(C) hnamesᴳ(ᴳ- D3) ->
@@ -454,12 +454,12 @@ Lemma ectxsSubLemma : forall (D1 D2 D3 : ctx) (h : hdn) (C : ectxs) (n : mode) (
   ctx_LinOnly D3 ->
   ctx_FinAgeOnly D3 ->
   ctx_ValidOnly D3 ->
-  ctx_Disjoint D1 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
-  ctx_Disjoint D2 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
-  ctx_Disjoint D3 ᴳ{+ h : ¹ν ⌊ U ⌋ n } ->
- D1 ⨄ n ᴳ· D2 ⨄ ᴳ{+ h : ¹ν ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
+  ctx_Disjoint D1 ᴳ{+ h : m ⌊ U ⌋ n } ->
+  ctx_Disjoint D2 ᴳ{+ h : m ⌊ U ⌋ n } ->
+  ctx_Disjoint D3 ᴳ{+ h : m ⌊ U ⌋ n } ->
+ D1 ⨄ (m · n) ᴳ· D2 ⨄ ᴳ{+ h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
  D2 ⨄ ᴳ- D3 ⫦ v : U ->
- D1 ⨄ n ᴳ· D3 ⊣ C ꟲ[ h ≔ hnamesᴳ( n ᴳ· (ᴳ- D3)) ‗ v ] : T ↣ U0.
+ D1 ⨄ m ᴳ· ᴳ-- (n ᴳ· ᴳ- D3) ⊣ C ꟲ[ h ≔ hnamesᴳ( n ᴳ· (ᴳ- D3)) ‗ v ] : T ↣ U0.
 Proof. Admitted.
 
 Lemma CompatibleLinFinOnlyIsExact : forall (D : ctx) (h : hdn) (T : type) (n : mode), ctx_LinOnly D -> ctx_FinAgeOnly D -> ctx_CompatibleDH D h (₊ ¹ν ⌊ T ⌋ n) -> D = ᴳ{+ h : ¹ν ⌊ T ⌋ n}.
