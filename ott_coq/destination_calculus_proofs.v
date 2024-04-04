@@ -214,12 +214,38 @@ Qed.
 Hint Rewrite <- DisjointMinusRightEquiv : propagate_down.
 
 Lemma DisjointNestedLeftEquiv : forall (D D' D'' : ctx), ctx_Disjoint (D ⨄ D') D'' <-> ctx_Disjoint D D'' /\ ctx_Disjoint D' D''.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_Disjoint, ctx_union.
+  split.
+  - intros h.
+    split.
+    all: intros x.
+    all: specialize (h x).
+    all: rewrite merge_with_spec_5 in h.
+    all: sfirstorder.
+  - intros h x.
+    rewrite merge_with_spec_5.
+    sfirstorder.
+Qed.
 Hint Rewrite DisjointNestedLeftEquiv : propagate_down.
 
 Lemma DisjointNestedRightEquiv : forall (D D' D'' : ctx), ctx_Disjoint D  (D' ⨄ D'') <-> ctx_Disjoint D D' /\ ctx_Disjoint D D''.
-Proof. Admitted.
+Proof.
+Proof.
+  intros *. unfold ctx_Disjoint, ctx_union.
+  split.
+  - intros h.
+    split.
+    all: intros x.
+    all: specialize (h x).
+    all: rewrite merge_with_spec_5 in h.
+    all: sfirstorder.
+  - intros h x.
+    rewrite merge_with_spec_5.
+    sfirstorder.
+Qed.
 Hint Rewrite DisjointNestedRightEquiv : propagate_down.
+
 Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
