@@ -180,7 +180,10 @@ Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D 
 Proof. Admitted.
 
 Lemma DisjointCommutative : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 <-> ctx_Disjoint G2 G1.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_Disjoint.
+  sfirstorder.
+Qed.
 
 Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
 Proof. Admitted.
