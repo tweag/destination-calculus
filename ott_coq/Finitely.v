@@ -8,6 +8,8 @@ From Hammer Require Import Hammer.
 From SMTCoq Require Import SMTCoq.
 Require MMaps.OrdList.
 Require Import Coq.Logic.Eqdep_dec.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Logic.ProofIrrelevance.
 
 Set Primitive Projections.
 
@@ -320,6 +322,16 @@ Record T A B := {
   }.
 Arguments underlying {A B}.
 Arguments support {A B}.
+
+Lemma ext_eq : forall {A B} (f g : T A B), (forall x, f x = g x) -> (f.(support) = g.(support)) -> f = g.
+Proof.
+  intros A B [f f_supp h_f] [g g_supp h_g] h_ext h_supp. cbn in *.
+  assert (f = g) as e.
+  { apply functional_extensionality_dep. assumption. }
+  subst g. subst g_supp.
+  f_equal.
+  apply proof_irrelevance.
+Qed.
 
 Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
 

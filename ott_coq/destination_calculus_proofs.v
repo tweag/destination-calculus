@@ -12,6 +12,7 @@ Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Logic.ProofIrrelevance.
 
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof.
@@ -276,15 +277,38 @@ Proof.
 Qed.
 
 Lemma EmptyIsDisjointRight : forall (G : ctx), ctx_Disjoint G ᴳ{}.
-Proof. Admitted.
+Proof.
+  sauto q: on unfold: ctx_Disjoint.
+Qed.
 
 Lemma StimesEmptyEq : forall (m : mode), m ᴳ· ᴳ{} = ᴳ{}.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_empty, empty, ctx_stimes, map. cbn.
+  f_equal.
+  apply proof_irrelevance.
+Qed.
+
 Lemma MinusEmptyEq : ᴳ- ᴳ{} = ᴳ{}.
-Proof. Admitted.
+Proof.
+  apply Finitely.ext_eq.
+  all: sfirstorder.
+Qed.
 
 Lemma UnionIdentityRight : forall (G : ctx), G = G ⨄ ᴳ{}.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros x. unfold ctx_union.
+    destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
+    + erewrite merge_with_spec_2.
+      2:{ eauto. }
+      eauto.
+    + erewrite merge_with_spec_4.
+      all: eauto.
+  - unfold ctx_union. destruct G. cbn.
+    rewrite app_nil_r. reflexivity.
+Qed.
+
 Lemma UnionIdentityLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
 Proof. Admitted.
 
