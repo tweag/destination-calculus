@@ -82,42 +82,22 @@ Proof.
   inversion 1.
 Qed.
 
+Lemma IsLinNuWkIsLin : forall (m : mode), mode_IsLinNu m -> mode_IsLin m.
+Proof.
+  intros *.
+  sauto lq: on.
+Qed.
+
+Lemma IsLinWkIsValid : forall (m : mode), mode_IsLin m -> mode_IsValid m. Proof.
+  intros m H. destruct H. apply (mode_IsValidProof (Lin, a)).
+Qed.
+
 Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
 Proof.
   intros b1 b2 h.
-  sauto lq: on use: mode_plus_not_lin.
+  apply IsLinNuWkIsLin in h.
+  sfirstorder use: mode_plus_not_lin.
 Qed.
-
-Lemma LinNuOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinNuOnly (G1 ⨄ G2) <-> ctx_LinNuOnly G1 /\ ctx_LinNuOnly G2 /\ ctx_Disjoint G1 G2.
-Proof.
-  intros *. unfold ctx_LinNuOnly.
-  apply merge_with_propagate_both_disjoint.
-  intros [xx|xh].
-  - intros [[[p1 a1]|] ?] [[[p2 a2]|] ?]. all: cbn. all:unfold mul_plus.
-    all: let rec t := solve
-                        [ discriminate
-                        | match goal with
-                          |  |- context [if ?x then _ else _] => destruct x
-                          end; t
-                        ]
-         in t.
-  - intros [[[? ?]|] ? ?|? [[? ?]|]] [[[? ?]|] ? ?|? [[? ?]|]]. all: cbn. all:unfold mul_plus.
-    all: let rec t := solve
-                        [ discriminate
-                        | match goal with
-                          |  |- context [if ?x then _ else _] => destruct x
-                          end; t
-                        ]
-         in t.
-Qed.
-Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
-
-Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
-Proof. Admitted.
-Hint Rewrite LinNuOnlyStimesEquiv : propagate_down.
-Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
 
 Lemma LinOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinOnly (G1 ⨄ G2) <-> ctx_LinOnly G1 /\ ctx_LinOnly G2 /\ ctx_Disjoint G1 G2.
 Proof.
@@ -137,14 +117,86 @@ Proof.
 Qed.
 Hint Rewrite LinOnlyUnionEquiv : propagate_down.
 
+Lemma LinNuOnlyWkLinOnly : forall (G : ctx), ctx_LinNuOnly G -> ctx_LinOnly G.
+Proof.
+  intros *.
+  sfirstorder use: IsLinNuWkIsLin.
+Qed.
+
+Lemma LinOnlyWkValidOnly : forall (G : ctx), ctx_LinOnly G -> ctx_ValidOnly G.
+Proof.
+  intros *.
+  sfirstorder use: IsLinWkIsValid.
+Qed.
+
+Lemma LinNuOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinNuOnly (G1 ⨄ G2) <-> ctx_LinNuOnly G1 /\ ctx_LinNuOnly G2 /\ ctx_Disjoint G1 G2.
+Proof.
+  intros *.
+  split.
+  - intros h.
+    assert (ctx_Disjoint G1 G2) as disj.
+    { hauto lq: on use: LinOnlyUnionEquiv, LinNuOnlyWkLinOnly. }
+    assert (ctx_LinNuOnly G1 /\ ctx_LinNuOnly G2).
+    2:{ hauto lq: on. }
+    unfold ctx_LinNuOnly, ctx_union in *.
+    eapply merge_with_propagate_backward_disjoint'.
+    { apply disj. }
+    eauto.
+  - intros h. unfold ctx_LinNuOnly, ctx_union in *.
+    apply merge_with_propagate_forward_disjoint.
+    all: sfirstorder.
+Qed.
+Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
+
+Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
+Proof. Admitted.
+Hint Rewrite LinNuOnlyStimesEquiv : propagate_down.
+Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
+
 Lemma FinAgeOnlyUnionBackward : forall (G1 G2 : ctx), ctx_FinAgeOnly (G1 ⨄ G2) -> ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply merge_with_propagate_backward.
+  intros [xx|xh]. all: cbn.
+  - intros [m1 ?] [m2 ?]. cbn.
+    match goal with
+    |  |- context [if ?x then _ else _] => destruct x
+    end.
+    2:{ inversion 1. }
+    unfold mode_plus.
+    destruct m1 as [[? [?|]]|]; destruct m2 as [[? [?|]]|]. all: unfold age_plus. all: cbn.
+    all:try solve[inversion 1].
+    (* Only one goal left *)
+    repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    all: sfirstorder.
+  - intros [m1 ? ?|? m1] [m2 ? ?|? m2]. all: cbn.
+    all: repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    all:try solve[inversion 1].
+    (* 2 goals left *)
+    all:destruct m1 as [[? [?|]]|]; destruct m2 as [[? [?|]]|]. all: unfold age_plus. all: cbn.
+    all:try solve[inversion 1].
+    (* 2 goals left *)
+    all: sfirstorder.
+Qed.
+
 Lemma FinAgeOnlyUnionBackward' : forall (G1 G2 : ctx), Basics.impl (ctx_FinAgeOnly (G1 ⨄ G2)) (ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2).
-Proof. Admitted.
+Proof.
+  exact FinAgeOnlyUnionBackward.
+Qed.
 Hint Rewrite FinAgeOnlyUnionBackward' : propagate_down.
 
 Lemma FinAgeOnlyUnionForward : forall (G1 G2 : ctx), (ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2 /\ ctx_Disjoint G1 G2) -> ctx_FinAgeOnly (G1 ⨄ G2).
-Proof. Admitted.
+Proof.
+  intros * h. unfold ctx_union, ctx_FinAgeOnly.
+  apply merge_with_propagate_forward_disjoint.
+  all: sfirstorder.
+Qed.
 
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
@@ -161,17 +213,6 @@ Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
 Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
-
-Lemma LinNuOnlyWkLinOnly : forall (G : ctx), ctx_LinNuOnly G -> ctx_LinOnly G.
-Proof. Admitted.
-Lemma LinOnlyWkValidOnly : forall (G : ctx), ctx_LinOnly G -> ctx_ValidOnly G.
-Proof. Admitted.
-
-Lemma IsLinNuWkIsLin : forall (m : mode), mode_IsLinNu m -> mode_IsLin m.
-Proof. Admitted.
-Lemma IsLinWkIsValid : forall (m : mode), mode_IsLin m -> mode_IsValid m. Proof.
-  intros m H. destruct H. apply (mode_IsValidProof (Lin, a)).
-Qed.
 
 Lemma DisjointStimesLeftEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint (m ᴳ· D) D' <-> ctx_Disjoint D D'.
 Proof.
