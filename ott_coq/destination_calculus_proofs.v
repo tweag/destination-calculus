@@ -350,6 +350,9 @@ Proof. Admitted.
 
 Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
 Proof. Admitted.
+
+Lemma UnionCommutative' : forall (G1 G2 : ctx) x, (G1 ⨄ G2) x = (G2 ⨄ G1) x.
+Proof. Admitted.
 Lemma UnionAssociative : forall (G1 G2 G3 : ctx), G1 ⨄ (G2 ⨄ G3) = (G1 ⨄ G2) ⨄ G3.
 Proof. Admitted.
 
@@ -440,7 +443,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative, UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
 
 Ltac crush :=
   solve
@@ -752,7 +755,7 @@ Proof.
       rewrite <- hnamesFullShiftEq.
       rewrite MinusHdnShiftEq.
       assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD. { apply (Ty_ectxs_LinFinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0). tauto. }
-      constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (T' := T') (U0 := U0) (U := U) (D2 := 
+      constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12).
         { apply LinOnlyUnionEquiv. rewrite <- UnionAssociative. rewrite UnionCommutative. tauto. }
         {
@@ -1048,7 +1051,7 @@ Proof.
     * exists (C ∘ ⬜⨞(λ x ⁔ m ⟼ u)), t. constructor; tauto.
   - rename Tyt into TyFillC, Tyt0 into Tyt, t0 into t, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. destruct (term_NotVal_dec t').
-      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ n); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename TyRv0 into TyRvp. inversion TyRvp; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } rename D1 into D', D0 into D1, D3 into D2, D4 into D3. 
+      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ n); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename TyRv0 into TyRvp. inversion TyRvp; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } rename D1 into D', D0 into D1, D3 into D2, D4 into D3.
       exists
         ( C ©️[ h ≔ hnamesᴳ( ᴳ- D3) ᴴ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h}) ‗  v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h})] ] ),
         (ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h})]).
