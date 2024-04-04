@@ -120,6 +120,13 @@ Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B
   | None => None
   end.
 
+Lemma map_In : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) x, In x f <-> In x (map m f).
+Proof.
+  intros *. unfold In, map.
+  destruct (f x).
+  all: hauto lq: on.
+Qed.
+
 Definition map_support : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) l, Support l f -> Support l (map m f).
 Proof.
   intros * h. unfold Support, map in *.
@@ -410,6 +417,13 @@ Qed.
 Lemma map_spec0 : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = Fun.map m f x.
 Proof.
   trivial.
+Qed.
+
+Lemma map_In : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) x, In x f <-> In x (map m f).
+Proof.
+  intros *. unfold In, Fun.In.
+  rewrite map_spec0.
+  apply Fun.map_In.
 Qed.
 
 #[program]

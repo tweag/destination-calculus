@@ -154,19 +154,63 @@ Lemma IsLinWkIsValid : forall (m : mode), mode_IsLin m -> mode_IsValid m. Proof.
 Qed.
 
 Lemma DisjointStimesLeftEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint (m ᴳ· D) D' <-> ctx_Disjoint D D'.
-Proof. Admitted.
+Proof.
+  (* This proof, and the similar ones below are more complicated than
+    they ought to because we can't rewrite under foralls. I [aspiwack]
+    am however unwilling to spend the time and find a better way,
+    copy-paste will do. *)
+  intros *. unfold ctx_Disjoint, ctx_stimes.
+  split.
+  - intros h x.
+    specialize (h x).
+    rewrite <- map_In in h.
+    trivial.
+  - intros h x.
+    rewrite <- map_In.
+    eauto.
+Qed.
 Hint Rewrite DisjointStimesLeftEquiv : propagate_down.
 
 Lemma DisjointStimesRightEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint D (m ᴳ· D') <-> ctx_Disjoint D D'.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_Disjoint, ctx_stimes.
+  split.
+  - intros h x.
+    specialize (h x).
+    rewrite <- map_In in h.
+    trivial.
+  - intros h x.
+    rewrite <- map_In.
+    eauto.
+Qed.
 Hint Rewrite DisjointStimesRightEquiv : propagate_down.
 
 Lemma DisjointMinusLeftEquiv : forall (D D' : ctx), ctx_Disjoint D D' <-> ctx_Disjoint (ᴳ-D) D'.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_Disjoint, ctx_minus.
+  split.
+  - intros h x.
+    rewrite <- map_In.
+    eauto.
+  - intros h x.
+    specialize (h x).
+    rewrite <- map_In in h.
+    trivial.
+Qed.
 Hint Rewrite <- DisjointMinusLeftEquiv : propagate_down.
 
 Lemma DisjointMinusRightEquiv : forall (D D' : ctx), ctx_Disjoint D D' <-> ctx_Disjoint D (ᴳ-D').
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_Disjoint, ctx_minus.
+  split.
+  - intros h x.
+    rewrite <- map_In.
+    eauto.
+  - intros h x.
+    specialize (h x).
+    rewrite <- map_In in h.
+    trivial.
+Qed.
 Hint Rewrite <- DisjointMinusRightEquiv : propagate_down.
 
 Lemma DisjointNestedLeftEquiv : forall (D D' D'' : ctx), ctx_Disjoint (D ⨄ D') D'' <-> ctx_Disjoint D D'' /\ ctx_Disjoint D' D''.
