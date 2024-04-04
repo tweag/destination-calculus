@@ -69,43 +69,45 @@ Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnl
 Proof. Admitted.
 Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
 
-Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
+Lemma mode_plus_not_lin : forall b1 b2, ~mode_IsLin (mode_plus b1 b2).
 Proof.
   intros [[q1 [a1|]]|].
-  2:{ cbn. hauto lq: on. }
-  2:{ cbn. hauto lq: on. }
-  intros [[q2 [a2|]]|].
-  2:{ cbn. hauto lq: on. }
-  2:{ cbn. hauto lq: on. }
-  cbn.
-  destruct (HdnsM.MF.eq_dec a1 a2) as [?|?].
-  2:{ cbn. hauto lq: on. }
+  2:{ cbn.  sauto q: on. }
+  2:{ cbn. sauto lq: on. }
+  intros [[q2 [a2|]]|]. all: cbn.
+  2:{ cbn. sauto lq: on. }
+  2:{ cbn. sauto lq: on. }
+  cbn. unfold mul_plus.
   inversion 1.
+Qed.
+
+Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
+Proof.
+  intros b1 b2 h.
+  sauto lq: on use: mode_plus_not_lin.
 Qed.
 
 Lemma LinNuOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinNuOnly (G1 ⨄ G2) <-> ctx_LinNuOnly G1 /\ ctx_LinNuOnly G2 /\ ctx_Disjoint G1 G2.
 Proof.
   intros *. unfold ctx_LinNuOnly.
-  split.
-  - apply merge_with_propagate_backward_disjoint.
-    intros [xx|xh].
-    + intros [[[p1 a1]|] ?] [[[p2 a2]|] ?]. all: cbn. all:unfold mul_plus.
-      all: let rec t := solve
-                          [ discriminate
-                          | match goal with
-                            |  |- context [if ?x then _ else _] => destruct x
-                            end; t
-                          ]
-           in t.
-    + intros [[[? ?]|] ? ?|? [[? ?]|]] [[[? ?]|] ? ?|? [[? ?]|]]. all: cbn. all:unfold mul_plus.
-      all: let rec t := solve
-                          [ discriminate
-                          | match goal with
-                            |  |- context [if ?x then _ else _] => destruct x
-                            end; t
-                          ]
-           in t.
-  - hfcrush use: merge_with_propagate_forward_disjoint.
+  apply merge_with_propagate_both_disjoint.
+  intros [xx|xh].
+  - intros [[[p1 a1]|] ?] [[[p2 a2]|] ?]. all: cbn. all:unfold mul_plus.
+    all: let rec t := solve
+                        [ discriminate
+                        | match goal with
+                          |  |- context [if ?x then _ else _] => destruct x
+                          end; t
+                        ]
+         in t.
+  - intros [[[? ?]|] ? ?|? [[? ?]|]] [[[? ?]|] ? ?|? [[? ?]|]]. all: cbn. all:unfold mul_plus.
+    all: let rec t := solve
+                        [ discriminate
+                        | match goal with
+                          |  |- context [if ?x then _ else _] => destruct x
+                          end; t
+                        ]
+         in t.
 Qed.
 Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
 

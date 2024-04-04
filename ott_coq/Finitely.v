@@ -294,6 +294,15 @@ Proof.
     all: sfirstorder.
 Qed.
 
+Lemma merge_with_propagate_both_disjoint : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
+    (forall x b1 b2, ~P x (m x b1 b2)) -> (forall x b, merge_with m f g x = Some b -> P x b) <-> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b)/\(forall x, In x f -> In x g -> False).
+Proof.
+  intros * h.
+  split.
+  - hfcrush use: merge_with_propagate_backward_disjoint.
+  - sfirstorder use: merge_with_propagate_forward_disjoint.
+Qed.
+
 End Fun.
 
 (* Optionally, we could make a notation for this type. Something like "finitely (x:A), B". *)
@@ -528,4 +537,13 @@ Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : 
   - intros [? ?].
     eapply merge_with_propagate_forward.
     all: sfirstorder.
+Qed.
+
+Lemma merge_with_propagate_both_disjoint : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+    (forall x b1 b2, ~P x (m x b1 b2)) -> (forall x b, merge_with m f g x = Some b -> P x b) <-> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b)/\(forall x, In x f -> In x g -> False).
+Proof.
+  intros * h.
+  split.
+  - hfcrush use: merge_with_propagate_backward_disjoint.
+  - sfirstorder use: merge_with_propagate_forward_disjoint.
 Qed.
