@@ -255,14 +255,26 @@ Proof.
   sfirstorder.
 Qed.
 
-Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_ValidOnly *)
-Proof. Admitted.
-Lemma EmptyIsFinAgeOnly : ctx_FinAgeOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_FinAgeOnly *)
-Proof. Admitted.
-Lemma EmptyIsDestOnly : ctx_DestOnly ᴳ{}. (* TODO remove when we have actual definition of ctx_DestOnly *)
-Proof. Admitted.
+Lemma EmptyIsLinOnly : ctx_LinOnly ᴳ{}.
+Proof.
+  scongruence unfold: ctx_LinOnly.
+Qed.
+
+Lemma EmptyIsFinAgeOnly : ctx_FinAgeOnly ᴳ{}.
+Proof.
+  scongruence unfold: ctx_FinAgeOnly.
+Qed.
+
+Lemma EmptyIsDestOnly : ctx_DestOnly ᴳ{}.
+Proof.
+  sauto q: on unfold: ctx_DestOnly.
+Qed.
+
 Lemma EmptyIsDisjointLeft : forall (G : ctx), ctx_Disjoint ᴳ{} G.
-Proof. Admitted.
+Proof.
+  sauto q: on unfold: ctx_Disjoint.
+Qed.
+
 Lemma EmptyIsDisjointRight : forall (G : ctx), ctx_Disjoint G ᴳ{}.
 Proof. Admitted.
 
