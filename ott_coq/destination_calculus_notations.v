@@ -12,7 +12,7 @@ Notation "'ᴴ{' b , .. , c '}'" := (hdns_from_list (cons b .. (cons c nil) ..))
 Notation "H1 '∪' H2" := (HdnsM.union H1 H2) (at level 24, left associativity, H2 at next level).
 Notation "H 'ᴴ⩲' h" := (hdns_shift H h) (at level 21, h at level 19, no associativity).
 Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity).
-Notation "'hnamesꟲ(' C ')'" := (hdns_from_ectxs C HdnsM.empty) (at level 0, no associativity).
+Notation "'hnames©(' C ')'" := (hdns_from_ectxs C HdnsM.empty) (at level 0, no associativity).
 
 (* Terms : 40-59 *)
 Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).
@@ -48,9 +48,9 @@ Notation "H '⟨' v '❟' w '⟩'" := (val_A H v w) (at level 31, no associativi
 Notation "v 'ᵛ[' H '⩲' k ] " := (val_hdn_shift v H k) (at level 30, H at level 24, k at level 19, no associativity).
 
 (* Evaluation context stack : 60 - 64 *)
-Notation "'ꟲ⬜'" := nil.
+Notation "'©️⬜'" := nil.
 Notation "C '∘' c" := (cons c C) (at level 63, left associativity, c at next level).
-Notation "C 'ꟲ[' h '≔' H '‗' v ]" := (ectxs_fill C h H v) (at level 61, h at level 19, H at level 24, v at level 59, left associativity).
+Notation "C '©️[' h '≔' H '‗' v ]" := (ectxs_fill C h H v) (at level 61, h at level 19, H at level 24, v at level 59, left associativity).
 
 (* Evaluation contexts : 40-59 *)
 Notation "'⬜≻' u" := (ectx_AppFoc1 u) (at level 42, no associativity, u at next level).
@@ -109,7 +109,8 @@ Notation "'ᴳ{+' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (tyb_De
 Notation "'ᴳ{-' h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (tyb_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
 Notation "m 'ᴳ·' G" := (ctx_stimes m G) (at level 63, G at level 63, right associativity).
 Notation "G '⨄' H" := (ctx_union G H) (at level 64, left associativity, H at next level).
-Notation "ᴳ- G" := (ctx_minus G) (at level 62, no associativity, G at next level).
+Notation "'ᴳ-' G" := (ctx_minus G) (at level 62, no associativity, G at next level).
+Notation "'ᴳ-⁻¹' G" := (ctx_invminus G) (at level 62, no associativity, G at next level).
 Notation "G 'ᴳ[' H '⩲' k ]" := (ctx_hdn_shift G H k) (at level 61, H at level 24, k at level 19, no associativity).
 
 (* Typing and semantics : 70 - 79 *)

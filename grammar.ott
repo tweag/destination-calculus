@@ -221,6 +221,7 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ co
   | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
   | G1 ⨄ G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
   | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
+  | － G :: M :: iM {{ coq (ctx_invminus [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex -^{-1}[[G]] }}
   | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_hdn_shift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshdn{[}[[H]][[⩲]][[h']]\ottshdn{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
@@ -594,6 +595,18 @@ Definition ctx_minus (G : ctx) : ctx :=
       | tyb_Dest (Some (Lin, (Fin 0))) T n => tyb_Hole T n
       | tyb_Dest _ _ _ => tyb_Dest None type_U None
       | tyb_Hole _ _ => tyb_Hole type_U None
+      end
+    end
+  ) G.
+
+Definition ctx_invminus (G : ctx) : ctx :=
+  Finitely.map (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => fun tyb => tyb_Var None type_U
+    | name_DH _ => fun tyb => match tyb with
+      | tyb_Dest _ _ _ => tyb_Dest None type_U None
+      | tyb_Hole T n => tyb_Dest (Some (Lin, (Fin 0))) T n
+      (* TODO: should we check that n is valid? *)
       end
     end
   ) G.

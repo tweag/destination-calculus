@@ -523,6 +523,18 @@ Definition ctx_minus (G : ctx) : ctx :=
     end
   ) G.
 
+Definition ctx_invminus (G : ctx) : ctx :=
+  Finitely.map (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => fun tyb => tyb_Var None type_U
+    | name_DH _ => fun tyb => match tyb with
+      | tyb_Dest _ _ _ => tyb_Dest None type_U None
+      | tyb_Hole T n => tyb_Dest (Some (Lin, (Fin 0))) T n
+      (* TODO: should we check that n is valid? *)
+      end
+    end
+  ) G.
+
 Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
 
 Axiom ctx_hdn_shift_spec: forall (G : ctx) (H : hdns) (h': hdn), hdns_max H <= h' ->
