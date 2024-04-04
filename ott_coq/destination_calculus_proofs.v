@@ -120,7 +120,21 @@ Proof. Admitted.
 Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
 
 Lemma LinOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_LinOnly (G1 ⨄ G2) <-> ctx_LinOnly G1 /\ ctx_LinOnly G2 /\ ctx_Disjoint G1 G2.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply merge_with_propagate_both_disjoint.
+  intros [xx|xh]. all: cbn.
+  - intros [? ?] [? ?]. cbn.
+    match goal with
+    |  |- context [if ?x then _ else _] => destruct x
+    end.
+    all: sauto lq: on use: mode_plus_not_lin.
+  - intros [? ? ?|? ?] [? ? ?|? ?]. all: cbn.
+    all: repeat match goal with
+    |  |- context [if ?x then _ else _] => destruct x
+    end.
+    all: sauto lq: on use: mode_plus_not_lin.
+Qed.
 Hint Rewrite LinOnlyUnionEquiv : propagate_down.
 
 Lemma FinAgeOnlyUnionBackward : forall (G1 G2 : ctx), ctx_FinAgeOnly (G1 ⨄ G2) -> ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2.
