@@ -653,7 +653,16 @@ Ltac crush :=
     | hauto_ctx ].
 
 Lemma empty_support_Empty : forall (G : ctx), support G = nil -> G = ᴳ{}.
-Proof. Admitted.
+Proof.
+  intros * h.
+  apply ext_eq.
+  2:{ cbn. trivial. }
+  intros x. cbn.
+  destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
+  - apply support_supports in h_inG.
+    sauto q: on use: in_nil.
+  - trivial.
+Qed.
 
 Lemma Ty_ectxs_hnames_Disjoint : forall (C : ectxs) (D D' : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), hdns_Disjoint hnames©(C) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
