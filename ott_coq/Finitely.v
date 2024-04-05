@@ -84,6 +84,19 @@ Proof.
   hauto lq: on use: In_supported.
 Qed.
 
+(* Not the most general statement: we only need finite preimages for elements in f's support. *)
+Lemma precomp_support : forall {A B C} (g:A->B) (preimg : B -> list A) (f : forall x:B, option (C x)) (l : list B),
+    (forall x w, g w = x -> List.In w (preimg x)) -> Support l f ->
+    Support (flat_map preimg l) (fun w => f (g w)).
+Proof.
+  intros * h_preimg h_l. unfold Support in *.
+  intros w y h_w.
+  rewrite in_flat_map.
+  exists (g w).
+  split.
+  all: sfirstorder.
+Qed.
+
 Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) (y : A) : option (B y) :=
   match discr x y with
   | left e =>
