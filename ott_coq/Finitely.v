@@ -158,6 +158,26 @@ Proof.
   hauto lq: on.
 Qed.
 
+Lemma merge_commutative : forall {A B} (m : forall x:A, option (B x) -> option (B x) -> option (B x)) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) x,
+    (forall y1 y2, m x y1 y2 = m x y2 y1) -> merge m f g x = merge m g f x.
+Proof.
+  intros * h. unfold merge.
+  destruct (f x) as [yf|]; destruct (g x) as [yg|].
+  all: sfirstorder.
+Qed.
+
+(* Note, there are weaker requirements than requiring that `m x None
+   None = None` and `m` associative such as requiring that `m' = m`
+   except that `m' None None = None` is associative. But it isn't
+   clear that it's worth generalising. *)
+Lemma merge_associative : forall {A B} (m : forall x:A, option (B x) -> option (B x) -> option (B x)) (f g h: forall x:A, option (B x)) x,
+    (m x None None = None) -> (forall y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge m f (merge m g h) x = merge m (merge m f g) h x.
+Proof.
+  intros * H_None H. unfold merge.
+  destruct (f x) as [yf|]; destruct (g x) as [yg|]; destruct (h x) as [yh|]. all: cbn.
+  all: hauto l: on.
+Qed.
+
 Lemma merge_support : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) lf lg, Support lf f -> Support lg g -> Support (lf ++ lg) (merge m f g).
 Proof.
   intros * h_suppf h_suppg.
@@ -174,8 +194,8 @@ Definition merge_fun_of_with {A B} (m : forall x:A, B x -> B x -> B x) (x:A) (y1
   end.
 
 (* A most common instance of merge. *)
-Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) : option (B x) :=
-  merge (merge_fun_of_with m) f g x.
+Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) : forall (x:A), option (B x) :=
+  merge (merge_fun_of_with m) f g.
 
 Lemma merge_with_spec_1 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1 y2:B x),
     f x = Some y1 /\ g x = Some y2 -> merge_with m f g x = Some (m x y1 y2).
@@ -331,6 +351,23 @@ Proof.
   - sfirstorder use: merge_with_propagate_forward_disjoint.
 Qed.
 
+Lemma merge_with_commutative : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) x,
+    (forall y1 y2, m x y1 y2 = m x y2 y1) -> merge_with m f g x = merge_with m g f x.
+Proof.
+  intros * h. unfold merge_with.
+  apply merge_commutative. unfold merge_fun_of_with.
+  intros [] [].
+  all: sfirstorder.
+Qed.
+
+Lemma merge_with_associative : forall {A B} (m : forall x:A, B x -> B x -> B x) (f g h: forall x:A, option (B x)) x,
+    (forall y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge_with m f (merge_with m g h) x = merge_with m (merge_with m f g) h x.
+Proof.
+  intros * H. unfold merge_with.
+  apply merge_associative.
+  all: sauto.
+Qed.
+
 End Fun.
 
 (* Optionally, we could make a notation for this type. Something like "finitely (x:A), B". *)
@@ -479,8 +516,8 @@ Next Obligation.
   hauto lq: on use: support_supports, Fun.merge_support.
 Qed.
 
-Lemma merge_spec0 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x : A),
-    merge m f g x = Fun.merge m f g x.
+Lemma merge_spec0 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2),
+    (merge m f g).(underlying) = Fun.merge m f g.
 Proof.
   trivial.
 Qed.
@@ -613,4 +650,27 @@ Proof.
   split.
   - hfcrush use: merge_with_propagate_backward_disjoint.
   - sfirstorder use: merge_with_propagate_forward_disjoint.
+Qed.
+
+Lemma merge_with_commutative' : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) x,
+    (forall y1 y2, m x y1 y2 = m x y2 y1) -> merge_with m f g x = merge_with m g f x.
+Proof.
+  intros * h. rewrite merge_with_spec0.
+  sfirstorder use: Fun.merge_with_commutative.
+Qed.
+
+Lemma merge_with_associative' : forall {A B} (m : forall x:A, B x -> B x -> B x) (f g h: T A B) x,
+    (forall y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge_with m f (merge_with m g h) x = merge_with m (merge_with m f g) h x.
+Proof.
+  intros * h. rewrite merge_with_spec0.
+  sfirstorder use: Fun.merge_with_associative.
+Qed.
+
+Lemma merge_with_associative : forall {A B} (m : forall x:A, B x -> B x -> B x) (f g h: T A B),
+    (forall x y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge_with m f (merge_with m g h) = merge_with m (merge_with m f g) h.
+Proof.
+  intros * h.
+  apply ext_eq.
+  - sfirstorder use: merge_with_associative'.
+  - sfirstorder use: app_assoc.
 Qed.

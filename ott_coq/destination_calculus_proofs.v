@@ -417,7 +417,11 @@ Proof.
   all: sfirstorder.
 Qed.
 Lemma InvMinusEmptyEq : ᴳ-⁻¹ ᴳ{} = ᴳ{}.
-Proof. Admitted.
+Proof.
+  unfold ctx_invminus, empty, map. cbn.
+  apply ext_eq.
+  all: sfirstorder.
+Qed.
 
 Lemma UnionIdentityRight : forall (G : ctx), G = G ⨄ ᴳ{}.
 Proof.
@@ -435,18 +439,97 @@ Proof.
 Qed.
 
 Lemma UnionIdentityLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros x. unfold ctx_union.
+    destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
+    + erewrite merge_with_spec_3.
+      2:{ eauto. }
+      eauto.
+    + erewrite merge_with_spec_4.
+      all: eauto.
+  - unfold ctx_union. destruct G. cbn.
+    reflexivity.
+Qed.
 
 Lemma DisjointDestOnlyVar : forall (G : ctx) (x : var) (m : mode) (T : type), ctx_DestOnly G -> ctx_Disjoint G (ᴳ{ x : m ‗ T}).
 Proof. Admitted.
 
+Lemma mode_plus_commutative : forall (m n: mode), mode_plus m n = mode_plus n m.
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
+  all: trivial.
+  (* 1 goal left *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?|]; destruct a2 as [?|].
+  all: unfold mul_plus, age_plus. all: cbn.
+  all: repeat match goal with
+         |  |- context [if ?x then _ else _] => destruct x
+         end.
+  all: congruence.
+Qed.
+
+Lemma mode_plus_associative : forall (m n o: mode), mode_plus m (mode_plus n o) = mode_plus (mode_plus m n) o.
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
+  all: trivial.
+  (* 1 goal left *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|].
+  all: unfold mul_plus, age_plus. all: cbn.
+  all: repeat match goal with
+         |  |- context [if ?x then _ else _] => destruct x
+         | H: context [if ?x then _ else _] |- _ => destruct x
+         end.
+  all: congruence.
+Qed.
+
+Lemma UnionCommutative' : forall (G1 G2 : ctx) x, (G1 ⨄ G2) x = (G2 ⨄ G1) x.
+Proof.
+  intros *. unfold ctx_union.
+  apply merge_with_commutative'.
+  destruct x as [xx|xh].
+  - intros [? ?] [? ?]. cbn.
+    repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    all: sfirstorder use: mode_plus_commutative.
+  - intros [? ? ?|? ?] [? ? ?|? ?]. all: cbn.
+    all: repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    all: sfirstorder use: mode_plus_commutative.
+Qed.
+
 Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
 Proof. Admitted.
 
-Lemma UnionCommutative' : forall (G1 G2 : ctx) x, (G1 ⨄ G2) x = (G2 ⨄ G1) x.
-Proof. Admitted.
 Lemma UnionAssociative : forall (G1 G2 G3 : ctx), G1 ⨄ (G2 ⨄ G3) = (G1 ⨄ G2) ⨄ G3.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_union.
+  apply merge_with_associative.
+  intros [xx|xh].
+  - intros [? ?] [? ?] [? ?]. cbn. unfold union_tyb_var.
+    repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    { rewrite mode_plus_associative. reflexivity. }
+    all: try sfirstorder.
+    (* 3 goals left *)
+    all: destruct m as [[? ?]|]; cbn.
+    all: sfirstorder.
+  - intros [? ? ?|? ?] [? ? ?|? ?] [? ? ?|? ?]. all: cbn. all: unfold union_tyb_dh.
+    all: repeat match goal with
+           |  |- context [if ?x then _ else _] => destruct x
+           end.
+    (* 94 goals *)
+    all: try solve[rewrite mode_plus_associative; reflexivity].
+    (* 92 goals left *)
+    all: try sfirstorder.
+    (* 16 goals left *)
+    all: try destruct m as [[? ?]|]; try destruct n as [[? ?]|]; cbn.
+    (* 58 goals *)
+    all: sfirstorder.
+Qed.
 
 Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
 Proof. Admitted.
