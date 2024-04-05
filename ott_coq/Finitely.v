@@ -133,7 +133,7 @@ Definition map_support : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : fora
 Proof.
   intros * h. unfold Support, map in *.
   intros x. specialize (h x).
-  destruct (f x) as [|y].
+  destruct (f x).
   - eauto.
   - intros ? [=].
 Qed.
@@ -455,6 +455,18 @@ Proof.
   intros *. unfold In, Fun.In.
   rewrite map_spec0.
   apply Fun.map_In.
+Qed.
+
+Lemma map_Mapsto : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
+Proof.
+  intros *.
+  rewrite map_spec0.
+  split.
+- intros issome.
+  unfold Fun.map in issome. destruct (f x) eqn:emap in issome.
+  assert (m x b = y) as e. { injection issome; tauto. } rewrite <- e.
+  exists b. tauto. congruence.
+- intros [z [eq1 eq2]]. unfold Fun.map. destruct (f x) eqn:emap. assert (b = z) as e. { injection eq1; tauto. } subst. tauto. congruence.
 Qed.
 
 #[program]

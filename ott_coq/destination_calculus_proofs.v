@@ -50,12 +50,49 @@ Proof.
   - hauto lq: on use: merge_with_spec_3.
   - hauto lq: on use: merge_with_spec_4.
 Qed.
-Lemma ValidOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) <-> ctx_ValidOnly G /\ mode_IsValid m.
-Proof. Admitted.
-Hint Rewrite ValidOnlyStimesEquiv : propagate_down.
-(* Lemma ValidOnlyMinusEquiv : forall (G : ctx), ctx_ValidOnly (ᴳ-G) <-> ctx_LinNuOnly G /\ ctx_DestOnly G.
-Proof. Admitted.
-Hint Rewrite ValidOnlyMinusEquiv : propagate_down. *)
+Lemma ValidOnlyStimesBackward : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) -> ctx_ValidOnly G.
+Proof.
+  intros *.
+  intros validmG.
+  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+      | ˣ _ => stimes_tyb_var m
+      | ʰ _ => stimes_tyb_dh m
+      end)
+    as mf.
+  unfold ctx_ValidOnly in *. intros n tyb mapstoG. specialize (validmG n (mf n tyb)).
+  assert ((m ᴳ· G) n = Some (mf n tyb)).
+    { eapply map_Mapsto. exists tyb. split. tauto. tauto. }
+  specialize (validmG H).
+  destruct n, tyb; cbn in validmG; try rename n into m0; cbn; destruct m0; try constructor; unfold mode_times in validmG; destruct m in validmG; cbn in validmG; try destruct p as (_, _) in validmG; tauto.
+Qed.
+
+Lemma ValidOnlyStimesBackward' : forall (m : mode) (G : ctx), Basics.impl (ctx_ValidOnly (m ᴳ· G)) (ctx_ValidOnly G).
+Proof.
+  exact ValidOnlyStimesBackward.
+Qed.
+Hint Rewrite ValidOnlyStimesBackward' : propagate_down.
+
+Lemma TimesIsValidEquiv : forall (m1 m2 : mode), mode_IsValid (m1 · m2) <-> mode_IsValid m1 /\ mode_IsValid m2.
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
+  all: sfirstorder.
+Qed.
+
+Lemma ValidOnlyStimesForward : forall (m : mode) (G : ctx), ctx_ValidOnly G /\ mode_IsValid m -> ctx_ValidOnly (m ᴳ· G).
+Proof.
+  intros * [validG validm].
+  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+      | ˣ _ => stimes_tyb_var m
+      | ʰ _ => stimes_tyb_dh m
+      end)
+    as mf.
+  unfold ctx_ValidOnly in *. intros n tyb mapstomapG. specialize (validG n).
+  assert (exists tyb', G n = Some tyb' /\ tyb = mf n tyb').
+    { eapply map_Mapsto. tauto. }
+  destruct H as (tyb' & H & e). specialize (validG tyb' H). subst.
+  destruct n, tyb'; cbn in validG; try rename n into m0; cbn; apply TimesIsValidEquiv; tauto. 
+Qed.
+
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
@@ -498,7 +535,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesEquiv, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
 
 Ltac crush :=
   solve
@@ -756,7 +793,7 @@ Proof.
         assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
         rewrite D11Eq.
         { assert (ctx_ValidOnly (¹↑ ᴳ· (D2 ⨄ D11))).
-          { rewrite ValidOnlyStimesEquiv. split.
+          { apply ValidOnlyStimesForward. split.
             - rewrite (UnionCommutative (D11 ⨄ D12) D2) in ValidOnlyD.
               rewrite UnionAssociative in ValidOnlyD.
               apply ValidOnlyUnionBackward in ValidOnlyD.
