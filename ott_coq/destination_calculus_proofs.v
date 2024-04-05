@@ -544,13 +544,39 @@ Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
 Proof. Admitted.
 
 Lemma TimesCommutative : forall (m n : mode), m · n = n · m.
-Proof. Admitted.
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|]. cbn.
+  all: trivial.
+  (* 1 goal left *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?|]; destruct a2 as [?|].
+  all: cbn.
+  all: sfirstorder use: PeanoNat.Nat.add_comm.
+Qed.
+
 Lemma TimesAssociative : forall (m1 m2 m3 : mode), m1 · (m2 · m3) = (m1 · m2) · m3.
-Proof. Admitted.
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
+  all: trivial.
+  (* 1 goal left *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|]. all: cbn.
+  all: sfirstorder use: PeanoNat.Nat.add_assoc.
+Qed.
+
 Lemma TimesIdentityRight : forall (m : mode), m · ¹ν = m.
-Proof. Admitted.
+Proof.
+  intros [[p a]|]. all: cbn.
+  2:{ trivial. }
+  destruct p as [|]; destruct a as [?|]. all: cbn.
+  all: hauto lq: on use: PeanoNat.Nat.add_0_r.
+Qed.
+
 Lemma TimesIdentityLeft : forall (m : mode), ¹ν · m = m.
-Proof. Admitted.
+Proof.
+  intros [[p a]|]. all: cbn.
+  2:{ trivial. }
+  destruct p as [|]; destruct a as [?|]. all: cbn.
+  all: hauto lq: on use: PeanoNat.Nat.add_0_l.
+Qed.
 
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
 Proof. Admitted.
