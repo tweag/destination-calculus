@@ -52,6 +52,13 @@ Proof.
   - hauto lq: on use: merge_with_spec_4.
 Qed.
 
+Lemma ValidOnlyUnionForward' : forall (G1 G2 : ctx), Basics.impl (ctx_ValidOnly G1 /\ ctx_ValidOnly G2 /\ ctx_Disjoint G1 G2) (ctx_ValidOnly (G1 ⨄ G2)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: ValidOnlyUnionForward.
+Qed.
+Hint Rewrite <- ValidOnlyUnionForward' : suffices.
+
 Lemma ValidOnlySingletonVar : forall x m T, ctx_ValidOnly ᴳ{ x : m ‗ T} <-> mode_IsValid m.
 Proof.
   intros *. unfold ctx_ValidOnly.
@@ -124,6 +131,13 @@ Proof.
   destruct H as (tyb' & H & e). specialize (validG tyb' H). subst.
   destruct n, tyb'; cbn in validG; try rename n into m0; cbn; apply TimesIsValidEquiv; tauto. 
 Qed.
+
+Lemma ValidOnlyStimesForward' : forall (m : mode) (G : ctx), Basics.impl (ctx_ValidOnly G /\ mode_IsValid m) (ctx_ValidOnly (m ᴳ· G)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: ValidOnlyStimesForward.
+Qed.
+Hint Rewrite <- ValidOnlyStimesForward' : suffices.
 
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
@@ -279,6 +293,13 @@ Proof.
   apply merge_with_propagate_forward_disjoint.
   all: sfirstorder.
 Qed.
+
+Lemma FinAgeOnlyUnionForward' : forall (G1 G2 : ctx), Basics.impl (ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2 /\ ctx_Disjoint G1 G2) (ctx_FinAgeOnly (G1 ⨄ G2)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: FinAgeOnlyUnionForward.
+Qed.
+Hint Rewrite <- FinAgeOnlyUnionForward' : suffices.
 
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
@@ -731,7 +752,7 @@ Ltac saturate :=
 
 Ltac crush :=
   let saturate' := (saturate; autorewrite with propagate_down in *) in
-  let finisher := hauto lq: on in
+  let finisher := solve [ hauto lq: on | rewrite_db suffices; hauto lq:on ] in
   let workhorse :=
     solve
       [ trivial
