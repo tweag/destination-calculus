@@ -157,9 +157,22 @@ Proof.
   sauto lq: on.
 Qed.
 
-Lemma IsLinWkIsValid : forall (m : mode), mode_IsLin m -> mode_IsValid m. Proof.
+Lemma IsLinNuWkIsLin' : forall (m : mode), Basics.impl (mode_IsLinNu m) (mode_IsLinNu m /\ mode_IsLin m).
+Proof.
+  sfirstorder use: IsLinNuWkIsLin.
+Qed.
+Hint Rewrite IsLinNuWkIsLin' : saturate.
+
+Lemma IsLinWkIsValid : forall (m : mode), mode_IsLin m -> mode_IsValid m.
+Proof.
   intros m H. destruct H. apply (mode_IsValidProof (Lin, a)).
 Qed.
+
+Lemma IsLinWkIsValid' : forall (m : mode), Basics.impl (mode_IsLin m) (mode_IsLin m /\ mode_IsValid m).
+Proof.
+  sfirstorder use: IsLinWkIsValid.
+Qed.
+Hint Rewrite IsLinWkIsValid' : saturate.
 
 Lemma mode_plus_not_lin_nu : forall b1 b2, ~mode_IsLinNu (mode_plus b1 b2).
 Proof.
@@ -707,7 +720,8 @@ Ltac saturate :=
         | _ =>
             (* Just rewrite once because otherwise would loop. *)
             (rewrite_strat outermost (hints saturate) in H);
-            (change P with (Blocked P) in H)
+            ( let P' := type of H in
+              change P' with (Blocked P') in H)
         end
     end;
   repeat match goal with
@@ -716,12 +730,16 @@ Ltac saturate :=
     end.
 
 Ltac crush :=
+  let saturate' := (saturate; autorewrite with propagate_down in *) in
+  let finisher := hauto lq: on in
   let workhorse :=
     solve
       [ trivial
       (* Saturate is slowish. So it's worth trying without it first. *)
-      | autorewrite with propagate_down in *; hauto lq: on
-      | saturate; autorewrite with propagate_down in *; hauto lq: on
+      | autorewrite with propagate_down in *; finisher
+      (* Saturate a second time because it isn't unlikely to uncover
+         something new after simplification. *)
+      | saturate'; solve [ finisher | saturate'; finisher ]
       (* ⬇️ should really be the last case because it can be quite slow. *)
       | hauto_ctx ]
   in
