@@ -5,6 +5,7 @@ Require Import Coq.Structures.Equalities.
 Require Import Coq.Structures.Orders.
 Require Import Coq.Structures.OrdersAlt.
 Require Import Coq.Structures.OrdersEx.
+Require Import Coq.Arith.Compare_dec.
 Require Import Coq.FSets.FMapList.
 Require Import Coq.FSets.FSetList.
 Require Import Coq.FSets.FMapFacts.
@@ -611,13 +612,23 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
-
-Axiom ctx_hdn_shift_spec: forall (G : ctx) (H : hdns) (h': hdn), hdns_max H <= h' ->
-  forall (n : name) (tyb: binding_type_of n), (G n = Some tyb <-> let (n', tyb') := match n as e return binding_type_of e -> { n' : name & binding_type_of n' } with
-    | name_Var x as nx => fun tyb => existT binding_type_of nx tyb
-    | name_DH h as nh => fun tyb => if HdnsM.mem h H then existT binding_type_of (name_DH (h+h')) (cast_binding_rename h (h+h') tyb) else existT binding_type_of nh tyb
-    end tyb in (ctx_hdn_shift G H h') n' = Some tyb').
+#[program]
+Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
+  {|
+    support := List.map (fun n => match n with
+      | name_Var x => name_Var x
+      | name_DH h => name_DH (hdn_shift h H h')
+    end) G.(support);
+    underlying := fun n => match n with
+      | name_Var x => G.(underlying) (name_Var x)
+      | name_DH h => G.(underlying) (name_DH (
+          match (ge_dec h h'), (HdnsM.mem (h-h') H) with
+          | left _, true => h-h'
+          | _, _ => h
+          end
+        ))
+      end;
+  |}.
 
 (******************************************************************************
  * EVALUATION CONTEXTS
