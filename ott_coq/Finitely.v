@@ -485,6 +485,27 @@ Proof.
   intros *. rewrite singleton_spec0. apply Fun.mapsto_singleton.
 Qed.
 
+(** Design note: precomp is defined using a subtype rather than a
+    precondition. Because this way, Program can defer the precondition
+    to an obligation.
+
+    e.g. (partially pseudo syntax, and very suboptimal preimage):
+
+    #[program]
+    Definition f = precomp (fun n => n-57) (fun n => [n .. n+57])) f'.
+    Next Obligation.
+      …
+ *)
+#[program]
+Definition precomp {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) : T A1 (fun w => B (g w)) :=
+  {|
+    underlying := fun w => f (g w);
+    support := List.flat_map preimg f.(support)
+  |}.
+Next Obligation.
+  sauto lq: on rew: off use: Fun.precomp_support.
+Qed.
+
 #[program]
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) : T A B2 :=
   {|
