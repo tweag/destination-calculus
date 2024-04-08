@@ -117,6 +117,12 @@ Proof.
   hauto q: on.
 Qed.
 
+Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Proof.
+  intros *. unfold singleton.
+  hauto dep: on.
+Qed.
+
 Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
   intros *. unfold singleton.
@@ -483,6 +489,12 @@ Qed.
 Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
   intros *. rewrite singleton_spec0. apply Fun.mapsto_singleton.
+Qed.
+
+Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Proof.
+  intros *. rewrite singleton_spec0.
+ apply Fun.singleton_spec_1.
 Qed.
 
 (** Design note: precomp is defined using a subtype rather than a

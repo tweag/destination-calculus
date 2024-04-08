@@ -51,6 +51,23 @@ Proof.
   - hauto lq: on use: merge_with_spec_3.
   - hauto lq: on use: merge_with_spec_4.
 Qed.
+
+Lemma ValidOnlySingletonVar : forall x m T, ctx_ValidOnly ᴳ{ x : m ‗ T} <-> mode_IsValid m.
+Proof.
+  intros *. unfold ctx_ValidOnly.
+  split.
+  - intros h.
+    specialize (h (ˣ x) (ₓ m ‗ T)). cbn in h.
+    apply h.
+    rewrite Fun.singleton_spec_1. reflexivity.
+  - intros h x' tyb hx'. unfold ctx_singleton in hx'. cbn.
+    rewrite mapsto_singleton in hx'.
+    rewrite eq_sigT_iff_eq_dep in hx'.
+    destruct hx'. cbn.
+    assumption.
+Qed.
+Hint Rewrite ValidOnlySingletonVar : propagate_down.
+
 Lemma ValidOnlyStimesBackward : forall (m : mode) (G : ctx), ctx_ValidOnly (m ᴳ· G) -> ctx_ValidOnly G.
 Proof.
   intros *.
@@ -72,6 +89,19 @@ Proof.
   exact ValidOnlyStimesBackward.
 Qed.
 Hint Rewrite ValidOnlyStimesBackward' : propagate_down.
+
+(* Potentially a fairly large lemma to prove. *)
+Lemma ValidJudgement_ValidOnly : forall G u T, G ⊢ u : T -> ctx_ValidOnly G.
+Proof. Admitted.
+
+(* Lemma stated so as not to lose information, as it'd otherwise lose
+   too much to be useful in an automatically rewriting tactic. *)
+Lemma ValidJudgement_ValidOnly' : forall G u T, Basics.impl (G ⊢ u : T) (G ⊢ u : T /\ ctx_ValidOnly G).
+Proof.
+  unfold Basics.impl.
+  eauto using ValidJudgement_ValidOnly.
+Qed.
+Hint Rewrite ValidJudgement_ValidOnly' : saturate.
 
 Lemma TimesIsValidEquiv : forall (m1 m2 : mode), mode_IsValid (m1 · m2) <-> mode_IsValid m1 /\ mode_IsValid m2.
 Proof.
@@ -663,13 +693,35 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq, ValidOnlySingletonVar, ValidOnlySingletonVar.
+
+(* Silly stuff to avoid matching hypotheses many times *)
+Definition Blocked (P : Prop) : Prop := P.
+
+Ltac saturate :=
+  (* This is an annoying machinery to rewrite in each hypothesis once. May be slow 🙁 *)
+  repeat match goal with
+    | H : ?P |- _ =>
+        lazymatch P with
+        | Blocked _ => fail
+        | _ =>
+            (* Just rewrite once because otherwise would loop. *)
+            (rewrite_strat outermost (hints saturate) in H);
+            (change P with (Blocked P) in H)
+        end
+    end;
+  repeat match goal with
+    | H : context[Blocked ?P] |- _ =>
+        change (Blocked P) with P in H
+    end.
 
 Ltac crush :=
   let workhorse :=
     solve
       [ trivial
+      (* Saturate is slowish. So it's worth trying without it first. *)
       | autorewrite with propagate_down in *; hauto lq: on
+      | saturate; autorewrite with propagate_down in *; hauto lq: on
       (* ⬇️ should really be the last case because it can be quite slow. *)
       | hauto_ctx ]
   in
