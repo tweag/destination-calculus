@@ -11,6 +11,7 @@ Require Import Coq.Structures.Equalities.
 Require Import Coq.Structures.Orders.
 Require Import Coq.Structures.OrdersAlt.
 Require Import Coq.Structures.OrdersEx.
+Require Import Coq.Arith.Compare_dec.
 Require Import Coq.FSets.FMapList.
 Require Import Coq.FSets.FSetList.
 Require Import Coq.FSets.FMapFacts.
@@ -535,13 +536,26 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx. Admitted.
-
-Axiom ctx_hdn_shift_spec: forall (G : ctx) (H : hdns) (h': hdn), hdns_max H <= h' ->
-  forall (n : name) (tyb: binding_type_of n), (G n = Some tyb <-> let (n', tyb') := match n as e return binding_type_of e -> { n' : name & binding_type_of n' } with
-    | name_Var x as nx => fun tyb => existT binding_type_of nx tyb
-    | name_DH h as nh => fun tyb => if HdnsM.mem h H then existT binding_type_of (name_DH (h+h')) (cast_binding_rename h (h+h') tyb) else existT binding_type_of nh tyb
-    end tyb in (ctx_hdn_shift G H h') n' = Some tyb').
+#[program]
+Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
+  {|
+    support := List.map (fun n => match n with
+      | name_Var x => name_Var x
+      | name_DH h => name_DH (hdn_shift h H h')
+    end) G.(support);
+    underlying := fun n => match n with
+      | name_Var x => G.(underlying) (name_Var x)
+      | name_DH h => G.(underlying) (name_DH (
+          match (ge_dec h h'), (HdnsM.mem (h-h') H) with
+          | left _, true => h-h'
+          | _, _ => h
+          end
+        ))
+      end;
+  |}.
+Next Obligation.
+  admit.
+Admitted.
 
 (******************************************************************************
  * EVALUATION CONTEXTS
@@ -866,7 +880,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_MapUnfoc : forall (C:ectxs) (x:var) (t':term) (v:val),
      Sem_eterm   (cons   (ectx_MapFoc x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
  | Sem_eterm_MapRedAOpenFoc : forall (C:ectxs) (H:hdns) (v2 v1:val) (x:var) (t':term) (h':hdn)
-     (hpMaxC: h' =  (hdns_max   (hdns_from_ectxs  C  HdnsM.empty)  )  ),
+     (hpMaxC: h' =  (  (hdns_max   (hdns_from_ectxs  C  HdnsM.empty)  )   +   1  )  ),
      Sem_eterm C (term_Map (term_Val (val_A H v2 v1)) x t')   (cons   (ectx_AOpenFoc  (hdns_shift  H   h' )   (val_hdn_shift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_hdn_shift  v1   H   h' )  ) 
  | Sem_eterm_AOpenUnfoc : forall (C:ectxs) (H:hdns) (v2 v1:val),
      Sem_eterm   (cons  (ectx_AOpenFoc H v2)   C )   (term_Val v1) C (term_Val (val_A H v2 v1))
@@ -899,7 +913,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillLUnfoc : forall (C:ectxs) (v:val),
      Sem_eterm   (cons   ectx_FillLFoc    C )   (term_Val v) C (term_FillL (term_Val v))
  | Sem_eterm_FillLRed : forall (C:ectxs) (h h':hdn)
-     (hpMaxCh: h' =  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )  ),
+     (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillL (term_Val (val_D h)))  (ectxs_fill  C   h    (hdns_from_list  (cons  ( h'  +   1  )  nil) )    (val_L (val_H   ( h'  +   1  )  )) )  (term_Val (val_D   ( h'  +   1  )  ))
  | Sem_eterm_FillRFoc : forall (C:ectxs) (t:term)
      (NotValt: term_NotVal t ),
@@ -907,7 +921,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillRUnfoc : forall (C:ectxs) (v:val),
      Sem_eterm   (cons   ectx_FillRFoc    C )   (term_Val v) C (term_FillR (term_Val v))
  | Sem_eterm_FillRRed : forall (C:ectxs) (h h':hdn)
-     (hpMaxCh: h' =  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )  ),
+     (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillR (term_Val (val_D h)))  (ectxs_fill  C   h    (hdns_from_list  (cons  ( h'  +   1  )  nil) )    (val_R (val_H   ( h'  +   1  )  )) )  (term_Val (val_D   ( h'  +   1  )  ))
  | Sem_eterm_FillEFoc : forall (C:ectxs) (t:term) (m:mode)
      (NotValt: term_NotVal t ),
@@ -915,7 +929,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillEUnfoc : forall (C:ectxs) (m:mode) (v:val),
      Sem_eterm   (cons   (ectx_FillEFoc m)    C )   (term_Val v) C (term_FillE (term_Val v) m)
  | Sem_eterm_FillERed : forall (C:ectxs) (h:hdn) (m:mode) (h':hdn)
-     (hpMaxCh: h' =  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )  ),
+     (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillE (term_Val (val_D h)) m)  (ectxs_fill  C   h    (hdns_from_list  (cons  ( h'  +   1  )  nil) )    (val_E m (val_H   ( h'  +   1  )  )) )  (term_Val (val_D   ( h'  +   1  )  ))
  | Sem_eterm_FillPFoc : forall (C:ectxs) (t:term)
      (NotValt: term_NotVal t ),
@@ -923,7 +937,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillPUnfoc : forall (C:ectxs) (v:val),
      Sem_eterm   (cons   ectx_FillPFoc    C )   (term_Val v) C (term_FillP (term_Val v))
  | Sem_eterm_FillPRed : forall (C:ectxs) (h h':hdn)
-     (hpMaxCh: h' =  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )  ),
+     (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillP (term_Val (val_D h)))  (ectxs_fill  C   h    (hdns_from_list  ((app (cons  ( h'  +   1  )  nil) (app (cons  ( h'  +   2  )  nil) nil))) )    (val_P (val_H   ( h'  +   1  )  ) (val_H   ( h'  +   2  )  )) )  (term_Val (val_P (val_D   ( h'  +   1  )  ) (val_D   ( h'  +   2  )  )))
  | Sem_eterm_FillFFoc : forall (C:ectxs) (t:term) (x:var) (m:mode) (u:term)
      (NotValt: term_NotVal t ),
@@ -943,7 +957,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillCUnfoc2 : forall (C:ectxs) (v v':val),
      Sem_eterm   (cons   (ectx_FillCFoc2 v)    C )   (term_Val v') C (term_FillC (term_Val v) (term_Val v'))
  | Sem_eterm_FillCRed : forall (C:ectxs) (h:hdn) (H:hdns) (v2 v1:val) (h':hdn)
-     (hpMaxCh: h' =  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )  ),
+     (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C  HdnsM.empty)     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillC (term_Val (val_D h)) (term_Val (val_A H v2 v1)))  (ectxs_fill  C   h     (hdns_shift  H   h' )      (val_hdn_shift  v2   H   h' )  )  (term_Val  (val_hdn_shift  v1   H   h' ) ).
 
 

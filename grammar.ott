@@ -629,6 +629,9 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
         ))
       end;
   |}.
+Next Obligation.
+  admit.
+Admitted.
 
 (******************************************************************************
  * EVALUATION CONTEXTS

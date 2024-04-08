@@ -13,6 +13,7 @@ Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
+Require Import Coq.Arith.Plus.
 
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof.
@@ -587,7 +588,7 @@ Proof. Admitted.
 Lemma DisjointTohdns_Disjoint : forall (D D' : ctx), ctx_Disjoint D D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D').
 Proof. Admitted.
 
-Lemma hdns_max_hdns_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) <= h' -> hdns_Disjoint H (H' ᴴ⩲ h').
+Lemma hdns_max_hdns_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) < h' -> hdns_Disjoint H (H' ᴴ⩲ h').
 Proof. Admitted.
 
 Lemma SubsetCtxUnionBackward : forall (G G': ctx) (H: hdns), HdnsM.Subset hnamesᴳ(G ⨄ G') H -> HdnsM.Subset hnamesᴳ(G) H /\ HdnsM.Subset hnamesᴳ(G') H.
@@ -904,11 +905,11 @@ Proof.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
       inversion TyRv; subst. rename D0 into D11, D3 into D12, D4 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
-      assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnames©(C))] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnames©(C))] : T) as Tyt1.
+      assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] : T) as Tyt1.
         { apply Ty_term_Val. apply TyR_v_hdn_shift. all: crush. }
-      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ ʰmax(hnames©(C))] ]); swap 3 4;
-        assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush );
-        assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
+      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ]); swap 3 4;
+        assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush );
+        assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
         rewrite D11Eq.
         { assert (ctx_ValidOnly (¹↑ ᴳ· (D2 ⨄ D11))).
           { apply ValidOnlyStimesForward. split.
@@ -918,20 +919,20 @@ Proof.
               tauto.
             - exact (mode_IsValidProof (Lin, Fin 1)).
           }
-          assert (ctx_ValidOnly (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+          assert (ctx_ValidOnly (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
           { apply ValidOnlyHdnShiftEquiv; tauto. }
-          assert (ctx_Disjoint (¹↑ ᴳ· (D2 ⨄ D11)) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+          assert (ctx_Disjoint (¹↑ ᴳ· (D2 ⨄ D11)) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
           { apply DisjointStimesLeftEquiv.
-            assert (ctx_Disjoint (D2 ⨄ D11) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])). {
+            assert (ctx_Disjoint (D2 ⨄ D11) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])). {
           {  apply DisjointNestedLeftEquiv. assert (HdnsM.Subset hnamesᴳ(D11 ⨄ D12 ⨄ D2) hnames©(C)).
               { apply hnames_CWkhnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
             { assert (HdnsM.Subset hnamesᴳ(D2) hnames©(C)).
               { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
               assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnames©(C)))).
-              { apply hdns_max_hdns_Disjoint. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
+              { apply hdns_max_hdns_Disjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
               { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
@@ -939,9 +940,9 @@ Proof.
               { apply SubsetCtxUnionBackward in H1. destruct H1. apply SubsetCtxUnionBackward in H1. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnames©(C)))).
-              { apply hdns_max_hdns_Disjoint. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
+              { apply hdns_max_hdns_Disjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
               { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
@@ -952,7 +953,7 @@ Proof.
           { crush. }
           { crush. }
         }
-        { assert (¹↑ ᴳ· (D2 ⨄ D11) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))] = (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) ⨄ ¹↑ ᴳ· D2) as ctxEq.
+        { assert (¹↑ ᴳ· (D2 ⨄ D11) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = (¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) ⨄ ¹↑ ᴳ· D2) as ctxEq.
           { rewrite <- StimesIdentity.
             rewrite UnionHdnShiftEq.
             rewrite StimesHdnShiftEq.
@@ -965,7 +966,7 @@ Proof.
       rewrite <- hnamesFullShiftEq.
       rewrite MinusHdnShiftEq.
       assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD. { apply (Ty_ectxs_LinFinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0). tauto. }
-      constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))]) (T' := T') (U0 := U0) (U := U) (D2 :=
+      constructor 19 with (D1 := D2 ⨄ D11) (D3 := D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12).
         { apply LinOnlyUnionEquiv. rewrite <- UnionAssociative. rewrite UnionCommutative. tauto. }
         {
@@ -975,9 +976,9 @@ Proof.
               { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
               assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnames©(C)))).
-              { apply hdns_max_hdns_Disjoint. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+              assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
+              { apply hdns_max_hdns_Disjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
               { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
@@ -985,15 +986,15 @@ Proof.
               { apply SubsetCtxUnionBackward in H. destruct H. apply SubsetCtxUnionBackward in H. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ ʰmax( hnames©(C)))).
-              { apply hdns_max_hdns_Disjoint. tauto. }
-              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ ʰmax( hnames©(C))])).
+              assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
+              { apply hdns_max_hdns_Disjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              assert (hdns_Disjoint hnamesᴳ(D11)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
               { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
           } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite UnionCommutative in TyC. rewrite UnionAssociative in TyC. tauto. }
           { rewrite <- D12Eq. rewrite <- MinusHdnShiftEq. rewrite <- UnionHdnShiftEq. apply TyR_v_hdn_shift. tauto.  }
-          { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hdns_Disjoint with (h' := ʰmax( hnames©(C))). reflexivity. }
+          { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hdns_Disjoint with (h' := ʰmax(hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
     - (* Sem-eterm-AOpenUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, TyRv into TyRv1. clear H2.
       inversion TyCc; subst. rename H6 into hdnsDisjoint.
@@ -1223,7 +1224,7 @@ Proof.
   - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
       rename D0 into D1, D2 into D', D3 into D2, D4 into D3.
-      exists (C ∘ hnamesᴳ( ᴳ- D3) ᴴ⩲ ʰmax(hnames©(C)) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax(hnames©(C))] ❟⬜), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax(hnames©(C))]]). constructor; tauto.
+      exists (C ∘ hnamesᴳ( ᴳ- D3) ᴴ⩲ (ʰmax(hnames©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ (ʰmax(hnames©(C)) + 1)] ❟⬜), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ (ʰmax(hnames©(C)) + 1)]]). constructor; tauto.
     * exists (C ∘ ⬜≻map x ⟼ t'), t. constructor; tauto.
   - rename Tyt into TyToA. destruct (term_NotVal_dec u).
     * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HdnsM.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.
@@ -1241,19 +1242,19 @@ Proof.
     * exists (C ∘ ⬜⨞()), t. constructor; tauto.
   - rename Tyt into TyFillL, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨁ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨁ T2 ⌋ n); tauto. }
-    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1} ‗ Inl ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1} ‗ Inl ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)). constructor; tauto.
     * exists (C ∘ ⬜⨞Inl), t. constructor; tauto.
   - rename Tyt into TyFillR, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨁ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨁ T2 ⌋ n); tauto. }
-    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1} ‗ Inr ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1} ‗ Inr ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)). constructor; tauto.
     * exists (C ∘ ⬜⨞Inr), t. constructor; tauto.
   - rename Tyt into TyFillP, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T1 ⨂ T2 ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T1 ⨂ T2 ⌋ n); tauto. }
-    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 , ʰmax( hnames©(C) ∪ ᴴ{ h}) + 2} ‗ ᵛ( ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1), ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 2))]), (ᵥ₎ ᵛ( ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1), ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 2))). constructor; tauto.
+    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1 , ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 2} ‗ ᵛ( ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1), ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 2))]), (ᵥ₎ ᵛ( ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1), ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 2))). constructor; tauto.
     * exists (C ∘ ⬜⨞(,)), t. constructor; tauto.
   - rename Tyt into TyFillE, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ ! n' ⁔ T ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ ! n' ⁔ T ⌋ n); tauto. }
-    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1} ‗ ᴇ n' ⁔ ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)). constructor; tauto.
+    exists (C ©️[ h ≔ ᴴ{ ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1} ‗ ᴇ n' ⁔ ᵛ- (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)]), (ᵥ₎ ᵛ+ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1 + 1)). constructor; tauto.
     * exists (C ∘ ⬜⨞ᴇ n'), t. constructor; tauto.
   - rename Tyt into TyFillF, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ T ⁔ m → U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⁔ m → U ⌋ n); tauto. }
@@ -1263,8 +1264,8 @@ Proof.
     * destruct e; subst. rename x into v. destruct (term_NotVal_dec t').
       + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h : ⌊ U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ n); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename TyRv0 into TyRvp. inversion TyRvp; subst. { exfalso. apply DestOnlyValHole with (D := ᴳ{- h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } rename D1 into D', D0 into D1, D3 into D2, D4 into D3.
       exists
-        ( C ©️[ h ≔ hnamesᴳ( ᴳ- D3) ᴴ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h}) ‗  v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h})] ] ),
-        (ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ ʰmax( hnames©(C) ∪ ᴴ{ h})]).
+        ( C ©️[ h ≔ hnamesᴳ( ᴳ- D3) ᴴ⩲ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1) ‗  v2 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)] ] ),
+        (ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D3) ⩲ (ʰmax( hnames©(C) ∪ ᴴ{ h}) + 1)]).
       constructor; tauto.
       + exists (C ∘ v ⨞·⬜), t'. constructor; tauto.
     * exists (C ∘ ⬜⨞· t'), t. constructor; tauto.
