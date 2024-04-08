@@ -78,6 +78,7 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
   all: sfirstorder.
 Qed.
+Hint Rewrite TimesIsValidEquiv : propagate_down.
 
 Lemma ValidOnlyStimesForward : forall (m : mode) (G : ctx), ctx_ValidOnly G /\ mode_IsValid m -> ctx_ValidOnly (m ᴳ· G).
 Proof.
