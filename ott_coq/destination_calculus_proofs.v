@@ -649,7 +649,8 @@ Ltac hauto_ctx :=
 
 Ltac crush :=
   solve
-    [ autorewrite with propagate_down in *; hauto lq: on
+    [ trivial
+    | autorewrite with propagate_down in *; hauto lq: on
     (* ⬇️ should really be the last case because it can be quite slow. *)
     | hauto_ctx ].
 
