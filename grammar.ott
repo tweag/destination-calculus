@@ -337,13 +337,45 @@ Fixpoint val_fill (va: val) (h':hdn) (H':hdns) (v':val) : val := match va with
 end.
 
 Definition ectxs_fill (C: ectxs) (h':hdn) (H' : hdns) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_AOpenFoc H v => ectx_AOpenFoc H (val_fill v h' H' v') (* TODO we need to update H!! *)
+  | ectx_AOpenFoc H v => ectx_AOpenFoc (HdnsM.union (HdnsM.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
-Definition val_hdn_shift (v : val) (H : hdns) (h' : hdn) : val. Admitted. (* TODO complete *)
+Fixpoint val_hdn_shift (va : val) (H : hdns) (h' : hdn) : val :=
+  match va with
+  | val_H h => val_H (hdn_shift h H h')
+  | val_D h => val_D (hdn_shift h H h')
+  | val_U => val_U
+  | val_F x m u => val_F x m (term_hdn_shift u H h') (* We can have dests captured in a function *)
+  | val_L v => val_L (val_hdn_shift v H h')
+  | val_R v => val_R (val_hdn_shift v H h')
+  | val_E m v => val_E m (val_hdn_shift v H h')
+  | val_P v1 v2 => val_P (val_hdn_shift v1 H h') (val_hdn_shift v2 H h')
+  | val_A H' v2 v1 => val_A H' (val_hdn_shift v2 H h') (val_hdn_shift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  end
+with term_hdn_shift (te : term) (H : hdns) (h' : hdn) : term :=
+  match te with
+  | term_Val v => term_Val (val_hdn_shift v H h')
+  | term_Var x => term_Var x
+  | term_App t t' => term_App (term_hdn_shift t H h') (term_hdn_shift t' H h')
+  | term_PatU t u => term_PatU (term_hdn_shift t H h') (term_hdn_shift u H h')
+  | term_PatS t m x1 u1 x2 u2 => term_PatS (term_hdn_shift t H h') m x1 (term_hdn_shift u1 H h') x2 (term_hdn_shift u2 H h')
+  | term_PatP t m x1 x2 u => term_PatP (term_hdn_shift t H h') m x1 x2 (term_hdn_shift u H h')
+  | term_PatE t m n x u => term_PatE (term_hdn_shift t H h') m n x (term_hdn_shift u H h')
+  | term_Map t x t' => term_Map (term_hdn_shift t H h') x (term_hdn_shift t' H h')
+  | term_ToA u => term_ToA (term_hdn_shift u H h')
+  | term_FromA t => term_FromA (term_hdn_shift t H h')
+  | term_Alloc => term_Alloc
+  | term_FillU t => term_FillU (term_hdn_shift t H h')
+  | term_FillL t => term_FillL (term_hdn_shift t H h')
+  | term_FillR t => term_FillR (term_hdn_shift t H h')
+  | term_FillE t m => term_FillE (term_hdn_shift t H h') m
+  | term_FillP t => term_FillP (term_hdn_shift t H h')
+  | term_FillF t x m u => term_FillF (term_hdn_shift t H h') x m (term_hdn_shift u H h')
+  | term_FillC t t' => term_FillC (term_hdn_shift t H h') (term_hdn_shift t' H h')
+end.
 
-Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v. (* put it to Type instead for shape info? *) (* TODO complete *)
+Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
 
 (******************************************************************************
  * TYPE
