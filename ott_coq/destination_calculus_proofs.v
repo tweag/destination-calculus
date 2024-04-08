@@ -119,17 +119,11 @@ Hint Rewrite TimesIsValidEquiv : propagate_down.
 
 Lemma ValidOnlyStimesForward : forall (m : mode) (G : ctx), ctx_ValidOnly G /\ mode_IsValid m -> ctx_ValidOnly (m ᴳ· G).
 Proof.
-  intros * [validG validm].
-  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
-      | ˣ _ => stimes_tyb_var m
-      | ʰ _ => stimes_tyb_dh m
-      end)
-    as mf.
-  unfold ctx_ValidOnly in *. intros n tyb mapstomapG. specialize (validG n).
-  assert (exists tyb', G n = Some tyb' /\ tyb = mf n tyb').
-    { eapply map_Mapsto. tauto. }
-  destruct H as (tyb' & H & e). specialize (validG tyb' H). subst.
-  destruct n, tyb'; cbn in validG; try rename n into m0; cbn; apply TimesIsValidEquiv; tauto. 
+  intros * [validG validm]. unfold ctx_ValidOnly, ctx_stimes in *.
+  apply map_propagate_forward'.
+  - eauto.
+  - intros [xx|xh] []. all: cbn.
+    all: sfirstorder use: TimesIsValidEquiv.
 Qed.
 
 Lemma ValidOnlyStimesForward' : forall (m : mode) (G : ctx), Basics.impl (ctx_ValidOnly G /\ mode_IsValid m) (ctx_ValidOnly (m ᴳ· G)).
@@ -147,7 +141,13 @@ Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ct
 Proof. Admitted.
 Hint Rewrite DestOnlyUnionEquiv : propagate_down.
 Lemma DestOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_DestOnly G <-> ctx_DestOnly (m ᴳ· G).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_DestOnly, ctx_stimes.
+  rewrite map_propagate_both'.
+  { sfirstorder. }
+  unfold IsDest.
+  hauto lq: on.
+Qed.
 Hint Rewrite <- DestOnlyStimesEquiv : propagate_down.
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
@@ -301,10 +301,12 @@ Proof.
 Qed.
 Hint Rewrite <- FinAgeOnlyUnionForward' : suffices.
 
+(* TODO: Lemma not true. *)
 Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
 Proof. Admitted.
 Hint Rewrite LinOnlyStimesEquiv : propagate_down.
 
+(* TODO: Lemma not true. *)
 Lemma FinAgeOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_FinAgeOnly (m ᴳ· G) <-> ctx_FinAgeOnly G /\ mode_IsFinAge m.
 Proof. Admitted.
 Hint Rewrite FinAgeOnlyStimesEquiv : propagate_down.
@@ -611,18 +613,6 @@ Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m �
 Proof. Admitted.
 (* TODO: add to canonalize? *)
 
-Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m · n) ᴳ· G.
-Proof. Admitted.
-Hint Rewrite StimesIsAction : canonalize.
-
-Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 ⨄ G2) = m ᴳ· G1 ⨄ m ᴳ· G2.
-Proof. Admitted.
-Hint Rewrite StimesUnionDistributive : canonalize.
-
-Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
-Proof. Admitted.
-Hint Rewrite <- StimesIdentity : canonalize.
-
 Lemma TimesCommutative : forall (m n : mode), m · n = n · m.
 Proof.
   intros [[p1 a1]|] [[p2 a2]|]. cbn.
@@ -660,6 +650,32 @@ Proof.
   all: hauto lq: on use: PeanoNat.Nat.add_0_l.
 Qed.
 Hint Rewrite TimesIdentityLeft : canonalize.
+
+Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m · n) ᴳ· G.
+Proof.
+  intros *.
+  apply ext_eq.
+  2:{ reflexivity. }
+  intros x. unfold ctx_stimes.
+  rewrite map_comp.
+  apply map_ext. clear x.
+  intros [xx|xh].
+  - apply functional_extensionality. cbn.
+    intros [? ?]. cbn.
+    sfirstorder use: TimesAssociative.
+  - apply functional_extensionality. cbn.
+    intros [? ? ?|? ?]. all: cbn.
+    all: sfirstorder use: TimesAssociative.
+Qed.
+Hint Rewrite StimesIsAction : canonalize.
+
+Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 ⨄ G2) = m ᴳ· G1 ⨄ m ᴳ· G2.
+Proof. Admitted.
+Hint Rewrite StimesUnionDistributive : canonalize.
+
+Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
+Proof. Admitted.
+Hint Rewrite <- StimesIdentity : canonalize.
 
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
 Proof. Admitted.
@@ -1129,7 +1145,8 @@ Proof.
         { rewrite <- hnamesD3Eq. apply Ty_term_Val. rewrite (UnionIdentityLeft ᴳ{}). apply TyR_val_A.
           - crush.
           - crush.
-          - intros n. unfold ctx_singleton. rewrite in_singleton. intros H; subst. cbv; tauto.
+          - intros n b. unfold ctx_singleton. rewrite mapsto_singleton. rewrite eq_sigT_iff_eq_dep.
+            intros []. cbv. tauto.
           - intros n tyb. unfold ctx_singleton. rewrite mapsto_singleton. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
           assert (tyb = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
             constructor.
@@ -1281,7 +1298,7 @@ Qed.
 Lemma DestOnlyValHole : forall (D : ctx) (h : hdn) (T : type), (D ⫦ ᵛ- h : T) -> ctx_DestOnly D -> False.
 Proof.
   intros D h T TyRv DestOnlyD. inversion TyRv; subst.
-  specialize (DestOnlyD (ʰ h)). unfold ctx_DestOnly, ctx_singleton, In, Fun.In in DestOnlyD. rewrite exists_impl_to_forall in DestOnlyD. specialize (DestOnlyD (₋ T ‗ ¹ν)). rewrite mapsto_singleton in DestOnlyD. specialize (DestOnlyD eq_refl). destruct (singleton (ʰ h) name_eq_dec (₋ T ‗ ¹ν) (ʰ h)) eqn:H' in DestOnlyD. rewrite mapsto_singleton in H'. assert (b = ₋ T‗ ¹ν) as Eqb. { apply inj_pair2_eq_dec. exact name_eq_dec. apply (eq_sym H'). } rewrite Eqb in DestOnlyD. all: tauto.
+  specialize (DestOnlyD (ʰ h)). unfold ctx_DestOnly, ctx_singleton in DestOnlyD. specialize (DestOnlyD (₋ T ‗ ¹ν)). rewrite mapsto_singleton in DestOnlyD. sfirstorder.
 Qed.
 
 Lemma term_NotVal_dec : forall (t : term), {exists v, t = ᵥ₎ v} + {term_NotVal t}.

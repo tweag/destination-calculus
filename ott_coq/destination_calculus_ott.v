@@ -424,17 +424,13 @@ Definition tyb_mode {n : name} (tyb: binding_type_of n): mode :=
  * CONTEXTS
  *****************************************************************************)
 
-Definition ctx_DestOnly (G : ctx) : Prop :=
-  forall n, Finitely.In n G ->
-    match n with
-    | name_DH h =>
-      (* TODO: give a name fo the property below*)
-      match G (name_DH h) with
-      | Some (tyb_Dest _ _ _) => True
-      | _ => False
-      end
-    | _ => False
-    end.
+Definition IsDest x : binding_type_of x -> Prop :=
+  match x with
+  | name_Var _ => fun _ => False
+  | name_DH h => fun b => match b with tyb_Dest _  _  _ => True | _ => False end
+  end.
+
+Definition ctx_DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
 
 Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
 Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).

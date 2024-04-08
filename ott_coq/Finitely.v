@@ -148,6 +148,68 @@ Proof.
   all: hauto lq: on.
 Qed.
 
+Lemma map_ext : forall {A B1 B2} (m1 m2 : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) x,
+    (forall x, m1 x = m2 x) -> map m1 f x = map m2 f x.
+Proof.
+  intros * h. unfold map.
+  hauto lq: on.
+Qed.
+
+Lemma map_comp : forall {A B1 B2 B3} (m1 : forall x, B1 x -> B2 x) (m2 : forall x, B2 x -> B3 x) (f : forall x:A, option (B1 x)) x, map m2 (map m1 f) x = map (fun x y => m2 x (m1 x y)) f x.
+Proof.
+  intros *. unfold map.
+  hauto lq: on.
+Qed.
+
+(* Not great: Q can never been inferred. But better than nothing. Easy case: map_propagate_forward'. *)
+Lemma map_propagate_forward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y1, f x = Some y1 -> Q x y1) -> (forall x y1, Q x y1 -> P x (m x y1)) -> forall x y2, map m f x = Some y2 -> P x y2.
+Proof.
+  intros * hf hm x y2 hy2. unfold map in *.
+  specialize (hf x).
+  destruct (f x) as [h_inf|h_ninf].
+  - injection hy2 as [= <-].
+    sfirstorder.
+  - scongruence.
+Qed.
+
+Lemma map_propagate_forward' : forall {A B} (m : forall x, B x -> B x) (f : forall x:A, option (B x)) (P : forall x, B x -> Prop),
+    (forall x y1, f x = Some y1 -> P x y1) -> (forall x y1, P x y1 -> P x (m x y1)) -> forall x y2, map m f x = Some y2 -> P x y2.
+Proof.
+  intros *.
+  apply map_propagate_forward.
+Qed.
+
+Lemma map_propagate_backward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y2, map m f x = Some y2 -> P x y2) -> (forall x y1, P x (m x y1) -> Q x y1) -> (forall x y1, f x = Some y1 -> Q x y1).
+Proof.
+  intros * hmap hm x y1 hy1.
+  hfcrush unfold: map.
+Qed.
+
+Lemma map_propagate_backward' : forall {A B} (m : forall x, B x -> B x) (f : forall x:A, option (B x)) (P : forall x, B x -> Prop),
+    (forall x y2, map m f x = Some y2 -> P x y2) -> (forall x y1, P x (m x y1) -> P x y1) -> (forall x y1, f x = Some y1 -> P x y1).
+Proof.
+  intros *.
+  apply map_propagate_backward.
+Qed.
+
+Lemma map_propagate_both : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y1, P x (m x y1) <-> Q x y1) -> (forall x y2, map m f x = Some y2 -> P x y2) <-> (forall x y1, f x = Some y1 -> Q x y1).
+Proof.
+  intros * hm.
+  split.
+  - hauto lq: on use: map_propagate_backward.
+  - hfcrush use: map_propagate_forward.
+Qed.
+
+Lemma map_propagate_both' : forall {A B} (m : forall x, B x -> B x) (f : forall x:A, option (B x)) (P : forall x, B x -> Prop),
+    (forall x y1, P x (m x y1) <-> P x y1) -> (forall x y2, map m f x = Some y2 -> P x y2) <-> (forall x y1, f x = Some y1 -> P x y1).
+Proof.
+  intros *.
+  apply map_propagate_both.
+Qed.
+
 Definition map_support : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) l, Support l f -> Support l (map m f).
 Proof.
   intros * h. unfold Support, map in *.
@@ -540,6 +602,13 @@ Proof.
   apply Fun.map_In.
 Qed.
 
+Lemma map_ext : forall {A B1 B2} (m1 m2 : forall x, B1 x -> B2 x) (f : T A B1) x,
+    (forall x, m1 x = m2 x) -> map m1 f x = map m2 f x.
+Proof.
+  intros *. rewrite map_spec0.
+  apply Fun.map_ext.
+Qed.
+
 Lemma map_Mapsto : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
 Proof.
   intros *.
@@ -550,6 +619,61 @@ Proof.
   assert (m x b = y) as e. { injection issome; tauto. } rewrite <- e.
   exists b. tauto. congruence.
 - intros [z [eq1 eq2]]. unfold Fun.map. destruct (f x) eqn:emap. assert (b = z) as e. { injection eq1; tauto. } subst. tauto. congruence.
+Qed.
+
+Lemma map_comp : forall {A B1 B2 B3} (m1 : forall x, B1 x -> B2 x) (m2 : forall x, B2 x -> B3 x) (f : T A B1) x, map m2 (map m1 f) x = map (fun x y => m2 x (m1 x y)) f x.
+Proof.
+  intros *. rewrite !map_spec0.
+  apply Fun.map_comp.
+Qed.
+
+(* Not great: Q can never been inferred. But better than nothing. Easy case: map_propagate_forward'. *)
+Lemma map_propagate_forward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y1, f x = Some y1 -> Q x y1) -> (forall x y1, Q x y1 -> P x (m x y1)) -> forall x y2, map m f x = Some y2 -> P x y2.
+Proof.
+  intros * hf hm x y2. rewrite map_spec0.
+  hfcrush use: Fun.map_propagate_forward.
+Qed.
+
+Lemma map_propagate_forward' : forall {A B} (m : forall x, B x -> B x) (f : T A B) (P : forall x, B x -> Prop),
+    (forall x y1, f x = Some y1 -> P x y1) -> (forall x y1, P x y1 -> P x (m x y1)) -> forall x y2, map m f x = Some y2 -> P x y2.
+Proof.
+  intros *.
+  apply map_propagate_forward.
+Qed.
+
+Lemma map_propagate_backward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y2, map m f x = Some y2 -> P x y2) -> (forall x y1, P x (m x y1) -> Q x y1) -> (forall x y1, f x = Some y1 -> Q x y1).
+Proof.
+  intros * hmap hm x y1.
+  eapply Fun.map_propagate_backward.
+  all: hauto l: on use: map_spec0, Fun.map_propagate_backward.
+Qed.
+
+Lemma map_propagate_backward' : forall {A B} (m : forall x, B x -> B x) (f : T A B) (P : forall x, B x -> Prop),
+    (forall x y2, map m f x = Some y2 -> P x y2) -> (forall x y1, P x (m x y1) -> P x y1) -> (forall x y1, f x = Some y1 -> P x y1).
+Proof.
+  intros *.
+  apply map_propagate_backward.
+Qed.
+
+Lemma map_propagate_both : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
+    (forall x y1, P x (m x y1) <-> Q x y1) -> (forall x y2, map m f x = Some y2 -> P x y2) <-> (forall x y1, f x = Some y1 -> Q x y1).
+Proof.
+  intros * hm.
+  split.
+  - intros h.
+    rewrite <- Fun.map_propagate_both with (m:=m) (P:=P).
+    all: hauto l: on use: map_spec0.
+  - intros h *. rewrite map_spec0.
+    hfcrush use: Fun.map_propagate_both.
+Qed.
+
+Lemma map_propagate_both' : forall {A B} (m : forall x, B x -> B x) (f : T A B) (P : forall x, B x -> Prop),
+    (forall x y1, P x (m x y1) <-> P x y1) -> (forall x y2, map m f x = Some y2 -> P x y2) <-> (forall x y1, f x = Some y1 -> P x y1).
+Proof.
+  intros *.
+  apply map_propagate_both.
 Qed.
 
 #[program]
