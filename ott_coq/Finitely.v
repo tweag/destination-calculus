@@ -167,7 +167,7 @@ Lemma map_propagate_forward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f :
 Proof.
   intros * hf hm x y2 hy2. unfold map in *.
   specialize (hf x).
-  destruct (f x) as [h_inf|h_ninf].
+  destruct (f x) as [h_inf|].
   - injection hy2 as [= <-].
     sfirstorder.
   - scongruence.

@@ -97,19 +97,6 @@ Proof.
 Qed.
 Hint Rewrite ValidOnlyStimesBackward' : propagate_down.
 
-(* Potentially a fairly large lemma to prove. *)
-Lemma ValidJudgement_ValidOnly : forall G u T, G ⊢ u : T -> ctx_ValidOnly G.
-Proof. Admitted.
-
-(* Lemma stated so as not to lose information, as it'd otherwise lose
-   too much to be useful in an automatically rewriting tactic. *)
-Lemma ValidJudgement_ValidOnly' : forall G u T, Basics.impl (G ⊢ u : T) (G ⊢ u : T /\ ctx_ValidOnly G).
-Proof.
-  unfold Basics.impl.
-  eauto using ValidJudgement_ValidOnly.
-Qed.
-Hint Rewrite ValidJudgement_ValidOnly' : saturate.
-
 Lemma TimesIsValidEquiv : forall (m1 m2 : mode), mode_IsValid (m1 · m2) <-> mode_IsValid m1 /\ mode_IsValid m2.
 Proof.
   intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
@@ -133,12 +120,35 @@ Proof.
 Qed.
 Hint Rewrite <- ValidOnlyStimesForward' : suffices.
 
+(* 
+ * ============================================================================
+ * Waiting for PR #2 to be merged 
+ * ========================================================================= *)
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
+Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
+Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
+Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
+(* ========================================================================= *)
 
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_DestOnly, ctx_union.
+  apply merge_with_propagate_both.
+  intros [xx|xh]. all: cbn. { sfirstorder. }
+  intros b1 b2. unfold union_tyb_dh. destruct b1, b2;
+  destruct (type_eq_dec T T0), (mode_eq_dec n n0). all:sfirstorder.
+Qed.
 Hint Rewrite DestOnlyUnionEquiv : propagate_down.
 Lemma DestOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_DestOnly G <-> ctx_DestOnly (m ᴳ· G).
 Proof.
@@ -149,9 +159,6 @@ Proof.
   hauto lq: on.
 Qed.
 Hint Rewrite <- DestOnlyStimesEquiv : propagate_down.
-Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
 
 Lemma mode_plus_not_lin : forall b1 b2, ~mode_IsLin (mode_plus b1 b2).
 Proof.
@@ -244,12 +251,59 @@ Proof.
 Qed.
 Hint Rewrite LinNuOnlyUnionEquiv : propagate_down.
 
-Lemma LinNuOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) <-> ctx_LinNuOnly G /\ mode_IsLinNu m.
-Proof. Admitted.
-Hint Rewrite LinNuOnlyStimesEquiv : propagate_down.
-Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
+Lemma LinNuOnlyStimesForward : forall (m : mode) (G : ctx), mode_IsLinNu m -> ctx_LinNuOnly G -> ctx_LinNuOnly (m ᴳ· G).
+Proof.
+  intros * linm linG.
+  unfold ctx_LinNuOnly in *.
+  intros n b h.
+  unfold ctx_stimes in h.
+  rewrite map_Mapsto in h. destruct h. destruct H.
+  specialize (linG n x H). destruct n.
+  - unfold stimes_tyb_var in H0. destruct x. subst. unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
+  - unfold stimes_tyb_dh in H0. destruct x; subst. 
+    + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
+    + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
+Qed.
+Lemma LinNuOnlyStimesForward' : forall (m : mode) (G : ctx), Basics.impl (mode_IsLinNu m /\ ctx_LinNuOnly G) (ctx_LinNuOnly (m ᴳ· G)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: LinNuOnlyStimesForward.
+Qed.
+Hint Rewrite LinNuOnlyStimesForward' : suffices.
+
+Lemma n_plus_n0_eq_0_implies_n0_eq_0 : forall n n0 : nat,
+  n + n0 = 0 -> n0 = 0.
+Proof.
+  intros n n0 H.
+  apply Nat.eq_add_0 in H. (* Definition of zero *)
+  destruct H. tauto.
+Qed.
+
+Lemma LinNuOnlyStimesBackward : forall (m : mode) (G : ctx), ctx_LinNuOnly (m ᴳ· G) -> ctx_LinNuOnly G.
+Proof.
+  intros *.
+  intros islinNu.
+  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+      | ˣ _ => stimes_tyb_var m
+      | ʰ _ => stimes_tyb_dh m
+      end)
+    as mf.
+    unfold ctx_LinNuOnly in *. intros n tyb mapstoG. specialize (islinNu n (mf n tyb)).
+  assert ((m ᴳ· G) n = Some (mf n tyb)).
+    { eapply map_Mapsto. exists tyb. split. tauto. tauto. }
+  specialize (islinNu H). unfold ctx_stimes in H. rewrite map_Mapsto in H. destruct H. destruct H. destruct n; cbn in *. all: rewrite H in mapstoG; inversion mapstoG; subst. all:clear mf.
+  - destruct tyb. unfold stimes_tyb_var in *. unfold mode_times, mode_IsLinNu in *. destruct m, m0; cbn; try destruct p; try destruct p0.
+    { unfold mul_times, age_times, ext_plus in *. destruct m, m0, a, a0; cbn; inversion islinNu; subst. rewrite H2, (n_plus_n0_eq_0_implies_n0_eq_0 n n0). all:trivial. }
+    all: try congruence.
+  - destruct tyb; unfold stimes_tyb_dh in *; unfold mode_times, mode_IsLinNu in *; try rename n into m0; destruct m; destruct m0; cbn; try destruct p; try destruct p0; unfold mul_times, age_times, ext_plus in *; try rename n into m0; try destruct m; try destruct m0; try destruct a; try destruct a0; cbn; inversion islinNu; subst; rewrite H2.
+    + rewrite (n_plus_n0_eq_0_implies_n0_eq_0 n0 n1). all:trivial.
+    + rewrite (n_plus_n0_eq_0_implies_n0_eq_0 n n0). all:trivial.
+Qed.
+Lemma LinNuOnlyStimesBackward' : forall (m : mode) (G : ctx), Basics.impl (ctx_LinNuOnly (m ᴳ· G)) (ctx_LinNuOnly G).
+Proof.
+  exact LinNuOnlyStimesBackward.
+Qed.
+Hint Rewrite LinNuOnlyStimesBackward' : propagate_down.
 
 Lemma FinAgeOnlyUnionBackward : forall (G1 G2 : ctx), ctx_FinAgeOnly (G1 ⨄ G2) -> ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2.
 Proof.
@@ -310,14 +364,6 @@ Hint Rewrite LinOnlyStimesEquiv : propagate_down.
 Lemma FinAgeOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_FinAgeOnly (m ᴳ· G) <-> ctx_FinAgeOnly G /\ mode_IsFinAge m.
 Proof. Admitted.
 Hint Rewrite FinAgeOnlyStimesEquiv : propagate_down.
-
-Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
-
-Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
 
 Lemma DisjointStimesLeftEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint (m ᴳ· D) D' <-> ctx_Disjoint D D'.
 Proof.
@@ -743,7 +789,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq, ValidOnlySingletonVar, ValidOnlySingletonVar.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesBackward, LinNuOnlyStimesForward, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq, ValidOnlySingletonVar, ValidOnlySingletonVar.
 
 (* Silly stuff to avoid matching hypotheses many times *)
 Definition Blocked (P : Prop) : Prop := P.
