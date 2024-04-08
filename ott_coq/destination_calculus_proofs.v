@@ -411,18 +411,22 @@ Proof.
   f_equal.
   apply proof_irrelevance.
 Qed.
+Hint Rewrite StimesEmptyEq : canonalize.
 
 Lemma MinusEmptyEq : ᴳ- ᴳ{} = ᴳ{}.
 Proof.
   apply Finitely.ext_eq.
   all: sfirstorder.
 Qed.
+Hint Rewrite MinusEmptyEq : canonalize.
+
 Lemma InvMinusEmptyEq : ᴳ-⁻¹ ᴳ{} = ᴳ{}.
 Proof.
   unfold ctx_invminus, empty, map. cbn.
   apply ext_eq.
   all: sfirstorder.
 Qed.
+Hint Rewrite InvMinusEmptyEq : canonalize.
 
 Lemma UnionIdentityRight : forall (G : ctx), G = G ⨄ ᴳ{}.
 Proof.
@@ -438,6 +442,7 @@ Proof.
   - unfold ctx_union. destruct G. cbn.
     rewrite app_nil_r. reflexivity.
 Qed.
+Hint Rewrite <- UnionIdentityRight : canonalize.
 
 Lemma UnionIdentityLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
 Proof.
@@ -453,6 +458,7 @@ Proof.
   - unfold ctx_union. destruct G. cbn.
     reflexivity.
 Qed.
+Hint Rewrite <- UnionIdentityLeft : canonalize.
 
 Lemma DisjointDestOnlyVar : forall (G : ctx) (x : var) (m : mode) (T : type), ctx_DestOnly G -> ctx_Disjoint G (ᴳ{ x : m ‗ T}).
 Proof. Admitted.
@@ -531,18 +537,26 @@ Proof.
     (* 58 goals *)
     all: sfirstorder.
 Qed.
+Hint Rewrite UnionAssociative : canonalize.
 
 Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
 Proof. Admitted.
+(* TODO: add to canonalize? *)
 Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
+(* TODO: add to canonalize? *)
 
 Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m · n) ᴳ· G.
 Proof. Admitted.
+Hint Rewrite StimesIsAction : canonalize.
+
 Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 ⨄ G2) = m ᴳ· G1 ⨄ m ᴳ· G2.
 Proof. Admitted.
+Hint Rewrite StimesUnionDistributive : canonalize.
+
 Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
 Proof. Admitted.
+Hint Rewrite <- StimesIdentity : canonalize.
 
 Lemma TimesCommutative : forall (m n : mode), m · n = n · m.
 Proof.
@@ -562,6 +576,7 @@ Proof.
   destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|]. all: cbn.
   all: sfirstorder use: PeanoNat.Nat.add_assoc.
 Qed.
+Hint Rewrite TimesAssociative : canonalize.
 
 Lemma TimesIdentityRight : forall (m : mode), m · ¹ν = m.
 Proof.
@@ -570,6 +585,7 @@ Proof.
   destruct p as [|]; destruct a as [?|]. all: cbn.
   all: hauto lq: on use: PeanoNat.Nat.add_0_r.
 Qed.
+Hint Rewrite TimesIdentityRight : canonalize.
 
 Lemma TimesIdentityLeft : forall (m : mode), ¹ν · m = m.
 Proof.
@@ -578,6 +594,7 @@ Proof.
   destruct p as [|]; destruct a as [?|]. all: cbn.
   all: hauto lq: on use: PeanoNat.Nat.add_0_l.
 Qed.
+Hint Rewrite TimesIdentityLeft : canonalize.
 
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
 Proof. Admitted.
@@ -648,11 +665,16 @@ Ltac hauto_ctx :=
     use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, (* ValidOnlyMinusEquiv, *) ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesEquiv, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq.
 
 Ltac crush :=
+  let workhorse :=
+    solve
+      [ trivial
+      | autorewrite with propagate_down in *; hauto lq: on
+      (* ⬇️ should really be the last case because it can be quite slow. *)
+      | hauto_ctx ]
+  in
   solve
     [ trivial
-    | autorewrite with propagate_down in *; hauto lq: on
-    (* ⬇️ should really be the last case because it can be quite slow. *)
-    | hauto_ctx ].
+    | autorewrite with canonalize in *; workhorse ].
 
 Lemma empty_support_Empty : forall (G : ctx), support G = nil -> G = ᴳ{}.
 Proof.
