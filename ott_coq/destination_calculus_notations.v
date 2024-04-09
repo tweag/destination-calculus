@@ -12,7 +12,7 @@ Notation "'ᴴ{' b , .. , c '}'" := (hdns_from_list (cons b .. (cons c nil) ..))
 Notation "H1 '∪' H2" := (HdnsM.union H1 H2) (at level 24, left associativity, H2 at next level).
 Notation "H 'ᴴ⩲' h" := (hdns_shift H h) (at level 21, h at level 19, no associativity).
 Notation "'hnamesᴳ(' G ')'" := (hdns_from_ctx G) (at level 0, no associativity).
-Notation "'hnames©(' C ')'" := (hdns_from_ectxs C HdnsM.empty) (at level 0, no associativity).
+Notation "'hnames©(' C ')'" := (hdns_from_ectxs C) (at level 0, no associativity).
 
 (* Terms : 40-59 *)
 Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).

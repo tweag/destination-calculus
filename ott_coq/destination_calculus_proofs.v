@@ -15,6 +15,44 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
 
+(* 
+ * ============================================================================
+ * Waiting for PR #2 to be merged 
+ * ========================================================================= *)
+Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
+Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
+Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
+Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
+Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
+Proof. Admitted.
+Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
+Proof. Admitted.
+(* TODO: add to canonalize? *)
+Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
+Proof. Admitted.
+(* TODO: add to canonalize? *)
+(* ========================================================================= *)
+
+(* 
+ * ============================================================================
+ * Not provable with the current implementation as the support is a list 
+ * whose order depends on the order of insertion.
+ * ========================================================================= *)
+Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
+Proof. Admitted.
+(* ========================================================================= *)
+
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof.
   assert (forall m1 m2, mode_IsValid (mode_plus m1 m2) -> mode_IsValid m1 /\ mode_IsValid m2) as h_mode_plus.
@@ -119,27 +157,6 @@ Proof.
   hauto lq: on use: ValidOnlyStimesForward.
 Qed.
 Hint Rewrite <- ValidOnlyStimesForward' : suffices.
-
-(* 
- * ============================================================================
- * Waiting for PR #2 to be merged 
- * ========================================================================= *)
-Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
-Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
-Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
-Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
-Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
-(* ========================================================================= *)
 
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
 Proof.
@@ -271,7 +288,7 @@ Proof.
   intros *. unfold Basics.impl.
   hauto lq: on use: LinNuOnlyStimesForward.
 Qed.
-Hint Rewrite LinNuOnlyStimesForward' : suffices.
+Hint Rewrite <- LinNuOnlyStimesForward' : suffices.
 
 Lemma n_plus_n0_eq_0_implies_n0_eq_0 : forall n n0 : nat,
   n + n0 = 0 -> n0 = 0.
@@ -338,7 +355,6 @@ Proof.
     (* 2 goals left *)
     all: sfirstorder.
 Qed.
-
 Lemma FinAgeOnlyUnionBackward' : forall (G1 G2 : ctx), Basics.impl (ctx_FinAgeOnly (G1 ⨄ G2)) (ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2).
 Proof.
   exact FinAgeOnlyUnionBackward.
@@ -351,7 +367,6 @@ Proof.
   apply merge_with_propagate_forward_disjoint.
   all: sfirstorder.
 Qed.
-
 Lemma FinAgeOnlyUnionForward' : forall (G1 G2 : ctx), Basics.impl (ctx_FinAgeOnly G1 /\ ctx_FinAgeOnly G2 /\ ctx_Disjoint G1 G2) (ctx_FinAgeOnly (G1 ⨄ G2)).
 Proof.
   intros *. unfold Basics.impl.
@@ -359,15 +374,97 @@ Proof.
 Qed.
 Hint Rewrite <- FinAgeOnlyUnionForward' : suffices.
 
-(* TODO: Lemma not true. *)
-Lemma LinOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) <-> ctx_LinOnly G /\ mode_IsLin m.
-Proof. Admitted.
-Hint Rewrite LinOnlyStimesEquiv : propagate_down.
+Lemma LinOnlyStimesBackward : forall (m : mode) (G : ctx), ctx_LinOnly (m ᴳ· G) -> ctx_LinOnly G.
+Proof.
+  intros *.
+  intros islin.
+  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+      | ˣ _ => stimes_tyb_var m
+      | ʰ _ => stimes_tyb_dh m
+      end)
+    as mf.
+    unfold ctx_LinOnly in *. intros n tyb mapstoG. specialize (islin n (mf n tyb)).
+  assert ((m ᴳ· G) n = Some (mf n tyb)).
+    { eapply map_Mapsto. exists tyb. split. tauto. tauto. }
+  specialize (islin H). unfold ctx_stimes in H. rewrite map_Mapsto in H. destruct H. destruct H. destruct n; cbn in *. all: rewrite H in mapstoG; inversion mapstoG; subst. all:clear mf.
+  - destruct tyb. unfold stimes_tyb_var in *. unfold mode_times in *. destruct m eqn:em, m0 eqn:em0; cbn; try destruct p; try destruct p0.
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion islin. }
+    all: inversion islin.
+  - destruct tyb; unfold stimes_tyb_dh in *; unfold mode_times in *; try destruct m eqn:em; try destruct m0 eqn:em0; try destruct n eqn:en; cbn; try destruct p; try destruct p0.
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion islin. }
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion islin. }
+    all: inversion islin.
+    { unfold mul_times, age_times, ext_plus in *. destruct m0, m1, a, a0; cbn; try constructor. all: inversion islin. }
+Qed.
+Lemma LinOnlyStimesBackward' : forall (m : mode) (G : ctx), Basics.impl (ctx_LinOnly (m ᴳ· G)) (ctx_LinOnly G).
+Proof.
+  exact LinOnlyStimesBackward.
+Qed.
+Hint Rewrite LinOnlyStimesBackward' : propagate_down.
 
-(* TODO: Lemma not true. *)
-Lemma FinAgeOnlyStimesEquiv : forall (m : mode) (G : ctx), ctx_FinAgeOnly (m ᴳ· G) <-> ctx_FinAgeOnly G /\ mode_IsFinAge m.
-Proof. Admitted.
-Hint Rewrite FinAgeOnlyStimesEquiv : propagate_down.
+Lemma LinOnlyStimesForward : forall (m : mode) (G : ctx), mode_IsLin m -> ctx_LinOnly G -> ctx_LinOnly (m ᴳ· G).
+Proof.
+  intros * validm linG.
+  unfold ctx_LinOnly in *.
+  intros n b h.
+  unfold ctx_stimes in h.
+  rewrite map_Mapsto in h. destruct h. destruct H.
+  specialize (linG n x H). destruct n.
+  - unfold stimes_tyb_var in H0. destruct x. subst. unfold tyb_mode in *. destruct m, m0; try destruct p; try destruct p0; try destruct m; try destruct m0; unfold mode_times, mul_times in *; cbn; try constructor; try inversion linG; try inversion validm.
+  - unfold stimes_tyb_dh in H0. destruct x; subst; unfold tyb_mode in *; try rename n into m0; destruct m, m0; try destruct p; try destruct p0; try destruct m; try destruct m0; unfold mode_times, mul_times in *; cbn; try constructor; try inversion linG; try inversion validm.
+Qed.
+Lemma LinOnlyStimesForward' : forall (m : mode) (G : ctx), Basics.impl (mode_IsLin m /\ ctx_LinOnly G) (ctx_LinOnly (m ᴳ· G)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: LinOnlyStimesForward.
+Qed.
+Hint Rewrite <- LinOnlyStimesForward' : suffices.
+
+Lemma FinAgeOnlyStimesBackward : forall (m : mode) (G : ctx), ctx_FinAgeOnly (m ᴳ· G) -> ctx_FinAgeOnly G.
+Proof.
+  intros *.
+  intros isfinAge.
+  pose (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+      | ˣ _ => stimes_tyb_var m
+      | ʰ _ => stimes_tyb_dh m
+      end)
+    as mf.
+    unfold ctx_FinAgeOnly in *. intros n tyb mapstoG. specialize (isfinAge n (mf n tyb)).
+  assert ((m ᴳ· G) n = Some (mf n tyb)).
+    { eapply map_Mapsto. exists tyb. split. tauto. tauto. }
+  specialize (isfinAge H). unfold ctx_stimes in H. rewrite map_Mapsto in H. destruct H. destruct H. destruct n; cbn in *. all: rewrite H in mapstoG; inversion mapstoG; subst. all:clear mf.
+  - destruct tyb. unfold stimes_tyb_var in *. unfold mode_times in *. destruct m eqn:em, m0 eqn:em0; cbn; try destruct p; try destruct p0.
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion isfinAge. }
+    all: inversion isfinAge.
+  - destruct tyb; unfold stimes_tyb_dh in *; unfold mode_times in *; try destruct m eqn:em; try destruct m0 eqn:em0; try destruct n eqn:en; cbn; try destruct p; try destruct p0.
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion isfinAge. }
+    { unfold mul_times, age_times, ext_plus in *. destruct m1, m2, a, a0; cbn; try constructor. all: inversion isfinAge. }
+    all: inversion isfinAge.
+    { unfold mul_times, age_times, ext_plus in *. destruct m0, m1, a, a0; cbn; try constructor. all: inversion isfinAge. }
+Qed.
+Lemma FinAgeOnlyStimesBackward' : forall (m : mode) (G : ctx), Basics.impl (ctx_FinAgeOnly (m ᴳ· G)) (ctx_FinAgeOnly G).
+Proof.
+  exact FinAgeOnlyStimesBackward.
+Qed.
+Hint Rewrite FinAgeOnlyStimesBackward' : propagate_down.
+
+Lemma FinAgeOnlyStimesForward : forall (m : mode) (G : ctx), mode_IsFinAge m -> ctx_FinAgeOnly G -> ctx_FinAgeOnly (m ᴳ· G).
+Proof.
+  intros * validm finAgeG.
+  unfold ctx_FinAgeOnly in *.
+  intros n b h.
+  unfold ctx_stimes in h.
+  rewrite map_Mapsto in h. destruct h. destruct H.
+  specialize (finAgeG n x H). destruct n.
+  - unfold stimes_tyb_var in H0. destruct x. subst. unfold tyb_mode in *. destruct m, m0; try destruct p; try destruct p0; try destruct a; try destruct a0; unfold mode_times, age_times in *; cbn; try constructor; try inversion finAgeG; try inversion validm.
+  - unfold stimes_tyb_dh in H0. destruct x; subst; unfold tyb_mode in *; try rename n into m0; destruct m, m0; try destruct p; try destruct p0; try destruct a; try destruct a0; unfold mode_times, age_times in *; cbn; try constructor; try inversion finAgeG; try inversion validm.
+Qed.
+Lemma FinAgeOnlyStimesForward' : forall (m : mode) (G : ctx), Basics.impl (mode_IsFinAge m /\ ctx_FinAgeOnly G) (ctx_FinAgeOnly (m ᴳ· G)).
+Proof.
+  intros *. unfold Basics.impl.
+  hauto lq: on use: FinAgeOnlyStimesForward.
+Qed.
+Hint Rewrite <- FinAgeOnlyStimesForward' : suffices.
 
 Lemma DisjointStimesLeftEquiv : forall (m : mode) (D D' : ctx), ctx_Disjoint (m ᴳ· D) D' <-> ctx_Disjoint D D'.
 Proof.
@@ -488,9 +585,6 @@ Proof.
 Qed.
 Hint Rewrite DisjointNestedRightEquiv : propagate_down.
 
-Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
-Proof. Admitted.
-
 Lemma DisjointCommutative : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 <-> ctx_Disjoint G2 G1.
 Proof.
   intros *. unfold ctx_Disjoint.
@@ -578,7 +672,17 @@ Qed.
 Hint Rewrite <- UnionIdentityLeft : canonalize.
 
 Lemma DisjointDestOnlyVar : forall (G : ctx) (x : var) (m : mode) (T : type), ctx_DestOnly G -> ctx_Disjoint G (ᴳ{ x : m ‗ T}).
-Proof. Admitted.
+Proof.
+  intros * destonly.
+  unfold ctx_DestOnly, ctx_Disjoint in *.
+  intros n inG inSing.
+  unfold In, Fun.In in *.
+  destruct inG as (tyb & mapsto).
+  specialize (destonly n tyb mapsto).
+  unfold ctx_singleton in inSing. destruct inSing. rewrite mapsto_singleton in H.
+  inversion H; subst.
+  unfold IsDest in destonly. assumption.
+Qed.
 
 Lemma mode_plus_commutative : forall (m n: mode), mode_plus m n = mode_plus n m.
 Proof.
@@ -626,9 +730,6 @@ Proof.
     all: sfirstorder use: mode_plus_commutative.
 Qed.
 
-Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
-Proof. Admitted.
-
 Lemma UnionAssociative : forall (G1 G2 G3 : ctx), G1 ⨄ (G2 ⨄ G3) = (G1 ⨄ G2) ⨄ G3.
 Proof.
   intros *. unfold ctx_union.
@@ -657,13 +758,6 @@ Proof.
     all: sfirstorder.
 Qed.
 Hint Rewrite UnionAssociative : canonalize.
-
-Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
-Proof. Admitted.
-(* TODO: add to canonalize? *)
-Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
-(* TODO: add to canonalize? *)
 
 Lemma TimesCommutative : forall (m n : mode), m · n = n · m.
 Proof.
@@ -721,16 +815,141 @@ Proof.
 Qed.
 Hint Rewrite StimesIsAction : canonalize.
 
+Lemma TimesDistributeOverPlus : forall (m n o : mode), m · (mode_plus n o) = mode_plus (m · n) (m · o).
+Proof.
+  intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
+  all: trivial.
+  (* 1 goal left *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|]. all: unfold mul_plus, mul_times, age_plus, age_times, ext_plus; repeat destruct age_eq_dec. all: trivial; try congruence; try reflexivity.
+  all: exfalso; assert (n0 <> n1) as Hneq by (intros H; apply n2; rewrite H; constructor);
+                  assert (n + n0 = n + n1) as Heq by (injection e; auto);
+                  apply Hneq; rewrite Nat.add_cancel_l with (p := n) in Heq; assumption.
+Qed.
+
 Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 ⨄ G2) = m ᴳ· G1 ⨄ m ᴳ· G2.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  2:{ reflexivity. }
+  intros n. unfold ctx_stimes, ctx_union.
+  unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.merge_fun_of_with.
+  assert (exists e, age_eq_dec Inf Inf = left e) as eq_inf_inf.
+    { destruct age_eq_dec. exists e; reflexivity. congruence. } destruct eq_inf_inf as (eqrefl & eq_inf_inf).
+  destruct (In_dec n G1), (In_dec n G2), n.
+  - destruct H as (tyb1 & mapstoG1), H0 as (tyb2 & mapstoG2); cbn; rewrite mapstoG1; rewrite mapstoG2; cbn.
+    f_equal. unfold stimes_tyb_var, union_tyb_var.
+    destruct tyb1, tyb2, (type_eq_dec T T0).
+    { rewrite TimesDistributeOverPlus; reflexivity. }
+    { unfold mode_times. destruct m. destruct p. all: tauto. }
+  - destruct H as (tyb1 & mapstoG1), H0 as (tyb2 & mapstoG2); cbn; rewrite mapstoG1; rewrite mapstoG2; cbn.
+    f_equal. unfold stimes_tyb_dh, union_tyb_dh.
+    destruct tyb1, tyb2, (type_eq_dec T T0); try destruct (mode_eq_dec n n0).
+    all: try rewrite TimesDistributeOverPlus; try reflexivity.
+    all: unfold mode_times; destruct m; try destruct p. all: tauto.
+  - destruct H as (tyb1 & mapstoG1); cbn; rewrite mapstoG1; cbn. rewrite In_None2 in H0. rewrite H0. reflexivity.
+  - destruct H as (tyb1 & mapstoG1); cbn; rewrite mapstoG1; cbn. rewrite In_None2 in H0. rewrite H0. reflexivity.
+  - destruct H0 as (tyb2 & mapstoG2); cbn; rewrite mapstoG2; cbn. rewrite In_None2 in H. rewrite H. reflexivity.
+  - destruct H0 as (tyb2 & mapstoG2); cbn; rewrite mapstoG2; cbn. rewrite In_None2 in H. rewrite H. reflexivity.
+  - cbn. rewrite In_None2 in H. rewrite H. rewrite In_None2 in H0. rewrite H0. reflexivity.
+  - cbn. rewrite In_None2 in H. rewrite H. rewrite In_None2 in H0. rewrite H0. reflexivity.
+Qed.
 Hint Rewrite StimesUnionDistributive : canonalize.
 
+Lemma map_Mapsto_None : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = None <-> f x = None.
+Proof.
+  intros *.
+  rewrite map_spec0.
+  split.
+- intros isnone.
+  unfold Fun.map in isnone. destruct (f x) eqn:emap in isnone. congruence. tauto.
+- intros isnone. unfold Fun.map. rewrite isnone. tauto.
+Qed.
+
 Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros x. unfold ctx_stimes.
+    destruct x as [xx|xh].
+    + destruct (In_dec (ˣ xx) G) as [[tyb mapsto]|notinG].
+      * rewrite mapsto. symmetry. apply map_Mapsto. exists tyb. split; trivial.
+        unfold stimes_tyb_var, mode_times. destruct tyb, m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
+      * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_Mapsto_None; tauto.
+    + destruct (In_dec (ʰ xh) G) as [[tyb mapsto]|notinG].
+      * rewrite mapsto. symmetry. apply map_Mapsto. exists tyb. split; trivial.
+        unfold stimes_tyb_dh, mode_times. destruct tyb; try rename n into m; destruct m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
+      * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_Mapsto_None; tauto.
+  - unfold ctx_stimes. unfold map. simpl. reflexivity.
+Qed.
 Hint Rewrite <- StimesIdentity : canonalize.
 
-Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
+Lemma HdnsUnionIdentityLeft : forall (H : hdns), HdnsM.Equal H (HdnsM.union HdnsM.empty H).
+Proof.
+  intros A.
+  unfold HdnsM.Equal. intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
+  split.
+  - right; tauto.
+  - intros [H1 | H2]. (* By definition of union, we can prove any goal if it is in one of the two sets *)
+    + inversion H1.
+    + tauto.
+Qed.
+
+Lemma HdnsUnionIdentityRight : forall (H : hdns), HdnsM.Equal H (HdnsM.union H HdnsM.empty).
+Proof.
+  intros A.
+  unfold HdnsM.Equal. intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
+  split.
+  - intros H. left; assumption.
+  - intros [H1 | H2]. (* By definition of union, we can prove any goal if it is in one of the two sets *)
+    + tauto.
+    + inversion H2.
+Qed.
+
+Lemma hnames_spec : forall (G : ctx) (h : hdn), HdnsM.In h (hnamesᴳ(G)) <-> exists x, G (name_DH h) = Some x.
 Proof. Admitted.
+
+Lemma HdnsInCtxUnionEquiv : forall (G G': ctx) (h: hdn), HdnsM.In h hnamesᴳ(G ⨄ G') <-> HdnsM.In h hnamesᴳ(G) \/ HdnsM.In h hnamesᴳ(G').
+Proof.
+  intros *. split.
+  - intros Hin. apply hnames_spec in Hin. rewrite hnames_spec, hnames_spec. destruct Hin as [x Hin]. destruct (In_dec (name_DH h) G) as [inG|notinG], (In_dec (name_DH h) G') as [inG'|notinG']; try unfold In, Fun.In in inG; try unfold In, Fun.In in inG'.
+    + left. assumption.
+    + left. assumption.
+    + right. assumption.
+    + assert (In (ʰ h) (G ⨄ G')). { unfold In, Fun.In. exists x. assumption. } apply merge_with_spec_5 in H. unfold In, Fun.In in H. assumption.
+  - intros [inG|inG']. 
+    + apply hnames_spec. rewrite hnames_spec in inG. destruct inG as [x inG]. destruct (In_dec (ʰ h) G').
+      * unfold In, Fun.In in H. destruct H as (y & H). exists (union_tyb_dh x y). apply merge_with_spec_1. split; assumption.
+      * rewrite In_None2 in H. exists x. apply merge_with_spec_2. split; assumption.
+    + apply hnames_spec. rewrite hnames_spec in inG'. destruct inG' as [x inG']. destruct (In_dec (ʰ h) G).
+      * unfold In, Fun.In in H. destruct H as (y & H). exists (union_tyb_dh y x). apply merge_with_spec_1. split; assumption.
+      * rewrite In_None2 in H. exists x. apply merge_with_spec_3. split; assumption.
+Qed.
+
+Lemma HdnsInCtxStimesEquiv : forall (m : mode) (G : ctx) (h: hdn), HdnsM.In h hnamesᴳ(m ᴳ· G) <-> HdnsM.In h hnamesᴳ(G).
+Proof. Admitted.
+
+Lemma HdnsSubsetCtxUnionBackward : forall (G G': ctx) (H: hdns), HdnsM.Subset hnamesᴳ(G ⨄ G') H -> HdnsM.Subset hnamesᴳ(G) H /\ HdnsM.Subset hnamesᴳ(G') H.
+Proof. Admitted.
+Lemma HdnsSubsetCtxStimesBackward : forall (m : mode) (G : ctx) (H: hdns), HdnsM.Subset hnamesᴳ(m ᴳ· G) H -> HdnsM.Subset hnamesᴳ(G) H.
+Proof. Admitted.
+
+Lemma hnamesMinusEq : forall (D : ctx), HdnsM.Equal (hnamesᴳ( ᴳ- D)) (hnamesᴳ( D)).
+Proof. Admitted.
+
+Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
+Proof.
+  intros * TyC. induction TyC.
+  { cbn. reflexivity. }
+  all:
+      try (cbn; unfold HdnsM.Subset; apply HdnsSubsetCtxUnionBackward in IHTyC; destruct IHTyC as (IHTyC1 & IHTyC2);  try apply HdnsSubsetCtxStimesBackward in IHTyC1; unfold HdnsM.Subset in IHTyC1 ; intros h Hin; specialize (IHTyC1 h Hin); apply HdnsFactsM.union_iff; right; assumption);
+      try (cbn; unfold HdnsM.Subset; apply HdnsSubsetCtxUnionBackward in IHTyC; destruct IHTyC as (IHTyC1 & IHTyC2); try apply HdnsSubsetCtxStimesBackward in IHTyC2; unfold HdnsM.Subset in IHTyC2; intros h Hin; specialize (IHTyC2 h Hin); apply HdnsFactsM.union_iff; right; assumption);
+      try (cbn; unfold HdnsM.Subset in * ; intros h Hin; specialize (IHTyC h Hin); apply HdnsFactsM.union_iff; right; assumption).
+  simpl. unfold HdnsM.Subset in *. intros h Hin. apply HdnsFactsM.union_iff. apply HdnsInCtxUnionEquiv in Hin. destruct Hin as [inD1|inD3].
+  - right. apply HdnsInCtxStimesEquiv in inD1. assert (HdnsM.In h hnamesᴳ( D1 ⨄ D2)).
+    { apply HdnsInCtxUnionEquiv. left. assumption. }
+    specialize (IHTyC h H0). assumption.
+  - left. rewrite hnamesMinusEq. assumption.
+Qed.
 
 Lemma hnames_DisjointToDisjoint : forall (D D' : ctx), ctx_DestOnly D -> ctx_DestOnly D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D') -> ctx_Disjoint D D'.
 Proof. Admitted.
@@ -741,9 +960,6 @@ Proof. Admitted.
 Lemma hdns_max_hdns_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) < h' -> hdns_Disjoint H (H' ᴴ⩲ h').
 Proof. Admitted.
 
-Lemma SubsetCtxUnionBackward : forall (G G': ctx) (H: hdns), HdnsM.Subset hnamesᴳ(G ⨄ G') H -> HdnsM.Subset hnamesᴳ(G) H /\ HdnsM.Subset hnamesᴳ(G') H.
-Proof. Admitted.
-
 Lemma HmaxSubset : forall (H H' : hdns), HdnsM.Subset H H' -> ʰmax(H) <= ʰmax(H').
 Proof. Admitted.
 
@@ -752,8 +968,7 @@ Proof. Admitted.
 Lemma InvMinusUnionDistributive : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 ->ᴳ-⁻¹ (G1 ⨄ G2) = ᴳ-⁻¹G1 ⨄ ᴳ-⁻¹G2.
 Proof. Admitted.
 
-Lemma hnamesMinusEq : forall (D : ctx), hnamesᴳ( ᴳ- D) = hnamesᴳ( D).
-Proof. Admitted.
+
 Lemma hnamesInvMinusEq : forall (D : ctx), hnamesᴳ( ᴳ-⁻¹ D) = hnamesᴳ( D).
 Proof. Admitted.
 Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
@@ -795,7 +1010,7 @@ Proof. Admitted.
 Ltac hauto_ctx :=
   hauto
     depth: 3
-    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesBackward, LinNuOnlyStimesForward, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesEquiv, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, SubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesEquiv, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq, ValidOnlySingletonVar, ValidOnlySingletonVar.
+    use: ValidOnlyUnionBackward, ValidOnlyUnionForward, ValidOnlyStimesBackward, ValidOnlyStimesForward, ValidOnlyHdnShiftEquiv, DestOnlyUnionEquiv, DestOnlyStimesEquiv, DestOnlyHdnShiftEquiv, LinNuOnlyUnionEquiv, LinNuOnlyStimesBackward, LinNuOnlyStimesForward, LinNuOnlyHdnShiftEquiv, LinOnlyUnionEquiv, LinOnlyStimesBackward, LinOnlyStimesForward, LinOnlyHdnShiftEquiv, LinNuOnlyWkLinOnly, LinOnlyWkValidOnly, IsLinNuWkIsLin, IsLinWkIsValid, DisjointStimesLeftEquiv, DisjointStimesRightEquiv, DisjointMinusLeftEquiv, DisjointInvMinusLeftEquiv, DisjointMinusRightEquiv, DisjointInvMinusRightEquiv, DisjointNestedLeftEquiv, DisjointNestedRightEquiv, DisjointHdnShiftEq, DisjointCommutative, EmptyIsLinOnly, EmptyIsDestOnly, EmptyIsDisjointLeft, EmptyIsDisjointRight, StimesEmptyEq, MinusEmptyEq, InvMinusEmptyEq, UnionIdentityRight, UnionIdentityLeft, DisjointDestOnlyVar, UnionCommutative', UnionAssociative, UnionHdnShiftEq, StimesHdnShiftEq, StimesIsAction, StimesUnionDistributive, StimesIdentity, TimesCommutative, TimesAssociative, TimesIdentityRight, TimesIdentityLeft, hnames_CWkhnames_G, hnames_DisjointToDisjoint, DisjointTohdns_Disjoint, hdns_max_hdns_Disjoint, UnionIdentityRight, UnionIdentityLeft, HdnsSubsetCtxUnionBackward, HmaxSubset, MinusUnionDistributive, InvMinusUnionDistributive, hnamesMinusEq, hnamesInvMinusEq, hnamesFullShiftEq, hnamesEmpty, EmptyIshdns_DisjointRight, EmptyIshdns_DisjointLeft, MinusHdnShiftEq, InvMinusHdnShiftEq, CompatibleDestSingleton, IncompatibleVarDestOnly, MinusSingletonEq, InvMinusSingletonEq, FinAgeOnlyUnionBackward, FinAgeOnlyUnionForward, FinAgeOnlyStimesBackward, FinAgeOnlyStimesForward, FinAgeOnlyHdnShiftEquiv, EmptyIsFinAgeOnly, StimesSingletonVar, StimesSingletonDest, StimesSingletonHole, hnamesSingletonDestEq, hnamesSingletonHoleEq, ValidOnlySingletonVar, ValidOnlySingletonVar.
 
 (* Silly stuff to avoid matching hypotheses many times *)
 Definition Blocked (P : Prop) : Prop := P.
@@ -857,27 +1072,27 @@ Lemma Ty_ectxs_LinFinOnlyD : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D 
 Proof.
   intros D C T U0 H. induction H.
   - split. apply EmptyIsLinOnly. apply EmptyIsFinAgeOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
-  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
+  - hauto lq: on use: LinOnlyUnionEquiv, LinOnlyStimesBackward, FinAgeOnlyUnionBackward, FinAgeOnlyStimesBackward, LinOnlyWkValidOnly.
   - assert (ctx_LinOnly (¹↑ ᴳ· D1)).
-      { hauto use: LinOnlyUnionEquiv, LinOnlyStimesEquiv, (mode_IsLinProof (Fin 1)). }
+      { hauto use: LinOnlyUnionEquiv, LinOnlyStimesForward, (mode_IsLinProof (Fin 1)). }
     assert (ctx_FinAgeOnly (¹↑ ᴳ· D1)).
-      { hauto use: FinAgeOnlyUnionBackward, FinAgeOnlyStimesEquiv, (mode_IsFinAgeProof Lin 1). }
+      { hauto use: FinAgeOnlyUnionBackward, FinAgeOnlyStimesForward, (mode_IsFinAgeProof Lin 1). }
     assert (ctx_Disjoint (D1 ⨄ D2) (ᴳ-D3)).
       { apply (Ty_ectxs_hnames_Disjoint C (D1 ⨄ D2) (ᴳ-D3) (U ⧔ T') U0); tauto. }
     assert (ctx_Disjoint (¹↑ ᴳ· D1) D3).
@@ -1112,7 +1327,7 @@ Proof.
           {  apply DisjointNestedLeftEquiv. assert (HdnsM.Subset hnamesᴳ(D11 ⨄ D12 ⨄ D2) hnames©(C)).
               { apply hnames_CWkhnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
             { assert (HdnsM.Subset hnamesᴳ(D2) hnames©(C)).
-              { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
+              { apply HdnsSubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
               assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
@@ -1122,7 +1337,7 @@ Proof.
               apply hnames_DisjointToDisjoint; crush.
             }
             { assert (HdnsM.Subset hnamesᴳ(D11) hnames©(C)).
-              { apply SubsetCtxUnionBackward in H1. destruct H1. apply SubsetCtxUnionBackward in H1. tauto. }
+              { apply HdnsSubsetCtxUnionBackward in H1. destruct H1. apply HdnsSubsetCtxUnionBackward in H1. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
@@ -1158,7 +1373,7 @@ Proof.
           {  apply DisjointNestedLeftEquiv. assert (HdnsM.Subset hnamesᴳ(D11 ⨄ D12 ⨄ D2) hnames©(C)).
               { apply hnames_CWkhnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
             { assert (HdnsM.Subset hnamesᴳ(D2) hnames©(C)).
-              { apply SubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
+              { apply HdnsSubsetCtxUnionBackward with (G := D11 ⨄ D12) (G' := D2) (H := hnames©(C)). tauto. }
               assert (ʰmax(hnamesᴳ(D2)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
@@ -1168,7 +1383,7 @@ Proof.
               apply hnames_DisjointToDisjoint; crush.
             }
             { assert (HdnsM.Subset hnamesᴳ(D11) hnames©(C)).
-              { apply SubsetCtxUnionBackward in H. destruct H. apply SubsetCtxUnionBackward in H. tauto. }
+              { apply HdnsSubsetCtxUnionBackward in H. destruct H. apply HdnsSubsetCtxUnionBackward in H. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).

@@ -6,9 +6,7 @@ Require Import Coq.Structures.Orders.
 Require Import Coq.Structures.OrdersAlt.
 Require Import Coq.Structures.OrdersEx.
 Require Import Coq.Arith.Compare_dec.
-Require Import Coq.FSets.FMapList.
 Require Import Coq.FSets.FSetList.
-Require Import Coq.FSets.FMapFacts.
 Require Import Coq.FSets.FSetFacts.
 Require List.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
@@ -17,6 +15,7 @@ Require Import Ott.Finitely.
 
 Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
 Module HdnsM := FSetList.Make(Nat_as_OTOrig).
+Module HdnsFactsM := FSetFacts.Facts(HdnsM).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -62,7 +61,7 @@ hdns, H :: 'hdns_' ::= {{ com Set of hole names }} {{ coq HdnsM.t }} {{ tex \ott
   | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HdnsM.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshdn{\cup}\,[[H2]] }}
   | H ⩲ h' :: M :: S {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hdns_shift [[H]] [[h']]) }}
   | hnames ( G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshdn{hnames(}[[G]]\ottshdn{)} }} {{ coq (hdns_from_ctx [[G]]) }}
-  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectxs [[C]] HdnsM.empty) }}
+  | hnames ( C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshdn{hnames(}[[C]]\ottshdn{)} }} {{ coq (hdns_from_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshdn{(}[[H]]\ottshdn{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -254,13 +253,12 @@ Definition hdns_from_ctx (G : ctx) : HdnsM.t :=
   (* TODO: This outputs both holes and destination names. Is it the intention? *)
   List.fold_right HdnsM.add HdnsM.empty (List.fold_right (fun n hs => match n with name_DH h => h::hs | _ => hs end) nil (Finitely.dom G)).
 
-(* TODO: should we rewrite this using a fold? *)
-Fixpoint hdns_from_ectxs (C : ectxs) (H : HdnsM.t) : HdnsM.t := match C with
-  | nil => H
-  | cons c xs => let H' := match c with
+Fixpoint hdns_from_ectxs (C : ectxs) : HdnsM.t := match C with
+  | nil => HdnsM.empty
+  | cons c xs => let H := match c with
     | ectx_AOpenFoc H' v => H'
     | _ => HdnsM.empty
-  end in hdns_from_ectxs xs (HdnsM.union H H')
+  end in (HdnsM.union H (hdns_from_ectxs xs))
 end.
 
 Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
