@@ -211,11 +211,13 @@ Proof.
     match goal with
     |  |- context [if ?x then _ else _] => destruct x
     end.
+    (* 2 goals *)
     all: sauto lq: on use: mode_plus_not_lin.
   - intros [? ? ?|? ?] [? ? ?|? ?]. all: cbn.
     all: repeat match goal with
     |  |- context [if ?x then _ else _] => destruct x
-    end.
+           end.
+    (* 7 goals *)
     all: sauto lq: on use: mode_plus_not_lin.
 Qed.
 Hint Rewrite LinOnlyUnionEquiv : propagate_down.
@@ -322,11 +324,13 @@ Proof.
     repeat match goal with
            |  |- context [if ?x then _ else _] => destruct x
            end.
+    (* 2 goals *)
     all: sfirstorder.
   - intros [m1 ? ?|? m1] [m2 ? ?|? m2]. all: cbn.
     all: repeat match goal with
            |  |- context [if ?x then _ else _] => destruct x
            end.
+    (* 7 goals *)
     all:try solve[inversion 1].
     (* 2 goals left *)
     all:destruct m1 as [[? [?|]]|]; destruct m2 as [[? [?|]]|]. all: unfold age_plus. all: cbn.
@@ -586,6 +590,7 @@ Proof.
   all: repeat match goal with
          |  |- context [if ?x then _ else _] => destruct x
          end.
+  (* 28 goals *)
   all: congruence.
 Qed.
 
@@ -600,6 +605,7 @@ Proof.
          |  |- context [if ?x then _ else _] => destruct x
          | H: context [if ?x then _ else _] |- _ => destruct x
          end.
+  (* 232 goals *)
   all: congruence.
 Qed.
 
