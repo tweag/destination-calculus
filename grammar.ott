@@ -1,12 +1,13 @@
 embed
 {{ coq
+Import EqNotations.
 Require Import Ott.ext_nat.
 Require Import Coq.Structures.Equalities.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
-Require List.
+Require Import Coq.Logic.FunctionalExtensionality.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
@@ -127,7 +128,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | v ≻ ⬜ :: :: AppFoc2 {{ com Application }} {{ tex [[v]]\,\succ[[⬜]] }}
   | ⬜ ; u :: :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[⬜]]~;\,[[u]] }}
   | ⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatSFoc {{ com Pattern-match on sum }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | ⬜ ≻case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ com Pattern-match on product }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +) 
+  | ⬜ ≻case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ com Pattern-match on product }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
   | ⬜ ≻case m ᴇ n x ⟼ u :: :: PatEFoc {{ com Pattern-match on exponential }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
   | ⬜ ≻map x ⟼ t' :: :: MapFoc {{ com Map over the right side of ampar }} {{ tex [[⬜]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
 
@@ -295,7 +296,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
   | term_PatP t m x1 x2 u =>
     let u' := match Nat.eq_dec x1 x', Nat.eq_dec x2 x' with | left _, left _ | left _, right _ | right _, left _ => u | right _, right _ => term_sub u x' v' end in
     term_PatP (term_sub t x' v') m x1 x2 u'
-  | term_PatE t m n x u => 
+  | term_PatE t m n x u =>
     let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
     term_PatE (term_sub t x' v') m n x u'
   | term_Map t x t' =>
@@ -665,23 +666,46 @@ Proof.
   - apply le_S. assumption.
 Qed.
 
+(* Defined separately from `ctx_hdn_shift` for two reasons: this
+   avoids Program adding a bunch of equality, so the function is
+   cleaner. And it makes it possible to state the
+   `preshift_binding_type_eq` lemma. *)
+Definition preshift (H : hdns) (h' : hdn) (n : name): name :=
+  match n with
+  | name_Var x => name_Var x
+  | name_DH h => name_DH (
+                    match (ge_dec h h') with
+                    | left _ => match (HdnsM.mem (h-h') H) with
+                               | true => h - h'
+                               | false => h
+                               end
+                    | right _ => match (HdnsM.mem h H) with
+                                | true => h + h'
+                                | false => h
+                                end
+                    end
+                  )
+  end.
+
+Lemma preshift_binding_type_eq : forall H h'
+  , binding_type_of = fun n => binding_type_of (preshift H h' n).
+Proof.
+  intros *.
+  apply functional_extensionality.
+  intros [xx|xh].
+  all: reflexivity.
+Defined.
+
+Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
+  match n with
+  | name_Var _ => fun b => b
+  | name_DH _ => fun b => b
+  end.
+
 #[program]
-Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) :=
-  precomp (fun n => match n with
-      | name_Var x => name_Var x
-      | name_DH h => name_DH (
-          match (ge_dec h h') with
-            | left _ => match (HdnsM.mem (h-h') H) with
-              | true => h - h'
-              | false => h
-              end
-            | right _ => match (HdnsM.mem h H) with
-              | true => h + h'
-              | false => h
-              end
-          end
-        )
-      end)
+Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
+  map (post_process H h') (
+  precomp (preshift H h')
     (
       fun n => match n with
       | name_Var x => cons (name_Var x) nil
@@ -694,9 +718,9 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) :=
           | true, left _, false => cons (name_DH h) (cons (name_DH (h+h')) nil)
           end
       end
-    ) G.
+    ) G).
 Next Obligation.
-  destruct w; unfold List.In.
+  destruct w; unfold List.In, preshift.
   - rewrite <- or_false_equiv. reflexivity.
   - destruct (ge_dec h h') eqn:egehhp.
     * destruct (HdnsM.mem (h-h') H) eqn:ememhmhp.

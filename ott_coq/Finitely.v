@@ -79,6 +79,31 @@ Proof.
   hauto lq: on use: In_supported.
 Qed.
 
+Lemma precomp_propagate_forward : forall {A1 A2 B} (g : A1 -> A2) (f : forall x:A2, option (B x)) (P : forall x, B x -> Prop),
+    (forall x y, f x = Some y -> P x y) -> (forall x y, f (g x) = Some y -> P (g x) y).
+Proof.
+  intros * h **.
+  apply h.
+  trivial.
+Qed.
+
+Lemma precomp_propagate_backward : forall {A1 A2 B} (g : A1 -> A2) (f : forall x:A2, option (B x)) (P : forall x, B x -> Prop),
+    (forall x2, exists x1, g x1 = x2) ->
+    (forall x y, f (g x) = Some y -> P (g x) y) -> (forall x y, f x = Some y -> P x y).
+Proof.
+  intros * surj h x y.
+  destruct (surj x) as [x' hx']. subst x.
+  sfirstorder.
+Qed.
+
+Lemma precomp_propagate_both : forall {A1 A2 B} (g : A1 -> A2) (f : forall x:A2, option (B x)) (P : forall x, B x -> Prop),
+    (forall x2, exists x1, g x1 = x2) ->
+    (forall x y, f x = Some y -> P x y) <-> (forall x y, f (g x) = Some y -> P (g x) y).
+Proof.
+  intros * h.
+  hfcrush use: precomp_propagate_forward, precomp_propagate_backward.
+Qed.
+
 (* Not the most general statement: we only need finite preimages for elements in f's support. *)
 Lemma precomp_support : forall {A B C} (g:A->B) (preimg : B -> list A) (f : forall x:B, option (C x)) (l : list B),
     (forall x w, g w = x -> List.In w (preimg x)) -> Support l f ->
@@ -607,6 +632,38 @@ Definition precomp {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | fora
   |}.
 Next Obligation.
   sauto lq: on rew: off use: Fun.precomp_support.
+Qed.
+
+Lemma precomp_spec0 : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B),
+    (precomp g preimg f).(underlying) = fun x => f (g x).
+Proof.
+  intros *.
+  reflexivity.
+Qed.
+
+Lemma precomp_propagate_forward : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) (P : forall x, B x -> Prop),
+    (forall x y, f x = Some y -> P x y) -> (forall x y, precomp g preimg f x = Some y -> P (g x) y).
+Proof.
+  intros * h **.
+  rewrite precomp_spec0 in *.
+  sfirstorder use: Fun.precomp_propagate_forward.
+Qed.
+
+Lemma precomp_propagate_backward : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) (P : forall x, B x -> Prop),
+    (forall x2, exists x1, g x1 = x2) ->
+    (forall x y, precomp g preimg f x = Some y -> P (g x) y) -> (forall x y, f x = Some y -> P x y).
+Proof.
+  intros *.
+  rewrite precomp_spec0 in *.
+  hfcrush use: Fun.precomp_propagate_forward.
+Qed.
+
+Lemma precomp_propagate_both : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) (P : forall x, B x -> Prop),
+    (forall x2, exists x1, g x1 = x2) ->
+    (forall x y, f x = Some y -> P x y) <-> (forall x y, precomp g preimg f x = Some y -> P (g x) y).
+Proof.
+  intros * h.
+  hfcrush use: precomp_propagate_forward, precomp_propagate_backward.
 Qed.
 
 #[program]

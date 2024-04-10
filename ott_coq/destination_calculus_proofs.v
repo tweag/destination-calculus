@@ -14,12 +14,20 @@ Require Import Coq.Logic.EqdepFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
+Require Import Arith.
 
 (* =========================================================================
  * Waiting for PR #2 to be merged 
  * ========================================================================= *)
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
+  (* rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. } *)
+  give_up.
+  (* apply precomp_propagate_both. *)
+Admitted.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
@@ -168,6 +176,14 @@ Proof.
 Qed.
 Hint Rewrite <- ValidOnlyStimesForward' : suffices.
 
+Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Proof.
+  intros *. unfold ctx_ValidOnly, ctx_hdn_shift.
+  split.
+  - intros h [xx|xh] b. cbn in *.
+Qed.
+Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
 Proof.
   intros *. unfold ctx_DestOnly, ctx_union.
@@ -289,7 +305,7 @@ Proof.
   rewrite map_mapsto in h. destruct h. destruct H.
   specialize (linG n x H). destruct n.
   - unfold stimes_tyb_var in H0. destruct x. subst. unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
-  - unfold stimes_tyb_dh in H0. destruct x; subst. 
+  - unfold stimes_tyb_dh in H0. destruct x; subst.
     + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
     + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
 Qed.
@@ -995,7 +1011,7 @@ Proof.
     + left. assumption.
     + right. assumption.
     + assert (In (ʰ h) (G ⨄ G')). { unfold In, Fun.In. exists x. assumption. } apply merge_with_spec_5 in H. unfold In, Fun.In in H. assumption.
-  - intros [inG|inG']. 
+  - intros [inG|inG'].
     + apply hnames_spec. rewrite hnames_spec in inG. destruct inG as [x inG]. destruct (In_dec (ʰ h) G').
       * unfold In, Fun.In in H. destruct H as (y & H). exists (union_tyb_dh x y). apply merge_with_spec_1. split; assumption.
       * rewrite In_None2 in H. exists x. apply merge_with_spec_2. split; assumption.
