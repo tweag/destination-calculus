@@ -16,7 +16,7 @@ G ⫦ +h : ⌊T⌋n
 {} ⫦ () :①
 
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : Probably we can relax that? Application will be impossible for such a function (as it would make the resulting context invalid), but it doesn't pose a problem per se
+{{ mode_IsValid [[m]] }} [[:Validm]]
 % {{ ctx_Disjoint [[D]] [[{ x : m T1 }]] }} : Redundant because ctx_DestOnly D => ctx_Disjoint D { x : m T1 }
 % other rules don't need ctx_NoVar D as they cannot syntactically accept vars
 {{ ctx_DestOnly [[D]] }} [[:DestOnlyD]] [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
@@ -39,7 +39,7 @@ G1 ⨄ G2 ⫦ (v1, v2) : T1 ⨂ T2
 
 % we should augment age of holes which are below an exponential
 G ⫦ v' : T [[:TyRvp]]
-% {{ mode_IsValid [[n]] }} : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ mode_IsValid [[n]] }} [[:Validn]]
 --------------------- :: E
 n·G ⫦ ᴇ n v' : ! n T
 
@@ -81,7 +81,7 @@ D ⊢ v : T
 -------------------- :: Var
 P ⊢ x : T
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ mode_IsValid [[m]] }} [[:Validm]]
 P1 ⊢ t : T [[:Tyt]]
 P2 ⊢ t' : T m → U [[:Tytp]]
 ----------------- :: App
@@ -92,7 +92,7 @@ P2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatU
 P1 ⨄ P2 ⊢ t ; u : U
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ mode_IsValid [[m]] }} [[:Validm]]
 {{ ctx_Disjoint [[P2]] [[{ x1 : m T1 }]] }} [[:DisjointP2x1]]
 {{ ctx_Disjoint [[P2]] [[{ x2 : m T2 }]] }} [[:DisjointP2x2]]
 P1 ⊢ t : T1 ⨁ T2 [[:Tyt]]
@@ -101,7 +101,7 @@ P2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatS
 m·P1 ⨄ P2 ⊢ t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ mode_IsValid [[m]] }} [[:Validm]]
 {{ ctx_Disjoint [[P2]] [[{ x1 : m T1 }]] }} [[:DisjointP2x1]]
 {{ ctx_Disjoint [[P2]] [[{ x2 : m T2 }]] }} [[:DisjointP2x2]]
 {{ ctx_Disjoint [[{ x1 : m T1 }]] [[{ x2 : m T2 }]] }} [[:Disjointx1x2]]
@@ -110,7 +110,8 @@ P2 ⨄ { x1 : m T1 } ⨄ { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatP
 m·P1 ⨄ P2 ⊢ t ≻case m (x1 , x2) ⟼ u : U
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
+{{ mode_IsValid [[m]] }} [[:Validm]]
+{{ mode_IsValid [[n]] }} [[:Validn]]
 {{ ctx_Disjoint [[P2]] [[{ x : m·n T }]] }} [[:DisjointP2x]]
 P1 ⊢ t : !n T [[:Tyt]]
 P2 ⨄ { x : m·n T } ⊢ u : U [[:Tyu]]
@@ -150,16 +151,20 @@ P ⊢ t : ⌊T1 ⨂ T2⌋n [[:Tyt]]
 ------------------------------ :: FillP
 P ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
 
+{{ mode_IsValid [[n]] }} [[:Validn]]
 P ⊢ t : ⌊!n' T⌋n [[:Tyt]]
 ------------------------------ :: FillE
 P ⊢ t ⨞ ᴇ n' : ⌊T⌋n'·n
 
+{{ mode_IsValid [[m]] }} [[:Validm]]
+{{ mode_IsValid [[n]] }} [[:Validn]]
 {{ ctx_Disjoint [[P2]] [[{ x : m T }]] }} [[:DisjointP2x]]
 P1 ⊢ t : ⌊T m → U⌋n [[:Tyt]]
 P2 ⨄ { x : m T } ⊢ u : U [[:Tyu]]
 ---------------------------------------- :: FillF
 P1 ⨄ (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : ①
 
+{{ mode_IsValid [[n]] }} [[:Validn]]
 P1 ⊢ t : ⌊U⌋n [[:Tyt]]
 P2 ⊢ t' : U ⧔ T [[:Tytp]]
 ----------------------------- :: FillC
@@ -174,8 +179,6 @@ D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing of evaluation conte
 -------------------- :: Id
 {} ⊣ ⬜ : U0 ↣ U0
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-%{{ ctx_Empty [[D1]] \/ mode_IsLin [[m]] }} != {} => m = ¹ν
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -186,11 +189,11 @@ D2 ⊢ t' : T m → U [[:Tytp]]
 ----------------- :: AppFoc1
 D1 ⊣ C ∘ (⬜ ≻ t') : T ↣ U0
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_ValidOnly [[m·D1]] }} [[:ValidmD1]]
+{{ mode_IsValid [[m]] }} [[:Validm]]
+{{ ctx_ValidOnly [[D1]] }} [[:ValidOnlyD1]]
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D1 ⊢ v : T [[:Tyv]]
 ----------------- :: AppFoc2
@@ -205,8 +208,6 @@ D2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatUFoc
 D1 ⊣ C ∘ (⬜ ; u) : ① ↣ U0
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-% D1 != {} => m = ¹ν
 % {{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }} useless with DestOnly
 % {{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
@@ -220,8 +221,6 @@ D2 ⨄ { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatSFoc
 D1 ⊣ C ∘ (⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-% D1 != {} => m = ¹ν
 % {{ ctx_Disjoint [[D2]] [[{ x1 : m T1 }]] }} useless with DestOnly
 % {{ ctx_Disjoint [[D2]] [[{ x2 : m T2 }]] }}
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
@@ -235,13 +234,12 @@ D2 ⨄ { x1 : m T1 } ⨄ { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatPFoc
 D1 ⊣ C ∘ (⬜ ≻case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
-% {{ mode_IsValid [[m]] }} [[:Validm]] : again, we can probably relax that. If m is invalid, it will contaminate the context anyway
-% D1 != {} => m = ¹ν
 % {{ ctx_Disjoint [[D2]] [[{ x : m·m' T }]] }} useless with DestOnly
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ mode_IsValid [[m]] }} [[:Validm]]
+{{ mode_IsValid [[m']] }} [[:Validmp]]
 {{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 m·D1 ⨄ D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⨄ { x : m·m' T } ⊢ u : U [[:Tyu]]
@@ -282,6 +280,7 @@ D ⊣ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TyC]]
 ------------------------------ :: FillPFoc
 D ⊣ C ∘ (⬜ ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
 
+{{ mode_IsValid [[m]] }} [[:Validm]]
 D ⊣ C : ⌊T⌋m·n ↣ U0 [[:TyC]]
 ------------------------------ :: FillEFoc
 D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
@@ -293,7 +292,9 @@ D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_ValidOnly [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
+{{ mode_IsValid [[m]] }} [[:Validm]]
+{{ mode_IsValid [[n]] }} [[:Validn]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : ① ↣ U0 [[:TyC]]
 D2 ⨄ { x : m T } ⊢ u : U [[:Tyu]]
 ---------------------------------------- :: FillFFoc
@@ -302,7 +303,8 @@ D1 ⊣ C ∘ (⬜ ⨞(λ x m ⟼ u)) : ⌊T m → U⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_ValidOnly [[(¹↑·n)·D2]] }} [[:ValidsnD2]]
+{{ ctx_ValidOnly [[D2]] }} [[:ValidOnlyD2]]
+{{ mode_IsValid [[n]] }} [[:Validn]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T ↣ U0 [[:TyC]]
 D2 ⊢ t' : U ⧔ T [[:Tytp]]
 ----------------------------- :: FillCFoc1
@@ -311,8 +313,8 @@ D1 ⊣ C ∘ (⬜ ⨞· t') : ⌊U⌋n ↣ U0
 {{ ctx_Disjoint [[D1]] [[D2]] }} [[:DisjointD1D2]]
 {{ ctx_DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ ctx_DestOnly [[D2]] }} [[:DestOnlyD2]]
-{{ ctx_ValidOnly [[D1]] }} [[:ValidD1]]
-{{ mode_IsValid [[(¹↑·n)]] }} [[:Validsn]]
+{{ ctx_ValidOnly [[D1]] }} [[:ValidOnlyD1]]
+{{ mode_IsValid [[n]] }} [[:Validn]]
 D1 ⨄ (¹↑·n)·D2 ⊣ C : T ↣ U0 [[:TyC]]
 D1 ⊢ v : ⌊U⌋n [[:Tyt]]
 ----------------------------- :: FillCFoc2

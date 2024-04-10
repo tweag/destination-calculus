@@ -883,10 +883,11 @@ Proof.
 Qed.
 Hint Rewrite <- StimesIdentity : canonalize.
 
-Lemma HdnsUnionIdentityLeft : forall (H : hdns), HdnsM.Equal H (HdnsM.union HdnsM.empty H).
+Lemma HdnsUnionIdentityLeft : forall (H : hdns), H = (HdnsM.union HdnsM.empty H).
 Proof.
-  intros A.
-  unfold HdnsM.Equal. intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
+  intros H.
+  apply HdnsM.eq_leibniz. unfold HdnsM.eq.
+  intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
   split.
   - right; tauto.
   - intros [H1 | H2]. (* By definition of union, we can prove any goal if it is in one of the two sets *)
@@ -894,12 +895,13 @@ Proof.
     + tauto.
 Qed.
 
-Lemma HdnsUnionIdentityRight : forall (H : hdns), HdnsM.Equal H (HdnsM.union H HdnsM.empty).
+Lemma HdnsUnionIdentityRight : forall (H : hdns), H = (HdnsM.union H HdnsM.empty).
 Proof.
-  intros A.
-  unfold HdnsM.Equal. intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
+  intros H.
+  apply HdnsM.eq_leibniz. unfold HdnsM.eq.
+  intros h. rewrite HdnsFactsM.union_iff. (* Definition of set equality *)
   split.
-  - intros H. left; assumption.
+  - intros H'. left; assumption.
   - intros [H1 | H2]. (* By definition of union, we can prove any goal if it is in one of the two sets *)
     + tauto.
     + inversion H2.
@@ -933,7 +935,7 @@ Proof. Admitted.
 Lemma HdnsSubsetCtxStimesBackward : forall (m : mode) (G : ctx) (H: hdns), HdnsM.Subset hnamesᴳ(m ᴳ· G) H -> HdnsM.Subset hnamesᴳ(G) H.
 Proof. Admitted.
 
-Lemma hnamesMinusEq : forall (D : ctx), HdnsM.Equal (hnamesᴳ( ᴳ- D)) (hnamesᴳ( D)).
+Lemma hnamesMinusEq : forall (D : ctx), (hnamesᴳ( ᴳ- D)) = hnamesᴳ( D).
 Proof. Admitted.
 
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
@@ -1175,7 +1177,7 @@ Proof.
       inversion Tyt; subst.
       assert (m = m0) as Eqmm0.
         { inversion_clear Tytp; inversion_clear TyRv; tauto. }
-      rewrite <- Eqmm0 in Tyt, Tytp, TyC, DestOnlyD, ValidOnlyD. clear Eqmm0. clear m0. rename P1 into D1, P2 into D2. rename Tyt into TyApp, Tyt0 into Tyt, T into U, T0 into T.
+      rewrite <- Eqmm0 in *. clear Eqmm0. clear m0. rename P1 into D1, P2 into D2. rename Tyt into TyApp, Tyt0 into Tyt, T into U, T0 into T.
       inversion Tytp; subst. clear H1. rename TyRv into TyRv'.
       inversion TyRv'; subst. rename H1 into DestOnlyD2.
       assert (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U) as Tyusub.
@@ -1333,7 +1335,7 @@ Proof.
               assert (hdns_Disjoint hnamesᴳ(D2) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
               { apply hdns_max_hdns_Disjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hdns_Disjoint hnamesᴳ(D2)  hnamesᴳ( D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
-              { rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
+              { unfold hdns_Disjoint. rewrite hnamesMinusEq. rewrite hnamesFullShiftEq. tauto. }
               apply hnames_DisjointToDisjoint; crush.
             }
             { assert (HdnsM.Subset hnamesᴳ(D11) hnames©(C)).

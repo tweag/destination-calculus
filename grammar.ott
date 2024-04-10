@@ -2,20 +2,23 @@ embed
 {{ coq
 Require Import Ott.ext_nat.
 Require Import Coq.Structures.Equalities.
-Require Import Coq.Structures.Orders.
-Require Import Coq.Structures.OrdersAlt.
-Require Import Coq.Structures.OrdersEx.
+Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
-Require Import Coq.FSets.FSetList.
-Require Import Coq.FSets.FSetFacts.
+Require Import Coq.MSets.MSetList.
+Require Import Coq.MSets.MSetFacts.
 Require List.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
 
-Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
-Module HdnsM := FSetList.Make(Nat_as_OTOrig).
-Module HdnsFactsM := FSetFacts.Facts(HdnsM).
+Module Nat' <: OrderedTypeWithLeibniz.
+  Include PeanoNat.Nat.
+  Lemma eq_leibniz : forall x y, eq x y -> x = y.
+  Proof. trivial.
+  Qed.
+End Nat'.
+Module HdnsM := MSetList.MakeWithLeibniz(Nat').
+Module HdnsFactsM := MSetFacts.Facts(HdnsM).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)

@@ -8,20 +8,23 @@ Require Import Ott.ott_list_core.
 
 Require Import Ott.ext_nat.
 Require Import Coq.Structures.Equalities.
-Require Import Coq.Structures.Orders.
-Require Import Coq.Structures.OrdersAlt.
-Require Import Coq.Structures.OrdersEx.
+Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
-Require Import Coq.FSets.FSetList.
-Require Import Coq.FSets.FSetFacts.
+Require Import Coq.MSets.MSetList.
+Require Import Coq.MSets.MSetFacts.
 Require List.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
 
-Module Nat_as_OTOrig := Backport_OT(Nat_as_OT).
-Module HdnsM := FSetList.Make(Nat_as_OTOrig).
-Module HdnsFactsM := FSetFacts.Facts(HdnsM).
+Module Nat' <: OrderedTypeWithLeibniz.
+  Include PeanoNat.Nat.
+  Lemma eq_leibniz : forall x y, eq x y -> x = y.
+  Proof. trivial.
+  Qed.
+End Nat'.
+Module HdnsM := MSetList.MakeWithLeibniz(Nat').
+Module HdnsFactsM := MSetFacts.Facts(HdnsM).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -622,6 +625,7 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
  | TyR_val_U : 
      TyR_val  ctx_empty  val_U type_U
  | TyR_val_F : forall (D:ctx) (x:var) (m:mode) (u:term) (T U:type)
+     (Validm: mode_IsValid m )
      (Tyu: Ty_term  (ctx_union  D    (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )  u U),
      ctx_DestOnly D  ->
      TyR_val D (val_F x m u) (type_F T m U)
@@ -636,7 +640,8 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
      (TyRv2: TyR_val G2 v2 T2),
      TyR_val  (ctx_union  G1   G2 )  (val_P v1 v2) (type_P T1 T2)
  | TyR_val_E : forall (n:mode) (G:ctx) (v':val) (T:type)
-     (TyRvp: TyR_val G v' T),
+     (TyRvp: TyR_val G v' T)
+     (Validn: mode_IsValid n ),
      TyR_val  (ctx_stimes  n   G )  (val_E n v') (type_E n T)
  | TyR_val_A : forall (D1 D2 D3:ctx) (v2 v1:val) (U T:type)
      (DestOnlyD1: ctx_DestOnly D1 )
@@ -660,6 +665,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (CompatPx: ctx_CompatibleVar P x (tyb_Var  (Some (pair   Lin     (Fin 0)  ))  T) ),
      Ty_term P (term_Var x) T
  | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t t':term) (U T:type)
+     (Validm: mode_IsValid m )
      (Tyt: Ty_term P1 t T)
      (Tytp: Ty_term P2 t' (type_F T m U)),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_App t t') U
@@ -668,6 +674,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyu: Ty_term P2 u U),
      Ty_term  (ctx_union  P1   P2 )  (term_PatU t u) U
  | Ty_term_PatS : forall (m:mode) (P1 P2:ctx) (t:term) (x1:var) (u1:term) (x2:var) (u2:term) (U T1 T2:type)
+     (Validm: mode_IsValid m )
      (DisjointP2x1: ctx_Disjoint P2  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )
      (DisjointP2x2: ctx_Disjoint P2  (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Tyt: Ty_term P1 t (type_S T1 T2))
@@ -675,6 +682,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyu2: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u2 U),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_PatS t m x1 u1 x2 u2) U
  | Ty_term_PatP : forall (m:mode) (P1 P2:ctx) (t:term) (x1 x2:var) (u:term) (U T1 T2:type)
+     (Validm: mode_IsValid m )
      (DisjointP2x1: ctx_Disjoint P2  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )
      (DisjointP2x2: ctx_Disjoint P2  (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
      (Disjointx1x2: ctx_Disjoint  (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))   (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )
@@ -682,6 +690,8 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyu: Ty_term  (ctx_union   (ctx_union  P2    (ctx_singleton (name_Var  x1 ) (tyb_Var  m   T1 ))  )     (ctx_singleton (name_Var  x2 ) (tyb_Var  m   T2 ))  )  u U),
      Ty_term  (ctx_union   (ctx_stimes  m   P1 )    P2 )  (term_PatP t m x1 x2 u) U
  | Ty_term_PatE : forall (m:mode) (P1 P2:ctx) (t:term) (n:mode) (x:var) (u:term) (U T:type)
+     (Validm: mode_IsValid m )
+     (Validn: mode_IsValid n )
      (DisjointP2x: ctx_Disjoint P2  (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  )
      (Tyt: Ty_term P1 t (type_E n T))
      (Tyu: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) )    T ))  )  u U),
@@ -712,14 +722,18 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P t (type_D (type_P T1 T2) n)),
      Ty_term P (term_FillP t) (type_P (type_D T1 n) (type_D T2 n))
  | Ty_term_FillE : forall (P:ctx) (t:term) (n':mode) (T:type) (n:mode)
+     (Validn: mode_IsValid n )
      (Tyt: Ty_term P t (type_D (type_E n' T) n)),
      Ty_term P (term_FillE t n') (type_D T  (mode_times'  ((app (cons n' nil) (app (cons n nil) nil))) ) )
  | Ty_term_FillF : forall (P1:ctx) (n:mode) (P2:ctx) (t:term) (x:var) (m:mode) (u:term) (T U:type)
+     (Validm: mode_IsValid m )
+     (Validn: mode_IsValid n )
      (DisjointP2x: ctx_Disjoint P2  (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )
      (Tyt: Ty_term P1 t (type_D (type_F T m U) n))
      (Tyu: Ty_term  (ctx_union  P2    (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )  u U),
      Ty_term  (ctx_union  P1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillF t x m u) type_U
  | Ty_term_FillC : forall (P1:ctx) (n:mode) (P2:ctx) (t t':term) (T U:type)
+     (Validn: mode_IsValid n )
      (Tyt: Ty_term P1 t (type_D U n))
      (Tytp: Ty_term P2 t' (type_A U T)),
      Ty_term  (ctx_union  P1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillC t t') T
@@ -739,7 +753,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidmD1: ctx_ValidOnly  (ctx_stimes  m   D1 )  )
+     (Validm: mode_IsValid m )
+     (ValidOnlyD1: ctx_ValidOnly D1 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
      (Tyv: Ty_term D1 (term_Val v) T),
      Ty_ectxs D2  (cons   (ectx_AppFoc2 v)    C )   (type_F T m U)  U0
@@ -776,6 +791,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
      (Validm: mode_IsValid m )
+     (Validmp: mode_IsValid m' )
      (ValidOnlyD2: ctx_ValidOnly D2 )
      (TyC: Ty_ectxs  (ctx_union   (ctx_stimes  m   D1 )    D2 )  C U U0)
      (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var   (mode_times'  ((app (cons m nil) (app (cons m' nil) nil))) )    T ))  )  u U),
@@ -807,13 +823,16 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs D C  (type_P (type_D T1 n) (type_D T2 n))  U0),
      Ty_ectxs D  (cons   ectx_FillPFoc    C )  (type_D (type_P T1 T2) n) U0
  | Ty_ectxs_FillEFoc : forall (D:ctx) (C:ectxs) (m:mode) (T:type) (n:mode) (U0:type)
+     (Validm: mode_IsValid m )
      (TyC: Ty_ectxs D C (type_D T  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) ) ) U0),
      Ty_ectxs D  (cons   (ectx_FillEFoc m)    C )  (type_D (type_E m T) n) U0
  | Ty_ectxs_FillFFoc : forall (D1:ctx) (C:ectxs) (x:var) (m:mode) (u:term) (T U:type) (n:mode) (U0:type) (D2:ctx)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD2: ctx_ValidOnly  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
+     (Validm: mode_IsValid m )
+     (Validn: mode_IsValid n )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_U U0)
      (Tyu: Ty_term  (ctx_union  D2    (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_FillFFoc x m u)    C )  (type_D (type_F T m U) n) U0
@@ -821,7 +840,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidsnD2: ctx_ValidOnly  (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )
+     (ValidOnlyD2: ctx_ValidOnly D2 )
+     (Validn: mode_IsValid n )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
      (Tytp: Ty_term D2 t' (type_A U T)),
      Ty_ectxs D1  (cons   (ectx_FillCFoc1 t')    C )  (type_D U n) U0
@@ -829,8 +849,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (DisjointD1D2: ctx_Disjoint D1 D2 )
      (DestOnlyD1: ctx_DestOnly D1 )
      (DestOnlyD2: ctx_DestOnly D2 )
-     (ValidD1: ctx_ValidOnly D1 )
-     (Validsn: mode_IsValid   (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )   )
+     (ValidOnlyD1: ctx_ValidOnly D1 )
+     (Validn: mode_IsValid n )
      (TyC: Ty_ectxs  (ctx_union  D1    (ctx_stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
      (Tyt: Ty_term D1 (term_Val v) (type_D U n)),
      Ty_ectxs D2  (cons   (ectx_FillCFoc2 v)    C )  (type_A U T) U0
