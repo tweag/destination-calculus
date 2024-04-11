@@ -170,15 +170,22 @@ Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
   | h :: t => HdnsM.add h (hdns_from_list t)
   end.
 
-Definition hdns_max (H : HdnsM.t) : nat :=
-  HdnsM.fold (fun k acc => max k acc) H 0.
+Definition hdns_max (H : HdnsM.t) : nat := match HdnsM.max_elt H with
+  | Some h => h
+  | None => 0
+  end.
 
 Definition hdns_shift (H : HdnsM.t) (h' : nat) : HdnsM.t :=
   HdnsM.fold (fun h acc => HdnsM.add (h + h') acc) H HdnsM.empty.
 
+Fixpoint hdns_from_ctxdom (dom: list name) : HdnsM.t :=
+  match dom with
+  | nil => HdnsM.empty
+  | name_Var _ :: xs => hdns_from_ctxdom xs
+  | name_DH h :: xs => HdnsM.add h (hdns_from_ctxdom xs)
+  end.
 Definition hdns_from_ctx (G : ctx) : HdnsM.t :=
-  (* TODO: This outputs both holes and destination names. Is it the intention? *)
-  List.fold_right HdnsM.add HdnsM.empty (List.fold_right (fun n hs => match n with name_DH h => h::hs | _ => hs end) nil (Finitely.dom G)).
+  hdns_from_ctxdom (dom G).
 
 Fixpoint hdns_from_ectxs (C : ectxs) : HdnsM.t := match C with
   | nil => HdnsM.empty

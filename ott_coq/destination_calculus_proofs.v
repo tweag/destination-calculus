@@ -907,8 +907,61 @@ Proof.
     + inversion H2.
 Qed.
 
+Definition ListSubset {A : Type} (l1 l2 : list A) : Prop := forall x, List.In x l1 -> List.In x l2.
+
+Lemma ListSubset_refl {A : Type} : forall (l : list A), ListSubset l l.
+Proof.
+  intros l x H. assumption.
+Qed.
+
+Lemma ListSubset_cons {A : Type} : forall (l1 l2 : list A) (x : A), ListSubset (x :: l1) l2 <-> List.In x l2 /\ ListSubset l1 l2.
+Proof.
+  intros l1 l2 x.
+  split.
+  - intros Subsetcons. split.
+    + unfold ListSubset in Subsetcons. specialize (Subsetcons x (in_eq x l1)). assumption.
+    + unfold ListSubset in *. intros y; specialize (Subsetcons y); intros Inyl1. apply (List.in_cons x) in Inyl1. specialize (Subsetcons Inyl1). assumption.
+  - intros (Inxl2 & Subsetl1l2). unfold ListSubset in *. intros y. specialize (Subsetl1l2 y). intros Inycons. destruct Inycons.
+    + subst; assumption.
+    + specialize (Subsetl1l2 H); assumption.
+Qed.
+
 Lemma hnames_spec : forall (G : ctx) (h : hdn), HdnsM.In h (hnamesᴳ(G)) <-> exists x, G (name_DH h) = Some x.
-Proof. Admitted.
+Proof.
+  intros *. split.
+  - intros Hin. unfold hdns_from_ctx, hdns_from_ctxdom in Hin. remember (dom(G)) as l in Hin. assert (ListSubset l (dom G)). { rewrite Heql. apply ListSubset_refl. } clear Heql. induction l.
+    * inversion Hin.
+    * rename a into n, l into ns.
+      rewrite ListSubset_cons in H; destruct H; rewrite dom_spec in H; rewrite In_spec in H. destruct ((fix hdns_from_ctxdom (dom : list name) : HdnsM.t := match dom with
+| ©️⬜ => HdnsM.empty
+| xs ∘ ˣ _ => hdns_from_ctxdom xs
+| xs ∘ ʰ h => HdnsM.add h (hdns_from_ctxdom xs)
+end) ns).
+      destruct n.
+      + specialize (IHl Hin H0). assumption.
+      + destruct (Nat.eq_dec h h0).
+        { rewrite e in *; assumption. }
+        { assert (HdnsM.In h {| HdnsM.this := this; HdnsM.is_ok := is_ok |}).
+          { rewrite HdnsM.add_spec in Hin. destruct Hin. congruence. assumption. }
+          specialize (IHl H1 H0). assumption.
+        }
+  - intros Hin. rewrite <- In_spec in Hin. apply dom_spec in Hin. unfold hdns_from_ctx, hdns_from_ctxdom. remember (dom(G)) as l. assert (ListSubset l (dom G)). { rewrite Heql. apply ListSubset_refl. } clear Heql. induction l.
+    * inversion Hin.
+    * rename a into n, l into ns.
+      destruct n.
+      { rewrite ListSubset_cons in H; destruct H.
+        assert (List.In (ʰ h) ns).
+        { destruct Hin. congruence. assumption. }
+        specialize (IHl H1 H0). assumption.
+      }
+      { destruct (Nat.eq_dec h h0).
+        { rewrite e in *. apply HdnsM.add_spec. left. congruence. }
+        { assert (List.In (ʰ h) ns).
+          { destruct Hin. inversion H0. congruence. assumption. }
+          apply ListSubset_cons in H; destruct H. specialize (IHl H0 H1). apply HdnsM.add_spec. right. assumption.
+        }
+      }
+Qed.
 
 Lemma HdnsInCtxUnionEquiv : forall (G G': ctx) (h: hdn), HdnsM.In h hnamesᴳ(G ⨄ G') <-> HdnsM.In h hnamesᴳ(G) \/ HdnsM.In h hnamesᴳ(G').
 Proof.
@@ -928,15 +981,28 @@ Proof.
 Qed.
 
 Lemma HdnsInCtxStimesEquiv : forall (m : mode) (G : ctx) (h: hdn), HdnsM.In h hnamesᴳ(m ᴳ· G) <-> HdnsM.In h hnamesᴳ(G).
-Proof. Admitted.
+Proof.
+  best use: hnames_spec, map_Mapsto.
+Qed.
 
 Lemma HdnsSubsetCtxUnionBackward : forall (G G': ctx) (H: hdns), HdnsM.Subset hnamesᴳ(G ⨄ G') H -> HdnsM.Subset hnamesᴳ(G) H /\ HdnsM.Subset hnamesᴳ(G') H.
-Proof. Admitted.
+Proof.
+  unfold HdnsM.Subset in *. intros *. intros Hyp. split.
+  - intros h Hin. specialize (Hyp h). apply Hyp, HdnsInCtxUnionEquiv. left. assumption.
+  - intros h Hin. specialize (Hyp h). apply Hyp, HdnsInCtxUnionEquiv. right. assumption.
+Qed.
+
 Lemma HdnsSubsetCtxStimesBackward : forall (m : mode) (G : ctx) (H: hdns), HdnsM.Subset hnamesᴳ(m ᴳ· G) H -> HdnsM.Subset hnamesᴳ(G) H.
-Proof. Admitted.
+Proof.
+  unfold HdnsM.Subset in *. intros *. intros Hyp h Hin. specialize (Hyp h). apply Hyp, HdnsInCtxStimesEquiv. assumption.
+Qed.
 
 Lemma hnamesMinusEq : forall (D : ctx), (hnamesᴳ( ᴳ- D)) = hnamesᴳ( D).
-Proof. Admitted.
+Proof.
+  intros D. apply HdnsM.eq_leibniz. unfold HdnsM.eq. intros h. rewrite! hnames_spec. split.
+  - intros Hin. rewrite <- In_spec in Hin. unfold ctx_minus in Hin. rewrite <- map_In in Hin. rewrite <- In_spec. assumption.
+  - intros Hin. rewrite <- In_spec in Hin. unfold ctx_minus. rewrite <- In_spec. rewrite <- map_In. assumption.
+Qed.
 
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
 Proof.
@@ -954,7 +1020,15 @@ Proof.
 Qed.
 
 Lemma hnames_DisjointToDisjoint : forall (D D' : ctx), ctx_DestOnly D -> ctx_DestOnly D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D') -> ctx_Disjoint D D'.
-Proof. Admitted.
+Proof.
+  intros * DestOnlyD DestOnlyD' hdnsDisjoint.
+  unfold ctx_Disjoint. intros n inD inD'. unfold In, Fun.In in *. destruct n.
+  - unfold ctx_DestOnly, IsDest in DestOnlyD. destruct inD as (tyb & inD); specialize (DestOnlyD (name_Var x) tyb inD); cbn in DestOnlyD. assumption.
+  - rewrite <- hnames_spec in inD, inD'. unfold hdns_Disjoint in hdnsDisjoint.
+    assert (HdnsM.In h (HdnsM.inter hnamesᴳ(D) hnamesᴳ(D'))).
+      { apply HdnsM.inter_spec. split; assumption. }
+    unfold HdnsM.Empty in hdnsDisjoint. specialize (hdnsDisjoint h). congruence.
+Qed.
 
 Lemma DisjointTohdns_Disjoint : forall (D D' : ctx), ctx_Disjoint D D' -> hdns_Disjoint hnamesᴳ(D) hnamesᴳ(D').
 Proof. Admitted.
@@ -993,19 +1067,77 @@ Lemma IncompatibleVarDestOnly : forall (D : ctx) (x : var) (m : mode) (T : type)
 Proof. Admitted.
 
 Lemma MinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ- ᴳ{+ h : ¹ν ⌊ T ⌋ n} = ᴳ{- h : T ‗ n }.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros n'. unfold ctx_minus, ctx_singleton.
+    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+    { rewrite singleton_spec_1. apply map_Mapsto. rewrite singleton_spec_1. simpl. exists (₊ ¹ν ⌊ T ⌋ n). split; tauto. }
+    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      rewrite H0 in *. apply map_Mapsto_None. assumption. }
+  - unfold ctx_minus.
+    sfirstorder.
+Qed.
+
 Lemma InvMinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ-⁻¹ ᴳ{- h : T ‗ n} = ᴳ{+ h : ¹ν ⌊ T ⌋ n }.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros n'. unfold ctx_invminus, ctx_singleton.
+    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+    { rewrite singleton_spec_1. apply map_Mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split; tauto. }
+    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      rewrite H in *. apply map_Mapsto_None. assumption. }
+  - unfold ctx_invminus.
+    sfirstorder.
+Qed.
 
 Lemma StimesSingletonVar : forall (x : var) (m : mode) (T : type) (m' : mode), m' ᴳ· ᴳ{ x : m ‗ T} = ᴳ{ x : (m · m') ‗ T}.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros n. unfold ctx_stimes, ctx_singleton.
+    destruct (name_eq_dec n (ˣ x)); rewrite? e in *.
+    { rewrite singleton_spec_1. apply map_Mapsto. rewrite singleton_spec_1. simpl. exists (ₓ m ‗ T). split. tauto. unfold stimes_tyb_var. rewrite TimesCommutative. reflexivity. }
+    { assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
+      assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ (m · m') ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
+      rewrite H0 in *. apply map_Mapsto_None. assumption. }
+  - unfold ctx_stimes.
+    sfirstorder.
+Qed.
+
 Lemma StimesSingletonDest : forall (h : hdn) (m n : mode) (T : type) (m': mode), m' ᴳ· ᴳ{+ h : m ⌊ T ⌋ n} = ᴳ{+ h : (m · m') ⌊ T ⌋ n}.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros n'. unfold ctx_stimes, ctx_singleton.
+    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+    { rewrite singleton_spec_1. apply map_Mapsto. rewrite singleton_spec_1. simpl. exists (₊ m ⌊ T ⌋ n). split. tauto. unfold stimes_tyb_dh. rewrite TimesCommutative. reflexivity. }
+    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ m ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ (m · m') ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      rewrite H0 in *. apply map_Mapsto_None. assumption. }
+  - unfold ctx_stimes.
+    sfirstorder.
+Qed.
 Lemma StimesSingletonHole : forall (h : hdn) (T : type) (n : mode) (m': mode), m' ᴳ· ᴳ{- h : T ‗ n} = ᴳ{- h : T ‗ (n · m') }.
-Proof. Admitted.
+Proof.
+  intros *.
+  apply Finitely.ext_eq.
+  - intros n'. unfold ctx_stimes, ctx_singleton.
+    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+    { rewrite singleton_spec_1. apply map_Mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split. tauto. unfold stimes_tyb_dh. rewrite TimesCommutative. reflexivity. }
+    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ (n · m')) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+      rewrite H0 in *. apply map_Mapsto_None. assumption. }
+  - unfold ctx_stimes.
+    sfirstorder.
+Qed.
 
 Lemma hnamesSingletonDestEq : forall (h : hdn) (m n : mode) (T : type), hnamesᴳ( ᴳ{+ h : m ⌊ T ⌋ n} ) = ᴴ{ h }.
 Proof. Admitted.
+
 Lemma hnamesSingletonHoleEq : forall (h : hdn) (T : type) (n : mode), hnamesᴳ( ᴳ{- h : T ‗ n} ) = ᴴ{ h }.
 Proof. Admitted.
 
