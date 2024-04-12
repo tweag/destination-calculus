@@ -20,6 +20,10 @@ Require Import Arith.
  * Waiting for PR #2 to be merged 
  * ========================================================================= *)
 
+(* This proof script is embarrassingly complex, but for some reason
+   the hammer doesn't succeed in using `HdnsM.mem … = true` as an
+   undefined symbol. So we have to tiptoe around quite a bit and make
+   some arithmetic proofs manually. *)
 Lemma preshift_surjective : forall H h' x, (forall h, HdnsM.mem h H = true -> h < h') -> exists x', preshift H h' x' = x.
 Proof.
   intros * h_max. unfold preshift.
@@ -30,23 +34,41 @@ Proof.
               | false, right _, _ => h
               | false, left _, true => (h-h')
               | false, left _, false => h
-              (* | true, left _, true => cons (name_DH (h-h')) (cons (name_DH (h+h')) nil) *)
-              | true, left _, true => (* (h-h') *) 57
-              (* | true, left _, false => cons (name_DH h) (cons (name_DH (h+h')) nil) *)
-              | true, left _, false => (* h *) 18
+              (* contradicts the hypotheses, arbitrary value *)
+              | _, _, _ => 57
               end).
   exists (ʰ h''). subst h''. f_equal.
-  destruct (HdnsM.mem h H) eqn: mem_h_H; destruct (HdnsM.mem (h - h') H) eqn: mem_hh_H.
-  all: destruct (ge_dec h h').
+  destruct (ge_dec h h').
+  (* 2 goals *)
+  (* This little dance is an attempt to not call `destruct` on some nested `mem (…mem…) H` term. *)
+  all: destruct (HdnsM.mem h H) eqn:mem_h_H; destruct (HdnsM.mem (h - h') H) eqn:mem_h_HH.
   (* 8 goals *)
+  all: destruct (HdnsM.mem h H) eqn:mem_h_H'; try discriminate.
+  all: destruct (HdnsM.mem (h - h') H) eqn:mem_h_HH'; try discriminate.
+  (* no more nesting at this point *)
+  all: repeat match goal with
+         |  |- context [if HdnsM.mem ?h1 ?h2 then _ else _] => destruct (HdnsM.mem h1 h2) eqn: ?
+         end.
+  (* 21 goals *)
   all: repeat match goal with
          |  |- context [if ?x then _ else _] => destruct x
          end.
-  (* 32 goals *)
+  (* 42 goals *)
   all: try sfirstorder.
-  (* 4 goals *)
-  all:give_up.
-Admitted.
+  (* 6 goals *)
+  all: try hauto l: on.
+  (* 3 goals *)
+  - apply h_max in mem_h_HH'.
+    sfirstorder.
+  - assert (h + h' - h' = h) as r.
+    { sfirstorder. }
+    rewrite r in *.
+    sfirstorder.
+  - assert (h + h' - h' = h) as r.
+    { sfirstorder. }
+    rewrite r in *.
+    sfirstorder.
+Qed.
 
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
