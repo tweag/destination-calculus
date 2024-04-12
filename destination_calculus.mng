@@ -101,6 +101,9 @@
 \item Did proofs in Coq because context manipulations are tricky.
 \item A number of wrong lemma initially assumed, but replacing them by
   correct variant was always easy to fix in proofs.
+\item Context sum made total by adding an extra invalid \emph{mode}
+  (rather than an extra context). It seems to be much simpler this
+  way.
 \end{itemize}
 
 \end{document}
