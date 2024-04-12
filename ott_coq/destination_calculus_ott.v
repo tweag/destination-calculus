@@ -480,6 +480,7 @@ Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
 
 Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop :=
+  Finitely.In (name_DH h) G /\
   forall (n' : name) (tyb' : binding_type_of n'), G n' = Some tyb' ->
     ( match n' return binding_type_of n' -> Prop with
       | name_DH h' => match Nat.eq_dec h h' with
@@ -494,6 +495,7 @@ Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop :=
     end tyb').
 
 Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop := 
+  Finitely.In (name_Var x) G /\
   forall (n' : name) (tyb' : binding_type_of n'), G n' = Some tyb' ->
     ( match n' return binding_type_of n' -> Prop with
       | name_Var x' => match Nat.eq_dec x x' with

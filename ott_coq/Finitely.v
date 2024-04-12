@@ -27,11 +27,6 @@ Module Fun.
      ignoring everything about setoids since we won't be needing them
      for our use-case. *)
 
-  (* TODO: map, merge (already done), proof of support for each. Then
-     make a type of finitely supported map (don't care about
-     equality). Implement the Admitted/Parameter definitions in
-     grammar.ott. *)
-
 Definition In {A B} (x:A) (f:forall x:A, option (B x)) : Prop := exists y, f x = Some y.
 
 Lemma In_None1 : forall {A B} (x:A) (f:forall x:A, option (B x)), In x f <-> f x <> None.
@@ -129,7 +124,7 @@ Proof.
   hauto dep: on.
 Qed.
 
-Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Lemma singleton_mapsto : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
   intros *. unfold singleton.
   destruct (discr x y) as [e|c].
@@ -531,6 +526,22 @@ Definition empty {A B} : T A B :=
     support := nil
   |}.
 
+Lemma dom_empty : forall {A B}, dom (@empty A B) = nil.
+Proof.
+  intros *.
+  unfold empty, dom. simpl. reflexivity.
+Qed.
+
+Lemma dom_empty_spec : forall {A B} (f : T A B), dom(f) = nil <-> f.(underlying) = (fun _ => None).
+Proof.
+  intros *.
+  split.
+  - intros h. apply functional_extensionality_dep. intros x. apply Fun.out_of_support_is_None with (l := (dom f)). apply dom_Support. intros inDomf. rewrite h in inDomf. inversion inDomf.
+  - unfold dom. intros eq. rewrite eq. induction (support f).
+    { cbn. reflexivity. }
+    { simpl. assumption. }
+Qed.
+
 #[program]
 Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) : T A B :=
   {|
@@ -554,9 +565,15 @@ Proof.
   hauto lq: on use: In_spec, singleton_spec0, Fun.in_singleton.
 Qed.
 
-Lemma mapsto_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Lemma singleton_mapsto : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
-  intros *. rewrite singleton_spec0. apply Fun.mapsto_singleton.
+  intros *. rewrite singleton_spec0. apply Fun.singleton_mapsto.
+Qed.
+
+Lemma dom_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), dom (singleton x discr v) = x::nil.
+Proof.
+  intros *.
+  unfold singleton, dom, support. simpl. rewrite Fun.singleton_spec_1. reflexivity.
 Qed.
 
 Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
@@ -621,7 +638,7 @@ Proof.
   apply Fun.map_ext.
 Qed.
 
-Lemma map_Mapsto : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
+Lemma map_mapsto : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
 Proof.
   intros *.
   rewrite map_spec0.
@@ -631,6 +648,16 @@ Proof.
   assert (m x b = y) as e. { injection issome; tauto. } rewrite <- e.
   exists b. tauto. congruence.
 - intros [z [eq1 eq2]]. unfold Fun.map. destruct (f x) eqn:emap. assert (b = z) as e. { injection eq1; tauto. } subst. tauto. congruence.
+Qed.
+
+Lemma map_mapsto_None : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = None <-> f x = None.
+Proof.
+  intros *.
+  rewrite map_spec0.
+  split.
+- intros isnone.
+  unfold Fun.map in isnone. destruct (f x) eqn:emap in isnone. congruence. tauto.
+- intros isnone. unfold Fun.map. rewrite isnone. tauto.
 Qed.
 
 Lemma map_comp : forall {A B1 B2 B3} (m1 : forall x, B1 x -> B2 x) (m2 : forall x, B2 x -> B3 x) (f : T A B1) x, map m2 (map m1 f) x = map (fun x y => m2 x (m1 x y)) f x.
