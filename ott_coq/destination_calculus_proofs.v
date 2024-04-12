@@ -20,6 +20,17 @@ Require Import Arith.
  * Waiting for PR #2 to be merged 
  * ========================================================================= *)
 
+Lemma gt_S_max : forall h H, HdnsM.mem h H = true -> h < ʰmax(H) + 1.
+Proof.
+  intros * h_H. unfold hdns_max.
+  destruct (HdnsM.max_elt H) eqn:h_max_elt.
+  2:{ apply HdnsM.max_elt_spec3 in h_max_elt. unfold HdnsM.Empty in *.
+      sfirstorder use: HdnsFactsM.mem_iff. }
+  apply HdnsM.max_elt_spec2  with (y:=h) in h_max_elt.
+  - sfirstorder.
+  - sfirstorder use: HdnsFactsM.mem_iff.
+Qed.
+
 (* This proof script is embarrassingly complex, but for some reason
    the hammer doesn't succeed in using `HdnsM.mem … = true` as an
    undefined symbol. So we have to tiptoe around quite a bit and make
@@ -70,24 +81,17 @@ Proof.
     sfirstorder.
 Qed.
 
-Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), (forall h, HdnsM.mem h H = true -> h < h') -> ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
   intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
   rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
-  give_up.
-  (* apply precomp_propagate_both. *)
-Admitted.
-Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
-
-(* Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
-Proof.
-  intros *. unfold ctx_ValidOnly, ctx_hdn_shift.
-  split.
-  - intros h [xx|xh] b. cbn in *.
+  symmetry.
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
 Qed.
-Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down. *)
+Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
 
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
