@@ -19,16 +19,54 @@ Require Import Arith.
 (* =========================================================================
  * Waiting for PR #2 to be merged 
  * ========================================================================= *)
+
+Lemma preshift_surjective : forall H h' x, (forall h, HdnsM.mem h H = true -> h < h') -> exists x', preshift H h' x' = x.
+Proof.
+  intros * h_max. unfold preshift.
+  destruct x as [xx|h].
+  { exists (ˣ xx). reflexivity. }
+  set (h'' := match HdnsM.mem h H, (ge_dec h h'), (HdnsM.mem (h-h') H) with
+              | true, right _, _ => (h+h')
+              | false, right _, _ => h
+              | false, left _, true => (h-h')
+              | false, left _, false => h
+              (* | true, left _, true => cons (name_DH (h-h')) (cons (name_DH (h+h')) nil) *)
+              | true, left _, true => (* (h-h') *) 57
+              (* | true, left _, false => cons (name_DH h) (cons (name_DH (h+h')) nil) *)
+              | true, left _, false => (* h *) 18
+              end).
+  exists (ʰ h''). subst h''. f_equal.
+  destruct (HdnsM.mem h H) eqn: mem_h_H; destruct (HdnsM.mem (h - h') H) eqn: mem_hh_H.
+  all: destruct (ge_dec h h').
+  (* 8 goals *)
+  all: repeat match goal with
+         |  |- context [if ?x then _ else _] => destruct x
+         end.
+  (* 32 goals *)
+  all: try sfirstorder.
+  (* 4 goals *)
+  all:give_up.
+Admitted.
+
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
   intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
-  (* rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
+  rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
   2:{ intros [xx|xh] **. all: cbn.
-      all: reflexivity. } *)
+      all: reflexivity. }
   give_up.
   (* apply precomp_propagate_both. *)
 Admitted.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+
+(* Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Proof.
+  intros *. unfold ctx_ValidOnly, ctx_hdn_shift.
+  split.
+  - intros h [xx|xh] b. cbn in *.
+Qed.
+Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down. *)
+
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
@@ -175,14 +213,6 @@ Proof.
   hauto lq: on use: ValidOnlyStimesForward.
 Qed.
 Hint Rewrite <- ValidOnlyStimesForward' : suffices.
-
-Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
-Proof.
-  intros *. unfold ctx_ValidOnly, ctx_hdn_shift.
-  split.
-  - intros h [xx|xh] b. cbn in *.
-Qed.
-Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
 
 Lemma DestOnlyUnionEquiv : forall (G1 G2 : ctx), ctx_DestOnly (G1 ⨄ G2) <-> ctx_DestOnly G1 /\ ctx_DestOnly G2.
 Proof.
@@ -1100,7 +1130,7 @@ Proof.
       + assert (~(h'<h)). { apply HdnsM.max_elt_spec2 with (s := H'). all:assumption. }
         apply not_lt_le; assumption.
       + apply HdnsM.max_elt_spec3 in eMax'. unfold HdnsM.Empty in eMax'. specialize (eMax' h). congruence.
-    - apply le_0_n.
+    - apply Nat.le_0_l.
 Qed.
 
 Lemma hnamesEmpty : hnamesᴳ(ᴳ{}) = HdnsM.empty.
@@ -1361,12 +1391,6 @@ Proof.
       { sblast use: DisjointNestedLeftEquiv, DisjointMinusRightEquiv, DisjointStimesLeftEquiv. }
     rewrite LinOnlyUnionEquiv. repeat split. tauto. tauto. tauto. apply FinAgeOnlyUnionForward. repeat split. all:tauto.
 Qed.
-
-(* =========================================================================
- * Waiting for PR #2 to be merged 
- * ========================================================================= *)
-
-(* ========================================================================= *)
 
 Lemma tSubLemma : forall (D1 D2 : ctx) (m : mode) (T U : type) (u : term) (x : var) (v : val), ctx_DestOnly D1 -> ctx_DestOnly D2 -> (D2 ⨄ ᴳ{ x : m ‗ T} ⊢ u : U) -> (D1 ⊢ ᵥ₎ v : T) -> (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U).
 Proof. Admitted.
