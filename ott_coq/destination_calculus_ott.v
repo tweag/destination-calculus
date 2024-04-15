@@ -71,7 +71,6 @@ Inductive term : Type :=  (*r Term *)
  | term_Map (t:term) (x:var) (t':term) (*r Map over the right side of ampar $(t:term)$ *)
  | term_ToA (u:term) (*r Wrap $(u:term)$ into a trivial ampar *)
  | term_FromA (t:term) (*r Extract value from trivial ampar *)
- | term_Alloc : term (*r Return a fresh "identity" ampar object *)
  | term_FillU (t:term) (*r Fill destination with unit *)
  | term_FillL (t:term) (*r Fill destination with left variant *)
  | term_FillR (t:term) (*r Fill destination with right variant *)
@@ -207,11 +206,7 @@ Definition hdns_Disjoint (H1 H2 : HdnsM.t) : Prop :=
   HdnsM.Empty (HdnsM.inter H1 H2).
 
 (******************************************************************************
- * TERMS STATIC BEHAVIOUR
- *****************************************************************************)
-
-(******************************************************************************
- * TERMS DYNAMIC BEHAVIOUR
+ * TERMS
  *****************************************************************************)
 
 Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
@@ -235,7 +230,6 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
     term_Map (term_sub t x' v') x t''
   | term_ToA u => term_ToA (term_sub u x' v')
   | term_FromA t => term_FromA (term_sub t x' v')
-  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_sub t x' v')
   | term_FillL t => term_FillL (term_sub t x' v')
   | term_FillR t => term_FillR (term_sub t x' v')
@@ -245,24 +239,19 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
     let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
     term_FillF (term_sub t x' v') x m u'
   | term_FillC t t' => term_FillC (term_sub t x' v') (term_sub t' x' v')
-end
+end.
 
-(* with
-(* TODO: Do we really need val_sub as value functions cannot capture anything except dests? *)
-val_sub (va: val) (x': var) (v': val) : val := match va with
-  | val_H h => val_H h
-  | val_D h => val_D h
-  | val_U => val_U
-  | val_F x m u =>
-    let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
-    val_F x m u'
-  | val_L v => val_L (val_sub v x' v')
-  | val_R v => val_R (val_sub v x' v')
-  | val_E m v => val_E m (val_sub v x' v')
-  | val_P v1 v2 => val_P (val_sub v1 x' v') (val_sub v2 x' v')
-  | val_A H v2 v1 => val_A H (val_sub v2 x' v') (val_sub v1 x' v')
-end *)
-.
+Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
+Lemma term_NotVal_dec : forall (t : term), {exists v, t = term_Val v} + {term_NotVal t}.
+Proof.
+  intros t. destruct t.
+  { left. exists v; tauto. }
+  all: right; congruence.
+Qed.
+
+(******************************************************************************
+ * VALUES
+ *****************************************************************************)
 
 Fixpoint val_fill (va: val) (h':hdn) (H':hdns) (v':val) : val := match va with
   | val_H h => match Nat.eq_dec h h' with | left _ => v' | right _ => val_H h end
@@ -275,11 +264,6 @@ Fixpoint val_fill (va: val) (h':hdn) (H':hdns) (v':val) : val := match va with
   | val_P v1 v2 => val_P (val_fill v1 h' H' v') (val_fill v2 h' H' v')
   | val_A H v2 v1 => val_A H v2 v1 (* No foreign hole allowed in ampar *)
 end.
-
-Definition ectxs_fill (C: ectxs) (h':hdn) (H' : hdns) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_AOpenFoc H v => ectx_AOpenFoc (HdnsM.union (HdnsM.remove h' H) H') (val_fill v h' H' v')
-  | _ => c
-end) C.
 
 Fixpoint val_hdn_shift (va : val) (H : hdns) (h' : hdn) : val :=
   match va with
@@ -305,7 +289,6 @@ with term_hdn_shift (te : term) (H : hdns) (h' : hdn) : term :=
   | term_Map t x t' => term_Map (term_hdn_shift t H h') x (term_hdn_shift t' H h')
   | term_ToA u => term_ToA (term_hdn_shift u H h')
   | term_FromA t => term_FromA (term_hdn_shift t H h')
-  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_hdn_shift t H h')
   | term_FillL t => term_FillL (term_hdn_shift t H h')
   | term_FillR t => term_FillR (term_hdn_shift t H h')
@@ -314,8 +297,6 @@ with term_hdn_shift (te : term) (H : hdns) (h' : hdn) : term :=
   | term_FillF t x m u => term_FillF (term_hdn_shift t H h') x m (term_hdn_shift u H h')
   | term_FillC t t' => term_FillC (term_hdn_shift t H h') (term_hdn_shift t' H h')
 end.
-
-Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
 
 (******************************************************************************
  * TYPE
@@ -464,65 +445,14 @@ Definition tyb_mode {n : name} (tyb: binding_type_of n): mode :=
     end
   end tyb.
 
-(******************************************************************************
- * CONTEXTS
- *****************************************************************************)
-
-(******************************************************************************
- * CONTEXTS
- *****************************************************************************)
-
-Definition IsDest x : binding_type_of x -> Prop :=
-  match x with
-  | name_Var _ => fun _ => False
-  | name_DH h => fun b => match b with tyb_Dest _  _  _ => True | _ => False end
-  end.
-
-Definition ctx_DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
-
-Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
-Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
-Definition ctx_FinAgeOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsFinAge (tyb_mode tyb).
-Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
-Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
-  forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
-
-Definition ctx_CompatibleDH (G: ctx) (h: hdn) (tyb: tyb_dh) : Prop :=
-  Finitely.In (name_DH h) G /\
-  forall (n' : name) (tyb' : binding_type_of n'), G n' = Some tyb' ->
-    ( match n' return binding_type_of n' -> Prop with
-      | name_DH h' => match Nat.eq_dec h h' with
-        | left h_eqrefl => fun tyb' => match tyb, tyb' with
-          | tyb_Dest m T n, tyb_Dest m' T' n' => mode_IsSubtype m m' /\ T = T' /\ n = n'
-          | tyb_Hole T n, tyb_Hole T' n' => T = T' /\ n = n'
-          | _, _ => False
-          end
-        | right h_eqcontra => fun tyb' => mode_IsUr (tyb_mode tyb')
-        end
-      | name_Var x' => fun tyb' => mode_IsUr (tyb_mode tyb')
-    end tyb').
-
-Definition ctx_CompatibleVar (G: ctx) (x: var) (tyb: tyb_var) : Prop := 
-  Finitely.In (name_Var x) G /\
-  forall (n' : name) (tyb' : binding_type_of n'), G n' = Some tyb' ->
-    ( match n' return binding_type_of n' -> Prop with
-      | name_Var x' => match Nat.eq_dec x x' with
-        | left x_eqrefl => fun tyb' => match tyb, tyb' with
-          | tyb_Var m T, tyb_Var m' T' => mode_IsSubtype m m' /\ T = T'
-          end
-        | right x_eqcontra => fun tyb' => mode_IsUr (tyb_mode tyb')
-        end
-      | name_DH h' => fun tyb' => mode_IsUr (tyb_mode tyb')
-    end tyb').
-
-Definition union_tyb_var (b1 b2 : tyb_var) : tyb_var := match b1, b2 with
+Definition tyb_union_var (b1 b2 : tyb_var) : tyb_var := match b1, b2 with
   | tyb_Var m1 T1, tyb_Var m2 T2 => match type_eq_dec T1 T2 with
     | left _ => tyb_Var (mode_plus m1 m2) T1
     | right _ => tyb_Var None type_U
     end
   end.
 
-Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh := match b1, b2 with
+Definition tyb_union_dh (b1 b2 : tyb_dh) : tyb_dh := match b1, b2 with
   | tyb_Dest m11 T1 m12, tyb_Dest m21 T2 m22 => match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
     | left _, left _ => tyb_Dest (mode_plus m11 m21) T1 m12
     | _, _ => tyb_Dest None type_U None
@@ -534,27 +464,54 @@ Definition union_tyb_dh (b1 b2 : tyb_dh) : tyb_dh := match b1, b2 with
   | _, _ => tyb_Hole type_U None
   end.
 
-Definition ctx_union (G1 G2 : ctx) : ctx :=
-  Finitely.merge_with (fun n =>
-    match n return (binding_type_of n) -> (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => union_tyb_var
-    | name_DH _ => union_tyb_dh
-    end
-  ) G1 G2.
-
-Definition stimes_tyb_var (m' : mode) (b : tyb_var) : tyb_var := match b with
+Definition tyb_stimes_var (m' : mode) (b : tyb_var) : tyb_var := match b with
   | tyb_Var m T => tyb_Var (mode_times m' m) T
 end.
-Definition stimes_tyb_dh (m' : mode) (b : tyb_dh) : tyb_dh := match b with
+Definition tyb_stimes_dh (m' : mode) (b : tyb_dh) : tyb_dh := match b with
   | tyb_Dest m T n => tyb_Dest (mode_times m' m) T n
   | tyb_Hole T n => tyb_Hole T (mode_times m' n)
 end.
 
+Definition tyb_IsDisposable x : binding_type_of x -> Prop :=
+  match x with
+  | name_Var _ => fun tyb => mode_IsUr (tyb_mode tyb)
+  | name_DH _ => fun _ => False
+  end.
+
+Definition tyb_IsDest x : binding_type_of x -> Prop :=
+  match x with
+  | name_Var _ => fun _ => False
+  | name_DH h => fun b => match b with tyb_Dest _  _  _ => True | _ => False end
+  end.
+
+Definition tyb_IsVar x : binding_type_of x -> Prop :=
+  match x with
+  | name_Var _ => fun _ => True
+  | name_DH _ => fun _ => False
+  end.
+
+(******************************************************************************
+ * CONTEXTS
+ *****************************************************************************)
+
+Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx :=
+  Finitely.singleton v (name_eq_dec) tyb.
+
+Definition ctx_empty : ctx := Finitely.empty.
+
+Definition ctx_union (G1 G2 : ctx) : ctx :=
+  Finitely.merge_with (fun n =>
+    match n return (binding_type_of n) -> (binding_type_of n) -> (binding_type_of n) with
+    | name_Var _ => tyb_union_var
+    | name_DH _ => tyb_union_dh
+    end
+  ) G1 G2.
+
 Definition ctx_stimes (m' : mode) (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => stimes_tyb_var m'
-    | name_DH _ => stimes_tyb_dh m'
+    | name_Var _ => tyb_stimes_var m'
+    | name_DH _ => tyb_stimes_dh m'
     end
   ) G.
 
@@ -612,14 +569,42 @@ Next Obligation.
   tauto.
 Qed.
 
+Definition ctx_DestOnly G : Prop := forall x b, G x = Some b -> tyb_IsDest x b.
+
+Definition ctx_VarOnly G : Prop := forall x b, G x = Some b -> tyb_IsVar x b.
+
+Definition ctx_NoVar G : Prop := forall x b, G x = Some b -> ~tyb_IsVar x b.
+
+Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLinNu (tyb_mode tyb).
+Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsLin (tyb_mode tyb).
+Definition ctx_FinAgeOnly (G : ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsFinAge (tyb_mode tyb).
+Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> mode_IsValid (tyb_mode tyb).
+Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
+  forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
+
+Definition ctx_DisposableOnly (G: ctx) : Prop :=
+  forall (n : name) (tyb: binding_type_of n), G n = Some tyb -> tyb_IsDisposable n tyb.
+
+(*
+Inductive ctx_CompatibleVar : ctx -> var -> mode -> type -> Prop :=
+  | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
+    ctx_DisposableOnly P -> ctx_Disjoint P (ctx_singleton (name_Var x) (tyb_Var m' T)) -> mode_IsSubtype m' m -> ctx_CompatibleVar (ctx_union P (ctx_singleton (name_Var x) (tyb_Var m' T))) x m T.
+
+(* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
+Definition ctx_CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
+  forall (n : name) (tyb: binding_type_of n), P n = Some tyb -> (
+    (n = (name_Var x) -> exists m', tyb = tyb_Var m' T /\ mode_IsSubtype m' m)
+ /\ (n <> (name_Var x) -> tyb_IsDisposable tyb)).
+*)
+
 (******************************************************************************
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
-Definition ctx_singleton (v : name) (tyb: binding_type_of v): ctx :=
-  Finitely.singleton v (name_eq_dec) tyb.
-
-Definition ctx_empty : ctx := Finitely.empty.
+Definition ectxs_fill (C: ectxs) (h':hdn) (H' : hdns) (v':val) : ectxs := List.map (fun c => match c with
+  | ectx_AOpenFoc H v => ectx_AOpenFoc (HdnsM.union (HdnsM.remove h' H) H') (val_fill v h' H' v')
+  | _ => c
+end) C.
 
 (*****************************************************************************)
 
@@ -645,9 +630,8 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
 Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
  | TyR_val_H : forall (h:hdn) (T:type),
      TyR_val  (ctx_singleton (name_DH  h ) (tyb_Hole  T    (Some (pair   Lin     (Fin 0)  ))  ))  (val_H h) T
- | TyR_val_D : forall (G:ctx) (h:hdn) (T:type) (n:mode)
-     (CompatGh: ctx_CompatibleDH G h (tyb_Dest  (Some (pair   Lin     (Fin 0)  ))  T n) ),
-     TyR_val G (val_D h) (type_D T n)
+ | TyR_val_D : forall (h:hdn) (T:type) (n:mode),
+     TyR_val  (ctx_singleton (name_DH  h ) (tyb_Dest   (Some (pair   Lin     (Fin 0)  ))    T   n ))  (val_D h) (type_D T n)
  | TyR_val_U : 
      TyR_val  ctx_empty  val_U type_U
  | TyR_val_F : forall (D:ctx) (x:var) (m:mode) (u:term) (T U:type)
@@ -683,13 +667,16 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
      (TyRv2: TyR_val  (ctx_union  D2     (ctx_minus  D3 )   )  v2 U),
      TyR_val  (ctx_union  D1   D2 )  (val_A  (hdns_from_ctx   (ctx_minus  D3 )  )  v2 v1) (type_A U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
- | Ty_term_Val : forall (D:ctx) (v:val) (T:type)
+ | Ty_term_Val : forall (P D:ctx) (v:val) (T:type)
+     (DisposP: ctx_DisposableOnly P )
      (TyRv: TyR_val D v T),
      ctx_DestOnly D  ->
-     Ty_term D (term_Val v) T
- | Ty_term_Var : forall (P:ctx) (x:var) (T:type)
-     (CompatPx: ctx_CompatibleVar P x (tyb_Var  (Some (pair   Lin     (Fin 0)  ))  T) ),
-     Ty_term P (term_Var x) T
+     Ty_term  (ctx_union  P   D )  (term_Val v) T
+ | Ty_term_Var : forall (P:ctx) (x:var) (m:mode) (T:type)
+     (DisposP: ctx_DisposableOnly P )
+     (DisjointPx: ctx_Disjoint P  (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )
+     (Subtypem: mode_IsSubtype m  (Some (pair   Lin     (Fin 0)  ))  ),
+     Ty_term  (ctx_union  P    (ctx_singleton (name_Var  x ) (tyb_Var  m   T ))  )  (term_Var x) T
  | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t t':term) (U T:type)
      (Validm: mode_IsValid m )
      (Tyt: Ty_term P1 t T)
@@ -733,8 +720,6 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_FromA : forall (P:ctx) (t:term) (U:type)
      (Tyt: Ty_term P t (type_A U type_U)),
      Ty_term P (term_FromA t) U
- | Ty_term_Alloc : forall (U:type),
-     Ty_term  ctx_empty  term_Alloc (type_A U (type_D U  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
      (Tyt: Ty_term P t (type_D type_U n)),
      Ty_term P (term_FillU t) type_U
@@ -956,8 +941,6 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
      Sem_eterm C (term_Map (term_Val (val_A H v2 v1)) x t')   (cons   (ectx_AOpenFoc  (hdns_shift  H   h' )   (val_hdn_shift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_hdn_shift  v1   H   h' )  ) 
  | Sem_eterm_AOpenUnfoc : forall (C:ectxs) (H:hdns) (v2 v1:val),
      Sem_eterm   (cons  (ectx_AOpenFoc H v2)   C )   (term_Val v1) C (term_Val (val_A H v2 v1))
- | Sem_eterm_AllocRed : forall (C:ectxs),
-     Sem_eterm C term_Alloc C (term_Val (val_A  (hdns_from_list  (cons  1  nil) )  (val_H  1 ) (val_D  1 )))
  | Sem_eterm_ToAFoc : forall (C:ectxs) (u:term)
      (NotValu: term_NotVal u ),
      Sem_eterm C (term_ToA u)   (cons   ectx_ToAFoc    C )   u

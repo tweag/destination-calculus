@@ -104,6 +104,8 @@
 \item Context sum made total by adding an extra invalid \emph{mode}
   (rather than an extra context). It seems to be much simpler this
   way.
+\item It might be a good idea to provide statistics on the number of
+  lemmas and size of Coq codebase.
 \end{itemize}
 
 \end{document}

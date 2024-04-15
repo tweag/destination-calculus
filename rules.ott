@@ -8,18 +8,16 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 --------------------- :: H
 { -h : T ¹ν } ⫦ -h : T
 
-{{ ctx_CompatibleDH [[G]] [[h]] [[₊ ¹ν ⌊T⌋n]] }} [[:CompatGh]]
 ---------------- :: D
-G ⫦ +h : ⌊T⌋n
+{ +h : ¹ν ⌊T⌋n } ⫦ +h : ⌊T⌋n
 
 --------------------- :: U
 {} ⫦ () :①
 
-
 {{ mode_IsValid [[m]] }} [[:Validm]]
 % {{ ctx_Disjoint [[D]] [[{ x : m T1 }]] }} : Redundant because ctx_DestOnly D => ctx_Disjoint D { x : m T1 }
 % other rules don't need ctx_NoVar D as they cannot syntactically accept vars
-{{ ctx_DestOnly [[D]] }} [[:DestOnlyD]] [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
+{{ ctx_DestOnly [[D]] }} [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
 D ⨄ { x : m T } ⊢ u : U [[:Tyu]]
 ----------------- :: F
 D ⫦ λᵛ x m ⟼ u : T m → U
@@ -73,13 +71,17 @@ defn
 P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
 
 {{ ctx_DestOnly [[D]] }} [[:DestOnlyD]] % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
+{{ ctx_DisposableOnly [[P]] }} [[:DisposP]]
+% We have ctx_Disjoint [[D]] [[P]] for free
 D ⫦ v : T [[:TyRv]]
 -------------------- :: Val
-D ⊢ v : T
+P ⨄ D ⊢ v : T
 
-{{ ctx_CompatibleVar [[P]] [[x]] [[ₓ ¹ν T]] }} [[:CompatPx]]
+{{ ctx_DisposableOnly [[P]] }} [[:DisposP]]
+{{ ctx_Disjoint [[P]] [[{ x : m T }]] }} [[:DisjointPx]]
+{{ mode_IsSubtype [[m]] [[¹ν]] }} [[:Subtypem]]
 -------------------- :: Var
-P ⊢ x : T
+P ⨄ { x : m T } ⊢ x : T
 
 {{ mode_IsValid [[m]] }} [[:Validm]]
 P1 ⊢ t : T [[:Tyt]]
@@ -132,8 +134,8 @@ P ⊢ t : U ⧔ ① [[:Tyt]]
 ------------------------------- :: FromA
 P ⊢ from⧔ t : U
 
--------------------------------- :: Alloc
-{} ⊢ alloc : U ⧔ ⌊U⌋¹ν
+% -------------------------------- :: Alloc
+% {} ⊢ alloc : U ⧔ ⌊U⌋¹ν
 
 P ⊢ t : ⌊①⌋n [[:Tyt]]
 ------------------------------ :: FillU
@@ -431,8 +433,8 @@ C[ H ⟨ v2 ❟ v1 ⟩ ≻map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] 
 ---------------------------------- :: AOpenUnfoc
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
--------------------------- :: AllocRed
-C[alloc] ⟶ C[{1} ⟨ -1 ❟ +1 ⟩]
+% -------------------------- :: AllocRed
+% C[alloc] ⟶ C[{1} ⟨ -1 ❟ +1 ⟩]
 
 {{ term_NotVal [[u]] }} [[:NotValu]]
 -------------------------- :: ToAFoc
