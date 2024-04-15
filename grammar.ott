@@ -11,6 +11,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
+Require Ott.Permutation.
 
 Module Nat' <: OrderedTypeWithLeibniz.
   Include PeanoNat.Nat.
@@ -651,50 +652,19 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Lemma or_false_equiv : forall A : Prop, A <-> A \/ False.
-Proof.
-  intros A.
-  split.
-  - intros HA. left. exact HA.
-  - intros [HA|HFalse]. exact HA. contradiction.
-Qed.
+Definition preshift_perm (H : hdns) (h' : hdn) (h'' : hdn) : Permutation.T :=
+  if HdnsM.mem h'' H then
+    {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|} :: nil
+  else
+    nil
+.
 
-Lemma zero_le_h (h : nat) : 0 <= h.
-Proof.
-  induction h.
-  - apply le_n.
-  - apply le_S. assumption.
-Qed.
-
-(* Defined separately from `ctx_hdn_shift` for two reasons: this
-   avoids Program adding a bunch of equality, so the function is
-   cleaner. And it makes it possible to state the
-   `preshift_binding_type_eq` lemma. *)
-Definition preshift (H : hdns) (h' : hdn) (n : name): name :=
+Definition preshift (H : hdns) (h' : hdn) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
   | name_DH h => name_DH (
-                    match (ge_dec h h') with
-                    | left _ => match (HdnsM.mem (h-h') H) with
-                               | true => h - h'
-                               | false => h
-                               end
-                    | right _ => match (HdnsM.mem h H) with
-                                | true => h + h'
-                                | false => h
-                                end
-                    end
-                  )
+                    Permutation.sem (List.flat_map (preshift_perm H h') (HdnsM.elements H)) h)
   end.
-
-Lemma preshift_binding_type_eq : forall H h'
-  , binding_type_of = fun n => binding_type_of (preshift H h' n).
-Proof.
-  intros *.
-  apply functional_extensionality.
-  intros [xx|xh].
-  all: reflexivity.
-Defined.
 
 Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
   match n with
@@ -708,33 +678,16 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
   precomp (preshift H h')
     (
       fun n => match n with
-      | name_Var x => cons (name_Var x) nil
-      | name_DH h => match HdnsM.mem h H, (ge_dec h h'), (HdnsM.mem (h-h') H) with
-          | true, right _, _ => cons (name_DH (h+h')) nil
-          | false, right _, _ => cons (name_DH h) nil
-          | false, left _, true => cons (name_DH (h-h')) nil
-          | false, left _, false => cons (name_DH h) nil
-          | true, left _, true => cons (name_DH (h-h')) (cons (name_DH (h+h')) nil)
-          | true, left _, false => cons (name_DH h) (cons (name_DH (h+h')) nil)
-          end
+      | name_Var x => name_Var x :: nil
+      | name_DH h => name_DH (Permutation.sem (List.rev (List.flat_map (preshift_perm H h') (HdnsM.elements H))) h) :: nil
       end
     ) G).
 Next Obligation.
-  destruct w; unfold List.In, preshift.
-  - rewrite <- or_false_equiv. reflexivity.
-  - destruct (ge_dec h h') eqn:egehhp.
-    * destruct (HdnsM.mem (h-h') H) eqn:ememhmhp.
-      + destruct (ge_dec (h - h') h') eqn:egehmhphp; rewrite ememhmhp.
-        -- destruct (HdnsM.mem (h - h' - h') H) eqn:ememhmhpmhp. all: right; rewrite <- or_false_equiv; f_equal; apply Nat.sub_add; tauto.
-        -- rewrite <- or_false_equiv; f_equal; apply Nat.sub_add; tauto.
-      + destruct (HdnsM.mem h H) eqn:ememh; rewrite egehhp, ememhmhp. all: left; reflexivity.
-    * destruct (HdnsM.mem h H) eqn:ememh.
-      + destruct (HdnsM.mem (h + h') H) eqn:ememhphp, (ge_dec (h + h') h') eqn:egehphphp; assert (h + h' - h' = h) as hpmeq by (apply Nat.add_sub); rewrite? hpmeq; rewrite? ememh.
-        -- left; reflexivity.
-        -- exfalso. apply n0. rewrite <- Nat.add_0_r. unfold ge. rewrite Nat.add_comm with (n := h). rewrite <- Nat.add_le_mono_l. induction h. apply le_n. apply le_S. apply zero_le_h.
-        -- left; reflexivity.
-        -- exfalso. apply n0. rewrite <- Nat.add_0_r. unfold ge. rewrite Nat.add_comm with (n := h). rewrite <- Nat.add_le_mono_l. induction h. apply le_n. apply le_S. apply zero_le_h.
-      + rewrite ememh, egehhp. left; reflexivity.
+  unfold List.In, preshift.
+  destruct w as [xx|xh].
+  { tauto. }
+  rewrite Permutation.post_inverse.
+  tauto.
 Qed.
 
 (******************************************************************************

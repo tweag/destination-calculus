@@ -35,53 +35,16 @@ Qed.
    the hammer doesn't succeed in using `HdnsM.mem … = true` as an
    undefined symbol. So we have to tiptoe around quite a bit and make
    some arithmetic proofs manually. *)
-Lemma preshift_surjective : forall H h' x, (forall h, HdnsM.mem h H = true -> h < h') -> exists x', preshift H h' x' = x.
+Lemma preshift_surjective : forall H h' x, exists x', preshift H h' x' = x.
 Proof.
-  intros * h_max. unfold preshift.
+  intros *. unfold preshift.
   destruct x as [xx|h].
   { exists (ˣ xx). reflexivity. }
-  set (h'' := match HdnsM.mem h H, (ge_dec h h'), (HdnsM.mem (h-h') H) with
-              | true, right _, _ => (h+h')
-              | false, right _, _ => h
-              | false, left _, true => (h-h')
-              | false, left _, false => h
-              (* contradicts the hypotheses, arbitrary value *)
-              | _, _, _ => 57
-              end).
-  exists (ʰ h''). subst h''. f_equal.
-  destruct (ge_dec h h').
-  (* 2 goals *)
-  (* This little dance is an attempt to not call `destruct` on some nested `mem (…mem…) H` term. *)
-  all: destruct (HdnsM.mem h H) eqn:mem_h_H; destruct (HdnsM.mem (h - h') H) eqn:mem_h_HH.
-  (* 8 goals *)
-  all: destruct (HdnsM.mem h H) eqn:mem_h_H'; try discriminate.
-  all: destruct (HdnsM.mem (h - h') H) eqn:mem_h_HH'; try discriminate.
-  (* no more nesting at this point *)
-  all: repeat match goal with
-         |  |- context [if HdnsM.mem ?h1 ?h2 then _ else _] => destruct (HdnsM.mem h1 h2) eqn: ?
-         end.
-  (* 21 goals *)
-  all: repeat match goal with
-         |  |- context [if ?x then _ else _] => destruct x
-         end.
-  (* 42 goals *)
-  all: try sfirstorder.
-  (* 6 goals *)
-  all: try hauto l: on.
-  (* 3 goals *)
-  - apply h_max in mem_h_HH'.
-    sfirstorder.
-  - assert (h + h' - h' = h) as r.
-    { sfirstorder. }
-    rewrite r in *.
-    sfirstorder.
-  - assert (h + h' - h' = h) as r.
-    { sfirstorder. }
-    rewrite r in *.
-    sfirstorder.
+  eexists (ʰ _). f_equal.
+  eapply Permutation.pre_inverse.
 Qed.
 
-Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), (forall h, HdnsM.mem h H = true -> h < h') -> ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
+Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
   intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
   rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).

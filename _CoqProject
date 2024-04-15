@@ -4,6 +4,7 @@
 -arg -w -arg -deprecated-hint-rewrite-without-locality
 
 ott_coq/Finitely.v
+ott_coq/Permutation.v
 ott_coq/ott_list_predicate.v
 ott_coq/ott_list_takedrop.v
 ott_coq/ott_list.v

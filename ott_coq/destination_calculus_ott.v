@@ -13,11 +13,11 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
-Require List.
 Require Import Coq.Logic.FunctionalExtensionality.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
+Require Ott.Permutation.
 
 Module Nat' <: OrderedTypeWithLeibniz.
   Include PeanoNat.Nat.
@@ -119,16 +119,16 @@ Inductive type : Type :=  (*r Type *)
  | type_F (T:type) (m:mode) (U:type) (*r Function *)
  | type_D (T:type) (m:mode) (*r Destination *).
 
-Inductive name : Type :=
+Inductive name : Type := 
  | name_Var (x:var)
  | name_DH (h:hdn).
 
 Definition ectxs : Type := (list ectx).
 
-Inductive tyb_var : Type :=
+Inductive tyb_var : Type := 
  | tyb_Var (m:mode) (T:type).
 
-Inductive tyb_dh : Type :=
+Inductive tyb_dh : Type := 
  | tyb_Dest (m:mode) (T:type) (n:mode)
  | tyb_Hole (T:type) (n:mode).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
@@ -576,50 +576,19 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Lemma or_false_equiv : forall A : Prop, A <-> A \/ False.
-Proof.
-  intros A.
-  split.
-  - intros HA. left. exact HA.
-  - intros [HA|HFalse]. exact HA. contradiction.
-Qed.
+Definition preshift_perm (H : hdns) (h' : hdn) (h'' : hdn) : Permutation.T :=
+  if HdnsM.mem h'' H then
+    {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|} :: nil
+  else
+    nil
+.
 
-Lemma zero_le_h (h : nat) : 0 <= h.
-Proof.
-  induction h.
-  - apply le_n.
-  - apply le_S. assumption.
-Qed.
-
-(* Defined separately from `ctx_hdn_shift` for two reasons: this
-   avoids Program adding a bunch of equality, so the function is
-   cleaner. And it makes it possible to state the
-   `preshift_binding_type_eq` lemma. *)
-Definition preshift (H : hdns) (h' : hdn) (n : name): name :=
+Definition preshift (H : hdns) (h' : hdn) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
   | name_DH h => name_DH (
-                    match (ge_dec h h') with
-                    | left _ => match (HdnsM.mem (h-h') H) with
-                               | true => h - h'
-                               | false => h
-                               end
-                    | right _ => match (HdnsM.mem h H) with
-                                | true => h + h'
-                                | false => h
-                                end
-                    end
-                  )
+                    Permutation.sem (List.flat_map (preshift_perm H h') (HdnsM.elements H)) h)
   end.
-
-Lemma preshift_binding_type_eq : forall H h'
-  , binding_type_of = fun n => binding_type_of (preshift H h' n).
-Proof.
-  intros *.
-  apply functional_extensionality.
-  intros [xx|xh].
-  all: reflexivity.
-Defined.
 
 Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
   match n with
@@ -633,33 +602,16 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
   precomp (preshift H h')
     (
       fun n => match n with
-      | name_Var x => cons (name_Var x) nil
-      | name_DH h => match HdnsM.mem h H, (ge_dec h h'), (HdnsM.mem (h-h') H) with
-          | true, right _, _ => cons (name_DH (h+h')) nil
-          | false, right _, _ => cons (name_DH h) nil
-          | false, left _, true => cons (name_DH (h-h')) nil
-          | false, left _, false => cons (name_DH h) nil
-          | true, left _, true => cons (name_DH (h-h')) (cons (name_DH (h+h')) nil)
-          | true, left _, false => cons (name_DH h) (cons (name_DH (h+h')) nil)
-          end
+      | name_Var x => name_Var x :: nil
+      | name_DH h => name_DH (Permutation.sem (List.rev (List.flat_map (preshift_perm H h') (HdnsM.elements H))) h) :: nil
       end
     ) G).
 Next Obligation.
-  destruct w; unfold List.In, preshift.
-  - rewrite <- or_false_equiv. reflexivity.
-  - destruct (ge_dec h h') eqn:egehhp.
-    * destruct (HdnsM.mem (h-h') H) eqn:ememhmhp.
-      + destruct (ge_dec (h - h') h') eqn:egehmhphp; rewrite ememhmhp.
-        -- destruct (HdnsM.mem (h - h' - h') H) eqn:ememhmhpmhp. all: right; rewrite <- or_false_equiv; f_equal; apply Nat.sub_add; tauto.
-        -- rewrite <- or_false_equiv; f_equal; apply Nat.sub_add; tauto.
-      + destruct (HdnsM.mem h H) eqn:ememh; rewrite egehhp, ememhmhp. all: left; reflexivity.
-    * destruct (HdnsM.mem h H) eqn:ememh.
-      + destruct (HdnsM.mem (h + h') H) eqn:ememhphp, (ge_dec (h + h') h') eqn:egehphphp; assert (h + h' - h' = h) as hpmeq by (apply Nat.add_sub); rewrite? hpmeq; rewrite? ememh.
-        -- left; reflexivity.
-        -- exfalso. apply n0. rewrite <- Nat.add_0_r. unfold ge. rewrite Nat.add_comm with (n := h). rewrite <- Nat.add_le_mono_l. induction h. apply le_n. apply le_S. apply zero_le_h.
-        -- left; reflexivity.
-        -- exfalso. apply n0. rewrite <- Nat.add_0_r. unfold ge. rewrite Nat.add_comm with (n := h). rewrite <- Nat.add_le_mono_l. induction h. apply le_n. apply le_S. apply zero_le_h.
-      + rewrite ememh, egehhp. left; reflexivity.
+  unfold List.In, preshift.
+  destruct w as [xx|xh].
+  { tauto. }
+  rewrite Permutation.post_inverse.
+  tauto.
 Qed.
 
 (******************************************************************************
@@ -698,7 +650,7 @@ Inductive TyR_val : ctx -> val -> type -> Prop :=    (* defn TyR_val *)
  | TyR_val_D : forall (G:ctx) (h:hdn) (T:type) (n:mode)
      (CompatGh: ctx_CompatibleDH G h (tyb_Dest  (Some (pair   Lin     (Fin 0)  ))  T n) ),
      TyR_val G (val_D h) (type_D T n)
- | TyR_val_U :
+ | TyR_val_U : 
      TyR_val  ctx_empty  val_U type_U
  | TyR_val_F : forall (D:ctx) (x:var) (m:mode) (u:term) (T U:type)
      (Validm: mode_IsValid m )
@@ -965,7 +917,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_AppUnfoc2 : forall (C:ectxs) (v v':val),
      Sem_eterm   (cons   (ectx_AppFoc2 v)    C )   (term_Val v') C (term_App (term_Val v) (term_Val v'))
  | Sem_eterm_AppRed : forall (C:ectxs) (v:val) (x:var) (m:mode) (u:term),
-     Sem_eterm C (term_App (term_Val v) (term_Val  (val_F x m u) )) C  (term_sub  u   x   v )
+     Sem_eterm C (term_App (term_Val v) (term_Val  (val_F x m u) )) C  (term_sub  u   x   v ) 
  | Sem_eterm_PatUFoc : forall (C:ectxs) (t u:term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_PatU t u)   (cons   (ectx_PatUFoc u)    C )   t
@@ -979,23 +931,23 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_PatSUnfoc : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
      Sem_eterm   (cons   (ectx_PatSFoc m x1 u1 x2 u2)    C )   (term_Val v) C (term_PatS (term_Val v) m x1 u1 x2 u2)
  | Sem_eterm_PatLRed : forall (C:ectxs) (v1:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
-     Sem_eterm C (term_PatS (term_Val  (val_L v1) ) m x1 u1 x2 u2) C  (term_sub  u1   x1   v1 )
+     Sem_eterm C (term_PatS (term_Val  (val_L v1) ) m x1 u1 x2 u2) C  (term_sub  u1   x1   v1 ) 
  | Sem_eterm_PatRRed : forall (C:ectxs) (v2:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
-     Sem_eterm C (term_PatS (term_Val  (val_R v2) ) m x1 u1 x2 u2) C  (term_sub  u2   x2   v2 )
+     Sem_eterm C (term_PatS (term_Val  (val_R v2) ) m x1 u1 x2 u2) C  (term_sub  u2   x2   v2 ) 
  | Sem_eterm_PatPFoc : forall (C:ectxs) (t:term) (m:mode) (x1 x2:var) (u:term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_PatP t m x1 x2 u)   (cons   (ectx_PatPFoc m x1 x2 u)    C )   t
  | Sem_eterm_PatPUnfoc : forall (C:ectxs) (m:mode) (x1 x2:var) (u:term) (v:val),
      Sem_eterm   (cons   (ectx_PatPFoc m x1 x2 u)    C )   (term_Val v) C (term_PatP (term_Val v) m x1 x2 u)
  | Sem_eterm_PatPRed : forall (C:ectxs) (v1 v2:val) (m:mode) (x1 x2:var) (u:term),
-     Sem_eterm C (term_PatP (term_Val (val_P v1 v2)) m x1 x2 u) C  (term_sub   (term_sub  u   x1   v1 )    x2   v2 )
+     Sem_eterm C (term_PatP (term_Val (val_P v1 v2)) m x1 x2 u) C  (term_sub   (term_sub  u   x1   v1 )    x2   v2 ) 
  | Sem_eterm_PatEFoc : forall (C:ectxs) (t:term) (m n:mode) (x:var) (u:term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_PatE t m n x u)   (cons   (ectx_PatEFoc m n x u)    C )   t
  | Sem_eterm_PatEUnfoc : forall (C:ectxs) (m n:mode) (x:var) (u:term) (v:val),
      Sem_eterm   (cons   (ectx_PatEFoc m n x u)    C )   (term_Val v) C (term_PatE (term_Val v) m n x u)
  | Sem_eterm_PatERed : forall (C:ectxs) (n:mode) (v':val) (m:mode) (x:var) (u:term),
-     Sem_eterm C (term_PatE (term_Val (val_E n v')) m n x u) C  (term_sub  u   x   v' )
+     Sem_eterm C (term_PatE (term_Val (val_E n v')) m n x u) C  (term_sub  u   x   v' ) 
  | Sem_eterm_MapFoc : forall (C:ectxs) (t:term) (x:var) (t':term)
      (NotValt: term_NotVal t ),
      Sem_eterm C (term_Map t x t')   (cons   (ectx_MapFoc x t')    C )   t
@@ -1003,7 +955,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
      Sem_eterm   (cons   (ectx_MapFoc x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
  | Sem_eterm_MapRedAOpenFoc : forall (C:ectxs) (H:hdns) (v2 v1:val) (x:var) (t':term) (h':hdn)
      (hpMaxC: h' =  (  (hdns_max   (hdns_from_ectxs  C )  )   +   1  )  ),
-     Sem_eterm C (term_Map (term_Val (val_A H v2 v1)) x t')   (cons   (ectx_AOpenFoc  (hdns_shift  H   h' )   (val_hdn_shift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_hdn_shift  v1   H   h' )  )
+     Sem_eterm C (term_Map (term_Val (val_A H v2 v1)) x t')   (cons   (ectx_AOpenFoc  (hdns_shift  H   h' )   (val_hdn_shift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_hdn_shift  v1   H   h' )  ) 
  | Sem_eterm_AOpenUnfoc : forall (C:ectxs) (H:hdns) (v2 v1:val),
      Sem_eterm   (cons  (ectx_AOpenFoc H v2)   C )   (term_Val v1) C (term_Val (val_A H v2 v1))
  | Sem_eterm_AllocRed : forall (C:ectxs),
@@ -1081,3 +1033,5 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FillCRed : forall (C:ectxs) (h:hdn) (H:hdns) (v2 v1:val) (h':hdn)
      (hpMaxCh: h' =  (  (hdns_max   (HdnsM.union   (hdns_from_ectxs  C )     (hdns_from_list  (cons h nil) )  )  )   +   1  )  ),
      Sem_eterm C (term_FillC (term_Val (val_D h)) (term_Val (val_A H v2 v1)))  (ectxs_fill  C   h     (hdns_shift  H   h' )      (val_hdn_shift  v2   H   h' )  )  (term_Val  (val_hdn_shift  v1   H   h' ) ).
+
+
