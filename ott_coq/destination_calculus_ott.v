@@ -160,11 +160,17 @@ Definition ctx : Type := Finitely.T name binding_type_of.
  * NAMES
  *****************************************************************************)
 
+Definition shift_one (h' : hdn) (h'' : hdn) : Permutation.Transposition.T :=
+  {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|}
+.
+
+Definition shift_perm (H : hdns) (h' : hdn) : Permutation.T :=
+  List.map (shift_one h') (HdnsM.elements H)
+.
+
 Definition hdn_shift (h : hdn) (H : HdnsM.t) (h' : hdn) : hdn :=
-  match HdnsM.mem h H with
-  | true => h + h'
-  | false => h
-  end.
+  Permutation.sem (shift_perm H h') h
+.
 
 Fixpoint hdns_from_list (l : list nat) : HdnsM.t :=
   match l with
@@ -576,15 +582,10 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition preshift_perm (h' : hdn) (h'' : hdn) : Permutation.Transposition.T :=
-  {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|}
-.
-
 Definition preshift (H : hdns) (h' : hdn) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
-  | name_DH h => name_DH (
-                    Permutation.sem (List.map (preshift_perm h') (HdnsM.elements H)) h)
+  | name_DH h => name_DH (Permutation.sem (List.rev (shift_perm H h')) h)
   end.
 
 Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
@@ -600,14 +601,14 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
     (
       fun n => match n with
       | name_Var x => name_Var x :: nil
-      | name_DH h => name_DH (Permutation.sem (List.rev (List.map (preshift_perm h') (HdnsM.elements H))) h) :: nil
+      | name_DH h => name_DH (Permutation.sem (shift_perm H h') h) :: nil
       end
     ) G).
 Next Obligation.
   unfold List.In, preshift.
   destruct w as [xx|xh].
   { tauto. }
-  rewrite Permutation.post_inverse.
+  rewrite Permutation.pre_inverse.
   tauto.
 Qed.
 

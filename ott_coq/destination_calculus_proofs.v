@@ -119,7 +119,13 @@ Proof. Admitted.
 Lemma InvMinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ]).
 Proof. Admitted.
 Lemma TyR_v_hdn_shift : forall (G : ctx) (v : val) (T : type) (H: hdns) (h': hdn), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T).
-Proof. Admitted.
+Proof.
+  Locate "_ ᵛ[ _ ⩲ _ ]".
+  Print val_hdn_shift.
+  Locate "_ ʰ[ _ ⩲ _ ]".
+  Print hdn_shift.
+
+Admitted.
 Lemma val_A_hdn_shift : forall (H : hdns) (v1 v2: val) (h': hdn), (H ⟨ v2 ❟ v1 ⟩)ᵛ[H⩲h'] = (H ᴴ⩲ h' ⟨ v2 ᵛ[H⩲h'] ❟ v1 ᵛ[H⩲h'] ⟩).
 Proof. Admitted.
 (* ========================================================================= *)
