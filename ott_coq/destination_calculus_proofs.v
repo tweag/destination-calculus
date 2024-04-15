@@ -42,38 +42,76 @@ Qed.
 
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
+  intros *. unfold ctx_ValidOnly, ctx_hdn_shift.
   rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
-  symmetry.
   apply precomp_propagate_both. intros x2.
   sfirstorder use: preshift_surjective.
 Qed.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
 
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_DestOnly, ctx_hdn_shift.
+  rewrite map_propagate_both with (Q := fun x b => IsDest _ b).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
+Qed.
 Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
+
 Lemma LinNuOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinNuOnly G <-> ctx_LinNuOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_LinNuOnly, ctx_hdn_shift.
+  rewrite map_propagate_both with (Q := fun x b => mode_IsLinNu (tyb_mode b)).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
+Qed.
 Hint Rewrite <- LinNuOnlyHdnShiftEquiv : propagate_down.
+
 Lemma LinOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_LinOnly G <-> ctx_LinOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_LinOnly, ctx_hdn_shift.
+  rewrite map_propagate_both with (Q := fun x b => mode_IsLin (tyb_mode b)).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
+Qed.
 Hint Rewrite <- LinOnlyHdnShiftEquiv : propagate_down.
+
 Lemma FinAgeOnlyHdnShiftEquiv : forall (G : ctx) (H : hdns) (h' : hdn), ctx_FinAgeOnly G <-> ctx_FinAgeOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_FinAgeOnly, ctx_hdn_shift.
+  rewrite map_propagate_both with (Q := fun x b => mode_IsFinAge (tyb_mode b)).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
+Qed.
 Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
+
+(* TODO: Not necessarily true if `h\in D'` and `h+h' \in D`. *)
 Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
+
+(* TODO: Annoying reasoning on supports. May work in setoid form though. But worth trying to do as an equality. *)
 Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
 Proof. Admitted.
 (* TODO: add to canonalize? *)
+
 Lemma StimesHdnShiftEq : forall (m : mode) (G : ctx) (H : hdns) (h' : hdn), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 (* TODO: add to canonalize? *)
+
+(* TODO: not true, requires h' to be bigger than the max of H' as well, I believe. *)
 Lemma hdns_max_hdns_Disjoint : forall (H H' : hdns) (h' : hdn), ʰmax(H) < h' -> hdns_Disjoint H (H' ᴴ⩲ h').
 Proof. Admitted.
+
 Lemma hnamesFullShiftEq : forall (G : ctx) (h' : hdn), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
 Lemma MinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ- G) ᴳ[ H ⩲ h' ] = ᴳ- (G ᴳ[ H ⩲ h' ]).
