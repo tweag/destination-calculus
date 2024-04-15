@@ -99,6 +99,10 @@ Hint Rewrite <- FinAgeOnlyHdnShiftEquiv : propagate_down.
 Lemma DisjointHdnShiftEq : forall (D D': ctx) (h': hdn), ctx_Disjoint D D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
+(* Sometimes bijections are beautiful *)
+Lemma HdnShiftEq_preserves_Disjoint : forall D1 D2 H h', ctx_Disjoint D1 D2 <-> ctx_Disjoint (D1 ᴳ[ H ⩲ h']) (D2 ᴳ[ H ⩲ h']).
+Proof. Admitted.
+
 (* TODO: Annoying reasoning on supports. May work in setoid form though. But worth trying to do as an equality. *)
 Lemma UnionHdnShiftEq : forall (G1 G2 : ctx) (H : hdns) (h' : hdn), (G1 ⨄ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ⨄ G2 ᴳ[ H⩲h' ].
 Proof. Admitted.
@@ -118,16 +122,50 @@ Lemma MinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ- G) ᴳ[ H 
 Proof. Admitted.
 Lemma InvMinusHdnShiftEq : forall (G : ctx) (H : hdns) (h' : hdn), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ]).
 Proof. Admitted.
-Lemma TyR_v_hdn_shift : forall (G : ctx) (v : val) (T : type) (H: hdns) (h': hdn), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T).
-Proof.
-  Locate "_ ᵛ[ _ ⩲ _ ]".
-  Print val_hdn_shift.
-  Locate "_ ʰ[ _ ⩲ _ ]".
-  Print hdn_shift.
 
-Admitted.
-Lemma val_A_hdn_shift : forall (H : hdns) (v1 v2: val) (h': hdn), (H ⟨ v2 ❟ v1 ⟩)ᵛ[H⩲h'] = (H ᴴ⩲ h' ⟨ v2 ᵛ[H⩲h'] ❟ v1 ᵛ[H⩲h'] ⟩).
+(* Could really be generalised to any var-only context. *)
+Lemma shift_single_variable : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
 Proof. Admitted.
+Lemma TyR_v_hdn_shift : forall (G : ctx) (v : val) (T : type) (H: hdns) (h': hdn), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
+with TyR_t_hdn_shift : forall (G : ctx) (t : term) (T : type) (H: hdns) (h': hdn), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_hdn_shift t H h' : T).
+Proof.
+  - destruct 1.
+    + cbn. unfold ctx_hdn_shift, hdn_shift, ctx_singleton, singleton.
+      give_up . (* some extensionality required *)
+    + give_up . (* I want to see a recursive case first *)
+    + give_up . (* some extensionality required *)
+    + cbn.
+      constructor.
+      * assumption.
+      * erewrite <- shift_single_variable, <- UnionHdnShiftEq.
+        auto.
+      * hauto l: on use: DestOnlyHdnShiftEquiv.
+    + cbn.
+      constructor. auto.
+    + cbn.
+      constructor. auto.
+    + cbn. rewrite UnionHdnShiftEq.
+      constructor. all: auto.
+    + cbn. rewrite StimesHdnShiftEq.
+      constructor. all: auto.
+    + cbn. rewrite UnionHdnShiftEq.
+      constructor.
+      (* 11 goals *)
+      all: auto.
+      (* 7 goals *)
+      * hauto l: on use: DestOnlyHdnShiftEquiv.
+      * hauto l: on use: DestOnlyHdnShiftEquiv.
+      * hauto l: on use: HdnShiftEq_preserves_Disjoint.
+      * give_up. (* arnaud: I'm worried about this one. I think we need an extra condition *)
+      * give_up. (* arnaud: basically same *)
+      * try rewrite <- StimesHdnShiftEq, <- UnionHdnShiftEq.
+        (* TODO: I don't know how to prove that goal yet. Why doesn't D3 have a shift to it? *)
+        give_up.
+      * (* same as above *)
+        give_up.
+  - (* TODO *) give_up.
+Admitted.
+
 (* ========================================================================= *)
 
 (* =========================================================================
