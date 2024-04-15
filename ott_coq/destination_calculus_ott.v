@@ -6,16 +6,18 @@ Require Import List.
 Require Import Ott.ott_list_core.
 
 
+Import EqNotations.
 Require Import Ott.ext_nat.
 Require Import Coq.Structures.Equalities.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
-Require List.
+Require Import Coq.Logic.FunctionalExtensionality.
 (* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
    we don't we can't use the coercions. *)
 Require Import Ott.Finitely.
+Require Ott.Permutation.
 
 Module Nat' <: OrderedTypeWithLeibniz.
   Include PeanoNat.Nat.
@@ -219,7 +221,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
   | term_PatP t m x1 x2 u =>
     let u' := match Nat.eq_dec x1 x', Nat.eq_dec x2 x' with | left _, left _ | left _, right _ | right _, left _ => u | right _, right _ => term_sub u x' v' end in
     term_PatP (term_sub t x' v') m x1 x2 u'
-  | term_PatE t m n x u => 
+  | term_PatE t m n x u =>
     let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
     term_PatE (term_sub t x' v') m n x u'
   | term_Map t x t' =>
@@ -574,26 +576,43 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
+Definition preshift_perm (H : hdns) (h' : hdn) (h'' : hdn) : Permutation.T :=
+  if HdnsM.mem h'' H then
+    {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|} :: nil
+  else
+    nil
+.
+
+Definition preshift (H : hdns) (h' : hdn) (n : name) : name :=
+  match n with
+  | name_Var x => name_Var x
+  | name_DH h => name_DH (
+                    Permutation.sem (List.flat_map (preshift_perm H h') (HdnsM.elements H)) h)
+  end.
+
+Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
+  match n with
+  | name_Var _ => fun b => b
+  | name_DH _ => fun b => b
+  end.
+
 #[program]
 Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
-  {|
-    support := List.map (fun n => match n with
-      | name_Var x => name_Var x
-      | name_DH h => name_DH (hdn_shift h H h')
-    end) G.(support);
-    underlying := fun n => match n with
-      | name_Var x => G.(underlying) (name_Var x)
-      | name_DH h => G.(underlying) (name_DH (
-          match (ge_dec h h'), (HdnsM.mem (h-h') H) with
-          | left _, true => h-h'
-          | _, _ => h
-          end
-        ))
-      end;
-  |}.
+  map (post_process H h') (
+  precomp (preshift H h')
+    (
+      fun n => match n with
+      | name_Var x => name_Var x :: nil
+      | name_DH h => name_DH (Permutation.sem (List.rev (List.flat_map (preshift_perm H h') (HdnsM.elements H))) h) :: nil
+      end
+    ) G).
 Next Obligation.
-  admit.
-Admitted.
+  unfold List.In, preshift.
+  destruct w as [xx|xh].
+  { tauto. }
+  rewrite Permutation.post_inverse.
+  tauto.
+Qed.
 
 (******************************************************************************
  * EVALUATION CONTEXTS

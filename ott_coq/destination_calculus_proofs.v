@@ -14,13 +14,48 @@ Require Import Coq.Logic.EqdepFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
+Require Import Arith.
 
 (* =========================================================================
  * Waiting for PR #2 to be merged 
  * ========================================================================= *)
+
+Lemma gt_S_max : forall h H, HdnsM.mem h H = true -> h < ʰmax(H) + 1.
+Proof.
+  intros * h_H. unfold hdns_max.
+  destruct (HdnsM.max_elt H) eqn:h_max_elt.
+  2:{ apply HdnsM.max_elt_spec3 in h_max_elt. unfold HdnsM.Empty in *.
+      sfirstorder use: HdnsFactsM.mem_iff. }
+  apply HdnsM.max_elt_spec2  with (y:=h) in h_max_elt.
+  - sfirstorder.
+  - sfirstorder use: HdnsFactsM.mem_iff.
+Qed.
+
+(* This proof script is embarrassingly complex, but for some reason
+   the hammer doesn't succeed in using `HdnsM.mem … = true` as an
+   undefined symbol. So we have to tiptoe around quite a bit and make
+   some arithmetic proofs manually. *)
+Lemma preshift_surjective : forall H h' x, exists x', preshift H h' x' = x.
+Proof.
+  intros *. unfold preshift.
+  destruct x as [xx|h].
+  { exists (ˣ xx). reflexivity. }
+  eexists (ʰ _). f_equal.
+  eapply Permutation.pre_inverse.
+Qed.
+
 Lemma ValidOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_ValidOnly G <-> ctx_ValidOnly (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_ValidOnly, ctx_hdn_shift. symmetry.
+  rewrite map_propagate_both with (Q := fun x b => mode_IsValid (tyb_mode b)).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  symmetry.
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: preshift_surjective.
+Qed.
 Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
+
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 Hint Rewrite <- DestOnlyHdnShiftEquiv : propagate_down.
@@ -289,7 +324,7 @@ Proof.
   rewrite map_mapsto in h. destruct h. destruct H.
   specialize (linG n x H). destruct n.
   - unfold stimes_tyb_var in H0. destruct x. subst. unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
-  - unfold stimes_tyb_dh in H0. destruct x; subst. 
+  - unfold stimes_tyb_dh in H0. destruct x; subst.
     + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
     + unfold tyb_mode in *. unfold mode_IsLinNu in *. subst. unfold mode_times. cbn. reflexivity.
 Qed.
@@ -995,7 +1030,7 @@ Proof.
     + left. assumption.
     + right. assumption.
     + assert (In (ʰ h) (G ⨄ G')). { unfold In, Fun.In. exists x. assumption. } apply merge_with_spec_5 in H. unfold In, Fun.In in H. assumption.
-  - intros [inG|inG']. 
+  - intros [inG|inG'].
     + apply hnames_spec. rewrite hnames_spec in inG. destruct inG as [x inG]. destruct (In_dec (ʰ h) G').
       * unfold In, Fun.In in H. destruct H as (y & H). exists (union_tyb_dh x y). apply merge_with_spec_1. split; assumption.
       * rewrite In_None2 in H. exists x. apply merge_with_spec_2. split; assumption.
@@ -1084,7 +1119,7 @@ Proof.
       + assert (~(h'<h)). { apply HdnsM.max_elt_spec2 with (s := H'). all:assumption. }
         apply not_lt_le; assumption.
       + apply HdnsM.max_elt_spec3 in eMax'. unfold HdnsM.Empty in eMax'. specialize (eMax' h). congruence.
-    - apply le_0_n.
+    - apply Nat.le_0_l.
 Qed.
 
 Lemma hnamesEmpty : hnamesᴳ(ᴳ{}) = HdnsM.empty.
@@ -1345,12 +1380,6 @@ Proof.
       { sblast use: DisjointNestedLeftEquiv, DisjointMinusRightEquiv, DisjointStimesLeftEquiv. }
     rewrite LinOnlyUnionEquiv. repeat split. tauto. tauto. tauto. apply FinAgeOnlyUnionForward. repeat split. all:tauto.
 Qed.
-
-(* =========================================================================
- * Waiting for PR #2 to be merged 
- * ========================================================================= *)
-
-(* ========================================================================= *)
 
 Lemma tSubLemma : forall (D1 D2 : ctx) (m : mode) (T U : type) (u : term) (x : var) (v : val), ctx_DestOnly D1 -> ctx_DestOnly D2 -> (D2 ⨄ ᴳ{ x : m ‗ T} ⊢ u : U) -> (D1 ⊢ ᵥ₎ v : T) -> (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U).
 Proof. Admitted.
