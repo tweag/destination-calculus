@@ -31,10 +31,6 @@ Proof.
   - sfirstorder use: HdnsFactsM.mem_iff.
 Qed.
 
-(* This proof script is embarrassingly complex, but for some reason
-   the hammer doesn't succeed in using `HdnsM.mem … = true` as an
-   undefined symbol. So we have to tiptoe around quite a bit and make
-   some arithmetic proofs manually. *)
 Lemma preshift_surjective : forall H h' x, exists x', preshift H h' x' = x.
 Proof.
   intros *. unfold preshift.

@@ -576,18 +576,15 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition preshift_perm (H : hdns) (h' : hdn) (h'' : hdn) : Permutation.T :=
-  if HdnsM.mem h'' H then
-    {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|} :: nil
-  else
-    nil
+Definition preshift_perm (h' : hdn) (h'' : hdn) : Permutation.Transposition.T :=
+  {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|}
 .
 
 Definition preshift (H : hdns) (h' : hdn) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
   | name_DH h => name_DH (
-                    Permutation.sem (List.flat_map (preshift_perm H h') (HdnsM.elements H)) h)
+                    Permutation.sem (List.map (preshift_perm h') (HdnsM.elements H)) h)
   end.
 
 Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
@@ -603,7 +600,7 @@ Definition ctx_hdn_shift (G : ctx) (H : hdns) (h' : hdn) : ctx :=
     (
       fun n => match n with
       | name_Var x => name_Var x :: nil
-      | name_DH h => name_DH (Permutation.sem (List.rev (List.flat_map (preshift_perm H h') (HdnsM.elements H))) h) :: nil
+      | name_DH h => name_DH (Permutation.sem (List.rev (List.map (preshift_perm h') (HdnsM.elements H))) h) :: nil
       end
     ) G).
 Next Obligation.
