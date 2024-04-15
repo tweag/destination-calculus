@@ -54,7 +54,7 @@ Hint Rewrite <- ValidOnlyHdnShiftEquiv : propagate_down.
 Lemma DestOnlyHdnShiftEquiv: forall (G : ctx) (H : hdns) (h' : hdn), ctx_DestOnly G <-> ctx_DestOnly (G ᴳ[ H⩲h' ]).
 Proof.
   intros *. unfold ctx_DestOnly, ctx_hdn_shift.
-  rewrite map_propagate_both with (Q := fun x b => IsDest _ b).
+  rewrite map_propagate_both with (Q := fun x b => tyb_IsDest _ b).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
   apply precomp_propagate_both. intros x2.
@@ -1777,10 +1777,15 @@ end)) D2 (Fun.singleton (ˣ x) name_eq_dec (ₓ m ‗ T))) -> (
   \/ (P1 = D1' /\ P2 = D2')
 ). *)
 
+Ltac restore_union_eq P1 P2 P3 P4 H1 H2:=
+  assert (P1 ⨄ P2 = P3 ⨄ P4) as UnionEq by (apply ext_eq; unfold ctx_singleton, ctx_union, merge_with, merge in *; try simpl; try intros nam; try rewrite H1; try reflexivity; try exact H2); clear H1; clear H2.
+
 Lemma tSubLemma : forall (P1 P2 : ctx) (m : mode) (T U : type) (u : term) (x : var) (v : val), (P2 ⨄ ᴳ{ x : m ‗ T} ⊢ u : U) -> (ctx_Disjoint P2 ᴳ{ x : m ‗ T}) -> (P1 ⊢ ᵥ₎ v : T) -> (m ᴳ· P1 ⨄ P2 ⊢ u ᵗ[ x ≔ v] : U).
 Proof.
   intros * Tyu Tyv.
   dependent induction Tyu.
+  - rename x into H1, x1 into H2, x0 into x.
+    restore_union_eq P D P2 ᴳ{ x : m ‗ T} H1 H2.
   (* - unfold term_sub. rewrite DestOnlyUnionEquiv in H. destruct H as (DestOnlyD2' & DestOnlyDx).
     unfold ctx_DestOnly in DestOnlyDx. specialize (DestOnlyDx (ˣ x) (ₓ m ‗ T)). unfold ctx_singleton in DestOnlyDx. rewrite singleton_spec_1 in DestOnlyDx. simpl in DestOnlyDx. specialize (DestOnlyDx eq_refl). contradiction.
   - unfold term_sub. destruct (HdnsFactsM.eq_dec x0 x); try rewrite e in *.
@@ -1799,7 +1804,7 @@ Proof.
     give_up.
 Admitted.
 
-Lemma tSubLemma2 : forall (D11 D12 D2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), ctx_DestOnly D11 -> ctx_DestOnly D12 -> ctx_DestOnly D2 -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (D2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (D11 ⊢ ᵥ₎ v1 : T1) -> (D12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
+Lemma tSubLemma2 : forall (P11 P12 P2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), (ctx_Disjoint P2 ᴳ{ x1 : m ‗ T1}) -> (ctx_Disjoint P2 ᴳ{ x2 : m ‗ T2}) -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (P2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (P11 ⊢ ᵥ₎ v1 : T1) -> (P12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (P11 ⨄ P12) ⨄ P2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
 Proof. Admitted.
 
 Lemma ectxsSubLemma : forall (D1 D2 D3: ctx) (h : hdn) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
