@@ -1417,6 +1417,21 @@ Proof.
   - unfold ctx_stimes in H. apply map_In in inStimes. congruence.
 Qed.
 
+Lemma NotInEquivDisjointSingleton : forall (G : ctx) (n : name) (tyb : binding_type_of n), ~In n G <-> ctx_Disjoint G (ctx_singleton n tyb).
+Proof.
+  intros *.
+  split.
+  - intros NotIn. unfold ctx_Disjoint. intros n'. intros InG. destruct (name_eq_dec n n'). rewrite e in *. congruence. intros inSing. unfold ctx_singleton in inSing. rewrite singleton_spec_2 with (x := n) (discr := name_eq_dec) (v := tyb) in n0. rewrite In_spec in inSing. destruct inSing. congruence.
+  - intros Disjoint. unfold ctx_Disjoint in Disjoint. intros InG.
+    assert (In n (ctx_singleton n tyb)). { apply in_singleton; reflexivity. }
+    specialize (Disjoint n InG H). assumption.
+Qed.
+
+Lemma NotInUnionForward: forall (G1 G2 : ctx) (n : name), ~In n G1 -> ~In n G2 -> ~In n (G1 ⨄ G2).
+Proof.
+  intros * NotIn1 NotIn2 InUnion. unfold ctx_union in InUnion. apply merge_with_spec_5 in InUnion. destruct InUnion. all:congruence.
+Qed.
+
 Lemma DestOnlyWkNoVar : forall (D : ctx), ctx_DestOnly D -> ctx_NoVar D.
 Proof.
   intros * H. unfold ctx_DestOnly in H. unfold ctx_NoVar. intros nam b mapstoD. specialize (H nam b mapstoD). destruct nam. { inversion H. } { intros contra. inversion contra. }
@@ -1439,9 +1454,9 @@ Proof.
   rewrite Pempty. symmetry. apply UnionIdentityLeft.
 Qed.
 
-Lemma VarOnlyNoVarUnionIsDisjoint : forall (P1 G2 : ctx), ctx_VarOnly P1 -> ctx_NoVar G2 -> ctx_Disjoint P1 G2.
+Lemma VarOnlyNoVarUnionIsDisjoint : forall (D1 G2 : ctx), ctx_VarOnly D1 -> ctx_NoVar G2 -> ctx_Disjoint D1 G2.
 Proof.
-  intros * VarOnly NoVar. unfold ctx_Disjoint. intros nam inP1 inG2. unfold ctx_VarOnly, ctx_NoVar, Fun.In, tyb_IsVar in *. destruct inP1; specialize (VarOnly nam x H). destruct inG2; specialize (NoVar nam x0 H0). destruct nam; simpl in *; congruence.
+  intros * VarOnly NoVar. unfold ctx_Disjoint. intros nam inD1 inG2. unfold ctx_VarOnly, ctx_NoVar, Fun.In, tyb_IsVar in *. destruct inD1; specialize (VarOnly nam x H). destruct inG2; specialize (NoVar nam x0 H0). destruct nam; simpl in *; congruence.
 Qed.
 
 Lemma DestOnlyAtXIsNone : forall (D : ctx) (x : var), ctx_DestOnly D -> D (ˣ x) = None.
@@ -1621,6 +1636,8 @@ Ltac hauto_ctx :=
         InUnionLeft,
         InUnionRight,
         InStimes,
+        NotInEquivDisjointSingleton,
+        NotInUnionForward,
         DestOnlyWkNoVar,
         DisposableOnlyWkVarOnly,
         VarOnlyNoVarUnionIsDisjoint,
@@ -1763,51 +1780,70 @@ Proof.
     rewrite LinOnlyUnionEquiv. repeat split. tauto. tauto. tauto. apply FinAgeOnlyUnionForward. repeat split. all:tauto.
 Qed.
 
-(* Lemma decompSubst : forall (P1 P2 D2: ctx) (x : var) (m: mode) (T : type), ctx_DestOnly D2 ->
-(Fun.merge (Fun.merge_fun_of_with (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0 -> binding_type_of n0) with
-| ˣ _ => tyb_union_var
-| ʰ _ => tyb_union_dh
-end)) P1 P2 = Fun.merge (Fun.merge_fun_of_with (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0 -> binding_type_of n0) with
-| ˣ _ => tyb_union_var
-| ʰ _ => tyb_union_dh
-end)) D2 (Fun.singleton (ˣ x) name_eq_dec (ₓ m ‗ T))) -> (
-  (exists (m1 m2: mode), P1 (ˣ x) = Some (ₓ m1 ‗ T) /\ ctx_QuasiDestOnly P1 (ˣ x) /\ P2 (ˣ x) = Some (ₓ m2 ‗ T) /\ ctx_QuasiDestOnly P2 (ˣ x) /\ (mode_plus m1 m2 = m))
-  \/ (P1 (ˣ x) = Some (ₓ m ‗ T) /\ ctx_QuasiDestOnly P1 (ˣ x) /\ ctx_DestOnly P2)
-  \/ (ctx_DestOnly P1 /\ P2 (ˣ x) = Some (ₓ m ‗ T) ctx_QuasiDestOnly P2 (ˣ x))
-  \/ (P1 = D1' /\ P2 = D2')
-). *)
+Ltac restore_union_eq D1 D2 D3 D4 H1 H2:=
+  assert (D1 ⨄ D2 = D3 ⨄ D4) as UnionEq by (apply ext_eq; unfold ctx_singleton, ctx_union, merge_with, merge in *; try simpl; try intros nam; try rewrite H1; try reflexivity; try exact H2); clear H1; clear H2.
 
-Ltac restore_union_eq P1 P2 P3 P4 H1 H2:=
-  assert (P1 ⨄ P2 = P3 ⨄ P4) as UnionEq by (apply ext_eq; unfold ctx_singleton, ctx_union, merge_with, merge in *; try simpl; try intros nam; try rewrite H1; try reflexivity; try exact H2); clear H1; clear H2.
-
-Lemma tSubLemma : forall (P1 P2 : ctx) (m : mode) (T U : type) (u : term) (x : var) (v : val), (P2 ⨄ ᴳ{ x : m ‗ T} ⊢ u : U) -> (ctx_Disjoint P2 ᴳ{ x : m ‗ T}) -> (P1 ⊢ ᵥ₎ v : T) -> (m ᴳ· P1 ⨄ P2 ⊢ u ᵗ[ x ≔ v] : U).
+Lemma Empty_dec : forall (G : ctx), { G = ᴳ{}} + { exists n tyb, G n = Some tyb }.
 Proof.
-  intros * Tyu Tyv.
-  dependent induction Tyu.
-  - rename x into H1, x1 into H2, x0 into x.
-    restore_union_eq P D P2 ᴳ{ x : m ‗ T} H1 H2.
-  (* - unfold term_sub. rewrite DestOnlyUnionEquiv in H. destruct H as (DestOnlyD2' & DestOnlyDx).
-    unfold ctx_DestOnly in DestOnlyDx. specialize (DestOnlyDx (ˣ x) (ₓ m ‗ T)). unfold ctx_singleton in DestOnlyDx. rewrite singleton_spec_1 in DestOnlyDx. simpl in DestOnlyDx. specialize (DestOnlyDx eq_refl). contradiction.
-  - unfold term_sub. destruct (HdnsFactsM.eq_dec x0 x); try rewrite e in *.
-    + pose proof CompatPx as CompatPx'. unfold ctx_CompatibleVar in CompatPx. destruct CompatPx as (inD2 & CompatPx).
-      rewrite In_spec in inD2. destruct inD2 as (tyb & inD2). specialize (CompatPx (ˣ x) tyb inD2). simpl in CompatPx. destruct (HdnsFactsM.eq_dec x x); try contradiction.
-      assert ((D2 ⨄ ᴳ{ x : m ‗ T}) (ˣ x) = Some (ₓ m ‗ T)) as e1.
-        { apply DestOnlyUnionSingletonVarAtX. assumption. } rewrite e1 in *. inversion inD2. rewrite <- H0 in *. destruct CompatPx as (sub & Teq). rewrite Teq in *.
-        rewrite IsSubtypeLinNuIsLinNu in sub. rewrite sub in *.
-        apply ctx_CompatibleVar_DestOnlyUnionSingleton in CompatPx'. destruct CompatPx' as ((m0 & sub') & eqempty). apply CheatNoneOnAllPointIsEmpty in eqempty. rewrite eqempty in *. all: crush.
-    + destruct CompatPx. unfold ctx_union in H. rewrite merge_with_spec_5 in H. destruct H.
-       { inversion H. assert (D2 (ˣ x0) = None). { apply DestOnlyAtXIsNone. assumption. } congruence. }
-       { inversion H. apply singleton_mapsto in H1. apply eq_sigT_fst in H1. inversion H1 ; congruence. }
-  - rename x1 into DEqSupport, x into DEqUnderlying, x0 into x.
-    destruct (In_dec (ˣ x) P1), (In_dec (ˣ x) P2).
-    + rewrite In_spec in *; destruct H as (tyb1 & mapstoP1), H0 as (tyb2 & mapstoP2). *)
-    give_up.
+  intros *. destruct (dom(G)) eqn:eDomG.
+  - left. apply CheatNoneOnAllPointIsEmpty. rewrite dom_empty_spec in eDomG. rewrite eDomG. intros x. trivial.
+  - right. exists n. rewrite <- In_spec. apply dom_spec. rewrite eDomG. apply List.in_eq.
+Qed.
+
+Lemma TermSubLemma :
+  forall (D1 D2 : ctx) (m' : mode) (T' U' : type) (te : term) (x' : var) (v' : val),
+  mode_IsValid m' ->
+  ctx_DestOnly D1 ->
+  ctx_DestOnly D2 ->
+  ctx_LinOnly (m' ᴳ· D1 ⨄ D2) ->
+  (D2 ⨄ ᴳ{ x' : m' ‗ T'} ⊢ te : U') ->
+  (D1 ⊢ ᵥ₎ v' : T') ->
+  (m' ᴳ· D1 ⨄ D2 ⊢ te ᵗ[ x' ≔ v'] : U').
+Proof.
+  intros * Validmp DestOnlyD1 DestOnlyD2 LinOnlyD Tyte Tyvp.
+  dependent induction Tyte; simpl.
+  - restore_union_eq P D D2 ᴳ{ x' : m' ‗ T'} x x0.
+    assert (P (ˣ x') = Some (ₓ m' ‗ T')).
+      { assert ((P ⨄ D) (ˣ x') = Some (ₓ m' ‗ T')). { rewrite UnionEq. unfold ctx_union, ctx_singleton. apply DestOnlyUnionSingletonVarAtX. assumption. }
+        rewrite UnionCommutative in H0.
+        unfold ctx_union, merge_with, merge, Fun.merge, Fun.merge_fun_of_with in H0. simpl in H0. destruct (D (ˣ x')) eqn:eqD.
+        - unfold ctx_DestOnly in H. specialize (H (ˣ x') b eqD). inversion H.
+        - destruct (P (ˣ x')); simpl in H0; trivial.
+      }
+    assert (mode_IsUr m'). { unfold ctx_DisposableOnly in DisposP. specialize (DisposP (ˣ x') (ₓ m' ‗ T') H0). simpl in DisposP. assumption. }
+    assert (D1 = ᴳ{}). { apply CheatNoneOnAllPointIsEmpty. intros n.
+    assert (ctx_LinOnly (m' ᴳ· D1)). { crush. } unfold ctx_LinOnly in H2. destruct (Empty_dec D1).
+    - rewrite e. cbn. reflexivity.
+    - destruct e as (n' & mapstoD1). exfalso.
+      unfold ctx_stimes in H2. specialize (H2 n').
+      pose proof mapstoD1 as inD1. rewrite <- In_spec in inD1. apply map_In with (m := (fun n : name => match n as n0 return (binding_type_of n0 -> binding_type_of n0) with
+| ˣ _ => tyb_stimes_var m'
+| ʰ _ => tyb_stimes_dh m'
+end)) in inD1. rewrite In_spec in inD1. destruct inD1 as (tyb & mapstoMap). specialize (H2 tyb mapstoMap).
+      destruct n'; unfold map, Fun.map in mapstoMap; simpl in mapstoMap; destruct mapstoD1 as (tyb' & mapstoD1); rewrite mapstoD1 in mapstoMap; inversion mapstoMap.
+      + inversion H1. inversion H2. destruct tyb, tyb'; unfold tyb_stimes_var, mode_times, mul_times in *; destruct m, m', m0; simpl in *; try congruence; try destruct p; try destruct p0; try destruct p1; try destruct m0; try destruct m1; simpl in *; trivial; try congruence.
+      + rewrite <- H4 in H2. inversion H2. destruct tyb, tyb'; unfold tyb_stimes_dh, mode_times, mul_times in *; try destruct m; try destruct m'; try destruct m0; try destruct n1; simpl in *; try congruence; try destruct p; try destruct p0; try destruct p1; try destruct m; try destruct m0; try destruct m1; simpl in *; trivial; try congruence; try inversion H1.
+     }
+     rewrite H2 in *. inversion H1. rewrite <- H3 in *. rewrite StimesEmptyEq, <- UnionIdentityLeft with (G := D2).
+     (* I need a lemma saying that I can split a binding into a singleton and another part *)
+     give_up.
 Admitted.
 
-Lemma tSubLemma2 : forall (P11 P12 P2 : ctx) (m : mode) (T1 T2 U : type) (u : term) (x1 x2 : var) (v1 v2 : val), (ctx_Disjoint P2 ᴳ{ x1 : m ‗ T1}) -> (ctx_Disjoint P2 ᴳ{ x2 : m ‗ T2}) -> (ctx_Disjoint ᴳ{ x1 : m ‗ T1} ᴳ{ x2 : m ‗ T2}) -> (P2 ⨄ ᴳ{ x1 : m ‗ T1} ⨄ ᴳ{ x2 : m ‗ T2} ⊢ u : U) -> (P11 ⊢ ᵥ₎ v1 : T1) -> (P12 ⊢ ᵥ₎ v2 : T2) -> (m ᴳ· (P11 ⨄ P12) ⨄ P2 ⊢ u ᵗ[ x1 ≔ v1 ] ᵗ[ x2 ≔ v2 ] : U).
+Lemma TermSubLemma2 :
+  forall (D11 D12 D2 : ctx) (m' : mode) (T1' T2' U' : type) (te : term) (x1' x2' : var) (v1' v2' : val),
+  mode_IsValid m' ->
+  ctx_DestOnly D11 ->
+  ctx_DestOnly D12 ->
+  ctx_DestOnly D2 ->
+  ctx_LinOnly (m' ᴳ· (D11 ⨄ D12) ⨄ D2) ->
+  (ctx_Disjoint ᴳ{ x1' : m' ‗ T1'} ᴳ{ x2' : m' ‗ T2'}) ->
+  (D2 ⨄ ᴳ{ x1' : m' ‗ T1'} ⨄ ᴳ{ x2' : m' ‗ T2'} ⊢ te : U') ->
+  (D11 ⊢ ᵥ₎ v1' : T1') ->
+  (D12 ⊢ ᵥ₎ v2' : T2') ->
+  (m' ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ te ᵗ[ x1' ≔ v1' ] ᵗ[ x2' ≔ v2' ] : U').
 Proof. Admitted.
 
-Lemma ectxsSubLemma : forall (D1 D2 D3: ctx) (h : hdn) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
+Lemma EctxsSubLemma : forall (D1 D2 D3: ctx) (h : hdn) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
   ctx_Disjoint D1 D2 ->
   ctx_Disjoint D1 D3 ->
   hdns_Disjoint hnames©(C) hnamesᴳ(ᴳ- D3) ->
@@ -1875,8 +1911,10 @@ Proof.
       assert (ctx_DestOnly (P ⨄ D2)) as DestOnlyPuD2. { crush. }
       rewrite (SimplifyDisposableInTyC P D2 DisposP DestOnlyPuD2) in *.
       inversion TyRv'; subst. rename H1 into DestOnlyD2.
+      assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v] : U) as Tyusub.
-      { apply (tSubLemma D1 D2 m T U u x v). all: crush. }
+      { apply (TermSubLemma D1 D2 m T U u x v). all: crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v]).
       all: crush.
     - (* Sem-eterm-PatUFoc *)
@@ -1924,8 +1962,10 @@ Proof.
       rewrite (SimplifyDisposableInTyC P D1 DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v1 : T1) as Tyt'.
         { term_Val_no_dispose D1. }
+      assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ u1 ᵗ[ x1 ≔ v1] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 m T1 U u1 x1 v1); crush. }
+        { apply (TermSubLemma D1 D2 m T1 U u1 x1 v1); crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u1 ᵗ[ x1 ≔ v1]). all: crush.
     - (* Sem-eterm-PatRRed *)
       inversion Tyt; subst.
@@ -1936,8 +1976,10 @@ Proof.
       rewrite (SimplifyDisposableInTyC P D1 DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v2 : T2) as Tyt'.
         { term_Val_no_dispose D1. }
+      assert (ctx_LinOnly (m ᴳ· D1 ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· D1 ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ⨄ D2 ⊢ u2 ᵗ[ x2 ≔ v2] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 m T2 U u2 x2 v2); crush. }
+        { apply (TermSubLemma D1 D2 m T2 U u2 x2 v2); crush. }
       constructor 1 with (D := (m ᴳ· D1 ⨄ D2)) (T := U) (t := u2 ᵗ[ x2 ≔ v2]). all: crush.
     - (* Sem-eterm-PatPFoc *)
       inversion Tyt; subst.
@@ -1965,8 +2007,10 @@ Proof.
         { term_Val_no_dispose D11. crush. }
       assert (D12 ⊢ ᵥ₎ v2 : T2) as Tyt2.
         { term_Val_no_dispose D12. crush. }
+      assert (ctx_LinOnly (m ᴳ· (D11 ⨄ D12) ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· (D11 ⨄ D12) ⨄ D2) C U U0); tauto. }
       assert (m ᴳ· (D11 ⨄ D12) ⨄ D2 ⊢ u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2] : U) as Tyusub.
-        { apply (tSubLemma2 D11 D12 D2 m T1 T2 U u x1 x2 v1 v2); crush. }
+        { apply (TermSubLemma2 D11 D12 D2 m T1 T2 U u x1 x2 v1 v2); crush. }
       constructor 1 with (D := (m ᴳ· (D11 ⨄ D12) ⨄ D2)) (T := U) (t := u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2]). all: crush.
     - (* Sem-eterm-PatEFoc *)
       inversion Tyt; subst.
@@ -1992,8 +2036,10 @@ Proof.
       rewrite (SimplifyDisposableInTyC P (n ᴳ· D1) DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v' : T) as Tyt'.
         { term_Val_no_dispose D1. crush. }
+      assert (ctx_LinOnly (m ᴳ· (n ᴳ· D1) ⨄ D2)) as LinOnlyD.
+        { apply (Ty_ectxs_LinFinOnlyD (m ᴳ· (n ᴳ· D1) ⨄ D2) C U U0); tauto. }
       assert ((m · n) ᴳ· D1 ⨄ D2 ⊢ u ᵗ[ x ≔ v'] : U) as Tyusub.
-        { apply (tSubLemma D1 D2 (m · n) T U u x v'). all: crush. }
+        { apply (TermSubLemma D1 D2 (m · n) T U u x v'). all: crush. }
       constructor 1 with (D := (m ᴳ· (n ᴳ· D1) ⨄ D2)) (T := U) (t := u ᵗ[ x ≔ v']). all: crush.
     - (* Sem-eterm-MapFoc *)
       inversion Tyt; subst. rename T0 into T.
@@ -2017,22 +2063,9 @@ Proof.
       inversion TyRv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
       assert (ctx_DestOnly (P ⨄ (D11 ⨄ D12))) as DestOnlyPuD1. { crush. }
       rewrite (SimplifyDisposableInTyC P (D11 ⨄ D12) DisposP DestOnlyPuD1) in *.
+      
       assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] : T) as Tyt1.
         { term_Val_no_dispose ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]). apply TyR_v_hdn_shift; trivial. apply DestOnlyHdnShiftEquiv; apply DestOnlyUnionEquiv; split; try apply DestOnlyStimesEquiv. crush. crush. }
-      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ]); swap 3 4;
-        assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush );
-        assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
-        rewrite D11Eq.
-        { assert (ctx_ValidOnly (¹↑ ᴳ· (D2 ⨄ D11))).
-          { apply ValidOnlyStimesForward. split.
-            - rewrite (UnionCommutative (D11 ⨄ D12) D2) in ValidOnlyD.
-              rewrite UnionAssociative in ValidOnlyD.
-              apply ValidOnlyUnionBackward in ValidOnlyD.
-              tauto.
-            - exact (mode_IsValidProof (Lin, Fin 1)).
-          }
-          assert (ctx_ValidOnly (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
-          { apply ValidOnlyHdnShiftEquiv; tauto. }
           assert (ctx_Disjoint (¹↑ ᴳ· (D2 ⨄ D11)) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
           { apply DisjointStimesLeftEquiv.
             assert (ctx_Disjoint (D2 ⨄ D11) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])). {
@@ -2049,7 +2082,7 @@ Proof.
               apply hnames_DisjointToDisjoint; crush.
             }
             { assert (HdnsM.Subset hnamesᴳ(D11) hnames©(C)).
-              { apply HdnsSubsetCtxUnionBackward in H1. destruct H1. apply HdnsSubsetCtxUnionBackward in H1. tauto. }
+              { apply HdnsSubsetCtxUnionBackward in H. destruct H. apply HdnsSubsetCtxUnionBackward in H. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
@@ -2059,6 +2092,21 @@ Proof.
               apply hnames_DisjointToDisjoint; crush.
             }
           } } tauto. }
+      constructor 1 with (D := ¹↑ ᴳ· (D2 ⨄ D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) ⨄ D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ]); swap 3 4;
+        assert (D11 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D11) as D11Eq by ( apply DisjointHdnShiftEq; crush );
+        assert (D12 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] = D12) as D12Eq by ( apply DisjointHdnShiftEq; crush );
+        rewrite D11Eq.
+        { assert (ctx_ValidOnly (¹↑ ᴳ· (D2 ⨄ D11))).
+          { apply ValidOnlyStimesForward. split.
+            - rewrite (UnionCommutative (D11 ⨄ D12) D2) in ValidOnlyD.
+              rewrite UnionAssociative in ValidOnlyD.
+              apply ValidOnlyUnionBackward in ValidOnlyD.
+              tauto.
+            - exact (mode_IsValidProof (Lin, Fin 1)).
+          }
+          assert (ctx_ValidOnly (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
+          { apply ValidOnlyHdnShiftEquiv; tauto. }
+
           apply ValidOnlyUnionForward; crush.
         }
         { rewrite (UnionCommutative D2 D11). apply DestOnlyUnionEquiv. split.
@@ -2079,7 +2127,16 @@ Proof.
              { apply ValidOnlyStimesForward; split; crush. }
              { crush. }
             }
-          apply tSubLemma with (T := T) (P2 := ¹↑ ᴳ· D2).
+          assert (ctx_LinOnly (D11 ⨄ D12 ⨄ D2)) as LinOnlyD.
+            { apply (Ty_ectxs_LinFinOnlyD (D11 ⨄ D12 ⨄ D2) C (U ⧔ T') U0); tauto. }
+          assert (ctx_LinOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ⨄ D13) ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]) ⨄ ¹↑ ᴳ· D2)).
+            { apply LinOnlyUnionEquiv; repeat split.
+              { apply LinOnlyStimesForward. exact (mode_IsLinProof (Fin 0)). apply LinOnlyHdnShiftEquiv. apply LinOnlyUnionEquiv; repeat split. apply LinOnlyStimesForward. exact (mode_IsLinProof (Fin 1)). crush.
+              assumption. crush. }
+              { apply LinOnlyStimesForward. exact (mode_IsLinProof (Fin 1)). crush. }
+              { apply DisjointStimesLeftEquiv. rewrite UnionHdnShiftEq. apply DisjointNestedLeftEquiv. split. rewrite StimesHdnShiftEq. rewrite DisjointHdnShiftEq. rewrite DisjointStimesLeftEquiv, DisjointStimesRightEquiv. crush. crush. apply DisjointCommutative. rewrite StimesUnionDistributive, DisjointNestedLeftEquiv in H. destruct H as (H & H'). assumption. }
+            }
+          apply TermSubLemma with (T' := T) (D2 := ¹↑ ᴳ· D2).
           all: crush.
         }
       rewrite <- hnamesFullShiftEq.
@@ -2102,7 +2159,7 @@ Proof.
               apply hnames_DisjointToDisjoint; crush.
             }
             { assert (HdnsM.Subset hnamesᴳ(D11) hnames©(C)).
-              { apply HdnsSubsetCtxUnionBackward in H. destruct H. apply HdnsSubsetCtxUnionBackward in H. tauto. }
+              { apply HdnsSubsetCtxUnionBackward in H0. destruct H0. apply HdnsSubsetCtxUnionBackward in H0. tauto. }
               assert (ʰmax(hnamesᴳ(D11)) <= ʰmax(hnames©(C))).
               { apply HmaxSubset. tauto. }
               assert (hdns_Disjoint hnamesᴳ(D11) (hnamesᴳ(D13) ᴴ⩲ (ʰmax(hnames©(C)) + 1))).
@@ -2236,7 +2293,7 @@ Proof.
           rewrite <- e2.
           assert (ᴳ{} ⨄ (¹ν · n) ᴳ· ᴳ{} ⨄ ᴳ{+ h : ¹ν ⌊ ① ⌋ n} = ᴳ{+ h : ¹ν ⌊ ① ⌋ n}) as e3. { crush. }
           rewrite <- e3 in TyC.
-          apply ectxsSubLemma with (D2 := ᴳ{}) (U := ①); swap 1 14.
+          apply EctxsSubLemma with (D2 := ᴳ{}) (U := ①); swap 1 14.
           { rewrite <- UnionIdentityLeft. rewrite MinusEmptyEq. apply TyR_val_U. }
           all: crush. }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
@@ -2271,7 +2328,7 @@ Proof.
           assert (hnamesᴳ(ᴳ- ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
           assert (ᴳ{} ⨄ (¹ν · n) ᴳ· ᴳ{} ⨄ ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n} = ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n}) as e3. { crush. } rewrite <- e3 in TyC.
-          apply ectxsSubLemma with (D2 := ᴳ{}) (D3 := ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (U := T1 ⨁ T2); swap 1 14.
+          apply EctxsSubLemma with (D2 := ᴳ{}) (D3 := ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (U := T1 ⨁ T2); swap 1 14.
           { rewrite <- UnionIdentityLeft. rewrite MinusSingletonEq. apply TyR_val_L. constructor. }
           give_up.
     - give_up.
