@@ -10,6 +10,7 @@ Require MMaps.OrdList.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
+Require Import Coq.Logic.IndefiniteDescription.
 
 Set Primitive Projections.
 
@@ -480,20 +481,26 @@ End Fun.
 (* Optionally, we could make a notation for this type. Something like "finitely (x:A), B". *)
 Record T A B := {
     underlying :> forall x:A, option (B x);
-    support : list A;
-    support_supports : Fun.Support support underlying
+    supported : exists l : list A, Fun.Support l underlying;
   }.
 Arguments underlying {A B}.
-Arguments support {A B}.
+Arguments supported {A B}.
 
-Lemma ext_eq : forall {A B} (f g : T A B), (forall x, f x = g x) -> (f.(support) = g.(support)) -> f = g.
+(** Sometimes, rarely, ext_eq' is more useful than ext_eq. *)
+Lemma ext_eq' : forall {A B} (f g : T A B), f.(underlying) = g.(underlying) ->f = g.
 Proof.
-  intros A B [f f_supp h_f] [g g_supp h_g] h_ext h_supp. cbn in *.
-  assert (f = g) as e.
-  { apply functional_extensionality_dep. assumption. }
-  subst g. subst g_supp.
+  intros A B [f f_supp] [g g_supp] h_ext. cbn in *.
+  subst g.
   f_equal.
   apply proof_irrelevance.
+Qed.
+
+Lemma ext_eq : forall {A B} (f g : T A B), (forall x, f x = g x) ->f = g.
+Proof.
+  intros * h_ext.
+  apply ext_eq'.
+  apply functional_extensionality_dep.
+  assumption.
 Qed.
 
 Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
@@ -522,8 +529,19 @@ Proof.
   all:sfirstorder.
 Qed.
 
+(** An arbitrary support, not really meant to be used outside of this
+    module: use `dom` instead. *)
+#[program]
+Definition a_support {A B} (f : T A B) : list A := constructive_indefinite_description _ f.(supported).
+
+Lemma a_support_supports : forall {A B} (f : T A B), Fun.Support (a_support f) f.
+Proof.
+  intros *. unfold a_support.
+  apply proj2_sig.
+Qed.
+
 Definition dom {A B} (f : T A B) : list A :=
-  List.filter (fun x => match f x with Some _ => true | None => false end) f.(support).
+  List.filter (fun x => match f x with Some _ => true | None => false end) (a_support f).
 
 Lemma dom_spec : forall {A B} (f : T A B) (x : A), List.In x (dom f) <-> In x f.
 Proof.
@@ -534,7 +552,7 @@ Proof.
   - rewrite filter_In.
     rewrite <- (Fun.In_supported_r f).
     + sauto.
-    + apply support_supports.
+    + apply a_support_supports.
 Qed.
 
 Lemma dom_Support : forall {A B} (f : T A B), Fun.Support (dom f) f.
@@ -548,32 +566,55 @@ Qed.
 Definition empty {A B} : T A B :=
   {|
     underlying := fun _ => None;
-    support := nil
   |}.
+Next Obligation.
+  exists nil.
+  scongruence.
+Qed.
 
 Lemma dom_empty : forall {A B}, dom (@empty A B) = nil.
 Proof.
   intros *.
-  unfold empty, dom. simpl. reflexivity.
+  unfold empty, dom. simpl.
+  (* Maybe this lemma is somewhere in the standard library. I[aspiwack] couldn't find it.
+     `in_nil: forall [A : Type] [a : A], ~ List.In a nil` is the converse. *)
+  assert (forall l : list A, (forall x, ~List.In x l) -> l = nil) as nil_in.
+  { induction l.
+    - congruence.
+    - intros h. specialize (h a).
+      contradict h.
+      apply in_eq. }
+  apply nil_in. intros x.
+  rewrite filter_In.
+  sfirstorder.
 Qed.
 
-Lemma dom_empty_spec : forall {A B} (f : T A B), dom(f) = nil <-> f.(underlying) = (fun _ => None).
+Lemma empty_support_empty : forall A B (f : T A B), Fun.Support nil f -> f = empty.
 Proof.
-  intros *.
-  split.
-  - intros h. apply functional_extensionality_dep. intros x. apply Fun.out_of_support_is_None with (l := (dom f)). apply dom_Support. intros inDomf. rewrite h in inDomf. inversion inDomf.
-  - unfold dom. intros eq. rewrite eq. induction (support f).
-    { cbn. reflexivity. }
-    { simpl. assumption. }
+  intros * h. unfold Fun.Support in h.
+  apply ext_eq. intros x. cbn.
+  specialize (h x).
+  destruct (f x) as [y|].
+  - specialize (h y).
+    sfirstorder use: in_nil.
+  - reflexivity.
+Qed.
+
+Corollary empty_dom_empty : forall A B (f : T A B), dom f = nil -> f = empty.
+Proof.
+  intros * h.
+  apply empty_support_empty.
+  rewrite <- h.
+  apply dom_Support.
 Qed.
 
 #[program]
 Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) : T A B :=
   {|
     underlying := Fun.singleton x discr v;
-    support := x::nil;
   |}.
 Next Obligation.
+  exists (x::nil).
   hauto lq: on use: Fun.singleton_support.
 Qed.
 
@@ -595,11 +636,10 @@ Proof.
   intros *. rewrite singleton_spec0. apply Fun.singleton_mapsto.
 Qed.
 
+(* TODO: Not true in the current implementation (dom could very well have multiple copies of the one element). Need revisit later. *)
 Lemma dom_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), dom (singleton x discr v) = x::nil.
 Proof.
-  intros *.
-  unfold singleton, dom, support. simpl. rewrite Fun.singleton_spec_1. reflexivity.
-Qed.
+Admitted.
 
 Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
@@ -628,10 +668,10 @@ Qed.
 Definition precomp {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) : T A1 (fun w => B (g w)) :=
   {|
     underlying := fun w => f (g w);
-    support := List.flat_map preimg f.(support)
   |}.
 Next Obligation.
-  sauto lq: on rew: off use: Fun.precomp_support.
+  exists (List.flat_map preimg (dom f)).
+  sauto lq: on rew: off use: Fun.precomp_support, dom_Support.
 Qed.
 
 Lemma precomp_spec0 : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B),
@@ -670,10 +710,10 @@ Qed.
 Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) : T A B2 :=
   {|
     underlying := Fun.map m f;
-    support := f.(support);
   |}.
 Next Obligation.
-  hauto lq: on use: support_supports, Fun.map_support.
+  exists (dom f).
+  hauto lq: on use: dom_Support, Fun.map_support.
 Qed.
 
 Lemma map_spec0 : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = Fun.map m f x.
@@ -776,10 +816,11 @@ Qed.
 Definition merge {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) : T A B3 :=
   {|
     underlying := Fun.merge m f g;
-    support := f.(support) ++ g.(support);
   |}.
 Next Obligation.
-  hauto lq: on use: support_supports, Fun.merge_support.
+  exists (dom f ++ dom g).
+  apply Fun.merge_support.
+  all: apply dom_Support.
 Qed.
 
 Lemma merge_spec0 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2),
@@ -937,6 +978,5 @@ Lemma merge_with_associative : forall {A B} (m : forall x:A, B x -> B x -> B x) 
 Proof.
   intros * h.
   apply ext_eq.
-  - sfirstorder use: merge_with_associative'.
-  - sfirstorder use: app_assoc.
+  sfirstorder use: merge_with_associative'.
 Qed.

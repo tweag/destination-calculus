@@ -17,7 +17,7 @@ Require Import Coq.Arith.Plus.
 Require Import Arith.
 
 (* =========================================================================
- * Waiting for PR #2 to be merged 
+ * Waiting for PR #2 to be merged
  * ========================================================================= *)
 
 Lemma gt_S_max : forall h H, HdnsM.mem h H = true -> h < ʰmax(H) + 1.
@@ -169,7 +169,7 @@ Admitted.
 (* ========================================================================= *)
 
 (* =========================================================================
- * Not provable with the current implementation as the support is a list 
+ * Not provable with the current implementation as the support is a list
  * whose order depends on the order of insertion.
  * ========================================================================= *)
 Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
@@ -779,15 +779,13 @@ Lemma UnionIdentityRight : forall (G : ctx), G = G ⨄ ᴳ{}.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros x. unfold ctx_union.
-    destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
-    + erewrite merge_with_spec_2.
-      2:{ eauto. }
-      eauto.
-    + erewrite merge_with_spec_4.
-      all: eauto.
-  - unfold ctx_union. destruct G. cbn.
-    rewrite app_nil_r. reflexivity.
+  intros x. unfold ctx_union.
+  destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
+  + erewrite merge_with_spec_2.
+    2:{ eauto. }
+    eauto.
+  + erewrite merge_with_spec_4.
+    all: eauto.
 Qed.
 Hint Rewrite <- UnionIdentityRight : canonalize.
 
@@ -795,15 +793,13 @@ Lemma UnionIdentityLeft : forall (G : ctx), G = ᴳ{} ⨄ G.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros x. unfold ctx_union.
-    destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
-    + erewrite merge_with_spec_3.
-      2:{ eauto. }
-      eauto.
-    + erewrite merge_with_spec_4.
-      all: eauto.
-  - unfold ctx_union. destruct G. cbn.
-    reflexivity.
+  intros x. unfold ctx_union.
+  destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
+  + erewrite merge_with_spec_3.
+    2:{ eauto. }
+    eauto.
+  + erewrite merge_with_spec_4.
+    all: eauto.
 Qed.
 Hint Rewrite <- UnionIdentityLeft : canonalize.
 
@@ -891,7 +887,7 @@ Proof.
     (* 16 goals left *)
     all: try destruct m as [[? ?]|]; try destruct n as [[? ?]|]; cbn.
     (* 58 goals *)
-    all: sfirstorder.
+    all: scongruence.
 Qed.
 Hint Rewrite UnionAssociative : canonalize.
 
@@ -937,7 +933,6 @@ Lemma StimesIsAction : forall (m n : mode) (G : ctx), m ᴳ· (n ᴳ· G) = (m �
 Proof.
   intros *.
   apply ext_eq.
-  2:{ reflexivity. }
   intros x. unfold ctx_stimes.
   rewrite map_comp.
   apply map_ext. clear x.
@@ -966,7 +961,6 @@ Lemma StimesUnionDistributive : forall (m : mode) (G1 G2 : ctx),  m ᴳ· (G1 �
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  2:{ reflexivity. }
   intros n. unfold ctx_stimes, ctx_union.
   unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.merge_fun_of_with.
   assert (exists e, age_eq_dec Inf Inf = left e) as eq_inf_inf.
@@ -995,7 +989,6 @@ Lemma MinusUnionDistributive : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 ->ᴳ- (
 Proof.
   intros * Disjoint.
   apply Finitely.ext_eq.
-  2:{ reflexivity. }
   intros n. unfold ctx_minus, ctx_union.
   unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.merge_fun_of_with.
   destruct (In_dec n G1), (In_dec n G2).
@@ -1007,7 +1000,6 @@ Lemma InvMinusUnionDistributive : forall (G1 G2 : ctx), ctx_Disjoint G1 G2 ->ᴳ
 Proof.
   intros * Disjoint.
   apply Finitely.ext_eq.
-  2:{ reflexivity. }
   intros n. unfold ctx_invminus, ctx_union.
   unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.merge_fun_of_with.
   destruct (In_dec n G1), (In_dec n G2).
@@ -1019,17 +1011,16 @@ Lemma StimesIdentity :  forall (G: ctx), G = ¹ν ᴳ· G.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros x. unfold ctx_stimes.
-    destruct x as [xx|xh].
-    + destruct (In_dec (ˣ xx) G) as [[tyb mapsto]|notinG].
-      * rewrite mapsto. symmetry. apply map_mapsto. exists tyb. split; trivial.
-        unfold tyb_stimes_var, mode_times. destruct tyb, m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
-      * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_mapsto_None; tauto.
-    + destruct (In_dec (ʰ xh) G) as [[tyb mapsto]|notinG].
-      * rewrite mapsto. symmetry. apply map_mapsto. exists tyb. split; trivial.
-        unfold tyb_stimes_dh, mode_times. destruct tyb; try rename n into m; destruct m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
-      * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_mapsto_None; tauto.
-  - unfold ctx_stimes. unfold map. simpl. reflexivity.
+  intros x. unfold ctx_stimes.
+  destruct x as [xx|xh].
+  + destruct (In_dec (ˣ xx) G) as [[tyb mapsto]|notinG].
+    * rewrite mapsto. symmetry. apply map_mapsto. exists tyb. split; trivial.
+      unfold tyb_stimes_var, mode_times. destruct tyb, m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
+    * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_mapsto_None; tauto.
+  + destruct (In_dec (ʰ xh) G) as [[tyb mapsto]|notinG].
+    * rewrite mapsto. symmetry. apply map_mapsto. exists tyb. split; trivial.
+      unfold tyb_stimes_dh, mode_times. destruct tyb; try rename n into m; destruct m; try destruct p; try destruct m, a; unfold mul_times, age_times, ext_plus; rewrite? Nat.add_0_l; reflexivity.
+    * rewrite In_None2 in notinG. rewrite notinG. symmetry. rewrite map_mapsto_None; tauto.
 Qed.
 Hint Rewrite <- StimesIdentity : canonalize.
 
@@ -1174,7 +1165,8 @@ Qed.
 Lemma hnames_CWkhnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HdnsM.Subset hnamesᴳ(D) hnames©(C).
 Proof.
   intros * TyC. induction TyC.
-  { cbn. reflexivity. }
+  { cbn. unfold hdns_from_ctx, ctx_empty.
+    rewrite dom_empty. reflexivity. }
   all:
       try (cbn; unfold HdnsM.Subset; apply HdnsSubsetCtxUnionBackward in IHTyC; destruct IHTyC as (IHTyC1 & IHTyC2);  try apply HdnsSubsetCtxStimesBackward in IHTyC1; unfold HdnsM.Subset in IHTyC1 ; intros h Hin; specialize (IHTyC1 h Hin); apply HdnsFactsM.union_iff; right; assumption);
       try (cbn; unfold HdnsM.Subset; apply HdnsSubsetCtxUnionBackward in IHTyC; destruct IHTyC as (IHTyC1 & IHTyC2); try apply HdnsSubsetCtxStimesBackward in IHTyC2; unfold HdnsM.Subset in IHTyC2; intros h Hin; specialize (IHTyC2 h Hin); apply HdnsFactsM.union_iff; right; assumption);
@@ -1267,69 +1259,59 @@ Lemma MinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ- ᴳ{+ h : 
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros n'. unfold ctx_minus, ctx_singleton.
-    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-    { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₊ ¹ν ⌊ T ⌋ n). split; tauto. }
-    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      rewrite H0 in *. apply map_mapsto_None. assumption. }
-  - unfold ctx_minus.
-    sfirstorder.
+  intros n'. unfold ctx_minus, ctx_singleton.
+  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+  { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₊ ¹ν ⌊ T ⌋ n). split; tauto. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    rewrite H0 in *. apply map_mapsto_None. assumption. }
 Qed.
 
 Lemma InvMinusSingletonEq : forall (h : hdn) (T : type) (n : mode), ᴳ-⁻¹ ᴳ{- h : T ‗ n} = ᴳ{+ h : ¹ν ⌊ T ⌋ n }.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros n'. unfold ctx_invminus, ctx_singleton.
-    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-    { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split; tauto. }
-    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      rewrite H in *. apply map_mapsto_None. assumption. }
-  - unfold ctx_invminus.
-    sfirstorder.
+  intros n'. unfold ctx_invminus, ctx_singleton.
+  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+  { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split; tauto. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    rewrite H in *. apply map_mapsto_None. assumption. }
 Qed.
 
 Lemma StimesSingletonVar : forall (x : var) (m : mode) (T : type) (m' : mode), m' ᴳ· ᴳ{ x : m ‗ T} = ᴳ{ x : (m · m') ‗ T}.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros n. unfold ctx_stimes, ctx_singleton.
-    destruct (name_eq_dec n (ˣ x)); rewrite? e in *.
-    { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (ₓ m ‗ T). split. tauto. unfold tyb_stimes_var. rewrite TimesCommutative. reflexivity. }
-    { assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
-      assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ (m · m') ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
-      rewrite H0 in *. apply map_mapsto_None. assumption. }
-  - unfold ctx_stimes.
-    sfirstorder.
+  intros n. unfold ctx_stimes, ctx_singleton.
+  destruct (name_eq_dec n (ˣ x)); rewrite? e in *.
+  { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (ₓ m ‗ T). split. tauto. unfold tyb_stimes_var. rewrite TimesCommutative. reflexivity. }
+  { assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ (m · m') ‗ T) n = None). { apply singleton_spec_2. symmetry. assumption. }
+    rewrite H0 in *. apply map_mapsto_None. assumption. }
 Qed.
 
 Lemma StimesSingletonDest : forall (h : hdn) (m n : mode) (T : type) (m': mode), m' ᴳ· ᴳ{+ h : m ⌊ T ⌋ n} = ᴳ{+ h : (m · m') ⌊ T ⌋ n}.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros n'. unfold ctx_stimes, ctx_singleton.
-    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-    { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₊ m ⌊ T ⌋ n). split. tauto. unfold tyb_stimes_dh. rewrite TimesCommutative. reflexivity. }
-    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ m ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ (m · m') ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      rewrite H0 in *. apply map_mapsto_None. assumption. }
-  - unfold ctx_stimes.
-    sfirstorder.
+  intros n'. unfold ctx_stimes, ctx_singleton.
+  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+  { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₊ m ⌊ T ⌋ n). split. tauto. unfold tyb_stimes_dh. rewrite TimesCommutative. reflexivity. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ m ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ (m · m') ⌊ T ⌋ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    rewrite H0 in *. apply map_mapsto_None. assumption. }
 Qed.
 Lemma StimesSingletonHole : forall (h : hdn) (T : type) (n : mode) (m': mode), m' ᴳ· ᴳ{- h : T ‗ n} = ᴳ{- h : T ‗ (n · m') }.
 Proof.
   intros *.
   apply Finitely.ext_eq.
-  - intros n'. unfold ctx_stimes, ctx_singleton.
-    destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-    { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split. tauto. unfold tyb_stimes_dh. rewrite TimesCommutative. reflexivity. }
-    { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ (n · m')) n' = None). { apply singleton_spec_2. symmetry. assumption. }
-      rewrite H0 in *. apply map_mapsto_None. assumption. }
-  - unfold ctx_stimes.
-    sfirstorder.
+  intros n'. unfold ctx_stimes, ctx_singleton.
+  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+  { rewrite singleton_spec_1. apply map_mapsto. rewrite singleton_spec_1. simpl. exists (₋ T ‗ n). split. tauto. unfold tyb_stimes_dh. rewrite TimesCommutative. reflexivity. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ (n · m')) n' = None). { apply singleton_spec_2. symmetry. assumption. }
+    rewrite H0 in *. apply map_mapsto_None. assumption. }
 Qed.
 
 Lemma hnamesSingletonDestEq : forall (h : hdn) (m n : mode) (T : type), hnamesᴳ( ᴳ{+ h : m ⌊ T ⌋ n} ) = ᴴ{ h }.
@@ -1346,16 +1328,10 @@ Proof.
   rewrite dom_singleton. reflexivity.
 Qed.
 
-Lemma empty_support_Empty : forall (G : ctx), support G = nil -> G = ᴳ{}.
+(* TODO: revisit if stuff breaks *)
+Lemma empty_support_Empty : forall (G : ctx), dom G = nil -> G = ᴳ{}.
 Proof.
-  intros * h.
-  apply ext_eq.
-  2:{ cbn. trivial. }
-  intros x. cbn.
-  destruct (In_dec x G) as [[y h_inG]|h_ninG]. all: rewrite ?In_None2 in *.
-  - apply support_supports in h_inG.
-    sauto q: on use: in_nil.
-  - trivial.
+  apply Finitely.empty_dom_empty.
 Qed.
 
 Lemma SubsetDisjoint : forall (H1 H2 H3 : hdns), HdnsM.Subset H1 H2 -> hdns_Disjoint H2 H3 -> hdns_Disjoint H1 H3.
@@ -1374,7 +1350,7 @@ Proof.
       destruct inD as (tyb & inD). specialize (CompatibleDH (ʰ h) tyb inD). simpl in CompatibleDH. destruct (HdnsFactsM.eq_dec h h) in CompatibleDH.
       2:{ congruence. }
       destruct tyb eqn: etyb in CompatibleDH.
-      { destruct CompatibleDH as (sub & e1 & e2). subst. 
+      { destruct CompatibleDH as (sub & e1 & e2). subst.
         assert (¹ν = m). { inversion sub. inversion H1. inversion H3. reflexivity. }
         rewrite <- H in inD; assumption.
       }
@@ -1780,13 +1756,10 @@ Proof.
     rewrite LinOnlyUnionEquiv. repeat split. tauto. tauto. tauto. apply FinAgeOnlyUnionForward. repeat split. all:tauto.
 Qed.
 
-Ltac restore_union_eq D1 D2 D3 D4 H1 H2:=
-  assert (D1 ⨄ D2 = D3 ⨄ D4) as UnionEq by (apply ext_eq; unfold ctx_singleton, ctx_union, merge_with, merge in *; try simpl; try intros nam; try rewrite H1; try reflexivity; try exact H2); clear H1; clear H2.
-
 Lemma Empty_dec : forall (G : ctx), { G = ᴳ{}} + { exists n tyb, G n = Some tyb }.
 Proof.
   intros *. destruct (dom(G)) eqn:eDomG.
-  - left. apply CheatNoneOnAllPointIsEmpty. rewrite dom_empty_spec in eDomG. rewrite eDomG. intros x. trivial.
+  - left. apply CheatNoneOnAllPointIsEmpty. apply empty_dom_empty in eDomG. rewrite eDomG. intros x. trivial.
   - right. exists n. rewrite <- In_spec. apply dom_spec. rewrite eDomG. apply List.in_eq.
 Qed.
 
@@ -1802,7 +1775,8 @@ Lemma TermSubLemma :
 Proof.
   intros * Validmp DestOnlyD1 DestOnlyD2 LinOnlyD Tyte Tyvp.
   dependent induction Tyte; simpl.
-  - restore_union_eq P D D2 ᴳ{ x' : m' ‗ T'} x x0.
+  - assert (P ⨄ D = D2 ⨄ ᴳ{ x' : m' ‗ T'}) as UnionEq.
+    { hauto l: on use: ext_eq. }
     assert (P (ˣ x') = Some (ₓ m' ‗ T')).
       { assert ((P ⨄ D) (ˣ x') = Some (ₓ m' ‗ T')). { rewrite UnionEq. unfold ctx_union, ctx_singleton. apply DestOnlyUnionSingletonVarAtX. assumption. }
         rewrite UnionCommutative in H0.
@@ -1863,6 +1837,14 @@ Proof. Admitted.
 
 Ltac term_Val_no_dispose D :=
   assert (ctx_DisposableOnly ᴳ{}) as DisposEmpty by (exact EmptyIsDisposableOnly); rewrite UnionIdentityLeft with (G := D); apply Ty_term_Val with (P := ᴳ{}); trivial.
+
+(* Could be an equivalence *)
+Lemma empty_union : forall G1 G2, G1 ⨄ G2 = ᴳ{} -> G1 = ᴳ{} /\ G2 = ᴳ{}.
+Proof. Admitted.
+
+(* Could be an equivalence *)
+Lemma empty_stimes : forall G m, m ᴳ· G = ᴳ{} -> G = ᴳ{}.
+Proof. Admitted.
 
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
   C ʲ[t] ⟶ C' ʲ[t'] -> ⊢ C' ʲ[t'] : T.
@@ -2063,7 +2045,7 @@ Proof.
       inversion TyRv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
       assert (ctx_DestOnly (P ⨄ (D11 ⨄ D12))) as DestOnlyPuD1. { crush. }
       rewrite (SimplifyDisposableInTyC P (D11 ⨄ D12) DisposP DestOnlyPuD1) in *.
-      
+
       assert ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)] : T) as Tyt1.
         { term_Val_no_dispose ((¹↑ ᴳ· D11 ⨄ D13) ᴳ[hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)]). apply TyR_v_hdn_shift; trivial. apply DestOnlyHdnShiftEquiv; apply DestOnlyUnionEquiv; split; try apply DestOnlyStimesEquiv. crush. crush. }
           assert (ctx_Disjoint (¹↑ ᴳ· (D2 ⨄ D11)) (D13 ᴳ[ hnamesᴳ( ᴳ- D13) ⩲ (ʰmax(hnames©(C)) + 1)])).
@@ -2173,11 +2155,11 @@ Proof.
           { rewrite <- MinusHdnShiftEq. rewrite hnamesFullShiftEq. apply hdns_max_hdns_Disjoint with (h' := ʰmax(hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
     - (* Sem-eterm-AOpenUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, TyRv into TyRv1. clear H2.
-      inversion TyCc; subst. rename H7 into hdnsDisjoint, D0 into D.
+      inversion TyCc; subst. rename H6 into hdnsDisjoint, D0 into D.
       rewrite <- (SimplifyDisposableInTyC P D DisposP DestOnlyD) in TyRv1.
       assert (¹↑ ᴳ· D1 ⨄ D3 = P ⨄ D) as eqD1uD3PuD.
-        { unfold ctx_union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. assumption. }
-      rewrite <- eqD1uD3PuD in *. clear H0. clear H2. clear eqD1uD3PuD. clear D.
+        { unfold ctx_union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. }
+      rewrite <- eqD1uD3PuD in *. clear H0. clear eqD1uD3PuD. clear D.
       assert (D1 ⨄ D2 ⊢ ᵥ₎ hnamesᴳ( ᴳ- D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
         { term_Val_no_dispose (D1 ⨄ D2). apply Ty_ectxs_hnames_Disjoint with (D := D1 ⨄ D2) (D' := ᴳ- D3) (C := C) (T := U ⧔ T) (U0 := U0) in hdnsDisjoint. apply TyR_val_A. all: trivial. crush. crush.
          }
@@ -2259,7 +2241,12 @@ Proof.
       inversion Tytp; subst.
       inversion TyRv; subst. rename DestOnlyD2 into DestOnlyPuD1uD2, DestOnlyD0 into DestOnlyD2.
       rewrite (SimplifyDisposableInTyC P (D1 ⨄ D2) DisposP DestOnlyPuD1uD2) in *.
-      inversion TyRv1. apply eq_sym in H3. apply (app_eq_nil (support D1) (support D3)) in H3. destruct H3. apply empty_support_Empty in H, H3. subst. rewrite StimesEmptyEq in *. rewrite <- UnionIdentityLeft in *. rewrite MinusEmptyEq in *. rewrite <- UnionIdentityRight in *.
+      inversion TyRv1.
+      assert (¹↑ ᴳ· D1 ⨄ D3 = ᴳ{}) as empty.
+      { apply ext_eq'. symmetry. exact H0. }
+      apply empty_union in empty. destruct empty as [empty_D1 empty_D3].
+      apply empty_stimes in empty_D1.
+      rewrite empty_D3, MinusEmptyEq, <- UnionIdentityRight in TyRv2.
       assert (D2 ⊢ ᵥ₎ v2 : U).
         { term_Val_no_dispose D2. }
       constructor 1 with (D := D2) (T := U) (t := ᵥ₎ v2). all: crush.
@@ -2393,7 +2380,10 @@ Proof.
   - rename Tyt into TyToA, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply TyR_val_DestOnlyValHole with (D := ᴳ{- h : T ⧔ ① ‗ ¹ν}) (h := h) (T := T ⧔ ①); tauto. }
       inversion TyRv1; subst. { assert (ctx_DestOnly (¹↑ ᴳ· D1 ⨄ D3)). { crush. } exfalso. apply TyR_val_DestOnlyValHole with (D := (¹↑ ᴳ· D1 ⨄ D3)) (h := h) (T := ①). all:tauto. }
-      assert (D3 = ᴳ{}) as EmptyD3. { apply eq_sym in H2. apply (app_eq_nil (support D1) (support D3)) in H2. destruct H2. apply empty_support_Empty in H, H2. tauto. } subst. rewrite hnamesMinusEq, hnamesEmpty.
+      assert (¹↑ ᴳ· D1 ⨄ D3 = ᴳ{}) as Empty.
+      { apply ext_eq'. symmetry. apply H0. }
+      apply empty_union in Empty. destruct Empty as [_ EmptyD3].
+      subst. rewrite hnamesMinusEq, hnamesEmpty.
       exists C, (ᵥ₎ v2). constructor.
     * exists (C ∘ from⧔⬜), t. constructor; tauto.
   - rename Tyt into TyFillU, Tyt0 into Tyt, t0 into t. destruct (term_NotVal_dec t).
