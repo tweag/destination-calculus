@@ -113,6 +113,7 @@
   easy to fix in proofs.
 \item Axioms that we use and why (in particular setoid equality not
   very natural with ott-generated typing rules).
+\item Talk about the use and benefits of Copilot.
 \end{itemize}
 
 \end{document}
