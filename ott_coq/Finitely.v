@@ -985,6 +985,14 @@ Proof.
   sfirstorder use: Fun.merge_with_commutative.
 Qed.
 
+Lemma merge_with_commutative : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
+    (forall x y1 y2, m x y1 y2 = m x y2 y1) -> merge_with m f g = merge_with m g f.
+Proof.
+  intros * h.
+  apply ext_eq.
+  sfirstorder use: merge_with_commutative'.
+Qed.
+
 Lemma merge_with_associative' : forall {A B} (m : forall x:A, B x -> B x -> B x) (f g h: T A B) x,
     (forall y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge_with m f (merge_with m g h) x = merge_with m (merge_with m f g) h x.
 Proof.
