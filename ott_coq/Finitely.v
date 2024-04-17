@@ -138,7 +138,7 @@ Proof.
   hauto q: on.
 Qed.
 
-Lemma singleton_MapsKeyTo : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Lemma singleton_MapsTo_at_elt : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
   intros *. unfold singleton.
   hauto dep: on.
@@ -660,10 +660,10 @@ Proof.
   - intros y. rewrite dom_spec, In_singleton_iff. congruence.
 Qed.
 
-Lemma singleton_MapsKeyTo : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Lemma singleton_MapsTo_at_elt : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
   intros *. rewrite singleton_spec.
- apply Fun.singleton_MapsKeyTo.
+ apply Fun.singleton_MapsTo_at_elt.
 Qed.
 
 Lemma singleton_nMapsTo_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) y, singleton x discr v y = None <-> x <> y.

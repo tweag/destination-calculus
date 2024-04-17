@@ -175,7 +175,7 @@ P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
 defn
 D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by
 
-% Idea : remove MultCond, but have a failable multiplication through good intercalation of ctx_minus and mult. This would work without fancy things with having dual modes for holes I think. Because ctx_minus will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
+% Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus and mult. This would work without fancy things with having dual modes for holes I think. Because hminus will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
 % If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??
 
 -------------------- :: Id
@@ -322,7 +322,7 @@ D1 ⊢ v : ⌊U⌋n [[:Tyt]]
 ----------------------------- :: FillCFoc2
 D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 
-% TODO: check that ctx_minus enforces linearity+now
+% TODO: check that hminus enforces linearity+now
 
 {{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
 {{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]

@@ -19,8 +19,8 @@ Module Nat' <: OrderedTypeWithLeibniz.
   Proof. trivial.
   Qed.
 End Nat'.
-Module NatSet := MSetList.MakeWithLeibniz(Nat').
-Module NatSetFacts := MSetFacts.Facts(NatSet).
+Module HVars := MSetList.MakeWithLeibniz(Nat').
+Module HVarsFacts := MSetFacts.Facts(HVars).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -57,13 +57,13 @@ hvar, h :: 'hvar_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq 
   | 1 :: S :: O {{ coq 1 }} {{ tex \ottshvar{1} }}
   | 2 :: S :: T {{ coq 2 }} {{ tex \ottshvar{2} }}
   | h + h' :: M :: A {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
-  | h [ H ⩲ h' ] :: M :: S {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_shift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
-  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hvars_max [[H]]) }} {{ tex \ottshvar{max(}[[H]]\ottshvar{)} }}
+  | h [ H ⩲ h' ] :: M :: S {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{max(}[[H]]\ottshvar{)} }}
   | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshvar{(}[[h]]\ottshvar{)} }}
 
-hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq NatSet.t }} {{ tex \ottshvar{[[hvars]]} }}
+hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \ottshvar{[[hvars]]} }}
   | { h1 , .. , hk } :: :: L {{ coq (hvars_ [[h1..hk]]) }}
-  | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (NatSet.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
+  | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HVars.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
   | H ⩲ h' :: M :: S {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hvars_shift [[H]] [[h']]) }}
   | 'hvars(' G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshvar{hvars(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
   | 'hvars(' C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshvar{hvars(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
@@ -109,7 +109,7 @@ val, v :: 'val_' ::= {{ com Term value }}
   | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | H ⟨ v2 ❟ v1 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
-  | v [ H ⩲ h' ] :: M :: S {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_hvar_shift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | v [ H ⩲ h' ] :: M :: S {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -222,11 +222,11 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ co
   | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex \{[[x]]:\,\!_{[[m]]}[[T]]\} }}
   | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \{\ottshvar{+}[[h]]:\,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]}\} }}
   | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \{\ottshvar{-}[[h]]:[[T]]^{[[n]]}\} }}
-  | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (ctx_stimes [[m]] [[G]]) }}
-  | G1 + G2 :: M :: U {{ coq (ctx_union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
-  | - G :: M :: M {{ coq (ctx_minus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
-  | -⁻¹ G :: M :: iM {{ coq (ctx_invminus [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex -^{-1}[[G]] }}
-  | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_hvar_shift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
+  | G1 + G2 :: M :: U {{ coq (union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
+  | - G :: M :: M {{ coq (hminus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
+  | -⁻¹ G :: M :: iM {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex -^{-1}[[G]] }}
+  | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 embed
@@ -240,46 +240,50 @@ Definition shift_one (h' : hvar) (h'' : hvar) : Permutation.Transposition.T :=
 .
 
 Definition shift_perm (H : hvars) (h' : hvar) : Permutation.T :=
-  List.map (shift_one h') (NatSet.elements H)
+  List.map (shift_one h') (HVars.elements H)
 .
 
-Definition hvar_shift (h : hvar) (H : NatSet.t) (h' : hvar) : hvar :=
+Definition hvar_cshift (h : hvar) (H : HVars.t) (h' : hvar) : hvar :=
   Permutation.sem (shift_perm H h') h
 .
 
-Fixpoint hvars_ (l : list nat) : NatSet.t :=
+Fixpoint hvars_ (l : list nat) : HVars.t :=
   match l with
-  | nil => NatSet.empty
-  | h :: t => NatSet.add h (hvars_ t)
+  | nil => HVars.empty
+  | h :: t => HVars.add h (hvars_ t)
   end.
 
-Definition hvars_max (H : NatSet.t) : nat := match NatSet.max_elt H with
+Definition hvar_max (H : HVars.t) : nat := match HVars.max_elt H with
   | Some h => h
   | None => 0
   end.
 
-Definition hvars_shift (H : NatSet.t) (h' : nat) : NatSet.t :=
-  NatSet.fold (fun h acc => NatSet.add (h + h') acc) H NatSet.empty.
+Definition hvars_shift (H : HVars.t) (h' : nat) : HVars.t :=
+  HVars.fold (fun h acc => HVars.add (h + h') acc) H HVars.empty.
 
-Fixpoint hvars_dom (dom: list name) : NatSet.t :=
+Fixpoint hvars_dom (dom: list name) : HVars.t :=
   match dom with
-  | nil => NatSet.empty
+  | nil => HVars.empty
   | name_Var _ :: xs => hvars_dom xs
-  | name_DH h :: xs => NatSet.add h (hvars_dom xs)
+  | name_DH h :: xs => HVars.add h (hvars_dom xs)
   end.
-Definition hvars_ctx (G : ctx) : NatSet.t :=
+Definition hvars_ctx (G : ctx) : HVars.t :=
   hvars_dom (dom G).
 
-Fixpoint hvars_ectxs (C : ectxs) : NatSet.t := match C with
-  | nil => NatSet.empty
+Fixpoint hvars_ectxs (C : ectxs) : HVars.t := match C with
+  | nil => HVars.empty
   | cons c xs => let H := match c with
     | ectx_AOpenFoc H' v => H'
-    | _ => NatSet.empty
-  end in (NatSet.union H (hvars_ectxs xs))
+    | _ => HVars.empty
+  end in (HVars.union H (hvars_ectxs xs))
 end.
 
-Definition HDisjoint (H1 H2 : NatSet.t) : Prop :=
-  NatSet.Empty (NatSet.inter H1 H2).
+Definition HDisjoint (H1 H2 : HVars.t) : Prop :=
+  HVars.Empty (HVars.inter H1 H2).
+
+(******************************************************************************
+ * TERMS
+ *****************************************************************************)
 
 Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
@@ -343,37 +347,37 @@ Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
   | val_A H v2 v1 => val_A H v2 v1 (* No foreign hole allowed in ampar *)
 end.
 
-Fixpoint val_hvar_shift (va : val) (H : hvars) (h' : hvar) : val :=
+Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
   match va with
-  | val_H h => val_H (hvar_shift h H h')
-  | val_D h => val_D (hvar_shift h H h')
+  | val_H h => val_H (hvar_cshift h H h')
+  | val_D h => val_D (hvar_cshift h H h')
   | val_U => val_U
-  | val_F x m u => val_F x m (term_hvar_shift u H h') (* We can have dests captured in a function *)
-  | val_L v => val_L (val_hvar_shift v H h')
-  | val_R v => val_R (val_hvar_shift v H h')
-  | val_E m v => val_E m (val_hvar_shift v H h')
-  | val_P v1 v2 => val_P (val_hvar_shift v1 H h') (val_hvar_shift v2 H h')
-  | val_A H' v2 v1 => val_A H' (val_hvar_shift v2 H h') (val_hvar_shift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_F x m u => val_F x m (term_cshift u H h') (* We can have dests captured in a function *)
+  | val_L v => val_L (val_cshift v H h')
+  | val_R v => val_R (val_cshift v H h')
+  | val_E m v => val_E m (val_cshift v H h')
+  | val_P v1 v2 => val_P (val_cshift v1 H h') (val_cshift v2 H h')
+  | val_A H' v2 v1 => val_A H' (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
-with term_hvar_shift (te : term) (H : hvars) (h' : hvar) : term :=
+with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
   match te with
-  | term_Val v => term_Val (val_hvar_shift v H h')
+  | term_Val v => term_Val (val_cshift v H h')
   | term_Var x => term_Var x
-  | term_App t t' => term_App (term_hvar_shift t H h') (term_hvar_shift t' H h')
-  | term_PatU t u => term_PatU (term_hvar_shift t H h') (term_hvar_shift u H h')
-  | term_PatS t m x1 u1 x2 u2 => term_PatS (term_hvar_shift t H h') m x1 (term_hvar_shift u1 H h') x2 (term_hvar_shift u2 H h')
-  | term_PatP t m x1 x2 u => term_PatP (term_hvar_shift t H h') m x1 x2 (term_hvar_shift u H h')
-  | term_PatE t m n x u => term_PatE (term_hvar_shift t H h') m n x (term_hvar_shift u H h')
-  | term_Map t x t' => term_Map (term_hvar_shift t H h') x (term_hvar_shift t' H h')
-  | term_ToA u => term_ToA (term_hvar_shift u H h')
-  | term_FromA t => term_FromA (term_hvar_shift t H h')
-  | term_FillU t => term_FillU (term_hvar_shift t H h')
-  | term_FillL t => term_FillL (term_hvar_shift t H h')
-  | term_FillR t => term_FillR (term_hvar_shift t H h')
-  | term_FillE t m => term_FillE (term_hvar_shift t H h') m
-  | term_FillP t => term_FillP (term_hvar_shift t H h')
-  | term_FillF t x m u => term_FillF (term_hvar_shift t H h') x m (term_hvar_shift u H h')
-  | term_FillC t t' => term_FillC (term_hvar_shift t H h') (term_hvar_shift t' H h')
+  | term_App t t' => term_App (term_cshift t H h') (term_cshift t' H h')
+  | term_PatU t u => term_PatU (term_cshift t H h') (term_cshift u H h')
+  | term_PatS t m x1 u1 x2 u2 => term_PatS (term_cshift t H h') m x1 (term_cshift u1 H h') x2 (term_cshift u2 H h')
+  | term_PatP t m x1 x2 u => term_PatP (term_cshift t H h') m x1 x2 (term_cshift u H h')
+  | term_PatE t m n x u => term_PatE (term_cshift t H h') m n x (term_cshift u H h')
+  | term_Map t x t' => term_Map (term_cshift t H h') x (term_cshift t' H h')
+  | term_ToA u => term_ToA (term_cshift u H h')
+  | term_FromA t => term_FromA (term_cshift t H h')
+  | term_FillU t => term_FillU (term_cshift t H h')
+  | term_FillL t => term_FillL (term_cshift t H h')
+  | term_FillR t => term_FillR (term_cshift t H h')
+  | term_FillE t m => term_FillE (term_cshift t H h') m
+  | term_FillP t => term_FillP (term_cshift t H h')
+  | term_FillF t x m u => term_FillF (term_cshift t H h') x m (term_cshift u H h')
+  | term_FillC t t' => term_FillC (term_cshift t H h') (term_cshift t' H h')
 end.
 
 (******************************************************************************
@@ -512,7 +516,7 @@ Qed.
  * BINDERS
  *****************************************************************************)
 
-Definition binding_mode {n : name} (binding: binding_type_of n): mode :=
+Definition mode_of {n : name} (binding: binding_type_of n): mode :=
   match n return (binding_type_of n) -> mode with
   | name_Var _ => fun binding => match binding with
     | binding_Var m _ => m
@@ -523,14 +527,14 @@ Definition binding_mode {n : name} (binding: binding_type_of n): mode :=
     end
   end binding.
 
-Definition binding_union_var (b1 b2 : binding_var) : binding_var := match b1, b2 with
+Definition union_var (b1 b2 : binding_var) : binding_var := match b1, b2 with
   | binding_Var m1 T1, binding_Var m2 T2 => match type_eq_dec T1 T2 with
     | left _ => binding_Var (mode_plus m1 m2) T1
     | right _ => binding_Var None type_U
     end
   end.
 
-Definition binding_union_dh (b1 b2 : binding_dh) : binding_dh := match b1, b2 with
+Definition union_dh (b1 b2 : binding_dh) : binding_dh := match b1, b2 with
   | binding_Dest m11 T1 m12, binding_Dest m21 T2 m22 => match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
     | left _, left _ => binding_Dest (mode_plus m11 m21) T1 m12
     | _, _ => binding_Dest None type_U None
@@ -542,17 +546,17 @@ Definition binding_union_dh (b1 b2 : binding_dh) : binding_dh := match b1, b2 wi
   | _, _ => binding_Hole type_U None
   end.
 
-Definition binding_stimes_var (m' : mode) (b : binding_var) : binding_var := match b with
+Definition stimes_var (m' : mode) (b : binding_var) : binding_var := match b with
   | binding_Var m T => binding_Var (mode_times m' m) T
 end.
-Definition binding_stimes_dh (m' : mode) (b : binding_dh) : binding_dh := match b with
+Definition stimes_dh (m' : mode) (b : binding_dh) : binding_dh := match b with
   | binding_Dest m T n => binding_Dest (mode_times m' m) T n
   | binding_Hole T n => binding_Hole T (mode_times m' n)
 end.
 
 Definition IsDisposable x : binding_type_of x -> Prop :=
   match x with
-  | name_Var _ => fun binding => IsUr (binding_mode binding)
+  | name_Var _ => fun binding => IsUr (mode_of binding)
   | name_DH _ => fun _ => False
   end.
 
@@ -577,23 +581,23 @@ Definition ctx_singleton (v : name) (binding: binding_type_of v): ctx :=
 
 Definition ctx_empty : ctx := Finitely.empty.
 
-Definition ctx_union (G1 G2 : ctx) : ctx :=
+Definition union (G1 G2 : ctx) : ctx :=
   Finitely.merge_with (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => binding_union_var
-    | name_DH _ => binding_union_dh
+    | name_Var _ => union_var
+    | name_DH _ => union_dh
     end
   ) G1 G2.
 
-Definition ctx_stimes (m' : mode) (G : ctx) : ctx :=
+Definition stimes (m' : mode) (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => binding_stimes_var m'
-    | name_DH _ => binding_stimes_dh m'
+    | name_Var _ => stimes_var m'
+    | name_DH _ => stimes_dh m'
     end
   ) G.
 
-Definition ctx_minus (G : ctx) : ctx :=
+Definition hminus (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_U
@@ -605,7 +609,7 @@ Definition ctx_minus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition ctx_invminus (G : ctx) : ctx :=
+Definition hminus_inv (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_U
@@ -617,22 +621,22 @@ Definition ctx_invminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition preshift (H : hvars) (h' : hvar) (n : name) : name :=
+Definition pre_cshift (H : hvars) (h' : hvar) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
   | name_DH h => name_DH (Permutation.sem (List.rev (shift_perm H h')) h)
   end.
 
-Definition post_process H h' n : binding_type_of (preshift H h' n) -> binding_type_of n :=
+Definition post_process H h' n : binding_type_of (pre_cshift H h' n) -> binding_type_of n :=
   match n with
   | name_Var _ => fun b => b
   | name_DH _ => fun b => b
   end.
 
 #[program]
-Definition ctx_hvar_shift (G : ctx) (H : hvars) (h' : hvar) : ctx :=
+Definition ctx_cshift (G : ctx) (H : hvars) (h' : hvar) : ctx :=
   map (post_process H h') (
-  precomp (preshift H h')
+  precomp (pre_cshift H h')
     (
       fun n => match n with
       | name_Var x => name_Var x :: nil
@@ -640,7 +644,7 @@ Definition ctx_hvar_shift (G : ctx) (H : hvars) (h' : hvar) : ctx :=
       end
     ) G).
 Next Obligation.
-  unfold List.In, preshift.
+  unfold List.In, pre_cshift.
   destruct w as [xx|xh].
   { tauto. }
   rewrite Permutation.pre_inverse.
@@ -653,10 +657,10 @@ Definition VarOnly G : Prop := forall x b, G x = Some b -> IsVar x b.
 
 Definition NoVar G : Prop := forall x b, G x = Some b -> ~IsVar x b.
 
-Definition LinNuOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLinNu (binding_mode binding).
-Definition LinOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLin (binding_mode binding).
-Definition FinAgeOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsFinAge (binding_mode binding).
-Definition ValidOnly (G: ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsValid (binding_mode binding).
+Definition LinNuOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLinNu (mode_of binding).
+Definition LinOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLin (mode_of binding).
+Definition FinAgeOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsFinAge (mode_of binding).
+Definition ValidOnly (G: ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsValid (mode_of binding).
 Definition Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
 
@@ -668,7 +672,7 @@ Definition DisposableOnly (G: ctx) : Prop :=
 (*
 Inductive CompatibleVar : ctx -> var -> mode -> type -> Prop :=
   | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
-    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (ctx_union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
+    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
 
 (* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
 Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
@@ -682,7 +686,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  *****************************************************************************)
 
 Definition ectxs_fill (C: ectxs) (h':hvar) (H' : hvars) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_AOpenFoc H v => ectx_AOpenFoc (NatSet.union (NatSet.remove h' H) H') (val_fill v h' H' v')
+  | ectx_AOpenFoc H v => ectx_AOpenFoc (HVars.union (HVars.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
