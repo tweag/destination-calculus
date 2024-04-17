@@ -20,4 +20,4 @@ A parler à Paris le 18:
 ctx_ValidOnly (*)
 ctx_DestOnly (D*)
 mode_IsValid (*)
-ctx_Disjoint A B -> éliminer et remplacer A ⨄ B par A,B
+A # B -> éliminer et remplacer A ᴳ+ B par A,B

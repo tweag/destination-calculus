@@ -21,7 +21,7 @@
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
 \definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
 \definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
-\definecolor{hdncolor}{HTML}{F14B2D} % red, itshape
+\definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
 
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1} } }
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathsf{#1} } }
@@ -32,7 +32,7 @@
 \newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1} } }
 \newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
-\newcommand{\ottshdn}[1]{\textcolor{hdncolor}{\mathtt{#1} } }
+\newcommand{\ottshvar}[1]{\textcolor{hvarcolor}{\mathtt{#1} } }
 \newcommand{\ottsmode}[1]{\textcolor{modecolor}{\mathit{#1} } }
 
 % Replace normal l with fancy round l in label names
@@ -144,5 +144,5 @@
 \newcommand{\cupdouble}{\,\text{\makebox[0pt][l]{$\cup$}\raisebox{.40ex}{\hspace{.15ex}$\scriptscriptstyle\cup$}}~}
 
 \newcommand{\pluseq}{
-  \raisebox{-0.135ex}{\scalebox{0.5}{$\ottshdn{\stackrel{+}{=}}$}}
+  \raisebox{-0.135ex}{\scalebox{0.5}{$\ottshvar{\stackrel{+}{=}}$}}
 }

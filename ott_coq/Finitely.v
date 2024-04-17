@@ -30,7 +30,7 @@ Module Fun.
 
 Definition In {A B} (x:A) (f:forall x:A, option (B x)) : Prop := exists y, f x = Some y.
 
-Lemma In_None1 : forall {A B} (x:A) (f:forall x:A, option (B x)), In x f <-> f x <> None.
+Lemma In_iff_neq_None : forall {A B} (x:A) (f:forall x:A, option (B x)), In x f <-> f x <> None.
 Proof.
   unfold In.
   intros *. split.
@@ -44,10 +44,10 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma In_None2 : forall {A B} (x:A) (f:forall x:A, option (B x)), ~(In x f) <-> f x = None.
+Lemma nIn_iff_nMapsTo : forall {A B} (x:A) (f:forall x:A, option (B x)), ~(In x f) <-> f x = None.
 Proof.
   intros *.
-  rewrite In_None1.
+  rewrite In_iff_neq_None.
   destruct (f x).
   - sfirstorder.
   - sfirstorder.
@@ -76,7 +76,7 @@ Qed.
 Lemma out_of_support_is_None : forall {A B} (f:forall x:A, option (B x)) l, Support l f -> forall x, ~List.In x l -> f x = None.
 Proof.
   intros * h x hnin.
-  apply In_None2.
+  apply nIn_iff_nMapsTo.
   hauto lq: on use: In_supported.
 Qed.
 
@@ -126,31 +126,31 @@ Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B
   | right _ => None
   end.
 
-Lemma singleton_support : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), Support (x :: nil) (singleton x discr v).
+Lemma Support_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), Support (x :: nil) (singleton x discr v).
 Proof.
   intros *. unfold Support, singleton. intros y w.
   hauto lq: on.
 Qed.
 
-Lemma in_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Lemma In_singleton_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
 Proof.
   intros *. unfold In, singleton.
   hauto q: on.
 Qed.
 
-Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Lemma singleton_MapsKeyTo : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
   intros *. unfold singleton.
   hauto dep: on.
 Qed.
 
-Lemma singleton_spec_2 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) y, x <> y <-> singleton x discr v y = None.
+Lemma singleton_nMapsTo_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) y, singleton x discr v y = None <-> x <> y.
 Proof.
   intros *. unfold singleton.
   hauto dep: on.
 Qed.
 
-Lemma singleton_mapsto : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Lemma singleton_MapsTo_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
   intros *. unfold singleton.
   destruct (discr x y) as [e|c].
@@ -168,7 +168,7 @@ Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B
   | None => None
   end.
 
-Lemma map_In : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) x, In x f <-> In x (map m f).
+Lemma In_map_iff : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : forall x:A, option (B1 x)) x, In x (map m f) <-> In x f.
 Proof.
   intros *. unfold In, map.
   destruct (f x).
@@ -252,14 +252,14 @@ Definition merge {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) ->
   | fx, gx => m x fx gx
   end.
 
-Lemma merge_spec1 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
+Lemma In_merge_forward : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
     In x f \/ In x g -> merge m f g x = m x (f x) (g x).
 Proof.
   unfold merge.
   hauto lq: on.
 Qed.
 
-Lemma merge_spec2 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
+Lemma In_merge_backward : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) (x:A),
     In x (merge m f g) -> In x f \/ In x g.
 Proof.
   unfold merge.
@@ -286,15 +286,15 @@ Proof.
   all: hauto l: on.
 Qed.
 
-Lemma merge_support : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) lf lg, Support lf f -> Support lg g -> Support (lf ++ lg) (merge m f g).
+Lemma Support_merge : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : forall x:A, option (B1 x)) (g : forall x:A, option (B2 x)) lf lg, Support lf f -> Support lg g -> Support (lf ++ lg) (merge m f g).
 Proof.
   intros * h_suppf h_suppg.
   apply In_supported. intros x h_in.
-  qauto l: on use: In_supported, in_or_app, merge_spec2.
+  qauto l: on use: In_supported, in_or_app, In_merge_backward.
 Qed.
 
 
-Definition merge_fun_of_with {A B} (m : forall x:A, B x -> B x -> B x) (x:A) (y1 : option (B x)) (y2 : option (B x)) : option (B x) :=
+Definition on_conflict_do {A B} (m : forall x:A, B x -> B x -> B x) (x:A) (y1 : option (B x)) (y2 : option (B x)) : option (B x) :=
   match y1, y2 with
   | Some y1', Some y2' => Some (m x y1' y2')
   | Some y, None | None, Some y => Some y
@@ -303,41 +303,41 @@ Definition merge_fun_of_with {A B} (m : forall x:A, B x -> B x -> B x) (x:A) (y1
 
 (* A most common instance of merge. *)
 Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) : forall (x:A), option (B x) :=
-  merge (merge_fun_of_with m) f g.
+  merge (on_conflict_do m) f g.
 
-Lemma merge_with_spec_1 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1 y2:B x),
+Lemma merge_with_Some_Some_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1 y2:B x),
     f x = Some y1 /\ g x = Some y2 -> merge_with m f g x = Some (m x y1 y2).
 Proof.
   unfold merge_with.
-  hauto lq: on use: @merge_spec1.
+  hauto lq: on use: @In_merge_forward.
 Qed.
 
-Lemma merge_with_spec_2 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1:B x),
+Lemma merge_with_Some_None_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y1:B x),
     f x = Some y1 /\ g x = None -> merge_with m f g x = Some y1.
 Proof.
   unfold merge_with.
-  hauto lq: on use: @merge_spec1.
+  hauto lq: on use: @In_merge_forward.
 Qed.
 
-Lemma merge_with_spec_3 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y2:B x),
+Lemma merge_with_None_Some_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A) (y2:B x),
     f x = None /\ g x = Some y2 -> merge_with m f g x = Some y2.
 Proof.
   unfold merge_with.
-  hauto lq: on use: @merge_spec1.
+  hauto lq: on use: @In_merge_forward.
 Qed.
 
-Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
+Lemma merge_with_None_None_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
     f x = None /\ g x = None -> merge_with m f g x = None.
 Proof.
   unfold merge_with, merge.
   hauto lq: on.
 Qed.
 
-Lemma merge_with_spec_5 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
+Lemma In_merge_iff : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)) (x:A),
     In x (merge_with m f g) <-> In x f \/ In x g.
 Proof.
   split.
-  - hauto lq: on use :@merge_spec2.
+  - hauto lq: on use :@In_merge_backward.
   - unfold merge_with, merge, In.
     hauto.
 Qed.
@@ -350,17 +350,17 @@ Proof.
   assert (forall x, (forall (b : B x), f x = Some b -> P x b) /\ (forall (b : B x), g x = Some b -> P x b)).
   2:{ sfirstorder. }
   intros x. specialize (h0 x).
-  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
-  - erewrite merge_with_spec_1 in h0.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?nIn_iff_nMapsTo in *.
+  - erewrite merge_with_Some_Some_eq in h0.
     2:{ eauto. }
     hecrush.
-  - erewrite merge_with_spec_2 in h0.
+  - erewrite merge_with_Some_None_eq in h0.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_3 in h0.
+  - erewrite merge_with_None_Some_eq in h0.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_4 in h0.
+  - erewrite merge_with_None_None_eq in h0.
     all: hfcrush.
 Qed.
 
@@ -372,17 +372,17 @@ Proof.
   assert (forall x, (forall (b : B x), f x = Some b -> P x b) /\ (forall (b : B x), g x = Some b -> P x b) /\ (In x f -> In x g -> False)).
   2:{ sfirstorder. }
   intros x. specialize (h0 x).
-  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
-  - erewrite merge_with_spec_1 in h0.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?nIn_iff_nMapsTo in *.
+  - erewrite merge_with_Some_Some_eq in h0.
     2:{ eauto. }
     hecrush.
-  - erewrite merge_with_spec_2 in h0.
+  - erewrite merge_with_Some_None_eq in h0.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_3 in h0.
+  - erewrite merge_with_None_Some_eq in h0.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_4 in h0.
+  - erewrite merge_with_None_None_eq in h0.
     all: hfcrush.
 Qed.
 
@@ -394,15 +394,15 @@ Proof.
   assert (forall x, (forall (b : B x), f x = Some b -> P x b) /\ (forall (b : B x), g x = Some b -> P x b)).
   2:{ sfirstorder. }
   intros x. specialize (h x).
-  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?nIn_iff_nMapsTo in *.
   - sfirstorder.
-  - erewrite merge_with_spec_2 in h.
+  - erewrite merge_with_Some_None_eq in h.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_3 in h.
+  - erewrite merge_with_None_Some_eq in h.
     2: { eauto. }
     hecrush.
-  - erewrite merge_with_spec_4 in h.
+  - erewrite merge_with_None_None_eq in h.
     all: hfcrush.
 Qed.
 
@@ -410,32 +410,32 @@ Lemma merge_with_propagate_forward : forall {A B} (P : forall x, B x -> Prop) (m
      (forall x b1 b2, P x b1 /\ P x b2 -> P x (m x b1 b2)) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
 Proof.
   intros * h h1 h2 x b h_merge.
-  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
-  - erewrite merge_with_spec_1 in h_merge.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?nIn_iff_nMapsTo in *.
+  - erewrite merge_with_Some_Some_eq in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - erewrite merge_with_spec_2 in h_merge.
+  - erewrite merge_with_Some_None_eq in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - erewrite merge_with_spec_3 in h_merge.
+  - erewrite merge_with_None_Some_eq in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - sblast use: merge_with_spec_4.
+  - sblast use: merge_with_None_None_eq.
 Qed.
 
 Lemma merge_with_propagate_forward_disjoint : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
     (forall x, In x f -> In x g -> False) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
 Proof.
   intros * h h1 h2 x b h_merge.
-  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?In_None2 in *.
+  destruct (In_dec x f) as [[bf h_inf]|h_ninf]; destruct (In_dec x g) as [[bg h_ing]|h_ning]. all: rewrite ?nIn_iff_nMapsTo in *.
   - hauto l: on.
-  - erewrite merge_with_spec_2 in h_merge.
+  - erewrite merge_with_Some_None_eq in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - erewrite merge_with_spec_3 in h_merge.
+  - erewrite merge_with_None_Some_eq in h_merge.
     2:{ eauto. }
     hauto l: on.
-  - hauto lq: on use: merge_with_spec_4.
+  - hauto lq: on use: merge_with_None_None_eq.
 Qed.
 
 Lemma merge_with_propagate_both : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : forall x:A, option (B x)) (g : forall x:A, option (B x)),
@@ -463,7 +463,7 @@ Lemma merge_with_commutative : forall {A B} (m : forall x:A, B x -> B x -> B x) 
     (forall y1 y2, m x y1 y2 = m x y2 y1) -> merge_with m f g x = merge_with m g f x.
 Proof.
   intros * h. unfold merge_with.
-  apply merge_commutative. unfold merge_fun_of_with.
+  apply merge_commutative. unfold on_conflict_do.
   intros [] [].
   all: sfirstorder.
 Qed.
@@ -505,26 +505,26 @@ Qed.
 
 Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
 
-Lemma In_spec : forall {A B} (x : A) (f : T A B), In x f <-> exists y, f x = Some y.
+Lemma In_iff_exists_Some : forall {A B} (x : A) (f : T A B), In x f <-> exists y, f x = Some y.
 Proof.
   sfirstorder.
 Qed.
 
-Lemma In_None1 : forall {A B} (x:A) (f:T A B), In x f <-> f x <> None.
+Lemma In_iff_neq_None : forall {A B} (x:A) (f:T A B), In x f <-> f x <> None.
 Proof.
   intros *.
-  hauto lq: on unfold: In use: Fun.In_None1.
+  hauto lq: on unfold: In use: Fun.In_iff_neq_None.
 Qed.
 
-Lemma In_None2 : forall {A B} (x:A) (f: T A B), ~(In x f) <-> f x = None.
+Lemma nIn_iff_nMapsTo : forall {A B} (x:A) (f: T A B), ~(In x f) <-> f x = None.
 Proof.
   intros *.
-  hauto lq: on unfold: In use: Fun.In_None2.
+  hauto lq: on unfold: In use: Fun.nIn_iff_nMapsTo.
 Qed.
 
 Lemma In_dec :  forall {A B} (x : A) (f : T A B), In x f \/ ~In x f.
 Proof.
-  intros *. rewrite !In_spec.
+  intros *. rewrite !In_iff_exists_Some.
   destruct (f x) as [y|].
   all:sfirstorder.
 Qed.
@@ -555,13 +555,13 @@ Proof.
     + apply a_support_supports.
 Qed.
 
-Lemma dom_nodup : forall {A B} (f : T A B), NoDup (dom f).
+Lemma NoDup_dom : forall {A B} (f : T A B), NoDup (dom f).
 Proof.
   intros *. unfold dom.
   apply NoDup_nodup.
 Qed.
 
-Lemma dom_Support : forall {A B} (f : T A B), Fun.Support (dom f) f.
+Lemma Support_dom : forall {A B} (f : T A B), Fun.Support (dom f) f.
 Proof.
   intros *.
   rewrite Fun.In_supported.
@@ -580,7 +580,7 @@ Qed.
 
 (* Maybe this lemma is somewhere in the standard library. I[aspiwack] couldn't find it.
    `in_nil: forall [A : Type] [a : A], ~ List.In a nil` is the converse. *)
-Lemma nil_in : forall A (l : list A), (forall x, ~List.In x l) -> l = nil.
+Lemma forall_NotIn_eq_nil : forall A (l : list A), (forall x, ~List.In x l) -> l = nil.
 Proof.
   induction l.
   - congruence.
@@ -589,15 +589,15 @@ Proof.
     apply in_eq.
 Qed.
 
-Lemma dom_empty : forall {A B}, dom (@empty A B) = nil.
+Lemma dom_empty_eq_nil : forall {A B}, dom (@empty A B) = nil.
 Proof.
   intros *. unfold empty.
-  apply nil_in. intros x.
-  rewrite dom_spec, In_spec. cbn.
+  apply forall_NotIn_eq_nil. intros x.
+  rewrite dom_spec, In_iff_exists_Some. cbn.
   sfirstorder.
 Qed.
 
-Lemma empty_support_empty : forall A B (f : T A B), Fun.Support nil f -> f = empty.
+Lemma Support_nil_is_empty : forall A B (f : T A B), Fun.Support nil f -> f = empty.
 Proof.
   intros * h. unfold Fun.Support in h.
   apply ext_eq. intros x. cbn.
@@ -608,12 +608,12 @@ Proof.
   - reflexivity.
 Qed.
 
-Corollary empty_dom_empty : forall A B (f : T A B), dom f = nil -> f = empty.
+Corollary dom_nil_is_empty : forall A B (f : T A B), dom f = nil -> f = empty.
 Proof.
   intros * h.
-  apply empty_support_empty.
+  apply Support_nil_is_empty.
   rewrite <- h.
-  apply dom_Support.
+  apply Support_dom.
 Qed.
 
 #[program]
@@ -623,28 +623,28 @@ Definition singleton {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B
   |}.
 Next Obligation.
   exists (x::nil).
-  hauto lq: on use: Fun.singleton_support.
+  hauto lq: on use: Fun.Support_singleton.
 Qed.
 
-Lemma singleton_spec0 : forall {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) (y : A),
+Lemma singleton_spec : forall {A B} (x : A) (discr : forall x y, {x = y} + {x<>y}) (v : B x) (y : A),
     singleton x discr v y = Fun.singleton x discr v y.
 Proof.
   intros *.
   sfirstorder.
 Qed.
 
-Lemma in_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
+Lemma In_singleton_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A), In y (singleton x discr v) <-> y = x.
 Proof.
   intros *.
-  hauto lq: on use: In_spec, singleton_spec0, Fun.in_singleton.
+  hauto lq: on use: In_iff_exists_Some, singleton_spec, Fun.In_singleton_iff.
 Qed.
 
-Lemma singleton_mapsto : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
+Lemma singleton_MapsTo_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) (y : A) (v': B y), (singleton x discr v) y = Some v' <-> existT B x v = existT B y v'.
 Proof.
-  intros *. rewrite singleton_spec0. apply Fun.singleton_mapsto.
+  intros *. rewrite singleton_spec. apply Fun.singleton_MapsTo_iff.
 Qed.
 
-Lemma dom_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), dom (singleton x discr v) = x::nil.
+Lemma dom_singleton_eq : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), dom (singleton x discr v) = x::nil.
 Proof.
   intros *.
   assert (forall l, NoDup l -> List.In x l -> (forall y, List.In y l -> x = y) -> l = x::nil) as in_list_singleton.
@@ -653,23 +653,23 @@ Proof.
     - intros _ h.
       (* Nice that CoqHammer solves this one because otherwise, it's a
          pretty finicky proof for no reason. *)
-      hfcrush use: nil_in. }
+      hfcrush use: forall_NotIn_eq_nil. }
   apply in_list_singleton.
-  - apply dom_nodup.
-  - apply dom_spec. rewrite in_singleton. reflexivity.
-  - intros y. rewrite dom_spec, in_singleton. congruence.
+  - apply NoDup_dom.
+  - apply dom_spec. rewrite In_singleton_iff. reflexivity.
+  - intros y. rewrite dom_spec, In_singleton_iff. congruence.
 Qed.
 
-Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
+Lemma singleton_MapsKeyTo : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
-  intros *. rewrite singleton_spec0.
- apply Fun.singleton_spec_1.
+  intros *. rewrite singleton_spec.
+ apply Fun.singleton_MapsKeyTo.
 Qed.
 
-Lemma singleton_spec_2 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) y, x <> y <-> singleton x discr v y = None.
+Lemma singleton_nMapsTo_iff : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x) y, singleton x discr v y = None <-> x <> y.
 Proof.
-  intros *. rewrite singleton_spec0.
-  apply Fun.singleton_spec_2.
+  intros *. rewrite singleton_spec.
+  apply Fun.singleton_nMapsTo_iff.
 Qed.
 
 (** Design note: precomp is defined using a subtype rather than a
@@ -690,10 +690,10 @@ Definition precomp {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | fora
   |}.
 Next Obligation.
   exists (List.flat_map preimg (dom f)).
-  sauto lq: on rew: off use: Fun.precomp_support, dom_Support.
+  sauto lq: on rew: off use: Fun.precomp_support, Support_dom.
 Qed.
 
-Lemma precomp_spec0 : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B),
+Lemma precomp_spec : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B),
     (precomp g preimg f).(underlying) = fun x => f (g x).
 Proof.
   intros *.
@@ -704,7 +704,7 @@ Lemma precomp_propagate_forward : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p 
     (forall x y, f x = Some y -> P x y) -> (forall x y, precomp g preimg f x = Some y -> P (g x) y).
 Proof.
   intros * h **.
-  rewrite precomp_spec0 in *.
+  rewrite precomp_spec in *.
   sfirstorder use: Fun.precomp_propagate_forward.
 Qed.
 
@@ -713,7 +713,7 @@ Lemma precomp_propagate_backward : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p
     (forall x y, precomp g preimg f x = Some y -> P (g x) y) -> (forall x y, f x = Some y -> P x y).
 Proof.
   intros *.
-  rewrite precomp_spec0 in *.
+  rewrite precomp_spec in *.
   hfcrush use: Fun.precomp_propagate_forward.
 Qed.
 
@@ -732,32 +732,32 @@ Definition map {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) : T A B2 :=
   |}.
 Next Obligation.
   exists (dom f).
-  hauto lq: on use: dom_Support, Fun.map_support.
+  hauto lq: on use: Support_dom, Fun.map_support.
 Qed.
 
-Lemma map_spec0 : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = Fun.map m f x.
+Lemma map_spec : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = Fun.map m f x.
 Proof.
   trivial.
 Qed.
 
-Lemma map_In : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) x, In x f <-> In x (map m f).
+Lemma In_map_iff : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) x, In x (map m f) <-> In x f.
 Proof.
   intros *. unfold In, Fun.In.
-  rewrite map_spec0.
-  apply Fun.map_In.
+  rewrite map_spec.
+  apply Fun.In_map_iff.
 Qed.
 
 Lemma map_ext : forall {A B1 B2} (m1 m2 : forall x, B1 x -> B2 x) (f : T A B1) x,
     (forall x, m1 x = m2 x) -> map m1 f x = map m2 f x.
 Proof.
-  intros *. rewrite map_spec0.
+  intros *. rewrite map_spec.
   apply Fun.map_ext.
 Qed.
 
-Lemma map_mapsto : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
+Lemma map_MapsTo_iff : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B2 x), map m f x = Some y <-> exists z, f x = Some z /\ y = m x z.
 Proof.
   intros *.
-  rewrite map_spec0.
+  rewrite map_spec.
   split.
 - intros issome.
   unfold Fun.map in issome. destruct (f x) eqn:emap in issome.
@@ -766,10 +766,10 @@ Proof.
 - intros [z [eq1 eq2]]. unfold Fun.map. destruct (f x) eqn:emap. assert (b = z) as e. { injection eq1; tauto. } subst. tauto. congruence.
 Qed.
 
-Lemma map_mapsto_None : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = None <-> f x = None.
+Lemma map_nMapsTo_iff : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = None <-> f x = None.
 Proof.
   intros *.
-  rewrite map_spec0.
+  rewrite map_spec.
   split.
 - intros isnone.
   unfold Fun.map in isnone. destruct (f x) eqn:emap in isnone. congruence. tauto.
@@ -778,7 +778,7 @@ Qed.
 
 Lemma map_comp : forall {A B1 B2 B3} (m1 : forall x, B1 x -> B2 x) (m2 : forall x, B2 x -> B3 x) (f : T A B1) x, map m2 (map m1 f) x = map (fun x y => m2 x (m1 x y)) f x.
 Proof.
-  intros *. rewrite !map_spec0.
+  intros *. rewrite !map_spec.
   apply Fun.map_comp.
 Qed.
 
@@ -786,7 +786,7 @@ Qed.
 Lemma map_propagate_forward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (P : forall x, B2 x -> Prop) (Q : forall x, B1 x -> Prop),
     (forall x y1, f x = Some y1 -> Q x y1) -> (forall x y1, Q x y1 -> P x (m x y1)) -> forall x y2, map m f x = Some y2 -> P x y2.
 Proof.
-  intros * hf hm x y2. rewrite map_spec0.
+  intros * hf hm x y2. rewrite map_spec.
   hfcrush use: Fun.map_propagate_forward.
 Qed.
 
@@ -802,7 +802,7 @@ Lemma map_propagate_backward : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f 
 Proof.
   intros * hmap hm x y1.
   eapply Fun.map_propagate_backward.
-  all: hauto l: on use: map_spec0, Fun.map_propagate_backward.
+  all: hauto l: on use: map_spec, Fun.map_propagate_backward.
 Qed.
 
 Lemma map_propagate_backward' : forall {A B} (m : forall x, B x -> B x) (f : T A B) (P : forall x, B x -> Prop),
@@ -819,8 +819,8 @@ Proof.
   split.
   - intros h.
     rewrite <- Fun.map_propagate_both with (m:=m) (P:=P).
-    all: hauto l: on use: map_spec0.
-  - intros h *. rewrite map_spec0.
+    all: hauto l: on use: map_spec.
+  - intros h *. rewrite map_spec.
     hfcrush use: Fun.map_propagate_both.
 Qed.
 
@@ -838,78 +838,78 @@ Definition merge {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) ->
   |}.
 Next Obligation.
   exists (dom f ++ dom g).
-  apply Fun.merge_support.
-  all: apply dom_Support.
+  apply Fun.Support_merge.
+  all: apply Support_dom.
 Qed.
 
-Lemma merge_spec0 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2),
+Lemma merge_spec : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2),
     (merge m f g).(underlying) = Fun.merge m f g.
 Proof.
   trivial.
 Qed.
 
-Lemma merge_spec1 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
+Lemma In_merge_forward : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
     In x f \/ In x g -> merge m f g x = m x (f x) (g x).
 Proof.
   intros *.
-  rewrite merge_spec0.
-  apply Fun.merge_spec1.
+  rewrite merge_spec.
+  apply Fun.In_merge_forward.
 Qed.
 
-Lemma merge_spec2 : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
+Lemma In_merge_backward : forall {A B1 B2 B3} (m : forall x:A, option (B1 x) -> option (B2 x) -> option (B3 x)) (f : T A B1) (g : T A B2) (x:A),
     In x (merge m f g) -> In x f \/ In x g.
 Proof.
   intros *.
-  rewrite In_spec, merge_spec0.
-  apply Fun.merge_spec2.
+  rewrite In_iff_exists_Some, merge_spec.
+  apply Fun.In_merge_backward.
 Qed.
 
 Definition merge_with {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) : T A B :=
-  merge (Fun.merge_fun_of_with m) f g.
+  merge (Fun.on_conflict_do m) f g.
 
-Lemma merge_with_spec0 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x : A), merge_with m f g x = Fun.merge_with m f g x.
+Lemma merge_with_spec : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x : A), merge_with m f g x = Fun.merge_with m f g x.
 Proof.
   trivial.
 Qed.
 
-Lemma merge_with_spec_1 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1 y2:B x),
+Lemma merge_with_Some_Some_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1 y2:B x),
     f x = Some y1 /\ g x = Some y2 -> merge_with m f g x = Some (m x y1 y2).
 Proof.
   intros *.
-  rewrite merge_with_spec0.
-  apply Fun.merge_with_spec_1.
+  rewrite merge_with_spec.
+  apply Fun.merge_with_Some_Some_eq.
 Qed.
 
-Lemma merge_with_spec_2 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1:B x),
+Lemma merge_with_Some_None_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y1:B x),
     f x = Some y1 /\ g x = None -> merge_with m f g x = Some y1.
 Proof.
   intros *.
-  rewrite merge_with_spec0.
-  apply Fun.merge_with_spec_2.
+  rewrite merge_with_spec.
+  apply Fun.merge_with_Some_None_eq.
 Qed.
 
-Lemma merge_with_spec_3 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y2:B x),
+Lemma merge_with_None_Some_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A) (y2:B x),
     f x = None /\ g x = Some y2 -> merge_with m f g x = Some y2.
 Proof.
   intros *.
-  rewrite merge_with_spec0.
-  apply Fun.merge_with_spec_3.
+  rewrite merge_with_spec.
+  apply Fun.merge_with_None_Some_eq.
 Qed.
 
-Lemma merge_with_spec_4 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
+Lemma merge_with_None_None_eq : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
     f x = None /\ g x = None -> merge_with m f g x = None.
 Proof.
   intros *.
-  rewrite merge_with_spec0.
-  apply Fun.merge_with_spec_4.
+  rewrite merge_with_spec.
+  apply Fun.merge_with_None_None_eq.
 Qed.
 
-Lemma merge_with_spec_5 : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
+Lemma In_merge_iff : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) (x:A),
     In x (merge_with m f g) <-> In x f \/ In x g.
 Proof.
   intros *.
-  rewrite !In_spec, merge_with_spec0.
-  hauto lq: on use: Fun.merge_with_spec_5.
+  rewrite !In_iff_exists_Some, merge_with_spec.
+  hauto lq: on use: Fun.In_merge_iff.
 Qed.
 
 Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
@@ -917,7 +917,7 @@ Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (
 Proof.
   intros * h h0.
   assert (forall (x : A) (b : B x), Fun.merge_with m f g x = Some b -> P x b) as h0'.
-  { sfirstorder use: merge_with_spec0. }
+  { sfirstorder use: merge_with_spec. }
   apply Fun.merge_with_propagate_backward with (m:=m).
   all: sfirstorder.
 Qed.
@@ -927,7 +927,7 @@ Lemma merge_with_propagate_backward_disjoint : forall {A B} (P : forall x, B x -
 Proof.
   intros * h h0.
   assert (forall (x : A) (b : B x), Fun.merge_with m f g x = Some b -> P x b) as h0'.
-  { sfirstorder use: merge_with_spec0. }
+  { sfirstorder use: merge_with_spec. }
   apply Fun.merge_with_propagate_backward_disjoint with (m:=m).
   all: sfirstorder.
 Qed.
@@ -937,7 +937,7 @@ Lemma merge_with_propagate_backward_disjoint' : forall {A B} (P : forall x, B x 
 Proof.
   intros * h h0.
   assert (forall (x : A) (b : B x), Fun.merge_with m f g x = Some b -> P x b) as h0'.
-  { sfirstorder use: merge_with_spec0. }
+  { sfirstorder use: merge_with_spec. }
   apply Fun.merge_with_propagate_backward_disjoint' with (m:=m).
   all: sfirstorder.
 Qed.
@@ -946,7 +946,7 @@ Lemma merge_with_propagate_forward : forall {A B} (P : forall x, B x -> Prop) (m
      (forall x b1 b2, P x b1 /\ P x b2 -> P x (m x b1 b2)) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
 Proof.
   intros * h h1 h2 x b.
-  erewrite merge_with_spec0.
+  erewrite merge_with_spec.
   sfirstorder use: Fun.merge_with_propagate_forward.
 Qed.
 
@@ -954,7 +954,7 @@ Lemma merge_with_propagate_forward_disjoint : forall {A B} (P : forall x, B x ->
     (forall x, In x f -> In x g -> False) -> (forall x b, f x = Some b -> P x b) -> (forall x b, g x = Some b -> P x b) -> (forall x b, merge_with m f g x = Some b -> P x b).
 Proof.
   intros * h h1 h2 x b.
-  erewrite merge_with_spec0.
+  erewrite merge_with_spec.
   sfirstorder use: Fun.merge_with_propagate_forward_disjoint.
 Qed.
 
@@ -981,7 +981,7 @@ Qed.
 Lemma merge_with_commutative' : forall {A B} (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B) x,
     (forall y1 y2, m x y1 y2 = m x y2 y1) -> merge_with m f g x = merge_with m g f x.
 Proof.
-  intros * h. rewrite merge_with_spec0.
+  intros * h. rewrite merge_with_spec.
   sfirstorder use: Fun.merge_with_commutative.
 Qed.
 
@@ -996,7 +996,7 @@ Qed.
 Lemma merge_with_associative' : forall {A B} (m : forall x:A, B x -> B x -> B x) (f g h: T A B) x,
     (forall y1 y2 y3, m x y1 (m x y2 y3) = m x (m x y1 y2) y3) -> merge_with m f (merge_with m g h) x = merge_with m (merge_with m f g) h x.
 Proof.
-  intros * h. rewrite merge_with_spec0.
+  intros * h. rewrite merge_with_spec.
   sfirstorder use: Fun.merge_with_associative.
 Qed.
 

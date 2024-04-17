@@ -45,8 +45,8 @@
 \ottmetavars
 
 \ottgrammartabular{
-\otthdn\ottinterrule
-\otthdns\ottinterrule
+\otthvar\ottinterrule
+\otthvars\ottinterrule
 \ottterm\ottinterrule
 \ottval\ottinterrule
 %\otteterm\ottafterlastrule
