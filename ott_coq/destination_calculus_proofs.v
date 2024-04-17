@@ -133,7 +133,10 @@ Proof.
     + cbn. unfold ctx_hdn_shift, hdn_shift, ctx_singleton, singleton.
       give_up . (* some extensionality required *)
     + give_up . (* I want to see a recursive case first *)
-    + give_up . (* some extensionality required *)
+    + replace (ᴳ{} ᴳ[ H ⩲ h']) with ᴳ{}.
+      2:{ apply ext_eq. cbn. congruence. }
+      cbn.
+      constructor.
     + cbn.
       constructor.
       * assumption.
