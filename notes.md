@@ -12,3 +12,12 @@
    statements, but no proof. Proofs are in Coq anyway, so… note: if we
    need manual proof in appendix, we can try using
    https://github.com/PierreSenellart/apxproof I've never used it.)
+
+A parler à Paris le 18:
+
+- Elimination du concept de Valid/Invalid dans le OTT/.tex
+
+ctx_ValidOnly (*)
+ctx_DestOnly (D*)
+mode_IsValid (*)
+ctx_Disjoint A B -> éliminer et remplacer A ⨄ B par A,B

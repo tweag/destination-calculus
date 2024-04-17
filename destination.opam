@@ -6,4 +6,5 @@ depends: [
   "coq-aac-tactics"
   "coq-smtcoq"
   "coq-mmaps"
+  "vscoq-language-server"
 ]

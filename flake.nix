@@ -1,6 +1,6 @@
 {
   inputs = {
-    opam-nix.url = "github:tweag/opam-nix";
+    opam-nix.url = "github:tweag/opam-nix?rev=e807e4ff89fa43233267db5fd2269c6ab7863989";
     opam-repository.url = "github:ocaml/opam-repository";
     opam-repository.flake = false;
     opam-coq-archive.url = "github:coq/opam-coq-archive";
@@ -44,6 +44,13 @@
             pkgs.eprover
             pkgs.cvc4
             pkgs.vampire
+            (pkgs.z3-tptp.overrideAttrs (oldAttrs : {
+                installPhase = ''
+                  mkdir -p "$out/bin"
+                  cp "z3_tptp5" "$out/bin/"
+                  ln -s "z3_tptp5" "$out/bin/z3_tptp"
+                '';
+            }))
             # dev utilities
             pkgs.entr
             # Latex stuff
