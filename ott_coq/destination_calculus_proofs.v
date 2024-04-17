@@ -168,14 +168,6 @@ Admitted.
 
 (* ========================================================================= *)
 
-(* =========================================================================
- * Not provable with the current implementation as the support is a list
- * whose order depends on the order of insertion.
- * ========================================================================= *)
-Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
-Proof. Admitted.
-(* ========================================================================= *)
-
 Lemma ValidOnlyUnionBackward : forall (G1 G2 : ctx), ctx_ValidOnly (G1 ⨄ G2) -> ctx_ValidOnly G1 /\ ctx_ValidOnly G2.
 Proof.
   assert (forall m1 m2, mode_IsValid (mode_plus m1 m2) -> mode_IsValid m1 /\ mode_IsValid m2) as h_mode_plus.
@@ -852,6 +844,12 @@ Proof.
            |  |- context [if ?x then _ else _] => destruct x
            end.
     all: sfirstorder use: mode_plus_commutative.
+Qed.
+
+Lemma UnionCommutative : forall (G1 G2 : ctx), G1 ⨄ G2 = G2 ⨄ G1.
+Proof.
+  intros *. apply ext_eq.
+  apply UnionCommutative'.
 Qed.
 
 Lemma UnionAssociative : forall (G1 G2 G3 : ctx), G1 ⨄ (G2 ⨄ G3) = (G1 ⨄ G2) ⨄ G3.
