@@ -278,10 +278,10 @@ Fixpoint hvars_ectxs (C : ectxs) : NatSet.t := match C with
   end in (NatSet.union H (hvars_ectxs xs))
 end.
 
-Definition hvars_Disjoint (H1 H2 : NatSet.t) : Prop :=
+Definition HDisjoint (H1 H2 : NatSet.t) : Prop :=
   NatSet.Empty (NatSet.inter H1 H2).
 
-Notation "H1 '##' H2" := (hvars_Disjoint H1 H2) (at level 50, no associativity).
+Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
 (******************************************************************************
  * TERMS
@@ -319,8 +319,8 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
   | term_FillC t t' => term_FillC (term_sub t x' v') (term_sub t' x' v')
 end.
 
-Definition term_NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
-Lemma term_NotVal_dec : forall (t : term), {exists v, t = term_Val v} + {term_NotVal t}.
+Definition NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
+Lemma NotVal_dec : forall (t : term), {exists v, t = term_Val v} + {NotVal t}.
 Proof.
   intros t. destruct t.
   { left. exists v; tauto. }
@@ -395,16 +395,16 @@ Definition mul_times (p1 p2: _mul) : _mul :=
   end.
 Definition mul_times' (pl: list _mul) : _mul :=
   List.fold_right mul_times Lin pl.
-Inductive mul_IsSubtype : _mul -> _mul -> Prop :=
-  | mul_IsSubtypeProofEq : forall (p : _mul), mul_IsSubtype p p
-  | mul_IsSubtypeProofUr : forall (p2 : _mul), mul_IsSubtype Ur p2.
-Theorem mul_IsSubtype_dec : forall (p1 p2: _mul), {mul_IsSubtype p1 p2} + {~mul_IsSubtype p1 p2}.
+Inductive MulSubtype : _mul -> _mul -> Prop :=
+  | MulSubtypeProofEq : forall (p : _mul), MulSubtype p p
+  | MulSubtypeProofUr : forall (p2 : _mul), MulSubtype Ur p2.
+Theorem MulSubtype_dec : forall (p1 p2: _mul), {MulSubtype p1 p2} + {~MulSubtype p1 p2}.
 Proof.
   intros p1 p2. destruct p1, p2.
-  - left. exact (mul_IsSubtypeProofEq Lin).
+  - left. exact (MulSubtypeProofEq Lin).
   - right. intros contra. inversion contra.
-  - left. exact (mul_IsSubtypeProofUr Lin).
-  - left. exact (mul_IsSubtypeProofEq Ur).
+  - left. exact (MulSubtypeProofUr Lin).
+  - left. exact (MulSubtypeProofEq Ur).
 Defined.
 
 (******************************************************************************
@@ -418,18 +418,18 @@ Definition age_plus (a1 a2: age) : age :=
   | left _ => a1
   | right _ => Inf
   end.
-Inductive age_IsSubtype : age -> age -> Prop :=
-  | age_IsSubtypeProofEq : forall (a : age), age_IsSubtype a a
-  | age_IsSubtypeProofInf : forall (a2 : age), age_IsSubtype Inf a2.
-Theorem age_IsSubtype_dec : forall (a1 a2: age), {age_IsSubtype a1 a2} + {~(age_IsSubtype a1 a2)}.
+Inductive AgeSubtype : age -> age -> Prop :=
+  | AgeSubtypeProofEq : forall (a : age), AgeSubtype a a
+  | AgeSubtypeProofInf : forall (a2 : age), AgeSubtype Inf a2.
+Theorem AgeSubtype_dec : forall (a1 a2: age), {AgeSubtype a1 a2} + {~(AgeSubtype a1 a2)}.
 Proof.
   intros a1 a2. destruct a1, a2.
   - assert ({n = n0} + {n <> n0}) by apply Nat.eq_dec. destruct H.
-    * rewrite e. left. exact (age_IsSubtypeProofEq (Fin n0)).
+    * rewrite e. left. exact (AgeSubtypeProofEq (Fin n0)).
     * right. intros contra. inversion contra. congruence.
   - right. intros contra. inversion contra.
-  - left. exact (age_IsSubtypeProofInf (Fin n)).
-  - left. exact (age_IsSubtypeProofEq Inf).
+  - left. exact (AgeSubtypeProofInf (Fin n)).
+  - left. exact (AgeSubtypeProofEq Inf).
 Defined.
 
 (******************************************************************************
@@ -449,62 +449,62 @@ Definition mode_times (m1 m2: mode) : mode :=
   end.
 Definition mode_times' (ml: list mode) : mode :=
   List.fold_right mode_times (Some (Lin, Fin 0)) ml.
-Inductive mode_IsSubtype : mode -> mode -> Prop :=
-  | mode_IsSubtypeProofNone : forall (m2 : mode), mode_IsSubtype None m2 (* skull represents contradictory requirements, so we must never be able to provide a value with multiplicity skull *)
-  | mode_IsSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), mul_IsSubtype p1 p2 -> age_IsSubtype a1 a2 -> mode_IsSubtype (Some (p1, a1)) (Some (p2, a2)).
-Theorem mode_IsSubtype_dec : forall (m1 m2: mode), {mode_IsSubtype m1 m2} + {~mode_IsSubtype m1 m2}.
+Inductive ModeSubtype : mode -> mode -> Prop :=
+  | ModeSubtypeProofNone : forall (m2 : mode), ModeSubtype None m2 (* skull represents contradictory requirements, so we must never be able to provide a value with multiplicity skull *)
+  | ModeSubtypeProofPair : forall (p1 p2 : _mul) (a1 a2 : age), MulSubtype p1 p2 -> AgeSubtype a1 a2 -> ModeSubtype (Some (p1, a1)) (Some (p2, a2)).
+Theorem ModeSubtype_dec : forall (m1 m2: mode), {ModeSubtype m1 m2} + {~ModeSubtype m1 m2}.
 Proof.
   intros m1 m2. destruct m1 as [(p1 & a1)|], m2 as [(p2 & a2)|].
-  - destruct (mul_IsSubtype_dec p1 p2), (age_IsSubtype_dec a1 a2).
-    + left. exact (mode_IsSubtypeProofPair p1 p2 a1 a2 m a).
+  - destruct (MulSubtype_dec p1 p2), (AgeSubtype_dec a1 a2).
+    + left. exact (ModeSubtypeProofPair p1 p2 a1 a2 m a).
     + right. intros contra. inversion contra. congruence.
     + right. intros contra. inversion contra. congruence.
     + right. intros contra. inversion contra. congruence.
   - right. intros contra. inversion contra.
-  - left. exact (mode_IsSubtypeProofNone (Some (p2, a2))).
-  - left. exact (mode_IsSubtypeProofNone None).
+  - left. exact (ModeSubtypeProofNone (Some (p2, a2))).
+  - left. exact (ModeSubtypeProofNone None).
 Defined.
-Inductive mode_IsValid : mode -> Prop :=
-  mode_IsValidProof : forall (pa : mul * age), mode_IsValid (Some pa).
-Theorem mode_IsValid_dec : forall (m : mode), {mode_IsValid m} + {~mode_IsValid m}.
+Inductive IsValid : mode -> Prop :=
+  IsValidProof : forall (pa : mul * age), IsValid (Some pa).
+Theorem IsValid_dec : forall (m : mode), {IsValid m} + {~IsValid m}.
 Proof.
   intros m. destruct m as [pa|].
-  - left. exact (mode_IsValidProof pa).
+  - left. exact (IsValidProof pa).
   - right. intros contra. inversion contra.
 Qed.
-Inductive mode_IsLin : mode -> Prop :=
-  mode_IsLinProof : forall (a : age), mode_IsLin (Some (Lin, a)).
-Theorem mode_IsLin_dec : forall (m : mode), {mode_IsLin m} + {~mode_IsLin m}.
+Inductive IsLin : mode -> Prop :=
+  IsLinProof : forall (a : age), IsLin (Some (Lin, a)).
+Theorem IsLin_dec : forall (m : mode), {IsLin m} + {~IsLin m}.
 Proof.
   intros m. destruct m as [pa|].
   - destruct pa as [p a]. destruct p.
-    + left. exact (mode_IsLinProof a).
+    + left. exact (IsLinProof a).
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
-Inductive mode_IsFinAge : mode -> Prop :=
-  mode_IsFinAgeProof : forall (p : mul) (k : nat), mode_IsFinAge (Some (p, Fin k)).
-Theorem mode_IsFinAge_dec : forall (m : mode), {mode_IsFinAge m} + {~mode_IsFinAge m}.
+Inductive IsFinAge : mode -> Prop :=
+  IsFinAgeProof : forall (p : mul) (k : nat), IsFinAge (Some (p, Fin k)).
+Theorem IsFinAge_dec : forall (m : mode), {IsFinAge m} + {~IsFinAge m}.
 Proof.
   intros m. destruct m as [pa|].
   - destruct pa as [p a]. destruct a.
-    + left. exact (mode_IsFinAgeProof p n).
+    + left. exact (IsFinAgeProof p n).
     + right. intros contra. inversion contra.
   - right. intros contra. inversion contra.
 Qed.
-Definition mode_IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
-Theorem mode_IsLinNu_dec : forall (m : mode), {mode_IsLinNu m} + {~mode_IsLinNu m}.
+Definition IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
+Theorem IsLinNu_dec : forall (m : mode), {IsLinNu m} + {~IsLinNu m}.
 Proof.
-  unfold mode_IsLinNu. intros m. apply mode_eq_dec.
+  unfold IsLinNu. intros m. apply mode_eq_dec.
 Qed.
-Inductive mode_IsUr : mode -> Prop :=
-  mode_IsUrProof : forall (a : age), mode_IsUr (Some (Ur, a)).
-Theorem mode_IsUr_dec : forall (m : mode), {mode_IsUr m} + {~mode_IsUr m}.
+Inductive IsUr : mode -> Prop :=
+  IsUrProof : forall (a : age), IsUr (Some (Ur, a)).
+Theorem IsUr_dec : forall (m : mode), {IsUr m} + {~IsUr m}.
 Proof.
   intros m. destruct m as [pa|].
   - destruct pa as [p a]. destruct p.
     + right. intros contra. inversion contra.
-    + left. exact (mode_IsUrProof a).
+    + left. exact (IsUrProof a).
   - right. intros contra. inversion contra.
 Qed.
 
@@ -550,19 +550,19 @@ Definition binding_stimes_dh (m' : mode) (b : binding_dh) : binding_dh := match 
   | binding_Hole T n => binding_Hole T (mode_times m' n)
 end.
 
-Definition binding_IsDisposable x : binding_type_of x -> Prop :=
+Definition IsDisposable x : binding_type_of x -> Prop :=
   match x with
-  | name_Var _ => fun binding => mode_IsUr (binding_mode binding)
+  | name_Var _ => fun binding => IsUr (binding_mode binding)
   | name_DH _ => fun _ => False
   end.
 
-Definition binding_IsDest x : binding_type_of x -> Prop :=
+Definition IsDest x : binding_type_of x -> Prop :=
   match x with
   | name_Var _ => fun _ => False
   | name_DH h => fun b => match b with binding_Dest _  _  _ => True | _ => False end
   end.
 
-Definition binding_IsVar x : binding_type_of x -> Prop :=
+Definition IsVar x : binding_type_of x -> Prop :=
   match x with
   | name_Var _ => fun _ => True
   | name_DH _ => fun _ => False
@@ -647,34 +647,34 @@ Next Obligation.
   tauto.
 Qed.
 
-Definition ctx_DestOnly G : Prop := forall x b, G x = Some b -> binding_IsDest x b.
+Definition DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
 
-Definition ctx_VarOnly G : Prop := forall x b, G x = Some b -> binding_IsVar x b.
+Definition VarOnly G : Prop := forall x b, G x = Some b -> IsVar x b.
 
-Definition ctx_NoVar G : Prop := forall x b, G x = Some b -> ~binding_IsVar x b.
+Definition NoVar G : Prop := forall x b, G x = Some b -> ~IsVar x b.
 
-Definition ctx_LinNuOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> mode_IsLinNu (binding_mode binding).
-Definition ctx_LinOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> mode_IsLin (binding_mode binding).
-Definition ctx_FinAgeOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> mode_IsFinAge (binding_mode binding).
-Definition ctx_ValidOnly (G: ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> mode_IsValid (binding_mode binding).
-Definition ctx_Disjoint (G1 G2 : ctx) : Prop :=
+Definition LinNuOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLinNu (binding_mode binding).
+Definition LinOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsLin (binding_mode binding).
+Definition FinAgeOnly (G : ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsFinAge (binding_mode binding).
+Definition ValidOnly (G: ctx) : Prop := forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsValid (binding_mode binding).
+Definition Disjoint (G1 G2 : ctx) : Prop :=
   forall x, Finitely.In x G1 -> Finitely.In x G2 -> False.
 
-Notation "G '#' H" := (ctx_Disjoint G H) (at level 50, no associativity).
+Notation "G '#' H" := (Disjoint G H) (at level 50, no associativity).
 
-Definition ctx_DisposableOnly (G: ctx) : Prop :=
-  forall (n : name) (binding: binding_type_of n), G n = Some binding -> binding_IsDisposable n binding.
+Definition DisposableOnly (G: ctx) : Prop :=
+  forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsDisposable n binding.
 
 (*
-Inductive ctx_CompatibleVar : ctx -> var -> mode -> type -> Prop :=
+Inductive CompatibleVar : ctx -> var -> mode -> type -> Prop :=
   | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
-    ctx_DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> mode_IsSubtype m' m -> ctx_CompatibleVar (ctx_union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
+    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (ctx_union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
 
 (* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
-Definition ctx_CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
+Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
   forall (n : name) (binding: binding_type_of n), P n = Some binding -> (
-    (n = (name_Var x) -> exists m', binding = binding_Var m' T /\ mode_IsSubtype m' m)
- /\ (n <> (name_Var x) -> binding_IsDisposable binding)).
+    (n = (name_Var x) -> exists m', binding = binding_Var m' T /\ ModeSubtype m' m)
+ /\ (n <> (name_Var x) -> IsDisposable binding)).
 *)
 
 (******************************************************************************
@@ -732,16 +732,16 @@ terminals :: 'terminals_' ::=
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules }}
-  | ctx_DestOnly G :: :: ctx_DestOnly {{ tex \texttt{ctx\_DestOnly}~[[G]] }}
-  | ctx_LinOnly G :: :: ctx_LinOnly {{ tex \texttt{ctx\_LinOnly}~[[G]] }}
-  | ctx_ValidOnly G :: :: ctx_ValidOnly {{ tex \texttt{ctx\_Valid}~[[G]] }}
-  | ctx_FinAgeOnly G :: :: ctx_FinAgeOnly {{ tex \texttt{ctx\_FinAgeOnly}~[[G]] }}
-  | ctx_DisposableOnly G :: :: ctx_DisposableOnly {{ tex \texttt{ctx\_DisposableOnly}~[[G]] }}
-  | G1 # G2 :: :: ctx_Disjoint {{ tex [[G1]]\texttt{\#}[[G2]] }}
-  | H1 ## H2 :: :: hvars_Disjoint {{ tex [[H1]]\texttt{\#\#}[[H2]] }}
-  | mode_IsValid m :: :: mode_IsValid {{ tex \texttt{mode\_Valid}~[[m]] }}
-  | mode_IsSubtype m1 m2 :: :: mode_IsSubtype {{ tex \texttt{mode\_IsSubtype}~[[m1]]~[[m2]] }}
-  | term_NotVal t :: :: term_NotVal {{ tex \texttt{NotVal}~[[t]] }}
+  | DestOnly G :: :: DestOnly {{ tex \texttt{DestOnly}~[[G]] }}
+  | LinOnly G :: :: LinOnly {{ tex \texttt{LinOnly}~[[G]] }}
+  | ValidOnly G :: :: ValidOnly {{ tex \texttt{ValidOnly}~[[G]] }}
+  | FinAgeOnly G :: :: FinAgeOnly {{ tex \texttt{FinAgeOnly}~[[G]] }}
+  | DisposableOnly G :: :: DisposableOnly {{ tex \texttt{DisposableOnly}~[[G]] }}
+  | G1 # G2 :: :: Disjoint {{ tex [[G1]]\texttt{\#}[[G2]] }}
+  | H1 ## H2 :: :: HDisjoint {{ tex [[H1]]\texttt{\#\#}[[H2]] }}
+  | IsValid m :: :: IsValid {{ tex \texttt{IsValid}~[[m]] }}
+  | ModeSubtype m1 m2 :: :: ModeSubtype {{ tex \texttt{ModeSubtype}~[[m1]]~[[m2]] }}
+  | NotVal t :: :: NotVal {{ tex \texttt{NotVal}~[[t]] }}
   | h1 = h2 :: :: hvar_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
 
   | G ⫦ v : T :: :: TyR_val

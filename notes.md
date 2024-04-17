@@ -17,7 +17,7 @@ A parler à Paris le 18:
 
 - Elimination du concept de Valid/Invalid dans le OTT/.tex
 
-ctx_ValidOnly (*)
-ctx_DestOnly (D*)
-mode_IsValid (*)
+ValidOnly (*)
+DestOnly (D*)
+IsValid (*)
 A # B -> éliminer et remplacer A ᴳ+ B par A,B
