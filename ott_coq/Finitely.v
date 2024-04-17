@@ -10,7 +10,7 @@ Require MMaps.OrdList.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
-Require Import Coq.Logic.IndefiniteDescription.
+Require Import Coq.Logic.ClassicalEpsilon.
 
 Set Primitive Projections.
 
@@ -541,11 +541,11 @@ Proof.
 Qed.
 
 Definition dom {A B} (f : T A B) : list A :=
-  List.filter (fun x => match f x with Some _ => true | None => false end) (a_support f).
+  List.nodup (fun x y => excluded_middle_informative _) (List.filter (fun x => match f x with Some _ => true | None => false end) (a_support f)).
 
 Lemma dom_spec : forall {A B} (f : T A B) (x : A), List.In x (dom f) <-> In x f.
 Proof.
-  intros *. unfold dom.
+  intros *. unfold dom. rewrite nodup_In.
   split.
   - rewrite filter_In.
     hauto l: on.
@@ -553,6 +553,12 @@ Proof.
     rewrite <- (Fun.In_supported_r f).
     + sauto.
     + apply a_support_supports.
+Qed.
+
+Lemma dom_nodup : forall {A B} (f : T A B), NoDup (dom f).
+Proof.
+  intros *. unfold dom.
+  apply NoDup_nodup.
 Qed.
 
 Lemma dom_Support : forall {A B} (f : T A B), Fun.Support (dom f) f.
@@ -572,20 +578,22 @@ Next Obligation.
   scongruence.
 Qed.
 
+(* Maybe this lemma is somewhere in the standard library. I[aspiwack] couldn't find it.
+   `in_nil: forall [A : Type] [a : A], ~ List.In a nil` is the converse. *)
+Lemma nil_in : forall A (l : list A), (forall x, ~List.In x l) -> l = nil.
+Proof.
+  induction l.
+  - congruence.
+  - intros h. specialize (h a).
+    contradict h.
+    apply in_eq.
+Qed.
+
 Lemma dom_empty : forall {A B}, dom (@empty A B) = nil.
 Proof.
-  intros *.
-  unfold empty, dom. simpl.
-  (* Maybe this lemma is somewhere in the standard library. I[aspiwack] couldn't find it.
-     `in_nil: forall [A : Type] [a : A], ~ List.In a nil` is the converse. *)
-  assert (forall l : list A, (forall x, ~List.In x l) -> l = nil) as nil_in.
-  { induction l.
-    - congruence.
-    - intros h. specialize (h a).
-      contradict h.
-      apply in_eq. }
+  intros *. unfold empty.
   apply nil_in. intros x.
-  rewrite filter_In.
+  rewrite dom_spec, In_spec. cbn.
   sfirstorder.
 Qed.
 
@@ -636,10 +644,21 @@ Proof.
   intros *. rewrite singleton_spec0. apply Fun.singleton_mapsto.
 Qed.
 
-(* TODO: Not true in the current implementation (dom could very well have multiple copies of the one element). Need revisit later. *)
 Lemma dom_singleton : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), dom (singleton x discr v) = x::nil.
 Proof.
-Admitted.
+  intros *.
+  assert (forall l, NoDup l -> List.In x l -> (forall y, List.In y l -> x = y) -> l = x::nil) as in_list_singleton.
+  { destruct 1 as [|y l h_nin h_nodup].
+    - sfirstorder.
+    - intros _ h.
+      (* Nice that CoqHammer solves this one because otherwise, it's a
+         pretty finicky proof for no reason. *)
+      hfcrush use: nil_in. }
+  apply in_list_singleton.
+  - apply dom_nodup.
+  - apply dom_spec. rewrite in_singleton. reflexivity.
+  - intros y. rewrite dom_spec, in_singleton. congruence.
+Qed.
 
 Lemma singleton_spec_1 : forall {A B} (x : A) (discr : forall x y, {x = y} + {~x=y}) (v : B x), singleton x discr v x = Some v.
 Proof.
