@@ -99,8 +99,6 @@
 \item Most of the proofs done by author with very little prior
   experience to Coq.
 \item Did proofs in Coq because context manipulations are tricky.
-\item A number of wrong lemma initially assumed, but replacing them by
-  correct variant was always easy to fix in proofs.
 \item Context sum made total by adding an extra invalid \emph{mode}
   (rather than an extra context). It seems to be much simpler this
   way.
@@ -110,7 +108,11 @@
   make more lemmas don't require a condition (but some lemmas that
   wouldn't in a straight renaming do in exchange).
 \item (possibly) methodology: assume a lot of lemmas, prove main
-  theorem, prove assumptions, some wrong, fix.
+  theorem, prove assumptions, some wrong, fix. A number of wrong lemma
+  initially assumed, but replacing them by correct variant was always
+  easy to fix in proofs.
+\item Axioms that we use and why (in particular setoid equality not
+  very natural with ott-generated typing rules).
 \end{itemize}
 
 \end{document}
