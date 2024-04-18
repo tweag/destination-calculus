@@ -70,7 +70,7 @@ Inductive term : Type :=  (*r Term *)
  | term_PatE (t:term) (m:mode) (n:mode) (x:var) (u:term) (*r Pattern-match on exponential *)
  | term_Map (t:term) (x:var) (t':term) (*r Map over the right side of ampar $(t:term)$ *)
  | term_ToA (u:term) (*r Wrap $(u:term)$ into a trivial ampar *)
- | term_FromA (t:term) (*r Extract value from trivial ampar *)
+ | term_FromA (t:term) (*r Convert ampar with no dest remaining into pair *)
  | term_FillU (t:term) (*r Fill destination with unit *)
  | term_FillL (t:term) (*r Fill destination with left variant *)
  | term_FillR (t:term) (*r Fill destination with right variant *)
@@ -98,7 +98,7 @@ Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_PatEFoc (m:mode) (n:mode) (x:var) (u:term) (*r Pattern-match on exponential *)
  | ectx_MapFoc (x:var) (t':term) (*r Map over the right side of ampar *)
  | ectx_ToAFoc : ectx (*r Wrap into a trivial ampar *)
- | ectx_FromAFoc : ectx (*r Extract value from trivial ampar *)
+ | ectx_FromAFoc : ectx (*r Convert ampar with no dest remaining into pair *)
  | ectx_FillUFoc : ectx (*r Fill destination with unit *)
  | ectx_FillLFoc : ectx (*r Fill destination with left variant *)
  | ectx_FillRFoc : ectx (*r Fill destination with right variant *)
@@ -737,9 +737,9 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_ToA : forall (P:ctx) (u:term) (U:type)
      (Tyu: Ty_term P u U),
      Ty_term P (term_ToA u) (type_A U type_U)
- | Ty_term_FromA : forall (P:ctx) (t:term) (U:type)
-     (Tyt: Ty_term P t (type_A U type_U)),
-     Ty_term P (term_FromA t) U
+ | Ty_term_FromA : forall (P:ctx) (t:term) (U T:type)
+     (Tyt: Ty_term P t (type_A U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )),
+     Ty_term P (term_FromA t) (type_P U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
      (Tyt: Ty_term P t (type_D type_U n)),
      Ty_term P (term_FillU t) type_U
@@ -838,9 +838,9 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
  | Ty_ectxs_ToAFoc : forall (D:ctx) (C:ectxs) (U U0:type)
      (TyC: Ty_ectxs D C  (type_A U type_U)  U0),
      Ty_ectxs D  (cons   ectx_ToAFoc    C )  U U0
- | Ty_ectxs_FromAFoc : forall (D:ctx) (C:ectxs) (U U0:type)
-     (TyC: Ty_ectxs D C U U0),
-     Ty_ectxs D  (cons   ectx_FromAFoc    C )   (type_A U type_U)  U0
+ | Ty_ectxs_FromAFoc : forall (D:ctx) (C:ectxs) (U T U0:type)
+     (TyC: Ty_ectxs D C  (type_P U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )  U0),
+     Ty_ectxs D  (cons   ectx_FromAFoc    C )   (type_A U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )  U0
  | Ty_ectxs_FillUFoc : forall (D:ctx) (C:ectxs) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C type_U U0),
      Ty_ectxs D  (cons   ectx_FillUFoc    C )  (type_D type_U n) U0
@@ -974,8 +974,8 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
      Sem_eterm C (term_FromA t)   (cons   ectx_FromAFoc    C )   t
  | Sem_eterm_FromAUnfoc : forall (C:ectxs) (v:val),
      Sem_eterm   (cons   ectx_FromAFoc    C )   (term_Val v) C (term_FromA (term_Val v))
- | Sem_eterm_FromARed : forall (C:ectxs) (v2:val),
-     Sem_eterm C (term_FromA (term_Val (val_A  (hvars_  nil )  v2 val_U))) C (term_Val v2)
+ | Sem_eterm_FromARed : forall (C:ectxs) (v2 v1:val),
+     Sem_eterm C (term_FromA (term_Val (val_A  (hvars_  nil )  v2 (val_E  (Some (pair   Ur     (Fin 0)  ))  v1)))) C (term_Val (val_P v2 (val_E  (Some (pair   Ur     (Fin 0)  ))  v1)))
  | Sem_eterm_FillUFoc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem_eterm C (term_FillU t)   (cons   ectx_FillUFoc    C )   t

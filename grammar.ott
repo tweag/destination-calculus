@@ -83,7 +83,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ≻case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
   | t ≻map x ⟼ t' :: :: Map {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[u]] }} {{ com Wrap $[[u]]$ into a trivial ampar }}
-  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Extract value from trivial ampar }}
+  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Convert ampar with no dest remaining into pair }}
   % | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
@@ -133,7 +133,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ ≻map x ⟼ t' :: :: MapFoc {{ com Map over the right side of ampar }} {{ tex [[⬜]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
 
   | to⧔ ⬜ :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Wrap into a trivial ampar }}
-  | from⧔ ⬜ :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Extract value from trivial ampar }}
+  | from⧔ ⬜ :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Convert ampar with no dest remaining into pair }}
   | ⬜ ⨞ () :: :: FillUFoc {{ com Fill destination with unit }}
   | ⬜ ⨞ Inl :: :: FillLFoc {{ com Fill destination with left variant }}
   | ⬜ ⨞ Inr :: :: FillRFoc {{ com Fill destination with right variant }}
