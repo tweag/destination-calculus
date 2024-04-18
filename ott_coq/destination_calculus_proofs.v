@@ -123,6 +123,9 @@ Proof. Admitted.
 Lemma cshift_distrib_on_hminus_inv : forall (G : ctx) (H : hvars) (h' : hvar), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = (ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ])).
 Proof. Admitted.
 
+Lemma cshift_distrib_on_hvars : forall H h' D, hvars_cshift hvarsᴳ( D) H h' = hvarsᴳ( D ᴳ[ H ⩲ h']).
+Proof. Admitted.
+
 (* Could really be generalised to any var-only context. *)
 Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
 Proof. Admitted.
@@ -151,22 +154,23 @@ Proof.
       constructor. all: auto.
     + cbn. rewrite cshift_distrib_on_stimes.
       constructor. all: auto.
-    + cbn. rewrite cshift_distrib_on_union.
-      give_up.
-      (* constructor.
+    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hvars, cshift_distrib_on_hminus.
+      constructor.
       (* 11 goals *)
-      all: auto.
-      (* 7 goals *)
       * hauto l: on use: DestOnly_cshift_iff.
       * hauto l: on use: DestOnly_cshift_iff.
+      * hauto l: on use: DestOnly_cshift_iff.
+      * hauto l: on use: LinOnly_cshift_iff.
+      * hauto l: on use: FinAgeOnly_cshift_iff.
+      * hauto l: on use: ValidOnly_cshift_iff.
       * hauto l: on use: Disjoint_cshift_iff.
-      * give_up. (* arnaud: I'm worried about this one. I think we need an extra condition *)
+      * give_up. (* should be fixed now *)
       * give_up. (* arnaud: basically same *)
       * try rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
         (* TODO: I don't know how to prove that goal yet. Why doesn't D3 have a shift to it? *)
         give_up.
       * (* same as above *)
-        give_up. *)
+        give_up.
   - (* TODO *) give_up.
 Admitted.
 
