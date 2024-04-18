@@ -129,13 +129,18 @@ Proof. Admitted.
 (* Could really be generalised to any var-only context. *)
 Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
 Proof. Admitted.
+
+Lemma cshift_singleton_hvar : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
+Proof. Admitted.
+
 Lemma TyR_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hvars) (h': hvar), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
 with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hvars) (h': hvar), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
 Proof.
   - destruct 1.
-    + cbn. unfold ctx_cshift, hvar_cshift, ctx_singleton, singleton.
-      give_up . (* some extensionality required *)
-    + give_up . (* I want to see a recursive case first *)
+    + cbn. rewrite cshift_singleton_hvar.
+      constructor.
+    + cbn. rewrite cshift_singleton_hvar.
+      constructor.
     + replace (ᴳ{} ᴳ[ H ⩲ h']) with ᴳ{}.
       2:{ apply ext_eq. cbn. congruence. }
       cbn.
@@ -164,13 +169,12 @@ Proof.
       * hauto l: on use: FinAgeOnly_cshift_iff.
       * hauto l: on use: ValidOnly_cshift_iff.
       * hauto l: on use: Disjoint_cshift_iff.
-      * give_up. (* should be fixed now *)
-      * give_up. (* arnaud: basically same *)
-      * try rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
-        (* TODO: I don't know how to prove that goal yet. Why doesn't D3 have a shift to it? *)
-        give_up.
-      * (* same as above *)
-        give_up.
+      * hauto l: on use: Disjoint_cshift_iff.
+      * hauto l: on use: Disjoint_cshift_iff.
+      * rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
+        auto.
+      * rewrite <- cshift_distrib_on_hminus, <- cshift_distrib_on_union.
+        auto.
   - (* TODO *) give_up.
 Admitted.
 
