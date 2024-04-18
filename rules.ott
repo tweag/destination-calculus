@@ -79,7 +79,7 @@ P + D ⊢ v : T
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 {{ [[P]] # [[{ x : m T }]] }} [[:DisjointPx]]
-{{ [[m]] <: [[¹ν]] }} [[:Subtypem]]
+{{ [[¹ν]] <: [[m]] }} [[:Subtypem]]
 -------------------- :: Var
 P + { x : m T } ⊢ x : T
 

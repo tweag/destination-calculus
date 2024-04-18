@@ -126,8 +126,8 @@ Proof. Admitted.
 (* Could really be generalised to any var-only context. *)
 Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
 Proof. Admitted.
-Lemma TyR_v_cshift : forall (G : ctx) (v : val) (T : type) (H: hvars) (h': hvar), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
-with TyR_t_cshift : forall (G : ctx) (t : term) (T : type) (H: hvars) (h': hvar), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
+Lemma TyR_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hvars) (h': hvar), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
+with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hvars) (h': hvar), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
 Proof.
   - destruct 1.
     + cbn. unfold ctx_cshift, hvar_cshift, ctx_singleton, singleton.
@@ -152,7 +152,8 @@ Proof.
     + cbn. rewrite cshift_distrib_on_stimes.
       constructor. all: auto.
     + cbn. rewrite cshift_distrib_on_union.
-      constructor.
+      give_up.
+      (* constructor.
       (* 11 goals *)
       all: auto.
       (* 7 goals *)
@@ -165,7 +166,7 @@ Proof.
         (* TODO: I don't know how to prove that goal yet. Why doesn't D3 have a shift to it? *)
         give_up.
       * (* same as above *)
-        give_up.
+        give_up. *)
   - (* TODO *) give_up.
 Admitted.
 
@@ -1472,7 +1473,7 @@ Ltac hauto_ctx :=
         total_cshift_eq,
         cshift_distrib_on_hminus,
         cshift_distrib_on_hminus_inv,
-        (* TyR_v_cshift,
+        (* TyR_val_cshift,
         val_A_cshift, *)
         union_commutative,
         (* union_commutative', *)
@@ -2060,7 +2061,7 @@ Proof.
             }
           } }
       assert ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] : T) as Tyt1.
-        { term_Val_no_dispose ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]). apply TyR_v_cshift; trivial. apply DestOnly_cshift_iff; apply DestOnly_union_iff; split; try apply DestOnly_stimes_iff. crush. crush. }
+        { term_Val_no_dispose ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]). apply TyR_val_cshift; trivial. apply DestOnly_cshift_iff; apply DestOnly_union_iff; split; try apply DestOnly_stimes_iff. crush. crush. }
           assert ((¹↑ ᴳ· (D2 ᴳ+ D11)) # (D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
           { apply Disjoint_stimes_l_iff. assumption. }
       constructor 1 with (D := ¹↑ ᴳ· (D2 ᴳ+ D11 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ]); swap 3 4;
@@ -2153,7 +2154,7 @@ Proof.
               { unfold HDisjoint. rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint. crush. assumption.
             } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
-          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus. rewrite <- cshift_distrib_on_union. apply TyR_v_cshift. tauto.  } { assumption. }
+          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus. rewrite <- cshift_distrib_on_union. apply TyR_val_cshift. tauto.  } { assumption. }
     - (* Sem-eterm-AOpenUnfoc *)
       inversion Tyt; subst. rename TyC into TyCc, TyRv into TyRv1. clear H2.
       inversion TyCc; subst. rename H6 into hvarsDisjoint, D0 into D.

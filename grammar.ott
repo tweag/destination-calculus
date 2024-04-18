@@ -153,7 +153,7 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | ① :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
   | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
-  | ! m T :: :: E {{ tex \ottstype{!}^{[[m]]}\,[[T]] }} {{ com Exponential }}
+  | ! m T :: :: E {{ tex \ottstype{!}_{[[m]]}\,[[T]] }} {{ com Exponential }}
   | U ⧔ T :: :: A {{ tex [[U]]\,\ottstype{\ltimes}\,[[T]] }} {{ com Ampar type (consuming $[[T]]$ yields $[[U]]$) }}
   | T m → U :: :: F {{ tex [[T]]\,_{[[m]]}\!\ottstype{\to}\,[[U]] }} {{ com Function }}
   | ⌊ T ⌋ m :: :: D {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
@@ -218,13 +218,13 @@ grammar
 
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
-  | { } :: S :: E {{ coq ctx_empty }}
-  | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex \{[[x]]:\,\!_{[[m]]}[[T]]\} }}
-  | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \{\ottshvar{+}[[h]]:\,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]}\} }}
-  | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \{\ottshvar{-}[[h]]:[[T]]^{[[n]]}\} }}
+  | { } :: S :: E {{ coq ctx_empty }} {{ tex \, }}
+  | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }}
+  | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{+}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
+  | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{-}[[h]]:[[T]]^{[[n]]} }}
   | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: U {{ coq (union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
-  | G1 , G2 :: M :: UDisjoint {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum/union of contexts $[[G1]]$ and $[[G2]]$. }}
+  | G1 , G2 :: M :: UDisjoint {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum/union of contexts $[[G1]]$ and $[[G2]]$. }} {{ tex [[G1]],~[[G2]] }}
   | - G :: M :: M {{ coq (hminus [[G]]) }} {{ tex \ottshvar{-}[[G]] }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
   | -⁻¹ G :: M :: iM {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex \ottshvar{-^{\scriptscriptstyle\text{-}1} }[[G]] }}
   | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
@@ -261,6 +261,9 @@ Definition hvar_max (H : HVars.t) : nat := match HVars.max_elt H with
 
 Definition hvars_shift (H : HVars.t) (h' : nat) : HVars.t :=
   HVars.fold (fun h acc => HVars.add (h + h') acc) H HVars.empty.
+
+Definition hvars_cshift (H H': HVars.t) (h' : nat) : HVars.t :=
+  HVars.fold (fun h acc => HVars.add (hvar_cshift h H' h') acc) H HVars.empty.
 
 Fixpoint hvars_dom (dom: list name) : HVars.t :=
   match dom with
@@ -358,7 +361,7 @@ Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
   | val_R v => val_R (val_cshift v H h')
   | val_E m v => val_E m (val_cshift v H h')
   | val_P v1 v2 => val_P (val_cshift v1 H h') (val_cshift v2 H h')
-  | val_A H' v2 v1 => val_A H' (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_A H' v2 v1 => val_A (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
 with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
   match te with
@@ -470,7 +473,7 @@ Proof.
   - left. exact (ModeSubtypeProofNone None).
 Defined.
 
-Notation "m '<:' n" := (ModeSubtype m n) (at level 50, no associativity).
+Notation "n '<:' m" := (ModeSubtype m n) (at level 50, no associativity).
 
 (******************************************************************************
  * BINDERS
@@ -764,6 +767,8 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
 
 parsing
 ctx_U <= ctx_P
+ctx_UDisjoint <= ctx_P
 ctx_P <= ctx_M
 ctx_U left ctx_U
+ctx_UDisjoint left ctx_UDisjoint
 term_Val <= term_Paren

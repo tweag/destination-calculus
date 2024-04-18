@@ -185,6 +185,9 @@ Definition hvar_max (H : HVars.t) : nat := match HVars.max_elt H with
 Definition hvars_shift (H : HVars.t) (h' : nat) : HVars.t :=
   HVars.fold (fun h acc => HVars.add (h + h') acc) H HVars.empty.
 
+Definition hvars_cshift (H H': HVars.t) (h' : nat) : HVars.t :=
+  HVars.fold (fun h acc => HVars.add (hvar_cshift h H' h') acc) H HVars.empty.
+
 Fixpoint hvars_dom (dom: list name) : HVars.t :=
   match dom with
   | nil => HVars.empty
@@ -281,7 +284,7 @@ Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
   | val_R v => val_R (val_cshift v H h')
   | val_E m v => val_E m (val_cshift v H h')
   | val_P v1 v2 => val_P (val_cshift v1 H h') (val_cshift v2 H h')
-  | val_A H' v2 v1 => val_A H' (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_A H' v2 v1 => val_A (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
 with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
   match te with
@@ -393,7 +396,7 @@ Proof.
   - left. exact (ModeSubtypeProofNone None).
 Defined.
 
-Notation "m '<:' n" := (ModeSubtype m n) (at level 50, no associativity).
+Notation "n '<:' m" := (ModeSubtype m n) (at level 50, no associativity).
 
 (******************************************************************************
  * BINDERS
@@ -692,7 +695,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Var : forall (P:ctx) (x:var) (m:mode) (T:type)
      (DisposP: DisposableOnly P )
      (DisjointPx: P #  (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )
-     (Subtypem: m <:  (Some (pair   Lin     (Fin 0)  ))  ),
+     (Subtypem:  (Some (pair   Lin     (Fin 0)  ))  <: m ),
      Ty_term  (union  P    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  (term_Var x) T
  | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t t':term) (U T:type)
      (Validm: IsValid m )
