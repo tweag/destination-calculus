@@ -139,6 +139,7 @@ Proof. Admitted.
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hvars) (h' : hvar), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
 Proof.
   intros *. unfold ctx_cshift, ctx_shift, union.
+  rewrite merge_with_map. (* rewrite map_precomp. *)
   (* rewrite merge_with_precomp. *)
 Admitted.
 (* TODO: add to canonalize? *)

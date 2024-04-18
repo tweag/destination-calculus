@@ -934,6 +934,17 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma merge_with_map : forall {A B1 B2} (m : forall x:A, B2 x -> B2 x -> B2 x) (m' : forall x, B1 x -> B2 x) (f : T A B1) (g : T A B1),
+    merge_with m (map m' f) (map m' g) = merge (fun x oy1 oy2 => match oy1, oy2 with
+                                                              | Some y1, Some y2 => Some (m x (m' x y1) (m' x y2))
+                                                              | Some y, None | None, Some y => Some (m' x y)
+                                                              | None, None => None
+                                                              end) f g.
+Proof.
+  intros *. apply ext_eq. cbn. intros x. unfold Fun.merge, Fun.map. cbn.
+  hauto lq: on.
+Qed.
+
 Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),
     (forall x b1 b2, P x (m x b1 b2) -> P x b1 /\ P x b2) -> (forall x b, merge_with m f g x = Some b -> P x b) -> (forall x b, f x = Some b -> P x b)/\(forall x b, g x = Some b -> P x b).
 Proof.
