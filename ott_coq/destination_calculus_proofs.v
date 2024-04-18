@@ -1415,7 +1415,7 @@ Proof.
   intros * VarOnlyP NoVarG. unfold Disjoint. intros nam inP1 inG2. unfold VarOnly, NoVar, Fun.In, IsVar in *. destruct inP1; specialize (VarOnlyP nam x H). destruct inG2; specialize (NoVarG nam x0 H0). destruct nam; simpl in *; congruence.
 Qed.
 
-Lemma DestOnly_nMapsto_var : forall (D : ctx) (x : var), DestOnly D -> D (ˣ x) = None.
+Lemma DestOnly_nMapsTo_var : forall (D : ctx) (x : var), DestOnly D -> D (ˣ x) = None.
 Proof.
   intros * DestOnlyD. unfold DestOnly in DestOnlyD. specialize (DestOnlyD (ˣ x)).
   destruct (List.In_dec name_eq_dec (ˣ x) (dom D)).
@@ -1428,7 +1428,7 @@ Proof.
     }
 Qed.
 
-Lemma VarOnly_nMapsto_hd : forall (P : ctx) (h : hvar), VarOnly P -> P (ʰ h) = None.
+Lemma VarOnly_nMapsTo_hd : forall (P : ctx) (h : hvar), VarOnly P -> P (ʰ h) = None.
 Proof.
   intros * VarOnlyP. unfold VarOnly in VarOnlyP. specialize (VarOnlyP (ʰ h)).
   destruct (List.In_dec name_eq_dec (ʰ h) (dom P)).
@@ -1445,7 +1445,7 @@ Lemma DestOnly_union_singleton_x_at_x : forall (D : ctx) (x : var) (m : mode) (T
 Proof.
   intros * DestOnlyD.
   unfold union. apply merge_with_None_Some_eq with (f := D). split.
-  + apply DestOnly_nMapsto_var. assumption.
+  + apply DestOnly_nMapsTo_var. assumption.
   + apply singleton_MapsTo_at_elt.
 Qed.
 
@@ -1591,7 +1591,7 @@ Ltac hauto_ctx :=
         DisposableOnly_wk_VarOnly,
         VarOnly_union_DestOnly_is_Disjoint,
         nDisposable_in_DestOnly,
-        DestOnly_nMapsto_var,
+        DestOnly_nMapsTo_var,
         DestOnly_union_singleton_x_at_x,
         ModeSubtype_linnu_eq,
         (IsLinProof (Fin 0)),
@@ -1759,11 +1759,11 @@ Proof.
   intros * VarOnlyP1 VarOnlyP2 DestOnlyD1 DestOnlyD2 UnionEq.
   split.
   - apply ext_eq. intros n. assert ((P1 ᴳ+ D1) n = (P2 ᴳ+ D2) n). { rewrite UnionEq. f_equal. } destruct n.
-    + unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do in H; simpl in H. destruct (P1 (ˣ x)) eqn:P1x; rewrite (DestOnly_nMapsto_var D1 x DestOnlyD1), (DestOnly_nMapsto_var D2 x DestOnlyD2) in H; destruct (P2 (ˣ x)); assumption.
-    + rewrite (VarOnly_nMapsto_hd P1 h VarOnlyP1), (VarOnly_nMapsto_hd P2 h VarOnlyP2). reflexivity.
+    + unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do in H; simpl in H. destruct (P1 (ˣ x)) eqn:P1x; rewrite (DestOnly_nMapsTo_var D1 x DestOnlyD1), (DestOnly_nMapsTo_var D2 x DestOnlyD2) in H; destruct (P2 (ˣ x)); assumption.
+    + rewrite (VarOnly_nMapsTo_hd P1 h VarOnlyP1), (VarOnly_nMapsTo_hd P2 h VarOnlyP2). reflexivity.
   - apply ext_eq. intros n. assert ((P1 ᴳ+ D1) n = (P2 ᴳ+ D2) n). { rewrite UnionEq. f_equal. } destruct n.
-    + rewrite (DestOnly_nMapsto_var D1 x DestOnlyD1), (DestOnly_nMapsto_var D2 x DestOnlyD2). reflexivity.
-    + unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do in H; simpl in H. destruct (D1 (ʰ h)) eqn:D1x; rewrite (VarOnly_nMapsto_hd P1 h VarOnlyP1), (VarOnly_nMapsto_hd P2 h VarOnlyP2) in H; destruct (D2 (ʰ h)); assumption.
+    + rewrite (DestOnly_nMapsTo_var D1 x DestOnlyD1), (DestOnly_nMapsTo_var D2 x DestOnlyD2). reflexivity.
+    + unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do in H; simpl in H. destruct (D1 (ʰ h)) eqn:D1x; rewrite (VarOnly_nMapsTo_hd P1 h VarOnlyP1), (VarOnly_nMapsTo_hd P2 h VarOnlyP2) in H; destruct (D2 (ʰ h)); assumption.
 Qed.
 
 Lemma TermSubLemma :
