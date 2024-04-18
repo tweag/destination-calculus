@@ -41,6 +41,7 @@
           inputsFrom = [ main ];
           buildInputs = [
             # Theorem provers for CoqHammer and SMTCoq.
+            pkgs.python310
             pkgs.eprover
             pkgs.cvc4
             pkgs.vampire

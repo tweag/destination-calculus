@@ -224,8 +224,9 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ co
   | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \{\ottshvar{-}[[h]]:[[T]]^{[[n]]}\} }}
   | m · G :: M :: P {{ com Multiply each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: U {{ coq (union [[G1]] [[G2]]) }} {{ com Sum contexts $[[G1]]$ and $[[G2]]$. Duplicate keys with incompatible values will be tagged with $\ottsmode{\skull}$ }}
-  | - G :: M :: M {{ coq (hminus [[G]]) }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
-  | -⁻¹ G :: M :: iM {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex -^{-1}[[G]] }}
+  | G1 , G2 :: M :: UDisjoint {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum/union of contexts $[[G1]]$ and $[[G2]]$. }}
+  | - G :: M :: M {{ coq (hminus [[G]]) }} {{ tex \ottshvar{-}[[G]] }} {{ com Transforms dest bindings into a hole bindings (requires \texttt{ctx\_DestOnly} $[[G]]$ and \texttt{ctx\_LinOnly} $[[G]]$) }}
+  | -⁻¹ G :: M :: iM {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings with left mode $\ottsmode{1\nu}$ (requires \texttt{ctx\_HoleOnly} $[[G]]$) }} {{ tex \ottshvar{-^{\scriptscriptstyle\text{-}1} }[[G]] }}
   | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
@@ -468,6 +469,13 @@ Proof.
   - left. exact (ModeSubtypeProofNone (Some (p2, a2))).
   - left. exact (ModeSubtypeProofNone None).
 Defined.
+
+Notation "m '<:' n" := (ModeSubtype m n) (at level 50, no associativity).
+
+(******************************************************************************
+ * BINDERS
+ *****************************************************************************)
+
 Inductive IsValid : mode -> Prop :=
   IsValidProof : forall (pa : mul * age), IsValid (Some pa).
 Theorem IsValid_dec : forall (m : mode), {IsValid m} + {~IsValid m}.
@@ -725,7 +733,7 @@ terminals :: 'terminals_' ::=
   | ⩲ :: :: rename {{ tex \pluseq }}
 
 % === Contexts ===
-  | + :: :: union {{ tex \cupplus }}
+  | + :: :: union {{ tex + }}
 
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex ~\longrightarrow~ }}

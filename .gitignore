@@ -405,3 +405,4 @@ Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
 .coqdeps.d
+rules_mod.ott

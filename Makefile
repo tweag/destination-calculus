@@ -1,4 +1,5 @@
 OTT_FILES = grammar.ott rules.ott
+OTT_FILES_MOD = grammar.ott rules_mod.ott
 OTT_OPTS = -tex_show_meta true -tex_wrap false -picky_multiple_parses false -tex_suppress_ntr Q
 OTT_TEX = destination_calculus_ott.tex
 OTT_COQ = ott_coq/destination_calculus_ott.v
@@ -28,10 +29,13 @@ clean: Makefile.coq
 	rm -f destination_calculus.*.gz
 	rm -f destination_calculus_ott.tex
 
-%.tex: %.mng $(OTT_FILES)
-	ott $(OTT_OPTS) -tex_filter $< $@ $(OTT_FILES)
+rules_mod.ott : rules.ott
+	python patch_rules.py rules.ott rules_mod.ott
 
-$(OTT_TEX): $(OTT_FILES)
+%.tex: %.mng $(OTT_FILES_MOD)
+	ott $(OTT_OPTS) -tex_filter $< $@ $(OTT_FILES_MOD)
+
+$(OTT_TEX): $(OTT_FILES_MOD)
 	ott $(OTT_OPTS) -o $@ $^
 
 $(OTT_COQ): $(OTT_FILES)

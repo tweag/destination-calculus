@@ -72,14 +72,14 @@ P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
 
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
 {{ DisposableOnly [[P]] }} [[:DisposP]]
-% We have [[D]] # [[P]] for free
+% {{ [[D]] # [[P]] }} for free
 D ⫦ v : T [[:TyRv]]
 -------------------- :: Val
 P + D ⊢ v : T
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 {{ [[P]] # [[{ x : m T }]] }} [[:DisjointPx]]
-{{ ModeSubtype [[m]] [[¹ν]] }} [[:Subtypem]]
+{{ [[m]] <: [[¹ν]] }} [[:Subtypem]]
 -------------------- :: Var
 P + { x : m T } ⊢ x : T
 
@@ -211,7 +211,7 @@ D2 ⊢ u : U [[:Tyu]]
 D1 ⊣ C ∘ (⬜ ; u) : ① ↣ U0
 
 % {{ [[D2]] # [[{ x1 : m T1 }]] }} useless with DestOnly
-% {{ [[D2]] # [[{ x2 : m T2 }]] }}
+% {{ [[D2]] # [[{ x2 : m T2 }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -224,7 +224,7 @@ D2 + { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 D1 ⊣ C ∘ (⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
 % {{ [[D2]] # [[{ x1 : m T1 }]] }} useless with DestOnly
-% {{ [[D2]] # [[{ x2 : m T2 }]] }}
+% {{ [[D2]] # [[{ x2 : m T2 }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -248,7 +248,7 @@ D2 + { x : m·m' T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatEFoc
 D1 ⊣ C ∘ (⬜ ≻case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
-% {{ [[¹↑·D2]] # [[{ x : ¹ν T2 }]] }} useless with DestOnly
+% {{ [[D2]] # [[{ x : ¹ν T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -287,10 +287,7 @@ D ⊣ C : ⌊T⌋m·n ↣ U0 [[:TyC]]
 ------------------------------ :: FillEFoc
 D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
-% Elements that can be compensated by u must be from an older scope
-% Realistically dests are linear, so no dest from D2 can be stored in a non-linear function*
-% D2 != {} => n = ¹ν
-% {{ [[D2]] # [[{ x : m T1 }]] }} useless with DestOnly
+% {{ [[D2]] # [[{ x : m T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]

@@ -392,6 +392,13 @@ Proof.
   - left. exact (ModeSubtypeProofNone (Some (p2, a2))).
   - left. exact (ModeSubtypeProofNone None).
 Defined.
+
+Notation "m '<:' n" := (ModeSubtype m n) (at level 50, no associativity).
+
+(******************************************************************************
+ * BINDERS
+ *****************************************************************************)
+
 Inductive IsValid : mode -> Prop :=
   IsValidProof : forall (pa : mul * age), IsValid (Some pa).
 Theorem IsValid_dec : forall (m : mode), {IsValid m} + {~IsValid m}.
@@ -685,7 +692,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Var : forall (P:ctx) (x:var) (m:mode) (T:type)
      (DisposP: DisposableOnly P )
      (DisjointPx: P #  (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )
-     (Subtypem: ModeSubtype m  (Some (pair   Lin     (Fin 0)  ))  ),
+     (Subtypem: m <:  (Some (pair   Lin     (Fin 0)  ))  ),
      Ty_term  (union  P    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  (term_Var x) T
  | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t t':term) (U T:type)
      (Validm: IsValid m )
