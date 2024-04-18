@@ -31,9 +31,9 @@ Proof.
   - sfirstorder use: HVarsFacts.mem_iff.
 Qed.
 
-Lemma pre_cshift_surjective : forall H h' x, exists x', pre_cshift H h' x' = x.
+Lemma pre_cshift_surjective : forall p x, exists x', pre_shift p x' = x.
 Proof.
-  intros *. unfold pre_cshift.
+  intros *. unfold pre_shift.
   destruct x as [xx|h].
   { exists (ˣ xx). reflexivity. }
   eexists (ʰ _). f_equal.
@@ -42,7 +42,7 @@ Qed.
 
 Lemma ValidOnly_cshift_iff: forall (G : ctx) (H : hvars) (h' : hvar), ValidOnly G <-> ValidOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold ValidOnly, ctx_cshift.
+  intros *. unfold ValidOnly, ctx_cshift, ctx_shift.
   rewrite map_propagate_both with (Q := fun x b => IsValid (mode_of b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
@@ -53,7 +53,7 @@ Hint Rewrite <- ValidOnly_cshift_iff : propagate_down.
 
 Lemma DestOnly_cshift_iff: forall (G : ctx) (H : hvars) (h' : hvar), DestOnly G <-> DestOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold DestOnly, ctx_cshift.
+  intros *. unfold DestOnly, ctx_cshift, ctx_shift.
   rewrite map_propagate_both with (Q := fun x b => IsDest _ b).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
@@ -64,7 +64,7 @@ Hint Rewrite <- DestOnly_cshift_iff : propagate_down.
 
 Lemma LinNuOnly_cshift_iff : forall (G : ctx) (H : hvars) (h' : hvar), LinNuOnly G <-> LinNuOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold LinNuOnly, ctx_cshift.
+  intros *. unfold LinNuOnly, ctx_cshift, ctx_shift.
   rewrite map_propagate_both with (Q := fun x b => IsLinNu (mode_of b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
@@ -75,7 +75,7 @@ Hint Rewrite <- LinNuOnly_cshift_iff : propagate_down.
 
 Lemma LinOnly_cshift_iff : forall (G : ctx) (H : hvars) (h' : hvar), LinOnly G <-> LinOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold LinOnly, ctx_cshift.
+  intros *. unfold LinOnly, ctx_cshift, ctx_shift.
   rewrite map_propagate_both with (Q := fun x b => IsLin (mode_of b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
@@ -86,7 +86,7 @@ Hint Rewrite <- LinOnly_cshift_iff : propagate_down.
 
 Lemma FinAgeOnly_cshift_iff : forall (G : ctx) (H : hvars) (h' : hvar), FinAgeOnly G <-> FinAgeOnly (G ᴳ[ H⩲h' ]).
 Proof.
-  intros *. unfold FinAgeOnly, ctx_cshift.
+  intros *. unfold FinAgeOnly, ctx_cshift, ctx_shift.
   rewrite map_propagate_both with (Q := fun x b => IsFinAge (mode_of b)).
   2:{ intros [xx|xh] **. all: cbn.
       all: reflexivity. }
@@ -95,17 +95,52 @@ Proof.
 Qed.
 Hint Rewrite <- FinAgeOnly_cshift_iff : propagate_down.
 
+Lemma shift_post_inverse : forall p G, ctx_shift (List.rev p) (ctx_shift p G) = G.
+Proof.
+  intros *.
+  apply ext_eq. intros [xx|xh].
+  {  cbn. unfold Fun.map. cbn. hauto lq: on. }
+  cbn. unfold Fun.map. cbn. rewrite Permutation.pre_inverse.
+  hauto lq: on.
+Qed.
+
+Lemma shift_pre_inverse : forall p G, ctx_shift p (ctx_shift (List.rev p) G) = G.
+Proof.
+  intros *.
+  apply ext_eq. intros [xx|xh].
+  {  cbn. unfold Fun.map. cbn. hauto lq: on. }
+  cbn. unfold Fun.map. cbn. rewrite Permutation.post_inverse.
+  hauto lq: on.
+Qed.
+
+Lemma In_shift : forall p G x, In x (ctx_shift p G) <-> In (pre_shift p x) G.
+Proof.
+  intros *. unfold ctx_shift.
+  rewrite In_map_iff, In_precomp_iff.
+  reflexivity.
+Qed.
+
+(* Sometimes bijections are beautiful *)
+Lemma Disjoint_cshift_iff : forall D1 D2 H h', D1 # D2 <-> (D1 ᴳ[ H ⩲ h']) # (D2 ᴳ[ H ⩲ h']).
+Proof.
+  assert (forall p D1 D2, D1 # D2 -> ctx_shift p D1 # ctx_shift p D2) as suffices.
+  2:{ split.
+      - apply suffices.
+      - specialize (suffices (shift_perm H h') (ctx_shift (List.rev (shift_perm H h')) D1) (ctx_shift (List.rev (shift_perm H h')) D2)).
+        rewrite !shift_pre_inverse in suffices. auto. }
+  intros *. unfold Disjoint. intros h x. rewrite !In_shift.
+  sfirstorder.
+Qed.
+
 (* TODO: Not necessarily true if `h\in D'` and `h+h' \in D`. *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hvar), D # D' -> D ᴳ[ hvarsᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
-(* Sometimes bijections are beautiful *)
-Lemma Disjoint_cshift_iff : forall D1 D2 H h', D1 # D2 <-> (D1 ᴳ[ H ⩲ h']) # (D2 ᴳ[ H ⩲ h']).
-Proof. Admitted.
-
-(* TODO: Annoying reasoning on supports. May work in setoid form though. But worth trying to do as an equality. *)
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hvars) (h' : hvar), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_cshift, ctx_shift, union.
+  (* rewrite merge_with_precomp. *)
+Admitted.
 (* TODO: add to canonalize? *)
 
 Lemma cshift_distrib_on_stimes : forall (m : mode) (G : ctx) (H : hvars) (h' : hvar), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).

@@ -700,6 +700,14 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma In_precomp_iff : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) x,
+    In x (precomp g preimg f) <-> In (g x) f.
+Proof.
+  intros *. rewrite !In_iff_exists_Some.
+  unfold precomp. cbn.
+  reflexivity.
+Qed.
+
 Lemma precomp_propagate_forward : forall {A1 A2 B} (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B) (P : forall x, B x -> Prop),
     (forall x y, f x = Some y -> P x y) -> (forall x y, precomp g preimg f x = Some y -> P (g x) y).
 Proof.
@@ -780,6 +788,13 @@ Lemma map_comp : forall {A B1 B2 B3} (m1 : forall x, B1 x -> B2 x) (m2 : forall 
 Proof.
   intros *. rewrite !map_spec.
   apply Fun.map_comp.
+Qed.
+
+Lemma map_precomp : forall {A1 A2 B1 B2} (m : forall x, B1 x -> B2 x)  (g : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, g w = x -> List.In w (p x)}) (f : T A2 B1),
+    map (fun x => m (g x)) (precomp g preimg f) = precomp g preimg (map m f).
+Proof.
+  intros *. apply ext_eq. intros x. cbn. unfold Fun.map.
+  reflexivity.
 Qed.
 
 (* Not great: Q can never been inferred. But better than nothing. Easy case: map_propagate_forward'. *)
@@ -910,6 +925,13 @@ Proof.
   intros *.
   rewrite !In_iff_exists_Some, merge_with_spec.
   hauto lq: on use: Fun.In_merge_iff.
+Qed.
+
+Lemma merge_with_precomp : forall {A1 A2 B} (m : forall x:A2, B x -> B x -> B x) (f : T A2 B) (g : T A2 B) (h : A1 -> A2) (preimg : { p : A2 -> list A1 | forall x w, h w = x -> List.In w (p x)}),
+    merge_with (fun x => m (h x)) (precomp h preimg f) (precomp h preimg g) = precomp h preimg (merge_with m f g).
+Proof.
+  intros *. apply ext_eq. cbn. intros x. unfold Fun.merge. cbn.
+  reflexivity.
 Qed.
 
 Lemma merge_with_propagate_backward : forall {A B} (P : forall x, B x -> Prop) (m : forall x:A, B x -> B x -> B x) (f : T A B) (g : T A B),

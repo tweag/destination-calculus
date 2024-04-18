@@ -632,35 +632,37 @@ Definition hminus_inv (G : ctx) : ctx :=
     end
   ) G.
 
-Definition pre_cshift (H : hvars) (h' : hvar) (n : name) : name :=
+Definition pre_shift (p : Permutation.T) (n : name) : name :=
   match n with
   | name_Var x => name_Var x
-  | name_DH h => name_DH (Permutation.sem (List.rev (shift_perm H h')) h)
+  | name_DH h => name_DH (Permutation.sem p h)
   end.
 
-Definition post_process H h' n : binding_type_of (pre_cshift H h' n) -> binding_type_of n :=
+Definition post_process (p : Permutation.T) n : binding_type_of (pre_shift p n) -> binding_type_of n :=
   match n with
   | name_Var _ => fun b => b
   | name_DH _ => fun b => b
   end.
 
 #[program]
-Definition ctx_cshift (G : ctx) (H : hvars) (h' : hvar) : ctx :=
-  map (post_process H h') (
-  precomp (pre_cshift H h')
+Definition ctx_shift (p : Permutation.T) (G : ctx) : ctx :=
+  map (post_process p) (
+  precomp (pre_shift p )
     (
       fun n => match n with
       | name_Var x => name_Var x :: nil
-      | name_DH h => name_DH (Permutation.sem (shift_perm H h') h) :: nil
+      | name_DH h => name_DH (Permutation.sem (List.rev p) h) :: nil
       end
     ) G).
 Next Obligation.
-  unfold List.In, pre_cshift.
+  unfold List.In, pre_shift.
   destruct w as [xx|xh].
   { tauto. }
-  rewrite Permutation.pre_inverse.
+  rewrite Permutation.post_inverse.
   tauto.
 Qed.
+
+Definition ctx_cshift (G : ctx) (H : hvars) (h' : hvar) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
 
 Definition DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
 
