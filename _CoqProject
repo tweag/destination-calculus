@@ -1,22 +1,10 @@
--Q ott_coq Ott
+-Q ott_coq Dest
 
 -arg -w -arg -deprecated-hint-without-locality
 -arg -w -arg -deprecated-hint-rewrite-without-locality
 
 ott_coq/Finitely.v
 ott_coq/Permutation.v
-ott_coq/ott_list_predicate.v
-ott_coq/ott_list_takedrop.v
-ott_coq/ott_list.v
-ott_coq/ott_list_repeat.v
-ott_coq/ott_list_mem.v
-ott_coq/ott_list_base.v
-ott_coq/ott_list_eq_dec.v
-ott_coq/ott_list_support.v
-ott_coq/ott_list_nth.v
-ott_coq/ott_list_core.v
-ott_coq/ott_list_distinct.v
-ott_coq/ott_list_flat_map.v
 ott_coq/ext_nat.v
 ott_coq/destination_calculus_ott.v
 ott_coq/destination_calculus_notations.v

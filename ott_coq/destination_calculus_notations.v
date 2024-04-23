@@ -1,7 +1,7 @@
 Require Import List.
 Require Import Ott.ott_list_core.
-Require Import Ott.destination_calculus_ott.
-Require Import Ott.ext_nat.
+Require Import Dest.destination_calculus_ott.
+Require Import Dest.ext_nat.
 
 (* Var, holes and dests names : 15-19 *)
 Notation "'maxᴴ(' H ')'" := (hvar_max H) (at level 0, no associativity).

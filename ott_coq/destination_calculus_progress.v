@@ -1,10 +1,10 @@
 Require Import List.
 Require Import Ott.ott_list_core.
-Require Import Ott.destination_calculus_ott.
-Require Import Ott.destination_calculus_notations.
-Require Import Ott.ext_nat.
+Require Import Dest.destination_calculus_ott.
+Require Import Dest.destination_calculus_notations.
+Require Import Dest.ext_nat.
 Require Import Coq.Program.Equality.
-Require Import Ott.Finitely.
+Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
 (* ⬇️ for the `impl` relation. *)
@@ -15,7 +15,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
 Require Import Arith.
-Require Import Ott.destination_calculus_proofs.
+Require Import Dest.destination_calculus_proofs.
 
 Theorem Progress : forall (C : ectxs) (t : term) (U0 : type), ⊢ C ʲ[t] : U0 -> ((exists v, t = ᵥ₎ v) -> C <> ©️⬜) -> exists (C' : ectxs) (t' : term), C ʲ[t] ⟶ C' ʲ[t'].
 Proof.

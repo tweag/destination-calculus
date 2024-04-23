@@ -1,17 +1,17 @@
 embed
 {{ coq
 Import EqNotations.
-Require Import Ott.ext_nat.
+Require Import Dest.ext_nat.
 Require Import Coq.Structures.Equalities.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
-(* Grumble, grumble: we shouldn't need to Import Ott.Finitely, but if
+(* Grumble, grumble: we shouldn't need to Import Dest.Finitely, but if
    we don't we can't use the coercions. *)
-Require Import Ott.Finitely.
-Require Ott.Permutation.
+Require Import Dest.Finitely.
+Require Dest.Permutation.
 
 Module Nat' <: OrderedTypeWithLeibniz.
   Include PeanoNat.Nat.
