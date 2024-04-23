@@ -442,7 +442,7 @@ Proof.
             2:{ trivial. }
             destruct h_lin as [h_lin|h_lin].
             - inversion h_lin.
-            - apply empty_stimes. tauto. }
+            - apply stimes_empty_iff. tauto. }
         rewrite <- intermediary.
         rewrite LinOnly_union_iff. repeat split.
         - apply LinOnly_stimes_forward.
@@ -451,8 +451,8 @@ Proof.
           crush.
         - assumption.
         - crush. }
-      apply empty_union in empty. destruct empty as [empty_D1 empty_D3].
-      apply empty_stimes in empty_D1.
+      apply union_empty_iff in empty. destruct empty as [empty_D1 empty_D3].
+      apply stimes_empty_iff in empty_D1.
       rewrite empty_D3, hminus_empty_eq, <- union_empty_r_eq in TyRv2.
       assert (D2 ⊢ ᵥ₎ ᵛ( v2, ᴇ ων ⁔ v1) : U ⨂ ! ων ⁔ T).
       { subst. rewrite union_empty_r_eq with (G:=D2).

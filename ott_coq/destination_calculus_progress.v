@@ -86,7 +86,7 @@ Proof.
             2:{ trivial. }
             destruct h_lin as [h_lin|h_lin].
             - inversion h_lin.
-            - apply empty_stimes. tauto. }
+            - apply stimes_empty_iff. tauto. }
         rewrite <- intermediary.
         rewrite LinOnly_union_iff. repeat split.
         - apply LinOnly_stimes_forward.
@@ -95,7 +95,7 @@ Proof.
           crush.
         - assumption.
         - crush. }
-      apply empty_union in Empty. destruct Empty as [_ EmptyD3].
+      apply union_empty_iff in Empty. destruct Empty as [_ EmptyD3].
       subst. rewrite hvars_minus_eq, hvars_empty_is_hempty.
       exists C, (ᵥ₎ ᵛ( v2 , ᴇ ων ⁔ v' )). constructor.
     * exists (C ∘ from⧔⬜), t. constructor; tauto.

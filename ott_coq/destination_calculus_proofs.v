@@ -853,6 +853,14 @@ Proof.
 Qed.
 Hint Rewrite <- union_empty_l_eq : canonalize.
 
+(* Could be an equivalence *)
+Lemma union_empty_iff : forall G1 G2, G1 ᴳ+ G2 = ᴳ{} <-> G1 = ᴳ{} /\ G2 = ᴳ{}.
+Proof. Admitted.
+
+(* Could be an equivalence *)
+Lemma stimes_empty_iff : forall G m, m ᴳ· G = ᴳ{} <-> G = ᴳ{}.
+Proof. Admitted.
+
 Lemma DestOnly_Disjoint_singleton_var : forall (G : ctx) (x : var) (m : mode) (T : type), DestOnly G -> G # (ᴳ{ x : m ‗ T}).
 Proof.
   intros * destonly.
@@ -1741,6 +1749,8 @@ Ltac hauto_ctx :=
         hminus_inv_empty_eq,
         union_empty_r_eq,
         union_empty_l_eq,
+        union_empty_iff,
+        stimes_empty_iff,
         DestOnly_Disjoint_singleton_var,
         mode_plus_commutative,
         mode_plus_associative,
@@ -2282,12 +2292,4 @@ Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hvar) (C : ectxs) (m n : mod
  D1 ᴳ+ (m · n) ᴳ· D2 ᴳ+ ᴳ{+ h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
  D2 ᴳ+ (ᴳ- D3) ⫦ v : U ->
  D1 ᴳ+ m ᴳ· (ᴳ-⁻¹ (n ᴳ· (ᴳ- D3))) ⊣ C ©️[ h ≔ hvarsᴳ(ᴳ- D3) ‗ v ] : T ↣ U0.
-Proof. Admitted.
-
-(* Could be an equivalence *)
-Lemma empty_union : forall G1 G2, G1 ᴳ+ G2 = ᴳ{} <-> G1 = ᴳ{} /\ G2 = ᴳ{}.
-Proof. Admitted.
-
-(* Could be an equivalence *)
-Lemma empty_stimes : forall G m, m ᴳ· G = ᴳ{} <-> G = ᴳ{}.
 Proof. Admitted.
