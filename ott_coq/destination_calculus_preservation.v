@@ -273,7 +273,7 @@ Proof.
             rewrite D11Eq.
             rewrite union_commutative with (G2 := ¹↑ ᴳ· D2).
             rewrite union_associative.
-            rewrite stimes_distrib_union. tauto. }
+            rewrite stimes_distrib_on_union. tauto. }
           rewrite ctxEq.
           assert (ValidOnly ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ( hvars©( C)) + 1)])).
             { apply ValidOnly_cshift_iff. apply ValidOnly_union_forward; trivial.
@@ -287,14 +287,14 @@ Proof.
               { apply LinOnly_stimes_forward. exact (IsLinProof (Fin 0)). apply LinOnly_cshift_iff. apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. exact (IsLinProof (Fin 1)). crush.
               assumption. crush. }
               { apply LinOnly_stimes_forward. exact (IsLinProof (Fin 1)). crush. }
-              { apply Disjoint_stimes_l_iff. rewrite cshift_distrib_on_union. apply Disjoint_union_l_iff. split. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. rewrite Disjoint_stimes_l_iff, Disjoint_stimes_r_iff. crush. crush. apply Disjoint_commutative. rewrite stimes_distrib_union, Disjoint_union_l_iff in H. destruct H as (H & H'). assumption. }
+              { apply Disjoint_stimes_l_iff. rewrite cshift_distrib_on_union. apply Disjoint_union_l_iff. split. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. rewrite Disjoint_stimes_l_iff, Disjoint_stimes_r_iff. crush. crush. apply Disjoint_commutative. rewrite stimes_distrib_on_union, Disjoint_union_l_iff in H. destruct H as (H & H'). assumption. }
             }
           assert (FinAgeOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2)).
             { apply FinAgeOnly_union_forward; repeat split.
               { apply FinAgeOnly_stimes_forward. exact (IsFinAgeProof Lin 0). apply FinAgeOnly_cshift_iff. apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. exact (IsFinAgeProof Lin 1). crush.
               assumption. crush. }
               { apply FinAgeOnly_stimes_forward. exact (IsFinAgeProof Lin 1). crush. }
-              { apply Disjoint_stimes_l_iff. rewrite cshift_distrib_on_union. apply Disjoint_union_l_iff. split. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. rewrite Disjoint_stimes_l_iff, Disjoint_stimes_r_iff. crush. crush. apply Disjoint_commutative. rewrite stimes_distrib_union, Disjoint_union_l_iff in H. destruct H as (H & H'). assumption. }
+              { apply Disjoint_stimes_l_iff. rewrite cshift_distrib_on_union. apply Disjoint_union_l_iff. split. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. rewrite Disjoint_stimes_l_iff, Disjoint_stimes_r_iff. crush. crush. apply Disjoint_commutative. rewrite stimes_distrib_on_union, Disjoint_union_l_iff in H. destruct H as (H & H'). assumption. }
             }
           apply term_sub_spec_1 with (T' := T) (D2 := ¹↑ ᴳ· D2).
           all: crush.
