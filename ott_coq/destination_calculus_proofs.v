@@ -1444,6 +1444,14 @@ Proof.
     specialize (DisjointGSing n InG H). assumption.
 Qed.
 
+Lemma Disjoint_singletons_iff : forall (n1 n2 : name) (binding1 : binding_type_of n1) (binding2 : binding_type_of n2), ctx_singleton n1 binding1 # ctx_singleton n2 binding2 <-> n1 <> n2.
+Proof.
+  intros *.
+  split.
+  - intros DisjointSing. intros contra. subst. unfold Disjoint in DisjointSing. specialize (DisjointSing n2). assert (In n2 (ctx_singleton n2 binding1)). { apply In_singleton_iff; reflexivity. } assert (In n2 (ctx_singleton n2 binding2)). { apply In_singleton_iff; reflexivity. } specialize (DisjointSing H H0). congruence.
+  - intros n1neq2. unfold Disjoint. intros n. intros inSing1 inSing2. unfold ctx_singleton in inSing1, inSing2. rewrite In_singleton_iff with (x := n1) (discr := name_eq_dec) (v := binding1) in inSing1. rewrite In_singleton_iff with (x := n2) (discr := name_eq_dec) (v := binding2) in inSing2. subst. congruence.
+Qed.
+
 Lemma nIn_union_iff: forall (G1 G2 : ctx) (n : name), ~In n (G1 ᴳ+ G2) <-> ((~In n G1) /\ (~In n G2)).
 Proof.
   intros *. split.
@@ -1835,6 +1843,7 @@ Ltac hauto_ctx :=
         In_union_iff,
         In_stimes_iff,
         nIn_iff_Disjoint_singleton,
+        Disjoint_singletons_iff,
         nIn_union_iff,
         nIn_stimes_iff,
         DisposableOnly_wk_VarOnly,
@@ -2396,7 +2405,34 @@ Proof.
       rewrite H2 in *.
       rewrite union_associative. rewrite union_commutative with (G2 := P1). rewrite <- union_associative.
       apply Ty_term_PatU with (P1 := P1) (P2 := (m' ᴳ· D1 ᴳ+ D2')); trivial.
-  - give_up.
+  - rename x into Hu.
+    assert (m ᴳ· P1 ᴳ+ P2 = D2 ᴳ+ ᴳ{ x' : m' ‗ T'}) as UnionEq.
+      { hauto l: on use: ext_eq. } clear Hu.
+    pose proof UnionEq as UnionEq'. apply ctx_split_dec_bound_var in UnionEq'. 2:{ crush. } 2:{ crush. }
+    destruct UnionEq' as [[in_both | in_left_only] | in_right_only], (HVarsFacts.eq_dec x1 x'), (HVarsFacts.eq_dec x2 x'); subst; simpl in *;
+      try (destruct in_both as (D1' & D2' & m1 & m2 & mP1eq & DestOnlyD1p & P2eq & DestOnlyD2p & meq); try apply ctx_split_stimes_inversion in mP1eq; try destruct mP1eq as (m1' & m1eq & D1'' & P1eq & DestOnlyD1pp); try pose proof Validmp as Validmp'; try rewrite <- meq in Validmp' ; try apply IsValid_plus_backward in Validmp' ; try destruct Validmp' as (Validm1 & Validm2); try pose proof Validm1 as Validm1'; try rewrite <- m1eq in Validm1'; try apply IsValid_times_backward in Validm1'; try destruct Validm1' as (_ & Validm1'));
+      try (destruct in_left_only as (D1' & mP1eq & DestOnlyD1p & DestOnlyP2);
+      try apply ctx_split_stimes_inversion in mP1eq; try destruct mP1eq as (m1 & m1eq & D1'' & P1eq & DestOnlyD1pp); try pose proof Validmp as Validmp'; try rewrite <- m1eq in Validmp'; try apply IsValid_times_backward in Validmp'; try destruct Validmp' as (_ & Validm1));
+      try (destruct in_right_only as (D2' & DestOnlyP1 & mP2eq & DestOnlyD2p));
+      subst; trivial;
+      try (specialize (DisjointP2x1 (ˣ x')); contradiction DisjointP2x1; try apply In_union_forward_r; apply In_singleton_iff; reflexivity);
+      try (specialize (DisjointP2x2 (ˣ x')); contradiction DisjointP2x2; try apply In_union_forward_r; apply In_singleton_iff; reflexivity).
+    * assert (m ᴳ· D1'' ᴳ+ D2' = D2). { apply remove_singletons_in_union_eq_stimes_l in UnionEq; assumption. } rewrite <- H in *.
+      assert (LinOnly (m1' ᴳ· D1 ᴳ+ D1'')). {
+        apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). apply LinOnly_stimes_plus_backward in LinOnlyD1. destruct LinOnlyD1 as (LinOnlymm1pD1 & LinOnlym2D1). apply LinOnly_union_iff; repeat split. all:crush. }
+      assert (FinAgeOnly (m1' ᴳ· D1 ᴳ+ D1'')). {
+        apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD1ppD2p). apply FinAgeOnly_stimes_plus_backward in FinAgeOnlyD1. destruct FinAgeOnlyD1 as (FinAgeOnlymm1pD1 & FinAgeOnlym2D1). apply FinAgeOnly_union_forward; repeat split; apply LinOnly_union_iff in LinOnlyD; destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). all:crush. }
+      specialize (IHTyte1 DestOnlyD1 x' T' m1' Validm1' D1'' DestOnlyD1pp H0 H1 eq_refl Tyvp).
+      assert (LinOnly (m2 ᴳ· D1 ᴳ+ (D2' ᴳ+ ᴳ{ x1 : m ‗ T1}))). {
+        apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). apply LinOnly_stimes_plus_backward in LinOnlyD1. destruct LinOnlyD1 as (LinOnlymm1pD1 & LinOnlym2D1). apply LinOnly_union_iff in LinOnlyD1ppD2p. destruct LinOnlyD1ppD2p as (LinOnlyD1pp & LinOnlyD2p & DisjointD1ppD2p). apply LinOnly_union_iff; repeat split. all:admit. (* all:crush. *) }
+      assert (FinAgeOnly (m2 ᴳ· D1 ᴳ+ (D2' ᴳ+ ᴳ{ x1 : m ‗ T1}))). {
+        apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD1ppD2p). apply FinAgeOnly_stimes_plus_backward in FinAgeOnlyD1. destruct FinAgeOnlyD1 as (FinAgeOnlymm1pD1 & FinAgeOnlym2D1). apply FinAgeOnly_union_forward; repeat split; apply LinOnly_union_iff in LinOnlyD; destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). all:admit. (* all:crush. *) }
+      (* We cannot use IHTyte2 here for two reasons :
+        - The subterm doesn't type in D2 + { x1 : ... } + { x' : ... } whereas only a ctx of the form D2 + { x' : ... } is allowed in term_sub lemma.
+        - Because of the binding { x1 : m T1 }, the ctx D2 + { x1 : m T1 } is often NOT LinOnly/FinAgeOnly (as the case multiplicity m is not constrained by anything really).
+      *)
+      (* specialize (IHTyte2 DestOnlyD1 x' T' m2 Validm2 (D2' ᴳ+ ᴳ{ x1 : m ‗ T1}) DestOnlyD2p H2 H3 eq_refl Tyvp). *)
+    give_up.
 Admitted.
 
 Lemma term_sub_spec_2 :
