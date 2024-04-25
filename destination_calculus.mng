@@ -1,26 +1,11 @@
 % -*- latex -*-
-\documentclass[10pt]{article}
-
+\documentclass[acmsmall, screen]{acmart}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[a4paper,left=0.75cm,right=0.75cm,top=1cm,bottom=1.70cm]{geometry}
-\usepackage{lmodern}
-\usepackage[dvipsnames]{xcolor}
-\usepackage{graphicx}
-\usepackage{amsmath}
 \usepackage{amsthm}
+\let\Bbbk\relax % needed because of a conflict between amssymb and newtx
 \usepackage{amssymb}
 \usepackage{subcaption}
-\usepackage{hyperref}
-\hypersetup{
-    colorlinks,
-    linkcolor={red!50!black},
-    citecolor={blue!50!black},
-    urlcolor={blue!80!black}
-  }
-
-\usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
-\addbibresource{bibliography.bib}
 
 % For OTT rendering
 \usepackage[supertabular]{ottalt}
@@ -34,11 +19,56 @@
 
 \begin{document}
 
-\title{Destination $\lambda$-calculus}
-\author{Thomas \textsc{Bagrel}}
-\date{\today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TITLE SECTION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\acmJournal{PACMPL}
+\acmConference[POPL'25]{Principles of Programming Languages}{January 19 -- 25, 2025}{Denver, Colorado}
+\title{Destination $\lambda-$calculus}
+\subtitle{A linear calculus for pure functional memory updates}
+
+\author{Thomas Bagrel}
+\orcid{0009-0008-8700-2741}
+\affiliation{
+  \institution{LORIA/Inria}
+  \department{MOSEL VERIDIS}
+  \city{Nancy}
+  \country{France}
+}
+\affiliation{
+  \institution{Modus Create}
+  \department{TWEAG - OSPO}
+  \city{Paris}
+  \country{France}
+}
+\email{thomas.bagrel@loria.fr}
+\email{thomas.bagrel@tweag.io}
+
+\author{Arnaud Spiwack}
+\orcid{0TBD-0TBD-0TBD-0TBD}
+\affiliation{
+  \institution{Modus Create}
+  \department{TWEAG - OSPO}
+  \position{Director of Research}
+  \city{Paris}
+  \country{France}
+}
+
+\abstract{
+  We present the destination $\lambda-$calculus, a linear calculus for
+  pure functional memory updates. We present the
+  syntax, type system, and operational semantics of the destination
+  $\lambda-$calculus, and prove type safety formally in the Coq proof assistant.
+  
+  We show how the principles of the destination $\lambda-$calculus can form a theoretical ground
+  for destination-passing style programming in functional languages. In particular,
+  we detail how the present work can be applied to Linear Haskell to lift the main restriction of DPS programming in Haskell as developped in \cite{bagreldps2024}. We illustrate this with a range of pseudo-Haskell examples.
+}
 
 \maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Term and value syntax}
 
@@ -115,5 +145,8 @@
   very natural with ott-generated typing rules).
 \item Talk about the use and benefits of Copilot.
 \end{itemize}
+
+\clearpage{}
+\bibliography{bibliography}{}
 
 \end{document}
