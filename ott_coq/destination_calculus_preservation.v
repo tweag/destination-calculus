@@ -35,9 +35,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻ t' : U) as TyApp.
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v  t' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) t' U T); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v ≻ t').
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v  t').
       all: crush.
     - (* Sem-eterm-AppFoc2 *)
       inversion Tyt; subst.
@@ -50,11 +50,11 @@ Proof.
       inversion Tyt; subst. rename TyRv into TyRvp, TyC into TyCc, D0 into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻ ᵥ₎ v' : U) as TyApp.
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v  ᵥ₎ v' : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v) (ᵥ₎ v') U T); tauto. }
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := (ᵥ₎ v) ≻ (ᵥ₎ v')).
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := (ᵥ₎ v)  (ᵥ₎ v')).
       all: crush.
     - (* Sem-eterm-AppRed *)
       inversion Tyt; subst.
@@ -104,9 +104,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2} : U) as TyPat.
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2} : U) as TyPat.
         { apply (Ty_term_PatS m D1 D2 (ᵥ₎ v) x1 u1 x2 u2 U T1 T2); crush. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v ≻caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). all: crush.
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). all: crush.
     - (* Sem-eterm-PatLRed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U.
@@ -147,9 +147,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u : U) as TyPat.
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v caseᵖ m ᵗ(x1 , x2) ⟼ u : U) as TyPat.
         { apply (Ty_term_PatP m D1 D2 (ᵥ₎ v) x1 x2 u U T1 T2); crush. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v ≻caseᵖ m ᵗ(x1 , x2) ⟼ u). all: crush.
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v caseᵖ m ᵗ(x1 , x2) ⟼ u). all: crush.
     - (* Sem-eterm-PatPRed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U.
@@ -178,9 +178,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u : U) as TyPat.
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v caseᵉ m ᴇ n ⁔ x ⟼ u : U) as TyPat.
         { apply (Ty_term_PatE m D1 D2 (ᵥ₎ v) n x u U T); crush. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v ≻caseᵉ m ᴇ n ⁔ x ⟼ u). all: crush.
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v caseᵉ m ᴇ n ⁔ x ⟼ u). all: crush.
     - (* Sem-eterm-PatERed *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into U, T0 into T.
@@ -207,9 +207,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinFinOnly (D1 ᴳ+ D2) C (U ⧔ T') U0); tauto. }
-      assert (D1 ᴳ+ D2 ⊢ ᵥ₎ v ≻map x ⟼ t' : U ⧔ T') as TyMap.
+      assert (D1 ᴳ+ D2 ⊢ ᵥ₎ v map x ⟼ t' : U ⧔ T') as TyMap.
         { apply (Ty_term_Map D1 D2 (ᵥ₎ v) x t' U T' T); crush. }
-      constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T') (t := ᵥ₎ v ≻map x ⟼ t'). all: crush.
+      constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T') (t := ᵥ₎ v map x ⟼ t'). all: crush.
     - (* Sem-eterm-MapRedAOpenFoc *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.

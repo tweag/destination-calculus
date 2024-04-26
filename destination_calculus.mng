@@ -1,4 +1,5 @@
 % -*- latex -*-
+\pdfmapfile{+zi4-sl.map}
 \documentclass[acmsmall, screen]{acmart}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -25,8 +26,19 @@
 
 \acmJournal{PACMPL}
 \acmConference[POPL'25]{Principles of Programming Languages}{January 19 -- 25, 2025}{Denver, Colorado}
-\title{Destination $\lambda-$calculus}
-\subtitle{A linear calculus for pure functional memory updates}
+\title{Destination calculus}
+\subtitle{A linear $\lambda-$calculus for pure, functional memory updates}
+
+\author{Arnaud Spiwack}
+\orcid{0TBD-0TBD-0TBD-0TBD}
+\affiliation{
+  \institution{Modus Create}
+  \department{TWEAG - OSPO}
+  \position{Director of Research}
+  \city{Paris}
+  \country{France}
+}
+\email{arnaud.spiwack@tweag.io}
 
 \author{Thomas Bagrel}
 \orcid{0009-0008-8700-2741}
@@ -45,26 +57,18 @@
 \email{thomas.bagrel@loria.fr}
 \email{thomas.bagrel@tweag.io}
 
-\author{Arnaud Spiwack}
-\orcid{0TBD-0TBD-0TBD-0TBD}
-\affiliation{
-  \institution{Modus Create}
-  \department{TWEAG - OSPO}
-  \position{Director of Research}
-  \city{Paris}
-  \country{France}
-}
-
-\abstract{
-  We present the destination $\lambda-$calculus, a linear calculus for
-  pure functional memory updates. We present the
+\begin{abstract}
+  We present the destination calculus, a linear $\lambda-$calculus for
+  pure, functional memory updates. We introduce the
   syntax, type system, and operational semantics of the destination
-  $\lambda-$calculus, and prove type safety formally in the Coq proof assistant.
+  calculus, and prove type safety formally in the Coq proof assistant.
   
-  We show how the principles of the destination $\lambda-$calculus can form a theoretical ground
+  We show how the principles of the destination calculus can form a theoretical ground
   for destination-passing style programming in functional languages. In particular,
-  we detail how the present work can be applied to Linear Haskell to lift the main restriction of DPS programming in Haskell as developped in \cite{bagreldps2024}. We illustrate this with a range of pseudo-Haskell examples.
-}
+  we detail how the present work can be applied to Linear Haskell to lift the main 
+  restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
+  We illustrate this with a range of pseudo-Haskell examples.
+\end{abstract}
 
 \maketitle
 
@@ -147,6 +151,7 @@
 \end{itemize}
 
 \clearpage{}
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
 
 \end{document}

@@ -1,3 +1,14 @@
+@inproceedings{bagrel_destination-passing_2024,
+	title = {Destination-passing style programming: a {Haskell} implementation},
+	shorttitle = {Destination-passing style programming},
+	url = {https://inria.hal.science/hal-04406360},
+	abstract = {Destination-passing style programming introduces destinations, which represent the address of a write-once memory cell. Those destinations can be passed as function parameters, and thus enable the caller of a function to keep control over memory management: the body of the called function will just be responsible of filling that memory cell. This is especially useful in functional programming languages, in which the body of a function is typically responsible for allocation of the result value. Programming with destination in Haskell is an interesting way to improve performance of critical parts of some programs, without sacrificing memory guarantees. Indeed, thanks to a linearly-typed API I present, a write-once memory cell cannot be left uninitialized before being read, and is still disposed of by the garbage collector when it is not in use anymore, eliminating the risk of uninitialized read, memory leak, or double-free errors that can arise when memory is managed manually. In this article, I present an implementation of destinations for Haskell, which relies on so-called compact regions. I demonstrate, in particular, a simple parser example for which the destination-based version uses 35\% less memory and time than its naive counterpart for large inputs.},
+	language = {en},
+	urldate = {2024-04-26},
+	author = {Bagrel, Thomas},
+	month = jan,
+	year = {2024},
+}
 
 @inproceedings{shaikhha_destination-passing_2017,
 	address = {Oxford UK},
