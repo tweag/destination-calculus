@@ -60,35 +60,74 @@
             pkgs.haskellPackages.lhs2tex
             (pkgs.texlive.combine {
               inherit (pkgs.texlive)
-                scheme-small
-                cleveref
-                latexmk
-                biblatex biblatex-software
-                stmaryrd
-                unicode-math lm lm-math
-                logreq xstring
-                xargs todonotes
-                mathpartir
-                bbold
-                halloweenmath
-                pict2e
-                # newunicodechar
+                scheme-basic
+                acmart
+
+                # acmart dependencies
+                amscls
+                amsfonts
+                amsmath
+                # supplies binhex:
+                kastrup
+                # supplies balance:
+                preprint
+                booktabs
+                caption
+                comment
+                cm-super
+                cmap
+                doclicense
+                draftwatermark
+                environ
+                etoolbox
+                fancyhdr
+                float
+                fontaxes
+                geometry
+                graphics
+                hyperref
+                hyperxmp
+                iftex
+                # not listed in the documentation, but needed:
+                ifmtarg
+                inconsolata
+                libertine
+                # already supplied by ncctools: manyfoot
+                microtype
+                mmap
+                ms
+                mweights
+                natbib
+                ncctools
+                newtx
+                oberdiek
+                # supplies pdftex-def:
+                graphics-def
+                refcount
+                setspace
+                textcase
+                totpages
+                trimspaces
+                upquote
+                url
+                xcolor
+                xkeyval
+                xstring
 
                 # for lhs2tex
                 lazylist polytable
 
                 # for ott
                 supertabular
+                mathpartir
 
-                # acmart and dependencies
-                # acmart totpages trimspaces
-                # libertine environ hyperxmp
-                # ifmtarg comment ncctools
-                # inconsolata newtx txfonts
-                # xpatch xurl
+                # styling for the language
+                stmaryrd
+                bbold
+                tipa
+                halloweenmath pict2e
                 ;
             })
-
           ];
         };
       });

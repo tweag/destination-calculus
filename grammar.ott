@@ -58,15 +58,15 @@ hvar, h :: 'hvar_' ::= {{ com Hole or destination name ($\mathbb{N}$) }} {{ coq 
   | 2 :: S :: T {{ coq 2 }} {{ tex \ottshvar{2} }}
   | h + h' :: M :: A {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
   | h [ H ⩲ h' ] :: M :: S {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
-  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{max(}[[H]]\ottshvar{)} }}
+  | max ( H ) :: M :: M {{ com Maximum of a set of holes }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathit{max}(}[[H]]\ottshvar{)} }}
   | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshvar{(}[[h]]\ottshvar{)} }}
 
 hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \ottshvar{[[hvars]]} }}
   | { h1 , .. , hk } :: :: L {{ coq (hvars_ [[h1..hk]]) }}
   | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HVars.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
   | H ⩲ h' :: M :: S {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hvars_shift [[H]] [[h']]) }}
-  | 'hvars(' G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshvar{hvars(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
-  | 'hvars(' C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshvar{hvars(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
+  | 'hvars(' G ) :: M :: C {{ com Hole names of a context (requires $\texttt{ctx\_NoVar}([[G]])$) }} {{ tex \ottshvar{\mathit{hvars}(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
+  | 'hvars(' C ) :: M :: E {{ com Hole names of an evaluation context }} {{ tex \ottshvar{\mathit{hvars}(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshvar{(}[[H]]\ottshvar{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,12 +76,12 @@ hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \o
 term, t, u :: 'term_' ::= {{ com Term }}
   | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
-  | t ≻ t' :: :: App {{ com Application }} {{ tex [[t]]\,\succ[[t']] }}
-  | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;\,[[u]] }}
-  | t ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t ≻case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
-  | t ≻case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | t ≻map x ⟼ t' :: :: Map {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +
+  | t  t' :: :: App {{ com Application }} {{ tex [[t]]\vartriangleright\![[t']] }}
+  | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;[[u]] }}
+  | t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar $[[t]]$ }} {{ tex [[t]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[u]] }} {{ com Wrap $[[u]]$ into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Convert ampar with no dest remaining into pair }}
   % | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
@@ -93,7 +93,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· t' :: :: FillC {{ com Fill destination with root of ampar $[[t']]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[t']] }}
 
-  | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \coloneq [[v]] ] }}
+  | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
   | ( t ) :: S :: Paren {{ coq [[t]] }}
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpaacing2
@@ -119,18 +119,18 @@ val, v :: 'val_' ::= {{ com Term value }}
 ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }}
   | ⬜ :: :: N {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
 %  | c :: S :: S {{ coq (cons [[c]] nil) }}
-  | C ∘ c :: :: C {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\,\circ\,[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
-  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\coloneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
+  | C ∘ c :: :: C {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\circ[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
+  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\assigneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
-  | ⬜ ≻ t' :: :: AppFoc1 {{ com Application }} {{ tex [[⬜]]\,\succ[[t']] }}
-  | v ≻ ⬜ :: :: AppFoc2 {{ com Application }} {{ tex [[v]]\,\succ[[⬜]] }}
-  | ⬜ ; u :: :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[⬜]]~;\,[[u]] }}
-  | ⬜ ≻case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatSFoc {{ com Pattern-match on sum }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\{\,\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\,\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | ⬜ ≻case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ com Pattern-match on product }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
-  | ⬜ ≻case m ᴇ n x ⟼ u :: :: PatEFoc {{ com Pattern-match on exponential }} {{ tex [[⬜]]\,\succ\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ ≻map x ⟼ t' :: :: MapFoc {{ com Map over the right side of ampar }} {{ tex [[⬜]]\,\succ\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
+  | ⬜  t' :: :: AppFoc1 {{ com Application }} {{ tex [[⬜]]\vartriangleright\![[t']] }}
+  | v  ⬜ :: :: AppFoc2 {{ com Application }} {{ tex [[v]]\vartriangleright\![[⬜]] }}
+  | ⬜ ; u :: :: PatUFoc {{ com Pattern-match on unit }} {{ tex [[⬜]]~;[[u]] }}
+  | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatSFoc {{ com Pattern-match on sum }} {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ com Pattern-match on product }} {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
+  | ⬜ case m ᴇ n x ⟼ u :: :: PatEFoc {{ com Pattern-match on exponential }} {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | ⬜ map x ⟼ t' :: :: MapFoc {{ com Map over the right side of ampar }} {{ tex [[⬜]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
 
   | to⧔ ⬜ :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ ⬜ :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }} {{ com Convert ampar with no dest remaining into pair }}
@@ -160,7 +160,7 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
 mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
-  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\![[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
+  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\hspace{-0.15ex}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
   | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
   | m1 · ... · mk :: M :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
@@ -741,7 +741,7 @@ terminals :: 'terminals_' ::=
   | + :: :: union {{ tex + }}
 
 % === Typing & Semantics ===
-  | ⟶ :: :: red {{ tex ~\longrightarrow~ }}
+  | ⟶ :: :: red {{ tex \longrightarrow }}
   | ⊢ :: :: vdash {{ tex \,\vdash\, }}
   | ⊣ :: :: dashv {{ tex \,\dashv\, }}
   | ⫦ :: :: dvdash {{ tex \,\Vdash\, }}
