@@ -88,7 +88,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
   | t ⨞ Inr :: :: FillR {{ com Fill destination with right variant }}
-  | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\expcons{[[m]]} }}
+  | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\,\expcons{[[m]]} }}
   | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· t' :: :: FillC {{ com Fill destination with root of ampar $[[t']]$ }} {{ tex [[t]]\triangleleft\!\mybullet\,[[t']] }}
@@ -98,12 +98,20 @@ term, t, u :: 'term_' ::= {{ com Term }}
   % | b sp t b spe :: S :: BreakSpacing1
   % | b sp t :: S :: BreakSpaacing2
   % | t b spe : : S :: BreakSpacing3
+  | alloc :: M :: SugarAlloc {{ tex \ottkw{alloc} }} {{ coq (termS_Alloc) }}
+  | from⧔' t :: M :: SugarFromA' {{ tex \ottkw{from}_{\ottstype{\ltimes} }' }} {{ coq (termS_FromA' [[t]]) }}
+  | t ˢ⨞ t' :: M :: SugarFillLeaf {{ tex [[t]]\triangleleft\!\,[[t']] }} {{ coq (termS_FillLeaf [[t]] [[t']]) }}
+  | ˢλ x m ⟼ u :: M :: SugarF {{ tex \lamsnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Lambda abstraction }} {{ coq (termS_F [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
+  | ˢInl t :: M :: SugarL {{ com Left variant for sum }} {{ tex \,\!^{s}\hspace{-0.15ex}\ottsctor{Inl}[[t]] }} {{ coq (termS_L [[t]]) }}
+  | ˢInr t :: M :: SugarR {{ com Right variant for sum }} {{ tex \,\!^{s}\hspace{-0.15ex}\ottsctor{Inr}[[t]] }} {{ coq (termS_R [[t]]) }}
+  | ˢᴇ m t :: M :: SugarE {{ tex \,\!^{s}\hspace{-0.15ex}\expcons{[[m]]}[[t]] }} {{ com Exponential }} {{ coq (termS_E [[m]] [[t]]) }}
+  | ˢ( t1 , t2 ) :: M :: SugarP {{ tex \,\!^{s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }} {{ com Product }} {{ coq (termS_P [[t1]] [[t2]]) }}
 
 val, v :: 'val_' ::= {{ com Term value }}
   | - h :: :: H {{ com Hole }} {{ tex \ottshvar{-}[[h]] }}
   | + h :: :: D {{ tex \ottshvar{+}[[h]] }} {{ com Destination }}
   | () :: :: U {{ com Unit }}
-  | λᵛ x m ⟼ u :: :: F {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Lambda abstraction }} % (+ bind x in t +)
+  | ᵛλ x m ⟼ u :: :: F {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Lambda abstraction }} % (+ bind x in t +)
   | Inl v :: :: L {{ com Left variant for sum }}
   | Inr v :: :: R {{ com Right variant for sum }}
   | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
@@ -137,7 +145,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ ⨞ () :: :: FillUFoc {{ com Fill destination with unit }}
   | ⬜ ⨞ Inl :: :: FillLFoc {{ com Fill destination with left variant }}
   | ⬜ ⨞ Inr :: :: FillRFoc {{ com Fill destination with right variant }}
-  | ⬜ ⨞ ᴇ m :: :: FillEFoc {{ com Fill destination with exponential constructor }} {{ tex [[⬜]][[⨞]]\expcons{[[m]]} }}
+  | ⬜ ⨞ ᴇ m :: :: FillEFoc {{ com Fill destination with exponential constructor }} {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
   | ⬜ ⨞ (,) :: :: FillPFoc {{ com Fill destination with product constructor }}
   | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillFFoc {{ com Fill destination with function }} {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | ⬜ ⨞· t' :: :: FillCFoc1 {{ com Fill destination with root of ampar }} {{ tex [[⬜]]\triangleleft\!\mybullet\,[[t']] }}
@@ -334,6 +342,118 @@ Proof.
   { left. exists v; tauto. }
   all: right; congruence.
 Qed.
+
+Definition termS_Alloc :=
+  (term_Val
+    (val_A
+      (hvars_ (1 :: nil))
+      (val_H 1)
+      (val_D 1)
+    )
+  ).
+
+Definition termS_FromA' (t : term) :=
+  (term_PatP
+    (term_FromA
+      (term_Map t 0
+        (term_PatU
+          (term_Var 0)
+          (term_Val (val_E (Some (Lin, Inf)) val_U))
+        )
+      )
+    )
+    (Some (Lin, (Fin 0))) 1 2
+    (term_PatE
+      (term_Var 2)
+      (Some (Lin, (Fin 0))) (Some (Lin, Inf)) 3
+      (term_PatU
+        (term_Var 3)
+        (term_Var 1)
+      )
+    )
+  ).
+
+Definition termS_FillLeaf (t t' : term) :=
+  (term_FillC t (term_ToA t')).
+
+Definition termS_F (x : var) (m : mode) (u : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (term_FillF
+        (term_Var 0)
+        x m u
+      )
+    )
+  ).
+
+Definition termS_L (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillL
+          (term_Var 0)
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_R (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillR
+          (term_Var 0)
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_E (m : mode) (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillE
+          (term_Var 0)
+          m
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_P (t1 t2 : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (term_PatP
+        (term_FillP
+          (term_Var 0)
+        )
+        (Some (Lin, (Fin 0))) 1 2
+        (term_PatU
+          (termS_FillLeaf
+            (term_Var 1)
+            t1
+          )
+          (termS_FillLeaf
+            (term_Var 2)
+            t2
+          )
+        )
+      )
+    )
+  ).
 
 (******************************************************************************
  * VALUES

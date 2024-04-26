@@ -39,13 +39,22 @@ Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19,
 Notation "'ᵛ-' h" := (val_H h) (at level 31, h at level 19, no associativity).
 Notation "'ᵛ+' h" := (val_D h) (at level 31, h at level 19, no associativity).
 Notation "'ᵛ()'" := (val_U).
-Notation "'λᵛ' x '⁔' m ⟼ t" := (val_F x m t) (at level 59, m at level 29, x at level 19, t at level 59, right associativity).
+Notation "'ᵛλ' x '⁔' m ⟼ t" := (val_F x m t) (at level 59, m at level 29, x at level 19, t at level 59, right associativity).
 Notation "'Inl' v" := (val_L v) (at level 31, right associativity, v at level 31).
 Notation "'Inr' v" := (val_R v) (at level 31, right associativity, v at level 31).
 Notation "'ᴇ' m '⁔' v" := (val_E m v) (at level 31, m at level 29, v at level 31, right associativity).
 Notation "'ᵛ(' v ',' w ')'" := (val_P v w) (at level 0, v at level 59, w at level 59, no associativity).
 Notation "H '⟨' v '❟' w '⟩'" := (val_A H v w) (at level 31, no associativity, v at level 59, w at level 59).
 Notation "v 'ᵛ[' H '⩲' k ] " := (val_cshift v H k) (at level 30, H at level 24, k at level 19, no associativity).
+
+Notation "'alloc'" := (termS_Alloc).
+Notation "'from⧔'' t" := (termS_FromA' t) (at level 41, right associativity, t at level 41).
+Notation "t 'ˢ⨞' u" := (termS_FillLeaf t u) (at level 43, left associativity, u at next level).
+Notation "'ˢλ' x '⁔' m '⟼' u" := (termS_F x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
+Notation "'ˢInl' t" := (termS_L t) (at level 31, right associativity, t at level 31).
+Notation "'ˢInr' t" := (termS_R t) (at level 31, right associativity, t at level 31).
+Notation "'ˢᴇ' m '⁔' t" := (termS_E m t) (at level 31, m at level 29, t at level 31, right associativity).
+Notation "'ˢ(' t ',' u ')'" := (termS_P t u) (at level 0, t at level 59, u at level 59, no associativity).
 
 (* Evaluation context stack : 60 - 64 *)
 Notation "'©️⬜'" := nil.

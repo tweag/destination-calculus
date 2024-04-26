@@ -260,19 +260,30 @@ Proof.
 Qed.
 Hint Rewrite <- ValidOnly_union_forward' : suffices.
 
-Lemma ValidOnly_singleton_iff : forall x m T, ValidOnly ᴳ{ x : m ‗ T} <-> IsValid m.
+Lemma LinOnly_singleton_iff: forall (n : name) (binding: binding_type_of n), LinOnly (ctx_singleton n binding) <-> IsLin (mode_of binding).
 Proof.
-  intros *. unfold ValidOnly.
-  split.
-  - intros h.
-    specialize (h (ˣ x) (ₓ m ‗ T)). cbn in h.
-    apply h.
-    rewrite Fun.singleton_MapsTo_at_elt. reflexivity.
-  - intros h x' binding hx'. unfold ctx_singleton in hx'. cbn.
-    rewrite singleton_MapsTo_iff in hx'.
-    rewrite eq_sigT_iff_eq_dep in hx'.
-    destruct hx'. cbn.
-    assumption.
+  intros n binding. split.
+  - intros LinOnlySing. unfold LinOnly in LinOnlySing.
+    specialize (LinOnlySing n binding). unfold ctx_singleton in LinOnlySing. specialize (LinOnlySing (singleton_MapsTo_at_elt n name_eq_dec binding)). assumption.
+  - intros IsLinMode. unfold LinOnly. intros n' binding' mapstoSing. apply singleton_MapsTo_iff in mapstoSing. assert (n = n'). { apply eq_sigT_fst in mapstoSing. assumption. } subst. apply inj_pair2_eq_dec in mapstoSing. 2:{ exact name_eq_dec. } subst. assumption.
+Qed.
+Hint Rewrite LinOnly_singleton_iff : propagate_down.
+
+Lemma FinAgeOnly_singleton_iff: forall (n : name) (binding: binding_type_of n), FinAgeOnly (ctx_singleton n binding) <-> IsFinAge (mode_of binding).
+Proof.
+  intros n binding. split.
+  - intros FinAgeOnlySing. unfold FinAgeOnly in FinAgeOnlySing.
+    specialize (FinAgeOnlySing n binding). unfold ctx_singleton in FinAgeOnlySing. specialize (FinAgeOnlySing (singleton_MapsTo_at_elt n name_eq_dec binding)). assumption.
+  - intros IsFinAgeMode. unfold FinAgeOnly. intros n' binding' mapstoSing. apply singleton_MapsTo_iff in mapstoSing. assert (n = n'). { apply eq_sigT_fst in mapstoSing. assumption. } subst. apply inj_pair2_eq_dec in mapstoSing. 2:{ exact name_eq_dec. } subst. assumption.
+Qed.
+Hint Rewrite FinAgeOnly_singleton_iff : propagate_down.
+
+Lemma ValidOnly_singleton_iff: forall (n : name) (binding: binding_type_of n), ValidOnly (ctx_singleton n binding) <-> IsValid (mode_of binding).
+Proof.
+  intros n binding. split.
+  - intros ValidOnlySing. unfold ValidOnly in ValidOnlySing.
+    specialize (ValidOnlySing n binding). unfold ctx_singleton in ValidOnlySing. specialize (ValidOnlySing (singleton_MapsTo_at_elt n name_eq_dec binding)). assumption.
+  - intros IsValidMode. unfold ValidOnly. intros n' binding' mapstoSing. apply singleton_MapsTo_iff in mapstoSing. assert (n = n'). { apply eq_sigT_fst in mapstoSing. assumption. } subst. apply inj_pair2_eq_dec in mapstoSing. 2:{ exact name_eq_dec. } subst. assumption.
 Qed.
 Hint Rewrite ValidOnly_singleton_iff : propagate_down.
 
@@ -1732,6 +1743,8 @@ Ltac hauto_ctx :=
         (* ValidOnly_union_backward', *)
         ValidOnly_union_forward,
         (* ValidOnly_union_forward', *)
+        LinOnly_singleton_iff,
+        FinAgeOnly_singleton_iff,
         ValidOnly_singleton_iff,
         ValidOnly_stimes_backward,
         (* ValidOnly_stimes_backward', *)

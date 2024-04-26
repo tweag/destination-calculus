@@ -9,5 +9,6 @@ ott_coq/ext_nat.v
 ott_coq/destination_calculus_ott.v
 ott_coq/destination_calculus_notations.v
 ott_coq/destination_calculus_proofs.v
+ott_coq/destination_calculus_sugar_typing.v
 ott_coq/destination_calculus_preservation.v
 ott_coq/destination_calculus_progress.v

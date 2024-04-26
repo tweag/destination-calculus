@@ -20,7 +20,7 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
 D + { x : m T } ⊢ u : U [[:Tyu]]
 ----------------- :: F
-D ⫦ λᵛ x m ⟼ u : T m → U
+D ⫦ ᵛλ x m ⟼ u : T m → U
 
 G ⫦ v1 : T1 [[:TyRv1]]
 --------------------- :: L
@@ -372,7 +372,7 @@ C[v  t'] ⟶ (C ∘ (v  ⬜))[t']
 (C ∘ (v  ⬜))[v'] ⟶ C[v  v']
 
 ------------------ :: AppRed
-C[v  (λᵛ x m ⟼ u) ] ⟶ C[u[x ≔ v] ]
+C[v  (ᵛλ x m ⟼ u) ] ⟶ C[u[x ≔ v] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: PatUFoc
@@ -517,7 +517,7 @@ C[t ⨞(λ x m ⟼ u)] ⟶ (C ∘ (⬜ ⨞(λ x m ⟼ u)))[t]
 (C ∘ (⬜ ⨞(λ x m ⟼ u)))[v] ⟶ C[v ⨞(λ x m ⟼ u)]
 
 ------------------------------------- :: FillFRed
-C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} λᵛ x m ⟼ u][()]
+C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} ᵛλ x m ⟼ u][()]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillCFoc1

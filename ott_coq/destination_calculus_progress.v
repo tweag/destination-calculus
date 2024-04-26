@@ -121,7 +121,7 @@ Proof.
     * exists (C ∘ ⬜⨞ᴇ n'), t. constructor; tauto.
   - rename Tyt into TyFillF, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply TyR_val_H_DestOnly_contra with (D := ᴳ{- h : ⌊ T ⁔ m → U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⁔ m → U ⌋ n); tauto. }
-    exists (C ©️[ h ≔ HVars.empty ‗ λᵛ x ⁔ m ⟼ u ]), (ᵥ₎ ᵛ()). constructor; tauto.
+    exists (C ©️[ h ≔ HVars.empty ‗ ᵛλ x ⁔ m ⟼ u ]), (ᵥ₎ ᵛ()). constructor; tauto.
     * exists (C ∘ ⬜⨞(λ x ⁔ m ⟼ u)), t. constructor; tauto.
   - rename Tyt into TyFillC, Tyt0 into Tyt, t0 into t, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. destruct (NotVal_dec t').

@@ -258,6 +258,118 @@ Proof.
   all: right; congruence.
 Qed.
 
+Definition termS_Alloc :=
+  (term_Val
+    (val_A
+      (hvars_ (1 :: nil))
+      (val_H 1)
+      (val_D 1)
+    )
+  ).
+
+Definition termS_FromA' (t : term) :=
+  (term_PatP
+    (term_FromA
+      (term_Map t 0
+        (term_PatU
+          (term_Var 0)
+          (term_Val (val_E (Some (Lin, Inf)) val_U))
+        )
+      )
+    )
+    (Some (Lin, (Fin 0))) 1 2
+    (term_PatE
+      (term_Var 2)
+      (Some (Lin, (Fin 0))) (Some (Lin, Inf)) 3
+      (term_PatU
+        (term_Var 3)
+        (term_Var 1)
+      )
+    )
+  ).
+
+Definition termS_FillLeaf (t t' : term) :=
+  (term_FillC t (term_ToA t')).
+
+Definition termS_F (x : var) (m : mode) (u : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (term_FillF
+        (term_Var 0)
+        x m u
+      )
+    )
+  ).
+
+Definition termS_L (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillL
+          (term_Var 0)
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_R (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillR
+          (term_Var 0)
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_E (m : mode) (t : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (termS_FillLeaf
+        (term_FillE
+          (term_Var 0)
+          m
+        )
+        t
+      )
+    )
+  ).
+
+Definition termS_P (t1 t2 : term) :=
+  (termS_FromA'
+    (term_Map
+      termS_Alloc
+      0
+      (term_PatP
+        (term_FillP
+          (term_Var 0)
+        )
+        (Some (Lin, (Fin 0))) 1 2
+        (term_PatU
+          (termS_FillLeaf
+            (term_Var 1)
+            t1
+          )
+          (termS_FillLeaf
+            (term_Var 2)
+            t2
+          )
+        )
+      )
+    )
+  ).
+
 (******************************************************************************
  * VALUES
  *****************************************************************************)
