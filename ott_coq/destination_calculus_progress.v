@@ -74,30 +74,30 @@ Proof.
     * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HVars.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.
     * exists (C ∘ to⧔⬜), u. constructor; tauto.
   - rename Tyt into TyToA, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
-    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply TyR_val_H_DestOnly_contra with (D := ᴳ{- h : U ⧔ ! ων ⁔ T ‗ ¹ν}) (h := h) (T := U ⧔ ! ων ⁔ T); tauto. }
-      inversion TyRv1; subst. { assert (DestOnly (¹↑ ᴳ· D1 ᴳ+ D3)). { crush. } exfalso. apply TyR_val_H_DestOnly_contra with (D := (¹↑ ᴳ· D1 ᴳ+ D3)) (h := h) (T := ! ων ⁔ T). all:tauto. }
+    * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply TyR_val_H_DestOnly_contra with (D := ᴳ{- h : U ⧔ ! ¹∞ ⁔ T ‗ ¹ν}) (h := h) (T := U ⧔ ! ¹∞ ⁔ T); tauto. }
+      inversion TyRv1; subst. { assert (DestOnly (¹↑ ᴳ· D1 ᴳ+ D3)). { crush. } exfalso. apply TyR_val_H_DestOnly_contra with (D := (¹↑ ᴳ· D1 ᴳ+ D3)) (h := h) (T := ! ¹∞ ⁔ T). all:tauto. }
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = ᴳ{}) as Empty.
-      { assert (¹↑ ᴳ· D1 ᴳ+ D3 = ων ᴳ· G) as intermediary.
+      { assert (¹↑ ᴳ· D1 ᴳ+ D3 = ¹∞ ᴳ· G) as intermediary.
         { apply ext_eq'. symmetry. exact H0. }
-        assert (ων ᴳ· G = ᴳ{}).
+        assert (¹∞ ᴳ· G = ᴳ{}).
         2:{ congruence. }
-        assert (LinOnly (ων ᴳ· G)) as h_lin.
-        2:{ apply LinOnly_stimes_dec in h_lin.
+        assert (FinAgeOnly (¹∞ ᴳ· G)) as h_lin.
+        2:{ apply FinAgeOnly_stimes_dec in h_lin.
             2:{ trivial. }
             destruct h_lin as [h_lin|h_lin].
             - inversion h_lin.
             - apply stimes_empty_iff. tauto. }
         rewrite <- intermediary.
-        rewrite LinOnly_union_iff. repeat split.
-        - apply LinOnly_stimes_forward.
+        apply FinAgeOnly_union_forward. repeat split.
+        - apply FinAgeOnly_stimes_forward.
           { constructor. }
-          apply Ty_ectxs_LinFinOnly in TyCc.
+          apply Ty_ectxs_LinOnly_FinAgeOnly in TyCc.
           crush.
         - assumption.
         - crush. }
       apply union_empty_iff in Empty. destruct Empty as [_ EmptyD3].
       subst. rewrite hvars_minus_eq, hvars_empty_is_hempty.
-      exists C, (ᵥ₎ ᵛ( v2 , ᴇ ων ⁔ v' )). constructor.
+      exists C, (ᵥ₎ ᵛ( v2 , ᴇ ¹∞ ⁔ v' )). constructor.
     * exists (C ∘ from⧔⬜), t. constructor; tauto.
   - rename Tyt into TyFillU, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion TyRv; subst. { exfalso. apply TyR_val_H_DestOnly_contra with (D := ᴳ{- h : ⌊ ① ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ ① ⌋ n); tauto. }

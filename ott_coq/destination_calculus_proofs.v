@@ -1961,7 +1961,7 @@ Proof.
   apply HDisjoint_to_Disjoint in H. assumption. apply Ty_ectxs_DestOnly in TyC'. assumption.
 Qed.
 
-Lemma Ty_ectxs_LinFinOnly : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), LinOnly D /\ FinAgeOnly D.
+Lemma Ty_ectxs_LinOnly_FinAgeOnly : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), LinOnly D /\ FinAgeOnly D.
 Proof.
   intros D C T U0 H. induction H.
   - split. apply LinOnly_empty. apply FinAgeOnly_empty.

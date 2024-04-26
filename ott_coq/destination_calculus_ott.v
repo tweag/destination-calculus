@@ -740,8 +740,8 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyu: Ty_term P u U),
      Ty_term P (term_ToA u) (type_A U type_U)
  | Ty_term_FromA : forall (P:ctx) (t:term) (U T:type)
-     (Tyt: Ty_term P t (type_A U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )),
-     Ty_term P (term_FromA t) (type_P U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )
+     (Tyt: Ty_term P t (type_A U  (type_E  (Some (pair   Lin     Inf  ))  T) )),
+     Ty_term P (term_FromA t) (type_P U  (type_E  (Some (pair   Lin     Inf  ))  T) )
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
      (Tyt: Ty_term P t (type_D type_U n)),
      Ty_term P (term_FillU t) type_U
@@ -841,8 +841,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs D C  (type_A U type_U)  U0),
      Ty_ectxs D  (cons   ectx_ToAFoc    C )  U U0
  | Ty_ectxs_FromAFoc : forall (D:ctx) (C:ectxs) (U T U0:type)
-     (TyC: Ty_ectxs D C  (type_P U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )  U0),
-     Ty_ectxs D  (cons   ectx_FromAFoc    C )   (type_A U  (type_E  (Some (pair   Ur     (Fin 0)  ))  T) )  U0
+     (TyC: Ty_ectxs D C  (type_P U  (type_E  (Some (pair   Lin     Inf  ))  T) )  U0),
+     Ty_ectxs D  (cons   ectx_FromAFoc    C )   (type_A U  (type_E  (Some (pair   Lin     Inf  ))  T) )  U0
  | Ty_ectxs_FillUFoc : forall (D:ctx) (C:ectxs) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C type_U U0),
      Ty_ectxs D  (cons   ectx_FillUFoc    C )  (type_D type_U n) U0
@@ -977,7 +977,7 @@ Inductive Sem_eterm : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem_e
  | Sem_eterm_FromAUnfoc : forall (C:ectxs) (v:val),
      Sem_eterm   (cons   ectx_FromAFoc    C )   (term_Val v) C (term_FromA (term_Val v))
  | Sem_eterm_FromARed : forall (C:ectxs) (v2 v1:val),
-     Sem_eterm C (term_FromA (term_Val (val_A  (hvars_  nil )  v2 (val_E  (Some (pair   Ur     (Fin 0)  ))  v1)))) C (term_Val (val_P v2 (val_E  (Some (pair   Ur     (Fin 0)  ))  v1)))
+     Sem_eterm C (term_FromA (term_Val (val_A  (hvars_  nil )  v2 (val_E  (Some (pair   Lin     Inf  ))  v1)))) C (term_Val (val_P v2 (val_E  (Some (pair   Lin     Inf  ))  v1)))
  | Sem_eterm_FillUFoc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem_eterm C (term_FillU t)   (cons   ectx_FillUFoc    C )   t
