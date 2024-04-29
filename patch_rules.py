@@ -37,6 +37,7 @@ def main():
         disjoints = dict()
         for l in group:
             if "DestOnly [[D" in l: continue
+            if "UserDefined [[P" in l: continue
             if "ValidOnly [[" in l: continue
             if "IsValid" in l : continue
             match = re.search((r"\{\{ *\[\[(.*)\]\] *" + "#" + r" *\[\[(.*)\]\] *\}\}"), l)

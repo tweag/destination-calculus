@@ -15,7 +15,7 @@ G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
 {} ⫦ () :①
 
 {{ IsValid [[m]] }} [[:Validm]]
-% {{ [[D]] # [[{ x : m T1 }]] }} : Redundant because DestOnly D => D # { x : m T1 }
+% {{ [[D]] # [[{ x : m T }]] }} : Redundant because DestOnly D => D # { x : m T1 }
 % other rules don't need NoVar D as they cannot syntactically accept vars
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
 D + { x : m T } ⊢ u : U [[:Tyu]]
@@ -171,6 +171,53 @@ P1 ⊢ t : ⌊U⌋n [[:Tyt]]
 P2 ⊢ t' : U ⧔ T [[:Tytp]]
 ----------------------------- :: FillC
 P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
+
+defn
+P ˢ⊢ t : T :: :: Ty_termS :: Ty_termS_ {{ com Typing of syntactic sugar forms }} by
+
+{{ DisposableOnly [[P]] }} [[:DisposP]]
+-------------------- :: Alloc
+P ˢ⊢ alloc : T ⧔ (⌊ T ⌋ ¹ν)
+
+P ⊢ t : T ⧔ ① [[:Tyt]]
+---------------- :: FromA'
+P ˢ⊢ from⧔' t : T
+
+{{ IsValid [[n]] }} [[:Validn]]
+P1 ⊢ t : ⌊T⌋n [[:Tyt]]
+P2 ⊢ t' : T [[:Tytp]]
+----------------------------- :: FillLeaf
+P1 + (¹↑·n)·P2 ˢ⊢ t ˢ⨞ t' : ①
+
+{{ UserDefined [[P2]] }} [[:UserDefinedP2]]
+{{ IsValid [[m]] }} [[:Validm]]
+{{ [[P2]] # [[{ x : m T }]] }} [[:DisjointP2x]]
+P2 + { x : m T } ⊢ u : U [[:Tyu]]
+---------------------------------------- :: F
+P2 ˢ⊢ ˢλ x m ⟼ u : T m → U
+
+{{ UserDefined [[P2]] }} [[:UserDefinedP2]]
+P2 ⊢ t : T1
+------------------------------ :: L
+P2 ˢ⊢ ˢInl t : T1 ⨁ T2
+
+{{ UserDefined [[P2]] }} [[:UserDefinedP2]]
+P2 ⊢ t : T2
+------------------------------ :: R
+P2 ˢ⊢ ˢInr t : T1 ⨁ T2
+
+{{ UserDefined [[P2]] }} [[:UserDefinedP2]]
+{{ IsValid [[m]] }} [[:Validm]]
+P2 ⊢ t : T
+----------------------------------- :: E
+m·P2 ˢ⊢ ˢᴇ m t : ! m T
+
+{{ UserDefined [[P21]] }} [[:UserDefinedP21]]
+{{ UserDefined [[P22]] }} [[:UserDefinedP22]]
+P21 ⊢ t1 : T1
+P22 ⊢ t2 : T2
+----------------------------------- :: P
+P21 + P22 ˢ⊢ ˢ(t1, t2) : T1 ⨂ T2
 
 defn
 D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by

@@ -90,6 +90,76 @@
 \ottectxs\ottafterlastrule
 }
 
+\subsection*{Desugaring}
+
+\activespaces
+
+\noindent$
+[[alloc]]
+\triangleq$ $\begin{array}{l}[[
+  H ⟨ -1 ❟ +1 ⟩
+]]\end{array}$
+
+\noindent$
+[[from⧔' t]]
+\triangleq$ $\begin{array}[t]{l}[[
+(from⧔ (t map un ⟼ un ; ᴇ ¹∞ () )) case ¹ν⮒
+‥‥( x1 , x2 ) ⟼ x2 case ¹ν⮒
+‥‥‥‥ᴇ ¹∞ x3 ⟼ x3 ; x1
+]]\end{array}$
+
+\noindent$
+[[t ˢ⨞ t']]
+\triangleq$ $\begin{array}[t]{l}[[
+t ⨞· (to⧔ t')
+]]\end{array}$
+
+\noindent$
+[[ˢλ x m ⟼ u]]
+\triangleq$ $\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ ( λ x m ⟼ u )⮒
+)
+]]\end{array}$
+
+\noindent$
+[[ˢInl t]]
+\triangleq$ $\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ Inl ˢ⨞ t⮒
+)
+]]\end{array}$
+
+\noindent$
+[[ˢInr t]]
+\triangleq$ $\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ Inr ˢ⨞ t⮒
+)
+]]\end{array}$
+
+\noindent$
+[[ˢᴇ m t]]
+\triangleq$ $\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ ᴇ m ˢ⨞ t⮒
+)
+]]\end{array}$
+
+\noindent$
+[[ˢ( t1 , t2 )]]
+\triangleq$ $\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ (,) case ¹ν⮒
+‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ˢ⨞ t1 ; d2 ˢ⨞ t2⮒
+)
+]]\end{array}$
+
 \section{Type system}
 
 \ottgrammartabular{
@@ -104,6 +174,7 @@
 
 \ottdefnTyRXXval{}
 \ottdefnTyXXterm{}
+\ottdefnTyXXtermS{}
 \ottdefnTyXXectxs{}
 \ottdefnTyXXeterm{}
 

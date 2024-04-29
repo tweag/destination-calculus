@@ -18,14 +18,13 @@ Notation "'hvars©(' C ')'" := (hvars_ectxs C) (at level 0, no associativity).
 Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).
 Notation "'ₓ₎' x" := (term_Var x) (at level 40, no associativity).
 Notation "t  u" := (term_App t u) (at level 42, left associativity, u at next level).
-Notation "t 'ᵗ;' u" := (term_PatU t u) (at level 45, left associativity, u at next level).
+Notation "t 'ᵗ;' u" := (term_PatU t u) (at level 45, right associativity, u at next level).
 Notation "t 'caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (term_PatS t m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, right associativity).
 Notation "t 'caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (term_PatP t m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, right associativity).
 Notation "t 'caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (term_PatE t m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, right associativity).
 Notation "t 'map' x ⟼ u" := (term_Map t x u) (at level 59, x at level 19, u at level 59, right associativity).
 Notation "'to⧔' t" := (term_ToA t) (at level 41, right associativity, t at level 41).
 Notation "'from⧔' t" := (term_FromA t) (at level 41, right associativity, t at level 41).
-(* Notation "'alloc'" := (term_Alloc). *)
 Notation "t '⨞()'" := (term_FillU t) (at level 43, left associativity).
 Notation "t '⨞Inl'" := (term_FillL t) (at level 43, left associativity).
 Notation "t '⨞Inr'" := (term_FillR t) (at level 43, left associativity).
@@ -34,6 +33,15 @@ Notation "t '⨞ᴇ' m" := (term_FillE t m) (at level 43, left associativity, m 
 Notation "t '⨞(λ' x '⁔' m '⟼' u ')'" := (term_FillF t x m u) (at level 43, m at level 29, x at level 19, u at level 59, left associativity).
 Notation "t '⨞·' u" := (term_FillC t u) (at level 43, left associativity, u at next level).
 Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19, v at level 59, left associativity).
+
+Notation "'alloc'" := (termS_Alloc).
+Notation "'from⧔'' t" := (termS_FromA' t) (at level 41, right associativity, t at level 41).
+Notation "t 'ˢ⨞' u" := (termS_FillLeaf t u) (at level 43, left associativity, u at next level).
+Notation "'ˢλ' x '⁔' m '⟼' u" := (termS_F x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
+Notation "'ˢInl' t" := (termS_L t) (at level 31, right associativity, t at level 31).
+Notation "'ˢInr' t" := (termS_R t) (at level 31, right associativity, t at level 31).
+Notation "'ˢᴇ' m '⁔' t" := (termS_E m t) (at level 31, m at level 29, t at level 31, right associativity).
+Notation "'ˢ(' t ',' u ')'" := (termS_P t u) (at level 0, t at level 59, u at level 59, no associativity).
 
 (* Values : 30-59 *)
 Notation "'ᵛ-' h" := (val_H h) (at level 31, h at level 19, no associativity).
@@ -46,15 +54,6 @@ Notation "'ᴇ' m '⁔' v" := (val_E m v) (at level 31, m at level 29, v at leve
 Notation "'ᵛ(' v ',' w ')'" := (val_P v w) (at level 0, v at level 59, w at level 59, no associativity).
 Notation "H '⟨' v '❟' w '⟩'" := (val_A H v w) (at level 31, no associativity, v at level 59, w at level 59).
 Notation "v 'ᵛ[' H '⩲' k ] " := (val_cshift v H k) (at level 30, H at level 24, k at level 19, no associativity).
-
-Notation "'alloc'" := (termS_Alloc).
-Notation "'from⧔'' t" := (termS_FromA' t) (at level 41, right associativity, t at level 41).
-Notation "t 'ˢ⨞' u" := (termS_FillLeaf t u) (at level 43, left associativity, u at next level).
-Notation "'ˢλ' x '⁔' m '⟼' u" := (termS_F x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
-Notation "'ˢInl' t" := (termS_L t) (at level 31, right associativity, t at level 31).
-Notation "'ˢInr' t" := (termS_R t) (at level 31, right associativity, t at level 31).
-Notation "'ˢᴇ' m '⁔' t" := (termS_E m t) (at level 31, m at level 29, t at level 31, right associativity).
-Notation "'ˢ(' t ',' u ')'" := (termS_P t u) (at level 0, t at level 59, u at level 59, no associativity).
 
 (* Evaluation context stack : 60 - 64 *)
 Notation "'©️⬜'" := nil.
@@ -126,6 +125,7 @@ Notation "G 'ᴳ[' H '⩲' k ]" := (ctx_cshift G H k) (at level 61, H at level 2
 
 Notation "G '⫦' v ':' T" := (TyR_val G v T) (at level 70, v at level 59, T at level 59, no associativity).
 Notation "P '⊢' t ':' T" := (Ty_term P t T) (at level 70, t at level 59, T at level 59, no associativity).
+Notation "P 'ˢ⊢' t ':' T" := (Ty_termS P t T) (at level 70, t at level 59, T at level 59, no associativity).
 Notation "D '⊣' C ':' T1 '↣' T2" := (Ty_ectxs D C T1 T2) (at level 70, C at level 64, T1 at level 59, T2 at level 59, no associativity).
 Notation "'⊢' C 'ʲ[' t ] : T" := (Ty_eterm C t T) (at level 70, C at level 64, t at level 59, T at level 59, no associativity).
 Notation "C 'ʲ[' t ] '⟶' C2 'ʲ[' t2 ]" := (Sem_eterm C t C2 t2) (at level 70, t at level 59, C2 at level 64, t2 at level 59, no associativity).

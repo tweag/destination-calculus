@@ -46,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y ::= {{ com Term-level variable name }}
+metavar var, x, y, d, un ::= {{ com Term-level variable name }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
@@ -95,17 +95,23 @@ term, t, u :: 'term_' ::= {{ com Term }}
 
   | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
   | ( t ) :: S :: Paren {{ coq [[t]] }}
-  % | b sp t b spe :: S :: BreakSpacing1
-  % | b sp t :: S :: BreakSpaacing2
-  % | t b spe : : S :: BreakSpacing3
+  | b1 sp t b2 :: S :: BreakSpacing1 {{ coq [[t]] }}
+  | b sp t :: S :: BreakSpaacing2 {{ coq [[t]] }}
+  % | t b spe :: S :: BreakSpacing3 {{ coq [[t]] }}
+
+  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 } :: S :: PatSsp1 {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b1]][[sp1]]\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b1]][[sp1]]\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ com Pattern-match on exponential }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
+
   | alloc :: M :: SugarAlloc {{ tex \ottkw{alloc} }} {{ coq (termS_Alloc) }}
-  | from⧔' t :: M :: SugarFromA' {{ tex \ottkw{from}_{\ottstype{\ltimes} }' }} {{ coq (termS_FromA' [[t]]) }}
+  | from⧔' t :: M :: SugarFromA' {{ tex \ottkw{from}_{\ottstype{\ltimes} }' [[t]] }} {{ coq (termS_FromA' [[t]]) }}
   | t ˢ⨞ t' :: M :: SugarFillLeaf {{ tex [[t]]\triangleleft\!\,[[t']] }} {{ coq (termS_FillLeaf [[t]] [[t']]) }}
   | ˢλ x m ⟼ u :: M :: SugarF {{ tex \lamsnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Lambda abstraction }} {{ coq (termS_F [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
-  | ˢInl t :: M :: SugarL {{ com Left variant for sum }} {{ tex \,\!^{s}\hspace{-0.15ex}\ottsctor{Inl}[[t]] }} {{ coq (termS_L [[t]]) }}
-  | ˢInr t :: M :: SugarR {{ com Right variant for sum }} {{ tex \,\!^{s}\hspace{-0.15ex}\ottsctor{Inr}[[t]] }} {{ coq (termS_R [[t]]) }}
-  | ˢᴇ m t :: M :: SugarE {{ tex \,\!^{s}\hspace{-0.15ex}\expcons{[[m]]}[[t]] }} {{ com Exponential }} {{ coq (termS_E [[m]] [[t]]) }}
-  | ˢ( t1 , t2 ) :: M :: SugarP {{ tex \,\!^{s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }} {{ com Product }} {{ coq (termS_P [[t1]] [[t2]]) }}
+  | ˢInl t :: M :: SugarL {{ com Left variant for sum }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inl}\,[[t]] }} {{ coq (termS_L [[t]]) }}
+  | ˢInr t :: M :: SugarR {{ com Right variant for sum }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inr}\,[[t]] }} {{ coq (termS_R [[t]]) }}
+  | ˢᴇ m t :: M :: SugarE {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\expcons{[[m]]}\,[[t]] }} {{ com Exponential }} {{ coq (termS_E [[m]] [[t]]) }}
+  | ˢ( t1 , t2 ) :: M :: SugarP {{ tex \,\!^{\scriptscriptstyle s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }} {{ com Product }} {{ coq (termS_P [[t1]] [[t2]]) }}
 
 val, v :: 'val_' ::= {{ com Term value }}
   | - h :: :: H {{ com Hole }} {{ tex \ottshvar{-}[[h]] }}
@@ -292,10 +298,6 @@ end.
 
 Definition HDisjoint (H1 H2 : HVars.t) : Prop :=
   HVars.Empty (HVars.inter H1 H2).
-
-(******************************************************************************
- * TERMS
- *****************************************************************************)
 
 Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
@@ -507,6 +509,10 @@ end.
 (******************************************************************************
  * TYPE
  *****************************************************************************)
+
+Definition max_runtime_var : var := 3.
+
+Definition UserDefined (G : ctx) := forall (x : var), Finitely.In (name_Var x) G -> x > max_runtime_var.
 
 (* Alias to the one defined by Ott *)
 Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type.
@@ -828,21 +834,24 @@ end) C.
 
 grammar
 
-% spacing, sp :: 'sp_' ::= {{ tex \ottssp{[[spacing]]} }}
-%   | s :: :: space1 {{ tex \myspace{1} }}
-%   | ss :: :: space2 {{ tex \myspace{2} }}
-%   | sss :: :: space3 {{ tex \myspace{3} }}
-%   | ssss :: :: space4 {{ tex \myspace{4} }}
-%   | sssss :: :: space5 {{ tex \myspace{5} }}
-%   | ssssss :: :: space6 {{ tex \myspace{6} }}
+spacing, sp :: 'sp_' ::= {{ tex \ottssp{[[spacing]]} }}
+  | ‥‥ :: :: space1 {{ tex \myspace{1} }}
+  | ‥‥‥‥ :: :: space2 {{ tex \myspace{2} }}
+  | ‥‥‥‥‥‥ :: :: space3 {{ tex \myspace{3} }}
+  | ‥‥‥‥‥‥‥‥ :: :: space4 {{ tex \myspace{4} }}
+  | ‥‥‥‥‥‥‥‥‥‥ :: :: space5 {{ tex \myspace{5} }}
+  | ‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space6 {{ tex \myspace{6} }}
 
 % spacing_end, spe :: 'spe_' ::= {{ tex \ottssp{[[spacing_end]]} }}
-%   | se :: :: space1e {{ tex \myspace{1} }}
-%   | sse :: :: space2e {{ tex \myspace{2} }}
-%   | ssse :: :: space3e {{ tex \myspace{3} }}
-%   | sssse :: :: space4e {{ tex \myspace{4} }}
-%   | ssssse :: :: space5e {{ tex \myspace{5} }}
-%   | sssssse :: :: space6e {{ tex \myspace{6} }}
+%   | …… :: :: space1e {{ tex \myspace{1} }}
+%   | ………… :: :: space2e {{ tex \myspace{2} }}
+%   | ……………… :: :: space3e {{ tex \myspace{3} }}
+%   | …………………… :: :: space4e {{ tex \myspace{4} }}
+%   | ………………………… :: :: space5e {{ tex \myspace{5} }}
+%   | ……………………………… :: :: space6e {{ tex \myspace{6} }}
+
+line_break, b :: 'b_' ::= {{ tex \ottssp{[[line_break]]} }}
+  | ⮒ :: :: break {{ tex \mynewline }}
 
 terminals :: 'terminals_' ::=
 
@@ -863,6 +872,7 @@ terminals :: 'terminals_' ::=
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex \longrightarrow }}
   | ⊢ :: :: vdash {{ tex \,\vdash\, }}
+  | ˢ⊢ :: :: svdash {{ tex \phantom{a}^{\scriptscriptstyle s}\!\!\vdash\, }}
   | ⊣ :: :: dashv {{ tex \,\dashv\, }}
   | ⫦ :: :: dvdash {{ tex \,\Vdash\, }}
 
@@ -883,6 +893,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
 
   | G ⫦ v : T :: :: TyR_val
   | P ⊢ t : T :: :: Ty_term
+  | P ˢ⊢ t : T :: :: Ty_termS
   | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }}
   | ⊢ C [ t ] : T :: :: Ty_eterm
   | C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm

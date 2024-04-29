@@ -50,15 +50,15 @@ Defined.
 Definition var : Type := nat. (*r Term-level variable name *)
 Definition k : Type := nat. (*r Index for ranges *)
 
-Definition hvar : Type := nat.
-
 Definition age : Type := ext_nat.
 
 Definition mul : Type := _mul.
 
-Definition hvars : Type := HVars.t.
+Definition hvar : Type := nat.
 
 Definition mode : Type := option (mul * age).
+
+Definition hvars : Type := HVars.t.
 
 Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
@@ -109,6 +109,10 @@ Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_FillCFoc2 (v:val) (*r Fill destination with root of ampar *)
  | ectx_AOpenFoc (H:hvars) (v2:val) (*r Open ampar. \textcolor{red}{Only new addition to term shapes} *).
 
+Inductive name : Type := 
+ | name_Var (x:var)
+ | name_DH (h:hvar).
+
 Inductive type : Type :=  (*r Type *)
  | type_U : type (*r Unit *)
  | type_S (T1:type) (T2:type) (*r Sum *)
@@ -118,18 +122,14 @@ Inductive type : Type :=  (*r Type *)
  | type_F (T:type) (m:mode) (U:type) (*r Function *)
  | type_D (T:type) (m:mode) (*r Destination *).
 
-Inductive name : Type := 
- | name_Var (x:var)
- | name_DH (h:hvar).
-
 Definition ectxs : Type := (list ectx).
-
-Inductive binding_var : Type := 
- | binding_Var (m:mode) (T:type).
 
 Inductive binding_dh : Type := 
  | binding_Dest (m:mode) (T:type) (n:mode)
  | binding_Hole (T:type) (n:mode).
+
+Inductive binding_var : Type := 
+ | binding_Var (m:mode) (T:type).
 Lemma eq_type: forall (x y : type), {x = y} + {x <> y}.
 Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
@@ -207,10 +207,6 @@ end.
 
 Definition HDisjoint (H1 H2 : HVars.t) : Prop :=
   HVars.Empty (HVars.inter H1 H2).
-
-(******************************************************************************
- * TERMS
- *****************************************************************************)
 
 Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
@@ -422,6 +418,10 @@ end.
 (******************************************************************************
  * TYPE
  *****************************************************************************)
+
+Definition max_runtime_var : var := 3.
+
+Definition UserDefined (G : ctx) := forall (x : var), Finitely.In (name_Var x) G -> x > max_runtime_var.
 
 (* Alias to the one defined by Ott *)
 Definition type_eq_dec : forall (T1 T2: type), {T1 = T2} + {T1 <> T2} := eq_type.
@@ -741,6 +741,17 @@ end) C.
 (*****************************************************************************)
 
 
+Inductive spacing : Type := 
+ | sp_space1 : spacing
+ | sp_space2 : spacing
+ | sp_space3 : spacing
+ | sp_space4 : spacing
+ | sp_space5 : spacing
+ | sp_space6 : spacing.
+
+Inductive line_break : Type := 
+ | b_break : line_break.
+
 Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual rules *)
  | _DestOnly (G:ctx)
  | _LinOnly (G:ctx)
@@ -755,6 +766,7 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _hvar_eq (h1:hvar) (h2:hvar)
  | _TyR_val (G:ctx) (v:val) (T:type)
  | _Ty_term (P:ctx) (t:term) (T:type)
+ | _Ty_termS (P:ctx) (t:term) (T:type)
  | _Ty_ectxs (D:ctx) (C:ectxs) (T1:type) (T2:type) (*r Typing of evaluation contexts *)
  | _Ty_eterm (C:ectxs) (t:term) (T:type)
  | _Sem_eterm (C:ectxs) (t:term) (C':ectxs) (t':term).
@@ -882,6 +894,43 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P1 t (type_D U n))
      (Tytp: Ty_term P2 t' (type_A U T)),
      Ty_term  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillC t t') T
+with Ty_termS : ctx -> term -> type -> Prop :=    (* defn Ty_termS *)
+ | Ty_termS_Alloc : forall (P:ctx) (T:type)
+     (DisposP: DisposableOnly P ),
+     Ty_termS P  (termS_Alloc)  (type_A T  (type_D T  (Some (pair   Lin     (Fin 0)  )) ) )
+ | Ty_termS_FromA' : forall (P:ctx) (t:term) (T:type)
+     (Tyt: Ty_term P t (type_A T type_U)),
+     Ty_termS P  (termS_FromA'  t )  T
+ | Ty_termS_FillLeaf : forall (P1:ctx) (n:mode) (P2:ctx) (t t':term) (T:type)
+     (Validn: IsValid n )
+     (Tyt: Ty_term P1 t (type_D T n))
+     (Tytp: Ty_term P2 t' T),
+     Ty_termS  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )   (termS_FillLeaf  t   t' )  type_U
+ | Ty_termS_F : forall (P2:ctx) (x:var) (m:mode) (u:term) (T U:type)
+     (UserDefinedP2: UserDefined P2 )
+     (Validm: IsValid m )
+     (DisjointP2x: P2 #  (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )
+     (Tyu: Ty_term  (union  P2    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  u U),
+     Ty_termS P2  (termS_F  x   m   u )  (type_F T m U)
+ | Ty_termS_L : forall (P2:ctx) (t:term) (T1 T2:type)
+     (UserDefinedP2: UserDefined P2 ),
+     Ty_term P2 t T1 ->
+     Ty_termS P2  (termS_L  t )  (type_S T1 T2)
+ | Ty_termS_R : forall (P2:ctx) (t:term) (T1 T2:type)
+     (UserDefinedP2: UserDefined P2 ),
+     Ty_term P2 t T2 ->
+     Ty_termS P2  (termS_R  t )  (type_S T1 T2)
+ | Ty_termS_E : forall (m:mode) (P2:ctx) (t:term) (T:type)
+     (UserDefinedP2: UserDefined P2 )
+     (Validm: IsValid m ),
+     Ty_term P2 t T ->
+     Ty_termS  (stimes  m   P2 )   (termS_E  m   t )  (type_E m T)
+ | Ty_termS_P : forall (P21 P22:ctx) (t1 t2:term) (T1 T2:type)
+     (UserDefinedP21: UserDefined P21 )
+     (UserDefinedP22: UserDefined P22 ),
+     Ty_term P21 t1 T1 ->
+     Ty_term P22 t2 T2 ->
+     Ty_termS  (union  P21   P22 )   (termS_P  t1   t2 )  (type_P T1 T2)
 with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
  | Ty_ectxs_Id : forall (U0:type),
      Ty_ectxs  ctx_empty   nil  U0 U0

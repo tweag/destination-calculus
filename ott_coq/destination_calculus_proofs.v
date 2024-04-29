@@ -15,6 +15,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
 Require Import Arith.
+Require Import Lia.
 
 (* =========================================================================
  * Waiting for PR #2 to be merged
@@ -1719,6 +1720,35 @@ Proof.
   - rewrite nIn_iff_nMapsTo in H. unfold merge_with, merge, Fun.on_conflict_do, Fun.merge, map, Fun.map; try unfold stimes_var; try unfold stimes_dh; simpl; rewrite H; reflexivity.
 Qed.
 
+Lemma UserDefined_union_iff : forall (G1 G2 : ctx), UserDefined (G1 ᴳ+ G2) <-> UserDefined G1 /\ UserDefined G2.
+Proof.
+  intros *.
+  unfold UserDefined.
+  split.
+  - intros UserDefinedG12.
+    split; intros x Hin.
+    + apply UserDefinedG12. apply In_union_iff. left. assumption.
+    + apply UserDefinedG12. apply In_union_iff. right. assumption.
+  - intros [UserDefinedG1 UserDefinedG2] x Hin.
+    apply In_union_iff in Hin.
+    destruct Hin as [Hin1 | Hin2].
+    + apply UserDefinedG1. assumption.
+    + apply UserDefinedG2. assumption.
+Qed.
+
+Lemma UserDefined_Disjoint : forall (G : ctx) (x : var) (m : mode) (T : type), UserDefined G -> x <= max_runtime_var -> G # ᴳ{ x : m ‗ T}.
+Proof.
+  intros * UserDefinedG infMaxRuntime.
+  unfold UserDefined in UserDefinedG.
+  unfold Disjoint.
+  intros * Hin1 Hin2.
+  destruct x0.
+  - apply In_singleton_iff in Hin2. inversion Hin2. subst.
+    specialize (UserDefinedG x Hin1).
+    lia.
+  - apply In_singleton_iff in Hin2. inversion Hin2.
+Qed.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
@@ -1879,6 +1909,8 @@ Ltac hauto_ctx :=
         FinAgeOnly_stimes_plus_backward,
         FinAgeOnly_stimes_times_backward,
         union_self_stimes_plus_eq,
+        (* UserDefined_union_iff, *)
+        (* UserDefined_Disjoint, *)
         (IsLinProof (Fin 0)),
         (IsLinProof (Fin 1)),
         (IsFinAgeProof Lin 0),
