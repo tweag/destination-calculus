@@ -133,7 +133,7 @@ Proof.
   sfirstorder.
 Qed.
 
-(* TODO: Not necessarily true if `h\in D'` and `h+h' \in D`. *)
+(* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hvar), D # D' -> D ᴳ[ hvarsᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
@@ -155,9 +155,9 @@ Proof. Admitted.
 
 Lemma total_cshift_eq : forall (G : ctx) (h' : hvar), hvarsᴳ(G ᴳ[ hvarsᴳ( G ) ⩲ h' ]) = hvarsᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
-Lemma cshift_distrib_on_hminus : forall (G : ctx) (H : hvars) (h' : hvar), (ᴳ- G) ᴳ[ H ⩲ h' ] = (ᴳ- (G ᴳ[ H ⩲ h' ])).
-Proof. Admitted.
 Lemma cshift_distrib_on_hminus_inv : forall (G : ctx) (H : hvars) (h' : hvar), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = (ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ])).
+Proof. Admitted.
+Lemma cshift_distrib_on_hminus : forall (G : ctx) (H : hvars) (h' : hvar), (ᴳ- G) ᴳ[ H ⩲ h' ] = (ᴳ- (G ᴳ[ H ⩲ h' ])).
 Proof. Admitted.
 
 Lemma cshift_distrib_on_hvars : forall H h' D, hvars_cshift hvarsᴳ( D) H h' = hvarsᴳ( D ᴳ[ H ⩲ h']).
@@ -196,7 +196,7 @@ Proof.
       constructor. all: auto.
     + cbn. rewrite cshift_distrib_on_stimes.
       constructor. all: auto.
-    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hvars, cshift_distrib_on_hminus.
+    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hvars, cshift_distrib_on_hminus_inv.
       constructor.
       (* 11 goals *)
       * hauto l: on use: DestOnly_cshift_iff.
@@ -210,7 +210,7 @@ Proof.
       * hauto l: on use: Disjoint_cshift_iff.
       * rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
         auto.
-      * rewrite <- cshift_distrib_on_hminus, <- cshift_distrib_on_union.
+      * rewrite <- cshift_distrib_on_hminus_inv, <- cshift_distrib_on_union.
         auto.
   - (* TODO *) give_up.
 Admitted.
@@ -691,20 +691,6 @@ Proof.
 Qed.
 Hint Rewrite Disjoint_stimes_r_iff : propagate_down.
 
-Lemma Disjoint_hminus_l_iff : forall (D D' : ctx), D # D' <-> ((ᴳ- D)) # D'.
-Proof.
-  intros *. unfold Disjoint, hminus.
-  split.
-  - intros h x.
-    rewrite In_map_iff.
-    eauto.
-  - intros h x.
-    specialize (h x).
-    rewrite In_map_iff in h.
-    trivial.
-Qed.
-Hint Rewrite <- Disjoint_hminus_l_iff : propagate_down.
-
 Lemma Disjoint_hminus_inv_l_iff : forall (D D' : ctx), D # D' <-> ((ᴳ-⁻¹ D)) # D'.
 Proof.
   intros *. unfold Disjoint, hminus_inv.
@@ -717,8 +703,9 @@ Proof.
     rewrite In_map_iff in h.
     trivial.
 Qed.
+Hint Rewrite <- Disjoint_hminus_inv_l_iff : propagate_down.
 
-Lemma Disjoint_hminus_r_iff : forall (D D' : ctx), D # D' <-> D # ((ᴳ-D')).
+Lemma Disjoint_hminus_l_iff : forall (D D' : ctx), D # D' <-> ((ᴳ- D)) # D'.
 Proof.
   intros *. unfold Disjoint, hminus.
   split.
@@ -730,11 +717,24 @@ Proof.
     rewrite In_map_iff in h.
     trivial.
 Qed.
-Hint Rewrite <- Disjoint_hminus_r_iff : propagate_down.
 
 Lemma Disjoint_hminus_inv_r_iff : forall (D D' : ctx), D # D' <-> D # ((ᴳ-⁻¹D')).
 Proof.
   intros *. unfold Disjoint, hminus_inv.
+  split.
+  - intros h x.
+    rewrite In_map_iff.
+    eauto.
+  - intros h x.
+    specialize (h x).
+    rewrite In_map_iff in h.
+    trivial.
+Qed.
+Hint Rewrite <- Disjoint_hminus_inv_r_iff : propagate_down.
+
+Lemma Disjoint_hminus_r_iff : forall (D D' : ctx), D # D' <-> D # ((ᴳ-D')).
+Proof.
+  intros *. unfold Disjoint, hminus.
   split.
   - intros h x.
     rewrite In_map_iff.
@@ -822,20 +822,20 @@ Proof.
 Qed.
 Hint Rewrite stimes_empty_eq : canonalize.
 
-Lemma hminus_empty_eq : (ᴳ- ᴳ{}) = ᴳ{}.
-Proof.
-  apply ext_eq.
-  all: sfirstorder.
-Qed.
-Hint Rewrite hminus_empty_eq : canonalize.
-
 Lemma hminus_inv_empty_eq : (ᴳ-⁻¹ ᴳ{}) = ᴳ{}.
 Proof.
-  unfold hminus_inv, empty, map. cbn.
   apply ext_eq.
   all: sfirstorder.
 Qed.
 Hint Rewrite hminus_inv_empty_eq : canonalize.
+
+Lemma hminus_empty_eq : (ᴳ- ᴳ{}) = ᴳ{}.
+Proof.
+  unfold hminus, empty, map. cbn.
+  apply ext_eq.
+  all: sfirstorder.
+Qed.
+Hint Rewrite hminus_empty_eq : canonalize.
 
 Lemma union_empty_r_eq : forall (G : ctx), G = G ᴳ+ ᴳ{}.
 Proof.
@@ -1061,22 +1061,22 @@ Proof.
 Qed.
 Hint Rewrite stimes_distrib_on_union : canonalize.
 
-Lemma hminus_distrib_on_union : forall (G1 G2 : ctx), G1 # G2 ->(ᴳ- (G1 ᴳ+ G2)) = (ᴳ-G1) ᴳ+ (ᴳ-G2).
+Lemma hminus_inv_distrib_on_union : forall (G1 G2 : ctx), G1 # G2 ->(ᴳ-⁻¹ (G1 ᴳ+ G2)) = (ᴳ-⁻¹G1) ᴳ+ (ᴳ-⁻¹G2).
 Proof.
   intros * DisjointG1G2.
   apply ext_eq.
-  intros n. unfold hminus, union.
+  intros n. unfold hminus_inv, union.
   unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.on_conflict_do.
   destruct (In_dec n G1), (In_dec n G2).
   { unfold Disjoint in DisjointG1G2. specialize (DisjointG1G2 n H H0). contradiction. }
   all: destruct n; try destruct H as (binding1 & mapstoG1); try destruct H0 as (binding2 & mapstoG2); cbn; try rewrite nIn_iff_nMapsTo in H; try rewrite nIn_iff_nMapsTo in H0; try rewrite mapstoG1; try rewrite mapstoG2; try rewrite H; try rewrite H0; cbn; trivial.
 Qed.
 
-Lemma hminus_inv_distrib_on_union : forall (G1 G2 : ctx), G1 # G2 ->(ᴳ-⁻¹ (G1 ᴳ+ G2)) = (ᴳ-⁻¹G1) ᴳ+ (ᴳ-⁻¹G2).
+Lemma hminus_distrib_on_union : forall (G1 G2 : ctx), G1 # G2 ->(ᴳ- (G1 ᴳ+ G2)) = (ᴳ-G1) ᴳ+ (ᴳ-G2).
 Proof.
   intros * DisjointG1G2.
   apply ext_eq.
-  intros n. unfold hminus_inv, union.
+  intros n. unfold hminus, union.
   unfold map, merge_with, merge, Fun.map, Fun.merge, Fun.on_conflict_do.
   destruct (In_dec n G1), (In_dec n G2).
   { unfold Disjoint in DisjointG1G2. specialize (DisjointG1G2 n H H0). contradiction. }
@@ -1224,18 +1224,18 @@ Proof.
 Qed.
 Hint Rewrite HSubset_stimes_backward' : propagate_down.
 
-Lemma hvars_minus_eq : forall (D : ctx), hvarsᴳ( (ᴳ- D)) = hvarsᴳ( D).
-Proof.
-  intros D. apply HVars.eq_leibniz. unfold HVars.eq. intros h. rewrite! hvars_spec. split.
-  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus in Hin. rewrite In_map_iff in Hin. rewrite <- In_iff_exists_Some. assumption.
-  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus. rewrite <- In_iff_exists_Some. rewrite In_map_iff. assumption.
-Qed.
-
-Lemma hvars_hminus_inv_eq : forall (D : ctx), hvarsᴳ( (ᴳ-⁻¹ D)) = hvarsᴳ( D).
+Lemma hvars_minus_eq : forall (D : ctx), hvarsᴳ( (ᴳ-⁻¹ D)) = hvarsᴳ( D).
 Proof.
   intros D. apply HVars.eq_leibniz. unfold HVars.eq. intros h. rewrite! hvars_spec. split.
   - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus_inv in Hin. rewrite In_map_iff in Hin. rewrite <- In_iff_exists_Some. assumption.
   - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus_inv. rewrite <- In_iff_exists_Some. rewrite In_map_iff. assumption.
+Qed.
+
+Lemma hvars_hminus_eq : forall (D : ctx), hvarsᴳ( (ᴳ- D)) = hvarsᴳ( D).
+Proof.
+  intros D. apply HVars.eq_leibniz. unfold HVars.eq. intros h. rewrite! hvars_spec. split.
+  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus in Hin. rewrite In_map_iff in Hin. rewrite <- In_iff_exists_Some. assumption.
+  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus. rewrite <- In_iff_exists_Some. rewrite In_map_iff. assumption.
 Qed.
 
 Lemma hvars_C_wk_hvars_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HVars.Subset hvarsᴳ(D) hvars©(C).
@@ -1310,27 +1310,27 @@ Proof.
   intros m. sauto lq: on.
 Qed.
 
-Lemma hminus_singleton : forall (h : hvar) (T : type) (n : mode), (ᴳ- ᴳ{+ h : ¹ν ⌊ T ⌋ n}) = ᴳ{- h : T ‗ n }.
-Proof.
-  intros *.
-  apply ext_eq.
-  intros n'. unfold hminus, ctx_singleton.
-  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₊ ¹ν ⌊ T ⌋ n). split; tauto. }
-  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
-    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
-    rewrite H0 in *. apply map_nMapsTo_iff. assumption. }
-Qed.
-
-Lemma hminus_inv_singleton : forall (h : hvar) (T : type) (n : mode), (ᴳ-⁻¹ ᴳ{- h : T ‗ n}) = ᴳ{+ h : ¹ν ⌊ T ⌋ n }.
+Lemma hminus_inv_singleton : forall (h : hvar) (T : type) (n : mode), (ᴳ-⁻¹ ᴳ{- h : ¹ν ⌊ T ⌋ n}) = ᴳ{+ h : T ‗ n }.
 Proof.
   intros *.
   apply ext_eq.
   intros n'. unfold hminus_inv, ctx_singleton.
   destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₋ T ‗ n). split; tauto. }
-  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
-    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₋ ¹ν ⌊ T ⌋ n). split; tauto. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+    rewrite H0 in *. apply map_nMapsTo_iff. assumption. }
+Qed.
+
+Lemma hminus_singleton : forall (h : hvar) (T : type) (n : mode), (ᴳ- ᴳ{+ h : T ‗ n}) = ᴳ{- h : ¹ν ⌊ T ⌋ n }.
+Proof.
+  intros *.
+  apply ext_eq.
+  intros n'. unfold hminus, ctx_singleton.
+  destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
+  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₊ T ‗ n). split; tauto. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ ¹ν ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
     rewrite H in *. apply map_nMapsTo_iff. assumption. }
 Qed.
 
@@ -1346,44 +1346,44 @@ Proof.
     rewrite H0 in *. apply map_nMapsTo_iff. assumption. }
 Qed.
 
-Lemma stimes_singleton_dest : forall (h : hvar) (m n : mode) (T : type) (m': mode), m' ᴳ· ᴳ{+ h : m ⌊ T ⌋ n} = ᴳ{+ h : (m · m') ⌊ T ⌋ n}.
+Lemma stimes_singleton_dest : forall (h : hvar) (m n : mode) (T : type) (m': mode), m' ᴳ· ᴳ{- h : m ⌊ T ⌋ n} = ᴳ{- h : (m · m') ⌊ T ⌋ n}.
 Proof.
   intros *.
   apply ext_eq.
   intros n'. unfold stimes, ctx_singleton.
   destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₊ m ⌊ T ⌋ n). split. tauto. unfold stimes_dh. rewrite mode_times_commutative. reflexivity. }
-  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ m ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
-    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ (m · m') ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₋ m ⌊ T ⌋ n). split. tauto. unfold stimes_dh. rewrite mode_times_commutative. reflexivity. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ m ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ (m · m') ⌊ T ⌋ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
     rewrite H0 in *. apply map_nMapsTo_iff. assumption. }
 Qed.
-Lemma stimes_singleton_hole : forall (h : hvar) (T : type) (n : mode) (m': mode), m' ᴳ· ᴳ{- h : T ‗ n} = ᴳ{- h : T ‗ (n · m') }.
+Lemma stimes_singleton_hole : forall (h : hvar) (T : type) (n : mode) (m': mode), m' ᴳ· ᴳ{+ h : T ‗ n} = ᴳ{+ h : T ‗ (n · m') }.
 Proof.
   intros *.
   apply ext_eq.
   intros n'. unfold stimes, ctx_singleton.
   destruct (name_eq_dec n' (ʰ h)); rewrite? e in *.
-  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₋ T ‗ n). split. tauto. unfold stimes_dh. rewrite mode_times_commutative. reflexivity. }
-  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
-    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₋ T ‗ (n · m')) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+  { rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. rewrite singleton_MapsTo_at_elt. simpl. exists (₊ T ‗ n). split. tauto. unfold stimes_dh. rewrite mode_times_commutative. reflexivity. }
+  { assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ T ‗ n) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
+    assert (@singleton name binding_type_of (ʰ h) name_eq_dec (₊ T ‗ (n · m')) n' = None). { apply singleton_nMapsTo_iff. symmetry. assumption. }
     rewrite H0 in *. apply map_nMapsTo_iff. assumption. }
 Qed.
 
-Lemma hvars_singleton_dest : forall (h : hvar) (m n : mode) (T : type), hvarsᴳ( ᴳ{+ h : m ⌊ T ⌋ n} ) = ᴴ{ h }.
+Lemma hvars_singleton_dest : forall (h : hvar) (m n : mode) (T : type), hvarsᴳ( ᴳ{- h : m ⌊ T ⌋ n} ) = ᴴ{ h }.
 Proof.
   intros *.
   unfold hvars_ctx, hvars_dom, hvars_, ctx_singleton.
   rewrite dom_singleton_eq. reflexivity.
 Qed.
 
-Lemma hvars_singleton_hole : forall (h : hvar) (T : type) (n : mode), hvarsᴳ( ᴳ{- h : T ‗ n} ) = ᴴ{ h }.
+Lemma hvars_singleton_hole : forall (h : hvar) (T : type) (n : mode), hvarsᴳ( ᴳ{+ h : T ‗ n} ) = ᴴ{ h }.
 Proof.
   intros *.
   unfold hvars_ctx, hvars_dom, hvars_, ctx_singleton.
   rewrite dom_singleton_eq. reflexivity.
 Qed.
 
-Lemma DestOnly_singleton_dest : forall (h : hvar) (m n : mode) (T : type), DestOnly ᴳ{+ h : m ⌊ T ⌋ n}.
+Lemma DestOnly_singleton_dest : forall (h : hvar) (m n : mode) (T : type), DestOnly ᴳ{- h : m ⌊ T ⌋ n}.
 Proof.
   unfold DestOnly, ctx_singleton, IsDest. intros * mapsto.
   apply singleton_MapsTo_iff in mapsto. pose proof mapsto as mapsto'. apply eq_sigT_fst in mapsto. destruct x; try congruence. inversion mapsto. rewrite <- H0 in *. apply inj_pair2_eq_dec in mapsto'. rewrite <- mapsto' in *. trivial. exact name_eq_dec.
@@ -1763,8 +1763,8 @@ Ltac hauto_ctx :=
         cshift_distrib_on_stimes,
         cshift_by_max_impl_HDisjoint,
         total_cshift_eq,
-        cshift_distrib_on_hminus,
         cshift_distrib_on_hminus_inv,
+        cshift_distrib_on_hminus,
         (* Ty_val_cshift,
         val_Ampar_cshift, *)
         union_commutative,
@@ -1814,10 +1814,10 @@ Ltac hauto_ctx :=
         (* FinAgeOnly_stimes_forward', *)
         Disjoint_stimes_l_iff,
         Disjoint_stimes_r_iff,
-        Disjoint_hminus_l_iff,
         Disjoint_hminus_inv_l_iff,
-        Disjoint_hminus_r_iff,
+        Disjoint_hminus_l_iff,
         Disjoint_hminus_inv_r_iff,
+        Disjoint_hminus_r_iff,
         Disjoint_union_l_iff,
         Disjoint_union_r_iff,
         Disjoint_commutative,
@@ -1828,8 +1828,8 @@ Ltac hauto_ctx :=
         Disjoint_empty_r,
         DisposableOnly_empty,
         stimes_empty_eq,
-        hminus_empty_eq,
         hminus_inv_empty_eq,
+        hminus_empty_eq,
         union_empty_r_eq,
         union_empty_l_eq,
         union_empty_iff,
@@ -1845,8 +1845,8 @@ Ltac hauto_ctx :=
         stimes_is_action,
         mode_times_distrib_on_plus,
         stimes_distrib_on_union,
-        hminus_distrib_on_union,
         hminus_inv_distrib_on_union,
+        hminus_distrib_on_union,
         stimes_linnu_eq,
         hunion_hempty_l_eq,
         hunion_hempty_r_eq,
@@ -1860,7 +1860,7 @@ Ltac hauto_ctx :=
         HSubset_stimes_backward,
         (* HSubset_stimes_backward', *)
         hvars_minus_eq,
-        hvars_hminus_inv_eq,
+        hvars_hminus_eq,
         hvars_C_wk_hvars_G,
         HDisjoint_to_Disjoint,
         Disjoint_to_HDisjoint,
@@ -1870,8 +1870,8 @@ Ltac hauto_ctx :=
         HDisjoint_hempty_r,
         HDisjoint_hempty_l,
         ModeSubtype_refl,
-        hminus_singleton,
         hminus_inv_singleton,
+        hminus_singleton,
         stimes_singleton_var,
         stimes_singleton_dest,
         stimes_singleton_hole,
@@ -1982,14 +1982,14 @@ Proof.
     apply In_merge_iff in H. destruct H.
     + assert (In nam (¹↑ ᴳ· D1 ᴳ+ D3)). { apply In_iff_exists_Some. apply In_merge_iff. left. apply In_map_iff. assumption. }
       destruct H0. unfold NoVar in IHTy1. specialize (IHTy1 nam x H0). unfold IsVar in IHTy1. destruct nam. specialize (IHTy1 I); assumption. inversion contra.
-    + assert (In nam (D2 ᴳ+ (ᴳ- D3))). { apply In_iff_exists_Some. apply In_merge_iff. left. assumption. }
+    + assert (In nam (D2 ᴳ+ (ᴳ-⁻¹ D3))). { apply In_iff_exists_Some. apply In_merge_iff. left. assumption. }
       destruct H0. unfold NoVar in IHTy2. specialize (IHTy2 nam x H0). unfold IsVar in IHTy2. destruct nam. specialize (IHTy2 I); assumption. inversion contra.
 Qed.
 
-Lemma Ty_val_Hole_DestOnly_contra : forall (D : ctx) (h : hvar) (T : type), (D ⫦ ᵛ- h : T) -> DestOnly D -> False.
+Lemma Ty_val_Hole_DestOnly_contra : forall (D : ctx) (h : hvar) (T : type), (D ⫦ ᵛ+ h : T) -> DestOnly D -> False.
 Proof.
   intros D h T Tyv DestOnlyD. inversion Tyv; subst.
-  specialize (DestOnlyD (ʰ h)). unfold DestOnly, ctx_singleton in DestOnlyD. specialize (DestOnlyD (₋ T ‗ ¹ν)). rewrite singleton_MapsTo_iff in DestOnlyD. sfirstorder.
+  specialize (DestOnlyD (ʰ h)). unfold DestOnly, ctx_singleton in DestOnlyD. specialize (DestOnlyD (₊ T ‗ ¹ν)). rewrite singleton_MapsTo_iff in DestOnlyD. sfirstorder.
 Qed.
 
 Lemma Ty_ectxs_DestOnly : forall (D : ctx) (C : ectxs) (T U0 : type) (TyC: D ⊣ C : T ↣ U0), DestOnly D.
@@ -2031,10 +2031,10 @@ Proof.
       { hauto use: LinOnly_union_iff, LinOnly_stimes_forward, (IsLinProof (Fin 1)). }
     assert (FinAgeOnly (¹↑ ᴳ· D1)).
       { hauto use: FinAgeOnly_union_backward, FinAgeOnly_stimes_forward, (IsFinAgeProof Lin 1). }
-    assert ((D1 ᴳ+ D2) # (ᴳ- D3)).
-      { apply (Ty_ectxs_HDisjoint_to_Disjoint C (D1 ᴳ+ D2) (ᴳ- D3) (U ⧔ T') U0); tauto. }
+    assert ((D1 ᴳ+ D2) # (ᴳ-⁻¹ D3)).
+      { apply (Ty_ectxs_HDisjoint_to_Disjoint C (D1 ᴳ+ D2) (ᴳ-⁻¹ D3) (U ⧔ T') U0); tauto. }
     assert ((¹↑ ᴳ· D1) # D3).
-      { sblast use: Disjoint_union_l_iff, Disjoint_hminus_r_iff, Disjoint_stimes_l_iff. }
+      { sblast use: Disjoint_union_l_iff, Disjoint_hminus_inv_r_iff, Disjoint_stimes_l_iff. }
     rewrite LinOnly_union_iff. repeat split. tauto. tauto. tauto. apply FinAgeOnly_union_forward. repeat split. all:tauto.
 Qed.
 
@@ -2497,17 +2497,17 @@ Proof. Admitted.
 Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hvar) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
   D1 # D2 ->
   D1 # D3 ->
-  hvars©(C) ## hvarsᴳ(ᴳ- D3) ->
+  hvars©(C) ## hvarsᴳ(ᴳ-⁻¹ D3) ->
   DestOnly D1 ->
   DestOnly D2 ->
   DestOnly D3 ->
   LinOnly D3 ->
   FinAgeOnly D3 ->
   ValidOnly D3 ->
-  D1 # ᴳ{+ h : m ⌊ U ⌋ n } ->
-  D2 # ᴳ{+ h : m ⌊ U ⌋ n } ->
-  D3 # ᴳ{+ h : m ⌊ U ⌋ n } ->
- D1 ᴳ+ (m · n) ᴳ· D2 ᴳ+ ᴳ{+ h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
- D2 ᴳ+ (ᴳ- D3) ⫦ v : U ->
- D1 ᴳ+ m ᴳ· (ᴳ-⁻¹ (n ᴳ· (ᴳ- D3))) ⊣ C ©️[ h ≔ hvarsᴳ(ᴳ- D3) ‗ v ] : T ↣ U0.
+  D1 # ᴳ{- h : m ⌊ U ⌋ n } ->
+  D2 # ᴳ{- h : m ⌊ U ⌋ n } ->
+  D3 # ᴳ{- h : m ⌊ U ⌋ n } ->
+ D1 ᴳ+ (m · n) ᴳ· D2 ᴳ+ ᴳ{- h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
+ D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
+ D1 ᴳ+ m ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hvarsᴳ(ᴳ-⁻¹ D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.

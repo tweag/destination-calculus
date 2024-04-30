@@ -666,7 +666,7 @@ Definition stimes (m' : mode) (G : ctx) : ctx :=
     end
   ) G.
 
-Definition hminus (G : ctx) : ctx :=
+Definition hminus_inv (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_Unit
@@ -678,7 +678,7 @@ Definition hminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition hminus_inv (G : ctx) : ctx :=
+Definition hminus (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_Unit
@@ -791,7 +791,7 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _Ty_term (P:ctx) (t:term) (T:type)
  | _Ty_sterm (P:ctx) (t:term) (T:type)
  | _Ty_ectxs (D:ctx) (C:ectxs) (T1:type) (T2:type) (*r Typing of evaluation contexts *)
- | _Ty_cmd (C:ectxs) (t:term) (T:type)
+ | _Ty (C:ectxs) (t:term) (T:type)
  | _Sem (C:ectxs) (t:term) (C':ectxs) (t':term).
 (** definitions *)
 
@@ -833,8 +833,8 @@ Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
      (DisjointD1D3: D1 # D3 )
      (DisjointD2D3: D2 # D3 )
      (Tyv1: Ty_val  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )  v1 T)
-     (Tyv2: Ty_val  (union  D2     (hminus  D3 )   )  v2 U),
-     Ty_val  (union  D1   D2 )  (val_Ampar  (hvars_ctx   (hminus  D3 )  )  v2 v1) (type_Ampar U T)
+     (Tyv2: Ty_val  (union  D2     (hminus_inv  D3 )   )  v2 U),
+     Ty_val  (union  D1   D2 )  (val_Ampar  (hvars_ctx   (hminus_inv  D3 )  )  v2 v1) (type_Ampar U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Val : forall (P D:ctx) (v:val) (T:type)
      (DisposP: DisposableOnly P )
@@ -1082,9 +1082,9 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (FinAgeOnlyD3: FinAgeOnly D3 )
      (ValidOnlyD3: ValidOnly D3 )
      (TyC: Ty_ectxs  (union  D1   D2 )  C  (type_Ampar U T')  U0)
-     (Tyv2: Ty_val  (union  D2    (hminus  D3 )  )  v2 U),
-      (hvars_ectxs  C )  ##  (hvars_ctx   (hminus  D3 )  )   ->
-     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hvars_ctx   (hminus  D3 )  )  v2)    C )  T' U0
+     (Tyv2: Ty_val  (union  D2    (hminus_inv  D3 )  )  v2 U),
+      (hvars_ectxs  C )  ##  (hvars_ctx   (hminus_inv  D3 )  )   ->
+     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hvars_ctx   (hminus_inv  D3 )  )  v2)    C )  T' U0
 with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
  | Ty_cmd : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)
      (ValidOnlyD: ValidOnly D )

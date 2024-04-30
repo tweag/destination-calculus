@@ -44,8 +44,8 @@ Notation "'ˢᴇ' m '⁔' t" := (sterm_Exp m t) (at level 31, m at level 29, t a
 Notation "'ˢ(' t ',' u ')'" := (sterm_Prod t u) (at level 0, t at level 59, u at level 59, no associativity).
 
 (* Values : 30-59 *)
-Notation "'ᵛ-' h" := (val_Hole h) (at level 31, h at level 19, no associativity).
-Notation "'ᵛ+' h" := (val_Dest h) (at level 31, h at level 19, no associativity).
+Notation "'ᵛ+' h" := (val_Hole h) (at level 31, h at level 19, no associativity).
+Notation "'ᵛ-' h" := (val_Dest h) (at level 31, h at level 19, no associativity).
 Notation "'ᵛ()'" := (val_Unit).
 Notation "'ᵛλ' x '⁔' m ⟼ t" := (val_Fun x m t) (at level 59, m at level 29, x at level 19, t at level 59, right associativity).
 Notation "'Inl' v" := (val_Left v) (at level 31, right associativity, v at level 31).
@@ -108,17 +108,17 @@ Notation "'ˣ' x" := (name_Var x) (at level 20, x at level 19, no associativity)
 Notation "'ʰ' h" := (name_DH h) (at level 20, h at level 19, no associativity).
 
 Notation "'ₓ' m '‗' T" := (binding_Var m T) (at level 60, m at level 29, T at level 59, no associativity).
-Notation "'₊' m '⌊' T '⌋' n" := (binding_Dest m T n) (at level 60, m at level 29, T at level 59, n at level 29, no associativity).
-Notation "'₋' T '‗' n" := (binding_Hole T n) (at level 60, T at level 59, n at level 29, no associativity).
+Notation "'₋' m '⌊' T '⌋' n" := (binding_Dest m T n) (at level 60, m at level 29, T at level 59, n at level 29, no associativity).
+Notation "'₊' T '‗' n" := (binding_Hole T n) (at level 60, T at level 59, n at level 29, no associativity).
 
 Notation "'ᴳ{}'" := (ctx_empty).
 Notation "'ᴳ{' x ':' m '‗' T '}'" := (ctx_singleton (name_Var x) (binding_Var m T)) (at level 1, x at level 19, m at level 29, T at level 59, no associativity).
-Notation "'ᴳ{+' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (binding_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
-Notation "'ᴳ{-' h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (binding_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
+Notation "'ᴳ{-' h ':' m ⌊ T ⌋ n '}'" := (ctx_singleton (name_DH h) (binding_Dest m T n)) (at level 0, h at level 19, m at level 29, T at level 59, n at level 29, no associativity).
+Notation "'ᴳ{+' h ':' T '‗' n '}'" := (ctx_singleton (name_DH h) (binding_Hole T n)) (at level 0, h at level 19, T at level 59, n at level 29, no associativity).
 Notation "m 'ᴳ·' G" := (stimes m G) (at level 63, G at level 63, right associativity).
 Notation "G 'ᴳ+' H" := (union G H) (at level 64, left associativity, H at next level).
-Notation "'ᴳ-' G" := (hminus G) (at level 62, no associativity, G at next level).
 Notation "'ᴳ-⁻¹' G" := (hminus_inv G) (at level 62, no associativity, G at next level).
+Notation "'ᴳ-' G" := (hminus G) (at level 62, no associativity, G at next level).
 Notation "G 'ᴳ[' H '⩲' k ]" := (ctx_cshift G H k) (at level 61, H at level 24, k at level 19, no associativity).
 
 (* Typing and semantics : 70 - 79 *)

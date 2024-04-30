@@ -217,7 +217,7 @@ Proof.
       inversion Tyv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
       assert (DestOnly (P ᴳ+ (D11 ᴳ+ D12))) as DestOnlyPuD1. { crush. }
       rewrite (nDisposable_in_DestOnly P (D11 ᴳ+ D12) DisposP DestOnlyPuD1) in *.
-      assert ((D2 ᴳ+ D11) # (D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])) as DisjointD2uD11D13. {
+      assert ((D2 ᴳ+ D11) # (D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])) as DisjointD2uD11D13. {
           {  apply Disjoint_union_l_iff. assert (HVars.Subset hvarsᴳ(D11 ᴳ+ D12 ᴳ+ D2) hvars©(C)).
               { apply hvars_C_wk_hvars_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
             { assert (HVars.Subset hvarsᴳ(D2) hvars©(C)).
@@ -226,7 +226,7 @@ Proof.
               { apply HSubset_impl_lt_max. tauto. }
               assert (hvarsᴳ(D2) ## (hvarsᴳ(D13) ᴴ⩲ (maxᴴ(hvars©(C)) + 1))).
               { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
-              assert (hvarsᴳ(D2) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+              assert (hvarsᴳ(D2) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
               { unfold HDisjoint. rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
             }
@@ -236,18 +236,18 @@ Proof.
               { apply HSubset_impl_lt_max. tauto. }
               assert (hvarsᴳ(D11) ## (hvarsᴳ(D13) ᴴ⩲ (maxᴴ(hvars©(C)) + 1))).
               { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
-              assert (hvarsᴳ(D11) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+              assert (hvarsᴳ(D11) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
               { rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
             }
           } }
-      assert ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] : T) as Tyt1.
-        { term_Val_no_dispose ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]). apply Ty_val_cshift; trivial. apply DestOnly_cshift_iff; apply DestOnly_union_iff; split; try apply DestOnly_stimes_iff. crush. crush. }
-          assert ((¹↑ ᴳ· (D2 ᴳ+ D11)) # (D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+      assert ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ⊢ ᵥ₎ v1 ᵛ[hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] : T) as Tyt1.
+        { term_Val_no_dispose ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]). apply Ty_val_cshift; trivial. apply DestOnly_cshift_iff; apply DestOnly_union_iff; split; try apply DestOnly_stimes_iff. crush. crush. }
+          assert ((¹↑ ᴳ· (D2 ᴳ+ D11)) # (D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
           { apply Disjoint_stimes_l_iff. assumption. }
-      constructor 1 with (D := ¹↑ ᴳ· (D2 ᴳ+ D11 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ]); swap 3 4;
-        assert (D11 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = D11) as D11Eq by ( apply cshift_by_Disjoint_eq; crush );
-        assert (D12 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = D12) as D12Eq by ( apply cshift_by_Disjoint_eq; crush );
+      constructor 1 with (D := ¹↑ ᴳ· (D2 ᴳ+ D11 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] ]); swap 3 4;
+        assert (D11 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = D11) as D11Eq by ( apply cshift_by_Disjoint_eq; crush );
+        assert (D12 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = D12) as D12Eq by ( apply cshift_by_Disjoint_eq; crush );
         rewrite D11Eq.
         { assert (ValidOnly (¹↑ ᴳ· (D2 ᴳ+ D11))).
           { apply ValidOnly_stimes_forward. split.
@@ -257,7 +257,7 @@ Proof.
               tauto.
             - exact (IsValidProof (Lin, Fin 1)).
           }
-          assert (ValidOnly (D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+          assert (ValidOnly (D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
           { apply ValidOnly_cshift_iff; tauto. }
 
           apply ValidOnly_union_forward; crush.
@@ -266,7 +266,7 @@ Proof.
           { crush. }
           { crush. }
         }
-        { assert (¹↑ ᴳ· (D2 ᴳ+ D11) ᴳ+ D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = (¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2) as ctxEq.
+        { assert (¹↑ ᴳ· (D2 ᴳ+ D11) ᴳ+ D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)] = (¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2) as ctxEq.
           { rewrite <- stimes_linnu_eq.
             rewrite cshift_distrib_on_union.
             rewrite cshift_distrib_on_stimes.
@@ -275,21 +275,21 @@ Proof.
             rewrite union_associative.
             rewrite stimes_distrib_on_union. tauto. }
           rewrite ctxEq.
-          assert (ValidOnly ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ( hvars©( C)) + 1)])).
+          assert (ValidOnly ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ( hvars©( C)) + 1)])).
             { apply ValidOnly_cshift_iff. apply ValidOnly_union_forward; trivial.
              { apply ValidOnly_stimes_forward; split; crush. }
              { crush. }
             }
           assert (LinOnly (D11 ᴳ+ D12 ᴳ+ D2) /\ FinAgeOnly (D11 ᴳ+ D12 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
             { apply (Ty_ectxs_LinOnly_FinAgeOnly (D11 ᴳ+ D12 ᴳ+ D2) C (U ⧔ T') U0); tauto. }
-          assert (LinOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2)).
+          assert (LinOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2)).
             { apply LinOnly_union_iff; repeat split.
               { apply LinOnly_stimes_forward. exact (IsLinProof (Fin 0)). apply LinOnly_cshift_iff. apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. exact (IsLinProof (Fin 1)). crush.
               assumption. crush. }
               { apply LinOnly_stimes_forward. exact (IsLinProof (Fin 1)). crush. }
               { apply Disjoint_stimes_l_iff. rewrite cshift_distrib_on_union. apply Disjoint_union_l_iff. split. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. rewrite Disjoint_stimes_l_iff, Disjoint_stimes_r_iff. crush. crush. apply Disjoint_commutative. rewrite stimes_distrib_on_union, Disjoint_union_l_iff in H. destruct H as (H & H'). assumption. }
             }
-          assert (FinAgeOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2)).
+          assert (FinAgeOnly ((¹ν ᴳ· (¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) ᴳ+ ¹↑ ᴳ· D2)).
             { apply FinAgeOnly_union_forward; repeat split.
               { apply FinAgeOnly_stimes_forward. exact (IsFinAgeProof Lin 0). apply FinAgeOnly_cshift_iff. apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. exact (IsFinAgeProof Lin 1). crush.
               assumption. crush. }
@@ -300,11 +300,11 @@ Proof.
           all: crush.
         }
       rewrite <- total_cshift_eq.
-      rewrite cshift_distrib_on_hminus.
+      rewrite cshift_distrib_on_hminus_inv.
       assert (LinOnly (D11 ᴳ+ D12 ᴳ+ D2)) as LinOnlyD. { apply (Ty_ectxs_LinOnly_FinAgeOnly (D11 ᴳ+ D12 ᴳ+ D2) C (U ⧔ T') U0). tauto. }
-      assert (hvars©( C) ## hvarsᴳ( ᴳ- D13 ᴳ[ hvarsᴳ( ᴳ- D13) ⩲ (maxᴴ( hvars©( C)) + 1)])) as hvarsDisjoint.
-        { rewrite <- cshift_distrib_on_hminus. rewrite total_cshift_eq. apply cshift_by_max_impl_HDisjoint with (h' := maxᴴ(hvars©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
-      constructor 19 with (D1 := D2 ᴳ+ D11) (D3 := D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
+      assert (hvars©( C) ## hvarsᴳ( ᴳ-⁻¹ D13 ᴳ[ hvarsᴳ( ᴳ-⁻¹ D13) ⩲ (maxᴴ( hvars©( C)) + 1)])) as hvarsDisjoint.
+        { rewrite <- cshift_distrib_on_hminus_inv. rewrite total_cshift_eq. apply cshift_by_max_impl_HDisjoint with (h' := maxᴴ(hvars©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
+      constructor 19 with (D1 := D2 ᴳ+ D11) (D3 := D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12).
         { apply LinOnly_union_iff. rewrite <- union_associative. rewrite union_commutative. tauto. }
         {
@@ -316,7 +316,7 @@ Proof.
               { apply HSubset_impl_lt_max. tauto. }
               assert (hvarsᴳ(D2) ## (hvarsᴳ(D13) ᴴ⩲ (maxᴴ(hvars©(C)) + 1))).
               { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
-              assert (hvarsᴳ(D2) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+              assert (hvarsᴳ(D2) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
               { rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
             }
@@ -326,7 +326,7 @@ Proof.
               { apply HSubset_impl_lt_max. tauto. }
               assert (hvarsᴳ(D11) ## (hvarsᴳ(D13) ᴴ⩲ (maxᴴ(hvars©(C)) + 1))).
               { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
-              assert (hvarsᴳ(D11) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+              assert (hvarsᴳ(D11) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
               { rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
             }
@@ -338,11 +338,11 @@ Proof.
               { apply HSubset_impl_lt_max. tauto. }
               assert (hvarsᴳ(D12) ## (hvarsᴳ(D13) ᴴ⩲ (maxᴴ(hvars©(C)) + 1))).
               { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
-              assert (hvarsᴳ(D12) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ- D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
+              assert (hvarsᴳ(D12) ## hvarsᴳ( D13 ᴳ[ hvarsᴳ(ᴳ-⁻¹ D13) ⩲ (maxᴴ(hvars©(C)) + 1)])).
               { unfold HDisjoint. rewrite hvars_minus_eq. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint. crush. assumption.
             } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
-          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto.  } { assumption. }
+          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto.  } { assumption. }
     - (* Sem-OpenAmpar_Unfoc *)
       inversion Tyt; subst. rename TyC into TyCc, Tyv into Tyv1. clear H2.
       inversion TyCc; subst. rename H6 into hvarsDisjoint, D0 into D.
@@ -350,39 +350,39 @@ Proof.
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = P ᴳ+ D) as eqD1uD3PuD.
         { unfold union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. }
       rewrite <- eqD1uD3PuD in *. clear H0. clear eqD1uD3PuD. clear D.
-      assert (D1 ᴳ+ D2 ⊢ ᵥ₎ hvarsᴳ(ᴳ- D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
-        { term_Val_no_dispose (D1 ᴳ+ D2). apply Ty_ectxs_HDisjoint_to_Disjoint with (D := D1 ᴳ+ D2) (D' := (ᴳ- D3)) (C := C) (T := U ⧔ T) (U0 := U0) in hvarsDisjoint. apply Ty_val_Ampar. all: trivial. crush.
+      assert (D1 ᴳ+ D2 ⊢ ᵥ₎ hvarsᴳ(ᴳ-⁻¹ D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
+        { term_Val_no_dispose (D1 ᴳ+ D2). apply Ty_ectxs_HDisjoint_to_Disjoint with (D := D1 ᴳ+ D2) (D' := (ᴳ-⁻¹ D3)) (C := C) (T := U ⧔ T) (U0 := U0) in hvarsDisjoint. apply Ty_val_Ampar. all: trivial. crush.
          }
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C (U ⧔ T) U0). tauto. }
-      constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T) (t := ᵥ₎ hvarsᴳ(ᴳ- D3) ⟨ v2 ❟ v1 ⟩). all: crush.
+      constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T) (t := ᵥ₎ hvarsᴳ(ᴳ-⁻¹ D3) ⟨ v2 ❟ v1 ⟩). all: crush.
 (*     - (* Sem-Alloc_Red *)
       inversion Tyt; subst.
-      assert (hvarsᴳ(ᴳ- ᴳ{+ 1 : ¹ν ⌊ U ⌋ ¹ν }) = ᴴ{ 1}) as hvarsD3Eq.
+      assert (hvarsᴳ(ᴳ-⁻¹ ᴳ{- 1 : ¹ν ⌊ U ⌋ ¹ν }) = ᴴ{ 1}) as hvarsD3Eq.
         { cbn. reflexivity. }
-      assert (ᴳ{} ⊢ ᵥ₎ ᴴ{ 1} ⟨ ᵛ- 1 ❟ ᵛ+ 1 ⟩ : U ⧔ ⌊ U ⌋ ¹ν) as Tytp.
+      assert (ᴳ{} ⊢ ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩ : U ⧔ ⌊ U ⌋ ¹ν) as Tytp.
         { rewrite <- hvarsD3Eq. apply Ty_term_Val. rewrite (union_empty_l_eq ᴳ{}). apply Ty_val_Ampar.
           - crush.
           - crush.
           - intros n b. unfold ctx_singleton. rewrite singleton_MapsTo_iff. rewrite eq_sigT_iff_eq_dep.
             intros []. cbv. tauto.
           - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
             constructor.
           - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
             constructor.
           - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₊ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
+          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
             constructor.
           - crush.
           - crush.
           - crush.
           - rewrite stimes_empty_eq. rewrite <- union_empty_l_eq. constructor. crush.
-          - rewrite <- union_empty_l_eq. rewrite hminus_singleton. constructor.
+          - rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. constructor.
           - crush.
         }
-      constructor 1 with (D := ᴳ{}) (T := U ⧔ ⌊ U ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ- 1 ❟ ᵛ+ 1 ⟩). all: crush. *)
+      constructor 1 with (D := ᴳ{}) (T := U ⧔ ⌊ U ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩). all: crush. *)
     - (* Sem-ToA_Foc *)
       inversion Tyt; subst.
       rename Tyt into TyToA.
@@ -404,8 +404,8 @@ Proof.
       inversion Tyu; subst. rename D into D2.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
       assert (ᴳ{} ᴳ+ D2 ⊢ ᵥ₎ hvars_ nil ⟨ v2 ❟ ᵛ() ⟩ : U ⧔ ①).
-        { term_Val_no_dispose (ᴳ{} ᴳ+ D2). assert (hvarsᴳ( (ᴳ- ᴳ{})) = hvars_ nil). { crush. } rewrite <- H. apply Ty_val_Ampar; swap 1 11; swap 2 10.
-          rewrite hminus_empty_eq. rewrite <- union_empty_r_eq; tauto.
+        { term_Val_no_dispose (ᴳ{} ᴳ+ D2). assert (hvarsᴳ( (ᴳ-⁻¹ ᴳ{})) = hvars_ nil). { crush. } rewrite <- H. apply Ty_val_Ampar; swap 1 11; swap 2 10.
+          rewrite hminus_inv_empty_eq. rewrite <- union_empty_r_eq; tauto.
           rewrite stimes_empty_eq. rewrite <- union_empty_r_eq. constructor.
           all:crush. }
       rewrite <- union_empty_l_eq in H.
@@ -453,7 +453,7 @@ Proof.
         - crush. }
       apply union_empty_iff in empty. destruct empty as [empty_D1 empty_D3].
       apply stimes_empty_iff in empty_D1.
-      rewrite empty_D3, hminus_empty_eq, <- union_empty_r_eq in Tyv2.
+      rewrite empty_D3, hminus_inv_empty_eq, <- union_empty_r_eq in Tyv2.
       assert (D2 ⊢ ᵥ₎ ᵛ( v2, ᴇ ¹∞ ⁔ v1) : U ⨂ ! ¹∞ ⁔ T).
       { subst. rewrite union_empty_r_eq with (G:=D2).
         term_Val_no_dispose (D2 ᴳ+ ᴳ{}). apply Ty_val_Prod.
@@ -482,16 +482,16 @@ Proof.
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C ① U0). tauto. }
       inversion Tytp; subst. clear H1.
       inversion Tyv; subst.
-      rewrite (nDisposable_in_DestOnly P ᴳ{+ h : ¹ν ⌊ ① ⌋ n} DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_DestOnly P ᴳ{- h : ¹ν ⌊ ① ⌋ n} DisposP DestOnlyD) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hvars_ nil ‗ ᵛ()] : ① ↣ U0).
-        { assert (ᴳ{} ᴳ+ ¹ν ᴳ· (ᴳ-⁻¹ (n ᴳ· (ᴳ- ᴳ{}))) = ᴳ{}) as e1. { crush. }
+        { assert (ᴳ{} ᴳ+ ¹ν ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{}))) = ᴳ{}) as e1. { crush. }
           rewrite <- e1.
-          assert (hvarsᴳ(ᴳ- ᴳ{}) = hvars_ nil) as e2. { crush. }
+          assert (hvarsᴳ(ᴳ-⁻¹ ᴳ{}) = hvars_ nil) as e2. { crush. }
           rewrite <- e2.
-          assert (ᴳ{} ᴳ+ (¹ν · n) ᴳ· ᴳ{} ᴳ+ ᴳ{+ h : ¹ν ⌊ ① ⌋ n} = ᴳ{+ h : ¹ν ⌊ ① ⌋ n}) as e3. { crush. }
+          assert (ᴳ{} ᴳ+ (¹ν · n) ᴳ· ᴳ{} ᴳ+ ᴳ{- h : ¹ν ⌊ ① ⌋ n} = ᴳ{- h : ¹ν ⌊ ① ⌋ n}) as e3. { crush. }
           rewrite <- e3 in TyC.
           apply ectxs_fill_spec with (D2 := ᴳ{}) (U := ①); swap 1 14.
-          { rewrite <- union_empty_l_eq. rewrite hminus_empty_eq. apply Ty_val_Unit. }
+          { rewrite <- union_empty_l_eq. rewrite hminus_inv_empty_eq. apply Ty_val_Unit. }
           all: crush. }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
       term_Val_no_dispose (ᴳ{}). apply Ty_val_Unit. all: crush.
@@ -518,15 +518,15 @@ Proof.
       inversion Tytp; subst. clear H1. rename D0 into D.
       rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
       inversion Tyv; subst; intros hpMaxCh.
-      assert (ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inl ᵛ- (h' + 1)] : ⌊ T1 ⌋ n ↣ U0).
-        { assert (ᴳ{} ᴳ+ ¹ν ᴳ· (ᴳ-⁻¹ (n ᴳ· (ᴳ- ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν }))) = ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ n }) as e1.
-            { rewrite <- union_empty_l_eq. rewrite <- stimes_linnu_eq. rewrite hminus_singleton. rewrite stimes_singleton_hole. rewrite hminus_inv_singleton. rewrite mode_times_linnu_l_eq. tauto. }
+      assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inl ᵛ+ (h' + 1)] : ⌊ T1 ⌋ n ↣ U0).
+        { assert (ᴳ{} ᴳ+ ¹ν ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν }))) = ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n }) as e1.
+            { rewrite <- union_empty_l_eq. rewrite <- stimes_linnu_eq. rewrite hminus_inv_singleton. rewrite stimes_singleton_hole. rewrite hminus_singleton. rewrite mode_times_linnu_l_eq. tauto. }
           rewrite <- e1.
-          assert (hvarsᴳ(ᴳ- ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
+          assert (hvarsᴳ(ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          assert (ᴳ{} ᴳ+ (¹ν · n) ᴳ· ᴳ{} ᴳ+ ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n} = ᴳ{+ h : ¹ν ⌊ T1 ⨁ T2 ⌋ n}) as e3. { crush. } rewrite <- e3 in TyC.
-          apply ectxs_fill_spec with (D2 := ᴳ{}) (D3 := ᴳ{+ (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (U := T1 ⨁ T2); swap 1 14.
-          { rewrite <- union_empty_l_eq. rewrite hminus_singleton. apply Ty_val_Left. constructor. }
+          assert (ᴳ{} ᴳ+ (¹ν · n) ᴳ· ᴳ{} ᴳ+ ᴳ{- h : ¹ν ⌊ T1 ⨁ T2 ⌋ n} = ᴳ{- h : ¹ν ⌊ T1 ⨁ T2 ⌋ n}) as e3. { crush. } rewrite <- e3 in TyC.
+          apply ectxs_fill_spec with (D2 := ᴳ{}) (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (U := T1 ⨁ T2); swap 1 14.
+          { rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Left. constructor. }
           give_up.
     - give_up.
 Admitted.

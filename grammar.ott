@@ -53,7 +53,7 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 
 grammar
 
-hvar, h :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number) }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
+hvar, h :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
   | 1 :: S :: 1 {{ coq 1 }} {{ tex \ottshvar{1} }}
   | 2 :: S :: 2 {{ coq 2 }} {{ tex \ottshvar{2} }}
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
@@ -124,8 +124,8 @@ sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | ˢ( t1 , t2 ) :: M :: SugarProd {{ com Allocate product }} {{ coq (sterm_Prod [[t1]] [[t2]]) }}
 
 val, v :: 'val_' ::= {{ com Value }}
-  | - h :: :: Hole {{ com Hole }} {{ tex \ottshvar{-}[[h]] }}
-  | + h :: :: Dest {{ tex \ottshvar{+}[[h]] }} {{ com Destination }}
+  | + h :: :: Hole {{ com Hole }} {{ tex [[h]] }}
+  | - h :: :: Dest {{ tex \ottshvar{\destminus}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | ᵛλ x m ⟼ u :: :: Fun {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Function with no free variable }} % (+ bind x in t +)
   | Inl v :: :: Left {{ com Left variant for sum }}
@@ -177,10 +177,10 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | ① :: :: Unit {{ tex \ottstype{1} }} {{ com Unit }}
   | T1 ⨁ T2 :: :: Sum {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: Prod {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
-  | ! m T :: :: Exp {{ tex \ottstype{!}_{[[m]]}\,[[T]] }} {{ com Exponential }}
+  | ! m T :: :: Exp {{ tex \ottstype{!}_{[[m]]}[[T]] }} {{ com Exponential }}
   | U ⧔ T :: :: Ampar {{ tex [[U]]\,\ottstype{\ltimes}\,[[T]] }} {{ com Ampar }}
   | T m → U :: :: Fun {{ tex [[T]]\,_{[[m]]}\!\ottstype{\to}\,[[U]] }} {{ com Function }}
-  | ⌊ T ⌋ m :: :: Dest {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
+  | ⌊ T ⌋ m :: :: Dest {{ tex \ottstype{\lfloor}\,\!_{[[m]]}\,[[T]]\ottstype{\rfloor} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
 mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
@@ -209,8 +209,8 @@ age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second c
 binding_var :: 'binding_' ::=
   | ₓ m T :: :: Var {{ tex \,\!_{[[m]]}[[T]] }}
 binding_dh :: 'binding_' ::=
-  | ₊ m ⌊ T ⌋ n :: :: Dest {{ tex \,\!_{[[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }}
-  | ₋ T n :: :: Hole {{ tex [[T]]^{[[n]]} }}
+  | ₋ m ⌊ T ⌋ n :: :: Dest {{ tex \,\!_{[[m]]}\ottstype{\lfloor}\,\!_{[[n]]}[[T]]\ottstype{\rfloor} }}
+  | ₊ T n :: :: Hole {{ tex \,\!_{[[n]]}[[T]] }}
 
 name :: 'name_' ::=
   | ˣ x :: :: Var {{ tex [[x]] }}
@@ -247,13 +247,13 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ co
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
   | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
   | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
-  | { + h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{+}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }} {{ com Destination typing binding }}
-  | { - h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{-}[[h]]:[[T]]^{[[n]]} }} {{ com Hole typing binding }}
-  | m · G :: M :: Stimes {{ com Multiply the left-most mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
+  | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex [[h]]:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
+  | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}\,[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
+  | m · G :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
   | G1 , G2 :: M :: DisjointUnion {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
-  | - G :: M :: Hminus {{ coq (hminus [[G]]) }} {{ tex \ottshvar{-}[[G]] }} {{ com Transforms dest bindings into a hole bindings }}
-  | -⁻¹ G :: M :: HminusInv {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{-^{\scriptscriptstyle\text{-}1} }[[G]] }}
+  | -⁻¹ G :: M :: HminusInv {{ coq (hminus_inv [[G]]) }} {{ tex \ottshvar{\destminus^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Transforms dest bindings into a hole bindings }}
+  | - G :: M :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{\destminus}[[G]] }}
   | G [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
@@ -747,7 +747,7 @@ Definition stimes (m' : mode) (G : ctx) : ctx :=
     end
   ) G.
 
-Definition hminus (G : ctx) : ctx :=
+Definition hminus_inv (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_Unit
@@ -759,7 +759,7 @@ Definition hminus (G : ctx) : ctx :=
     end
   ) G.
 
-Definition hminus_inv (G : ctx) : ctx :=
+Definition hminus (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
     | name_Var _ => fun binding => binding_Var None type_Unit

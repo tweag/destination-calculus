@@ -6,10 +6,10 @@ G ⫦ v : T :: :: Ty_val :: Ty_val_ {{ com Typing judgment for values }} by
 
 % We must track linearity precisely, but age for received value is arbitrary
 --------------------- :: Hole
-{ -h : T ¹ν } ⫦ -h : T
+{ +h : T ¹ν } ⫦ +h : T
 
 ---------------- :: Dest
-{ +h : ¹ν ⌊T⌋n } ⫦ +h : ⌊T⌋n
+{ -h : ¹ν ⌊T⌋n } ⫦ -h : ⌊T⌋n
 
 --------------------- :: Unit
 {} ⫦ () :①
@@ -42,7 +42,7 @@ G ⫦ v' : T [[:Tyvp]]
 n·G ⫦ ᴇ n v' : ! n T
 
 % We perform controls here on Ampar, and not on the other rules, because outside of the ampar, the hole/dests that are compensated will no longer be visible.
-% DestOnly [[G2 + G3]] ensures that v2 is just made of dests, and with DestOnly [[G1]] in G1 + (-G3) ⫦ v1 : T1 we can conclude that v2 dests compensates at least all the holes from this ampar. This forbids <<(-h0, -h), +h>, +h0> which isn't constructible through alloc anyway.
+% DestOnly [[G2 + G3]] ensures that v2 is just made of dests, and with DestOnly [[G1]] in G1 + (-⁻¹G3) ⫦ v1 : T1 we can conclude that v2 dests compensates at least all the holes from this ampar. This forbids <<(+h0, +h), -h>, -h0> which isn't constructible through alloc anyway.
 % These more complex rules are made to allow this program, in which v2 is made of dests which are not exclusively from this ampar:
 % alloc >map x0 |-> 
 %     alloc >map x1 |->
@@ -50,7 +50,7 @@ n·G ⫦ ᴇ n v' : ! n T
 %         fromA ( alloc >map xt |-> xt <| (,) >case (xt1, xt2) |->
 %                     xt1 <|. (toA x1) ; xt2 <|. (toA x2)
 %               )
-% We would have x2 = E ↑ +h0, and res = < -h0, < -h1 , (+h1, E ↑ +h0) > >
+% We would have x2 = E ↑ -h0, and res = < +h0, < +h1 , (-h1, E ↑ -h0) > >
 % If such a program typechecks, then we need the extra context G2 to v2 for dests coming from outside of this ampar (with DestOnly G2)
 % We need to make sure that an ampar will bind as many holes as possible (i.e that holes and matching dests cannot escape respectively in G1 and G2) -> ensured by {{ DestOnly [[G1]] }}, as G1 and G2 cannot interact. So we no longer need [[G1]] # [[G2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
@@ -63,9 +63,9 @@ n·G ⫦ ᴇ n v' : ! n T
 {{ [[D1]] # [[D3]] }} [[:DisjointD1D3]]
 {{ [[D2]] # [[D3]] }} [[:DisjointD2D3]]
 ¹↑·D1 + D3 ⫦ v1 : T [[:Tyv1]]
-D2 + (-D3) ⫦ v2 : U [[:Tyv2]]
+D2 + (-⁻¹D3) ⫦ v2 : U [[:Tyv2]]
 ---------------- :: Ampar
-D1 + D2 ⫦ hvars(-D3) ⟨v2 ❟ v1⟩ : U ⧔ T
+D1 + D2 ⫦ hvars(-⁻¹D3) ⟨v2 ❟ v1⟩ : U ⧔ T
 
 defn
 P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
@@ -222,7 +222,7 @@ P21 + P22 ˢ⊢ ˢ(t1, t2) : T1 ⨂ T2
 defn
 D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by
 
-% Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus and mult. This would work without fancy things with having dual modes for holes I think. Because hminus will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
+% Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus_inv and mult. This would work without fancy things with having dual modes for holes I think. Because hminus_inv will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
 % If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??
 
 -------------------- :: Id
@@ -366,12 +366,12 @@ D1 ⊢ v : ⌊U⌋n [[:Tyt]]
 ----------------------------- :: FillComp_Foc2
 D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 
-% TODO: check that hminus enforces linearity+now
+% TODO: check that hminus_inv enforces linearity+now
 
 {{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
 {{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]
 {{ [[D2]] # [[D3]] }} [[:Disjoint2D3]]
-{{ [[hvars(C)]] ## [[hvars(-D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
+{{ [[hvars(C)]] ## [[hvars(-⁻¹D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
@@ -379,9 +379,9 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 {{ FinAgeOnly [[D3]] }} [[:FinAgeOnlyD3]]
 {{ ValidOnly [[D3]] }} [[:ValidOnlyD3]]
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
-D2 + -D3 ⫦ v2 : U [[:Tyv2]]
+D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar_Foc
-¹↑·D1 + D3 ⊣ C ∘ (hvars(-D3) ᵒᵖ⟨v2 ❟ ⬜) : T' ↣ U0
+¹↑·D1 + D3 ⊣ C ∘ (hvars(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜) : T' ↣ U0
 
 defn
 ⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} by
@@ -479,7 +479,7 @@ C[ H ⟨ v2 ❟ v1 ⟩ map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] �
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
 % -------------------------- :: Alloc_Red
-% C[alloc] ⟶ C[{1} ⟨ -1 ❟ +1 ⟩]
+% C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
 
 {{ NotVal [[u]] }} [[:NotValu]]
 -------------------------- :: ToA_Foc
@@ -510,7 +510,7 @@ C[t ⨞ ()] ⟶ (C ∘ (⬜ ⨞ () ))[t]
 (C ∘ (⬜ ⨞ () ))[v] ⟶ C[v ⨞ ()]
 
 ------------------------------------- :: FillU_Red
-C[+h ⨞ ()] ⟶ C[h ≔ {} ()][()]
+C[-h ⨞ ()] ⟶ C[h ≔ {} ()][()]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillL_Foc
@@ -521,7 +521,7 @@ C[t ⨞ Inl] ⟶ (C ∘ (⬜ ⨞ Inl))[t]
 
 {{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillL_Red
-C[+h ⨞ Inl] ⟶ C[h ≔ {h'+1} Inl -(h'+1)][+(h'+1)]
+C[-h ⨞ Inl] ⟶ C[h ≔ {h'+1} Inl  +(h'+1)][-(h'+1)]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillR_Foc
@@ -532,7 +532,7 @@ C[t ⨞ Inr] ⟶ (C ∘ (⬜ ⨞ Inr))[t]
 
 {{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillR_Red
-C[+h ⨞ Inr] ⟶ C[h ≔ {h'+1} Inr -(h'+1)][+(h'+1)]
+C[-h ⨞ Inr] ⟶ C[h ≔ {h'+1} Inr  +(h'+1)][-(h'+1)]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillE_Foc
@@ -543,7 +543,7 @@ C[t ⨞ ᴇ m] ⟶ (C ∘ (⬜ ⨞ ᴇ m))[t]
 
 {{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillE_Red
-C[+h ⨞ ᴇ m] ⟶ C[h ≔ {h'+1} ᴇ m -(h'+1)][+(h'+1)]
+C[-h ⨞ ᴇ m] ⟶ C[h ≔ {h'+1} ᴇ m  +(h'+1)][-(h'+1)]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillP_Foc
@@ -554,7 +554,7 @@ C[t ⨞ (,)] ⟶ (C ∘ (⬜ ⨞ (,)))[t]
 
 {{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillP_Red
-C[+h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} (-(h'+1),-(h'+2))][( +(h'+1), +(h'+2) )]
+C[-h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} ( +(h'+1), +(h'+2))][( -(h'+1), -(h'+2) )]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillF_Foc
@@ -564,7 +564,7 @@ C[t ⨞(λ x m ⟼ u)] ⟶ (C ∘ (⬜ ⨞(λ x m ⟼ u)))[t]
 (C ∘ (⬜ ⨞(λ x m ⟼ u)))[v] ⟶ C[v ⨞(λ x m ⟼ u)]
 
 ------------------------------------- :: FillF_Red
-C[+h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} ᵛλ x m ⟼ u][()]
+C[-h ⨞ (λ x m ⟼ u)] ⟶ C[h ≔ {} ᵛλ x m ⟼ u][()]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: FillComp_Foc1
@@ -582,4 +582,4 @@ C[v ⨞· t'] ⟶ (C ∘ (v ⨞· ⬜))[t']
 
 {{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 ---------------------------------------- :: FillComp_Red
-C[+h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h') v2[H⩲h'] ][v1[H⩲h'] ]
+C[-h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h') v2[H⩲h'] ][v1[H⩲h'] ]

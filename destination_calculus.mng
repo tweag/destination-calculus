@@ -129,7 +129,7 @@ Build up to DList.
 \hline
 
 $[[alloc]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
-  H ⟨ -1 ❟ +1 ⟩
+  H ⟨ +1 ❟ -1 ⟩
 ]]\end{array}$ &
 
 $[[t ˢ⨞ t']]$ & $\triangleq$ & $\begin{array}[t]{l}[[
