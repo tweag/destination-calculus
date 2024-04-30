@@ -54,19 +54,19 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 grammar
 
 hvar, h :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number) }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
-  | 1 :: S :: O {{ coq 1 }} {{ tex \ottshvar{1} }}
-  | 2 :: S :: T {{ coq 2 }} {{ tex \ottshvar{2} }}
-  | h + h' :: M :: A {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
-  | h [ H ⩲ h' ] :: M :: S {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
-  | max ( H ) :: M :: M {{ com Maximum of a set of hole names }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathit{max}(}[[H]]\ottshvar{)} }}
+  | 1 :: S :: 1 {{ coq 1 }} {{ tex \ottshvar{1} }}
+  | 2 :: S :: 2 {{ coq 2 }} {{ tex \ottshvar{2} }}
+  | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
+  | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathit{max}(}[[H]]\ottshvar{)} }}
   | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshvar{(}[[h]]\ottshvar{)} }}
 
 hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \ottshvar{[[hvars]]} }}
-  | { h1 , .. , hk } :: :: L {{ coq (hvars_ [[h1..hk]]) }}
-  | H1 ∪ H2 :: M :: U {{ com Union of sets }} {{ coq (HVars.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
-  | H ⩲ h' :: M :: S {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hvars_shift [[H]] [[h']]) }}
-  | 'hvars(' G ) :: M :: C {{ com Hole names bound by the typing context $[[G]]$ }} {{ tex \ottshvar{\mathit{hvars}(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
-  | 'hvars(' C ) :: M :: E {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshvar{\mathit{hvars}(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
+  | { h1 , .. , hk } :: :: FromList {{ coq (hvars_ [[h1..hk]]) }}
+  | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HVars.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
+  | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hvars_shift [[H]] [[h']]) }}
+  | 'hvars(' G ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[G]]$ }} {{ tex \ottshvar{\mathit{hvars}(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
+  | 'hvars(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshvar{\mathit{hvars}(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshvar{(}[[H]]\ottshvar{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -91,7 +91,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\,\expcons{[[m]]} }}
   | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | t ⨞· t' :: :: FillC {{ com Fill destination with root of other ampar }} {{ tex [[t]]\triangleleft\!\mybullet\,[[t']] }}
+  | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\triangleleft\!\mybullet\,[[t']] }}
 
   | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
   | ( t ) :: S :: Paren {{ coq [[t]] }} {{ com Variable subsitution in term }}
@@ -103,37 +103,37 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
 
-  % Here we have to redefined all sugar construct in the same way as in termS
-  | alloc :: S :: SugarAlloc {{ coq (termS_Alloc) }} {{ tex \ottkw{alloc} }}
-  | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (termS_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\triangleleft\!\,[[t']] }}
-  | from⧔' t :: S :: SugarFromA' {{ coq (termS_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottstype{\ltimes} }' [[t]] }}
-  | ˢλ x m ⟼ u :: S :: SugarF {{ coq (termS_F [[x]] [[m]] [[u]]) }} {{ tex \lamsnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
-  | ˢInl t :: S :: SugarL {{ coq (termS_L [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inl}\,[[t]] }}
-  | ˢInr t :: S :: SugarR {{ coq (termS_R [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inr}\,[[t]] }}
-  | ˢᴇ m t :: S :: SugarE {{ coq (termS_E [[m]] [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\expcons{[[m]]}\,[[t]] }}
-  | ˢ( t1 , t2 ) :: S :: SugarP {{ coq (termS_P [[t1]] [[t2]]) }} {{ tex \,\!^{\scriptscriptstyle s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
+  % Here we have to redefined all sugar construct in the same way as in sterm
+  | alloc :: S :: SugarAlloc {{ coq (sterm_Alloc) }} {{ tex \ottkw{alloc} }}
+  | t ˢ⨞ t' :: S :: SugarFunillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\triangleleft\!\,[[t']] }}
+  | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottstype{\ltimes} }' [[t]] }}
+  | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamsnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
+  | ˢInl t :: S :: SugarLeft {{ coq (sterm_Left [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inl}\,[[t]] }}
+  | ˢInr t :: S :: SugarRight {{ coq (sterm_Right [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inr}\,[[t]] }}
+  | ˢᴇ m t :: S :: SugarExp {{ coq (sterm_Exp [[m]] [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\expcons{[[m]]}\,[[t]] }}
+  | ˢ( t1 , t2 ) :: S :: SugarProd {{ coq (sterm_Prod [[t1]] [[t2]]) }} {{ tex \,\!^{\scriptscriptstyle s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
 
-termS :: 'termS_' ::= {{ com Syntactic sugar for terms }}
-  | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (termS_Alloc) }}
-  | t ˢ⨞ t' :: M :: SugarFillLeaf {{ com Fill destination with supplied term }} {{ coq (termS_FillLeaf [[t]] [[t']]) }} 
-  | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (termS_FromA' [[t]]) }}
-  | ˢλ x m ⟼ u :: M :: SugarF {{ com Allocate function }} {{ coq (termS_F [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
-  | ˢInl t :: M :: SugarL {{ com Allocate left variant }} {{ coq (termS_L [[t]]) }}
-  | ˢInr t :: M :: SugarR {{ com Allocate right variant }} {{ coq (termS_R [[t]]) }}
-  | ˢᴇ m t :: M :: SugarE {{ com Allocate exponential }} {{ coq (termS_E [[m]] [[t]]) }}
-  | ˢ( t1 , t2 ) :: M :: SugarP {{ com Allocate product }} {{ coq (termS_P [[t1]] [[t2]]) }}
+sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
+  | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (sterm_Alloc) }}
+  | t ˢ⨞ t' :: M :: SugarFunillLeaf {{ com Fill destination with supplied term }} {{ coq (sterm_FillLeaf [[t]] [[t']]) }} 
+  | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (sterm_FromA' [[t]]) }}
+  | ˢλ x m ⟼ u :: M :: SugarFun {{ com Allocate function }} {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
+  | ˢInl t :: M :: SugarLeft {{ com Allocate left variant }} {{ coq (sterm_Left [[t]]) }}
+  | ˢInr t :: M :: SugarRight {{ com Allocate right variant }} {{ coq (sterm_Right [[t]]) }}
+  | ˢᴇ m t :: M :: SugarExp {{ com Allocate exponential }} {{ coq (sterm_Exp [[m]] [[t]]) }}
+  | ˢ( t1 , t2 ) :: M :: SugarProd {{ com Allocate product }} {{ coq (sterm_Prod [[t1]] [[t2]]) }}
 
 val, v :: 'val_' ::= {{ com Value }}
-  | - h :: :: H {{ com Hole }} {{ tex \ottshvar{-}[[h]] }}
-  | + h :: :: D {{ tex \ottshvar{+}[[h]] }} {{ com Destination }}
-  | () :: :: U {{ com Unit }}
-  | ᵛλ x m ⟼ u :: :: F {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Function with no free variable }} % (+ bind x in t +)
-  | Inl v :: :: L {{ com Left variant for sum }}
-  | Inr v :: :: R {{ com Right variant for sum }}
-  | ᴇ m v :: :: E {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
-  | ( v1 , v2 ) :: :: P {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
-  | H ⟨ v2 ❟ v1 ⟩ :: :: A {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
-  | v [ H ⩲ h' ] :: M :: S {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | - h :: :: Hole {{ com Hole }} {{ tex \ottshvar{-}[[h]] }}
+  | + h :: :: Dest {{ tex \ottshvar{+}[[h]] }} {{ com Destination }}
+  | () :: :: Unit {{ com Unit }}
+  | ᵛλ x m ⟼ u :: :: Fun {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Function with no free variable }} % (+ bind x in t +)
+  | Inl v :: :: Left {{ com Left variant for sum }}
+  | Inr v :: :: Right {{ com Right variant for sum }}
+  | ᴇ m v :: :: Exp {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
+  | ( v1 , v2 ) :: :: Prod {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
+  | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
+  | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,32 +141,32 @@ val, v :: 'val_' ::= {{ com Value }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }}
-  | ⬜ :: :: N {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
+  | ⬜ :: :: Nil {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
 %  | c :: S :: S {{ coq (cons [[c]] nil) }}
-  | C ∘ c :: :: C {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\circ[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
+  | C ∘ c :: :: Comp {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\circ[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
   | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\assigneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
-  | ⬜  t' :: :: AppFoc1 {{ tex [[⬜]]\vartriangleright\![[t']] }}
-  | v  ⬜ :: :: AppFoc2  {{ tex [[v]]\vartriangleright\![[⬜]] }}
-  | ⬜ ; u :: :: PatUFoc {{ tex [[⬜]]~;[[u]] }}
-  | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatSFoc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatPFoc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
-  | ⬜ case m ᴇ n x ⟼ u :: :: PatEFoc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ map x ⟼ t' :: :: MapFoc {{ tex [[⬜]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
+  | ⬜  t' :: :: App_Foc1 {{ tex [[⬜]]\vartriangleright\![[t']] }}
+  | v  ⬜ :: :: App_Foc2  {{ tex [[v]]\vartriangleright\![[⬜]] }}
+  | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]~;[[u]] }}
+  | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
+  | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | ⬜ map x ⟼ t' :: :: Map_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
 
-  | to⧔ ⬜ :: :: ToAFoc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }}
-  | from⧔ ⬜ :: :: FromAFoc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }}
-  | ⬜ ⨞ () :: :: FillUFoc
-  | ⬜ ⨞ Inl :: :: FillLFoc
-  | ⬜ ⨞ Inr :: :: FillRFoc
-  | ⬜ ⨞ ᴇ m :: :: FillEFoc {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
-  | ⬜ ⨞ (,) :: :: FillPFoc
-  | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillFFoc {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | ⬜ ⨞· t' :: :: FillCFoc1 {{ tex [[⬜]]\triangleleft\!\mybullet\,[[t']] }}
-  | v ⨞· ⬜ :: :: FillCFoc2 {{ tex [[v]]\triangleleft\!\mybullet\,[[⬜]] }}
-  | H ᵒᵖ⟨ v2 ❟ ⬜ :: :: AOpenFoc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]] }} {{ com Open ampar, binding hole names in the following context components }}
+  | to⧔ ⬜ :: :: ToA_Foc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }}
+  | from⧔ ⬜ :: :: FromA_Foc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }}
+  | ⬜ ⨞ () :: :: FillU_Foc
+  | ⬜ ⨞ Inl :: :: FillL_Foc
+  | ⬜ ⨞ Inr :: :: FillR_Foc
+  | ⬜ ⨞ ᴇ m :: :: FillE_Foc {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
+  | ⬜ ⨞ (,) :: :: FillP_Foc
+  | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillF_Foc {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
+  | ⬜ ⨞· t' :: :: FillComp_Foc1 {{ tex [[⬜]]\triangleleft\!\mybullet\,[[t']] }}
+  | v ⨞· ⬜ :: :: FillComp_Foc2 {{ tex [[v]]\triangleleft\!\mybullet\,[[⬜]] }}
+  | H ᵒᵖ⟨ v2 ❟ ⬜ :: :: OpenAmpar_Foc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]] }} {{ com Open ampar, binding hole names in the next components }}
   | ( c ) :: S :: Paren {{ coq [[c]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -174,32 +174,32 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
-  | ① :: :: U {{ tex \ottstype{1} }} {{ com Unit }}
-  | T1 ⨁ T2 :: :: S {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
-  | T1 ⨂ T2 :: :: P {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
-  | ! m T :: :: E {{ tex \ottstype{!}_{[[m]]}\,[[T]] }} {{ com Exponential }}
-  | U ⧔ T :: :: A {{ tex [[U]]\,\ottstype{\ltimes}\,[[T]] }} {{ com Ampar }}
-  | T m → U :: :: F {{ tex [[T]]\,_{[[m]]}\!\ottstype{\to}\,[[U]] }} {{ com Function }}
-  | ⌊ T ⌋ m :: :: D {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
+  | ① :: :: Unit {{ tex \ottstype{1} }} {{ com Unit }}
+  | T1 ⨁ T2 :: :: Sum {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
+  | T1 ⨂ T2 :: :: Prod {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
+  | ! m T :: :: Exp {{ tex \ottstype{!}_{[[m]]}\,[[T]] }} {{ com Exponential }}
+  | U ⧔ T :: :: Ampar {{ tex [[U]]\,\ottstype{\ltimes}\,[[T]] }} {{ com Ampar }}
+  | T m → U :: :: Fun {{ tex [[T]]\,_{[[m]]}\!\ottstype{\to}\,[[U]] }} {{ com Function }}
+  | ⌊ T ⌋ m :: :: Dest {{ tex \ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[m]]} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
 mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
-  | p a :: :: C {{ com Pair of a multiplicity and age }} {{ tex [[p]]\hspace{-0.15ex}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
+  | p a :: :: Pair {{ com Pair of a multiplicity and age }} {{ tex [[p]]\hspace{-0.15ex}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
   | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
-  | m1 · ... · mk :: S :: P {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
+  | m1 · ... · mk :: S :: Times {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
 
 mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring, first component of modality) }} {{ coq _mul }}
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear use }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear use }} {{ coq Ur }}
-  | p1 . ... . pk :: S :: P {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
+  | p1 . ... . pk :: S :: Times {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
 age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second component of modality) }} {{ coq ext_nat }}
   | ν :: :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now }} {{ coq (Fin 0) }}
   | ↑ :: :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
   | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static }} {{ coq Inf }}
-  | a1 · ... · ak :: S :: P {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
+  | a1 · ... · ak :: S :: Times {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
 
@@ -217,7 +217,7 @@ name :: 'name_' ::=
   | ʰ h :: :: DH {{ tex [[h]] }}
 
 subrules
-  termS <:: term
+  sterm <:: term
 
 embed
 {{ coq
@@ -245,16 +245,16 @@ grammar
 
 ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
-  | { } :: S :: E {{ coq ctx_empty }} {{ tex \, }}
-  | { x : m T } :: :: V {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
-  | { + h : m ⌊ T ⌋ n } :: :: D {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{+}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }} {{ com Destination typing binding }}
-  | { - h : T n } :: :: H {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{-}[[h]]:[[T]]^{[[n]]} }} {{ com Hole typing binding }}
-  | m · G :: M :: P {{ com Multiply the left-most mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
-  | G1 + G2 :: M :: U {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
-  | G1 , G2 :: M :: UDisjoint {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
-  | - G :: M :: M {{ coq (hminus [[G]]) }} {{ tex \ottshvar{-}[[G]] }} {{ com Transforms dest bindings into a hole bindings }}
-  | -⁻¹ G :: M :: iM {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{-^{\scriptscriptstyle\text{-}1} }[[G]] }}
-  | G [ H ⩲ h' ] :: M :: S {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
+  | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
+  | { + h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{+}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}[[T]]\ottstype{\rfloor}^{[[n]]} }} {{ com Destination typing binding }}
+  | { - h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{-}[[h]]:[[T]]^{[[n]]} }} {{ com Hole typing binding }}
+  | m · G :: M :: Stimes {{ com Multiply the left-most mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
+  | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
+  | G1 , G2 :: M :: DisjointUnion {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
+  | - G :: M :: Hminus {{ coq (hminus [[G]]) }} {{ tex \ottshvar{-}[[G]] }} {{ com Transforms dest bindings into a hole bindings }}
+  | -⁻¹ G :: M :: HminusInv {{ coq (hminus_inv [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{-^{\scriptscriptstyle\text{-}1} }[[G]] }}
+  | G [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
 embed
@@ -304,7 +304,7 @@ Definition hvars_ctx (G : ctx) : HVars.t :=
 Fixpoint hvars_ectxs (C : ectxs) : HVars.t := match C with
   | nil => HVars.empty
   | cons c xs => let H := match c with
-    | ectx_AOpenFoc H' v => H'
+    | ectx_OpenAmpar_Foc H' v => H'
     | _ => HVars.empty
   end in (HVars.union H (hvars_ectxs xs))
 end.
@@ -347,7 +347,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
   | term_FillF t x m u =>
     let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
     term_FillF (term_sub t x' v') x m u'
-  | term_FillC t t' => term_FillC (term_sub t x' v') (term_sub t' x' v')
+  | term_FillComp t t' => term_FillComp (term_sub t x' v') (term_sub t' x' v')
 end.
 
 Definition NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
@@ -358,22 +358,22 @@ Proof.
   all: right; congruence.
 Qed.
 
-Definition termS_Alloc :=
+Definition sterm_Alloc :=
   (term_Val
-    (val_A
+    (val_Ampar
       (hvars_ (1 :: nil))
-      (val_H 1)
-      (val_D 1)
+      (val_Hole 1)
+      (val_Dest 1)
     )
   ).
 
-Definition termS_FromA' (t : term) :=
+Definition sterm_FromA' (t : term) :=
   (term_PatP
     (term_FromA
       (term_Map t 0
         (term_PatU
           (term_Var 0)
-          (term_Val (val_E (Some (Lin, Inf)) val_U))
+          (term_Val (val_Exp (Some (Lin, Inf)) val_Unit))
         )
       )
     )
@@ -388,13 +388,13 @@ Definition termS_FromA' (t : term) :=
     )
   ).
 
-Definition termS_FillLeaf (t t' : term) :=
-  (term_FillC t (term_ToA t')).
+Definition sterm_FillLeaf (t t' : term) :=
+  (term_FillComp t (term_ToA t')).
 
-Definition termS_F (x : var) (m : mode) (u : term) :=
-  (termS_FromA'
+Definition sterm_Fun (x : var) (m : mode) (u : term) :=
+  (sterm_FromA'
     (term_Map
-      termS_Alloc
+      sterm_Alloc
       0
       (term_FillF
         (term_Var 0)
@@ -403,12 +403,12 @@ Definition termS_F (x : var) (m : mode) (u : term) :=
     )
   ).
 
-Definition termS_L (t : term) :=
-  (termS_FromA'
+Definition sterm_Left (t : term) :=
+  (sterm_FromA'
     (term_Map
-      termS_Alloc
+      sterm_Alloc
       0
-      (termS_FillLeaf
+      (sterm_FillLeaf
         (term_FillL
           (term_Var 0)
         )
@@ -417,12 +417,12 @@ Definition termS_L (t : term) :=
     )
   ).
 
-Definition termS_R (t : term) :=
-  (termS_FromA'
+Definition sterm_Right (t : term) :=
+  (sterm_FromA'
     (term_Map
-      termS_Alloc
+      sterm_Alloc
       0
-      (termS_FillLeaf
+      (sterm_FillLeaf
         (term_FillR
           (term_Var 0)
         )
@@ -431,12 +431,12 @@ Definition termS_R (t : term) :=
     )
   ).
 
-Definition termS_E (m : mode) (t : term) :=
-  (termS_FromA'
+Definition sterm_Exp (m : mode) (t : term) :=
+  (sterm_FromA'
     (term_Map
-      termS_Alloc
+      sterm_Alloc
       0
-      (termS_FillLeaf
+      (sterm_FillLeaf
         (term_FillE
           (term_Var 0)
           m
@@ -446,10 +446,10 @@ Definition termS_E (m : mode) (t : term) :=
     )
   ).
 
-Definition termS_P (t1 t2 : term) :=
-  (termS_FromA'
+Definition sterm_Prod (t1 t2 : term) :=
+  (sterm_FromA'
     (term_Map
-      termS_Alloc
+      sterm_Alloc
       0
       (term_PatP
         (term_FillP
@@ -457,11 +457,11 @@ Definition termS_P (t1 t2 : term) :=
         )
         (Some (Lin, (Fin 0))) 1 2
         (term_PatU
-          (termS_FillLeaf
+          (sterm_FillLeaf
             (term_Var 1)
             t1
           )
-          (termS_FillLeaf
+          (sterm_FillLeaf
             (term_Var 2)
             t2
           )
@@ -475,28 +475,28 @@ Definition termS_P (t1 t2 : term) :=
  *****************************************************************************)
 
 Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
-  | val_H h => match Nat.eq_dec h h' with | left _ => v' | right _ => val_H h end
-  | val_D h => val_D h
-  | val_U => val_U
-  | val_F x m u => val_F x m u (* No hole in a value function allowed *)
-  | val_L v => val_L (val_fill v h' H' v')
-  | val_R v => val_R (val_fill v h' H' v')
-  | val_E m v => val_E m (val_fill v h' H' v')
-  | val_P v1 v2 => val_P (val_fill v1 h' H' v') (val_fill v2 h' H' v')
-  | val_A H v2 v1 => val_A H v2 v1 (* No foreign hole allowed in ampar *)
+  | val_Hole h => match Nat.eq_dec h h' with | left _ => v' | right _ => val_Hole h end
+  | val_Dest h => val_Dest h
+  | val_Unit => val_Unit
+  | val_Fun x m u => val_Fun x m u (* No hole in a value function allowed *)
+  | val_Left v => val_Left (val_fill v h' H' v')
+  | val_Right v => val_Right (val_fill v h' H' v')
+  | val_Exp m v => val_Exp m (val_fill v h' H' v')
+  | val_Prod v1 v2 => val_Prod (val_fill v1 h' H' v') (val_fill v2 h' H' v')
+  | val_Ampar H v2 v1 => val_Ampar H v2 v1 (* No foreign hole allowed in ampar *)
 end.
 
 Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
   match va with
-  | val_H h => val_H (hvar_cshift h H h')
-  | val_D h => val_D (hvar_cshift h H h')
-  | val_U => val_U
-  | val_F x m u => val_F x m (term_cshift u H h') (* We can have dests captured in a function *)
-  | val_L v => val_L (val_cshift v H h')
-  | val_R v => val_R (val_cshift v H h')
-  | val_E m v => val_E m (val_cshift v H h')
-  | val_P v1 v2 => val_P (val_cshift v1 H h') (val_cshift v2 H h')
-  | val_A H' v2 v1 => val_A (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_Hole h => val_Hole (hvar_cshift h H h')
+  | val_Dest h => val_Dest (hvar_cshift h H h')
+  | val_Unit => val_Unit
+  | val_Fun x m u => val_Fun x m (term_cshift u H h') (* We can have dests captured in a function *)
+  | val_Left v => val_Left (val_cshift v H h')
+  | val_Right v => val_Right (val_cshift v H h')
+  | val_Exp m v => val_Exp m (val_cshift v H h')
+  | val_Prod v1 v2 => val_Prod (val_cshift v1 H h') (val_cshift v2 H h')
+  | val_Ampar H' v2 v1 => val_Ampar (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
 with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
   match te with
@@ -516,7 +516,7 @@ with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
   | term_FillE t m => term_FillE (term_cshift t H h') m
   | term_FillP t => term_FillP (term_cshift t H h')
   | term_FillF t x m u => term_FillF (term_cshift t H h') x m (term_cshift u H h')
-  | term_FillC t t' => term_FillC (term_cshift t H h') (term_cshift t' H h')
+  | term_FillComp t t' => term_FillComp (term_cshift t H h') (term_cshift t' H h')
 end.
 
 (******************************************************************************
@@ -680,20 +680,20 @@ Definition mode_of {n : name} (binding: binding_type_of n): mode :=
 Definition union_var (b1 b2 : binding_var) : binding_var := match b1, b2 with
   | binding_Var m1 T1, binding_Var m2 T2 => match type_eq_dec T1 T2 with
     | left _ => binding_Var (mode_plus m1 m2) T1
-    | right _ => binding_Var None type_U
+    | right _ => binding_Var None type_Unit
     end
   end.
 
 Definition union_dh (b1 b2 : binding_dh) : binding_dh := match b1, b2 with
   | binding_Dest m11 T1 m12, binding_Dest m21 T2 m22 => match type_eq_dec T1 T2, mode_eq_dec m12 m22 with
     | left _, left _ => binding_Dest (mode_plus m11 m21) T1 m12
-    | _, _ => binding_Dest None type_U None
+    | _, _ => binding_Dest None type_Unit None
     end
   | binding_Hole T1 n1, binding_Hole T2 n2 => match type_eq_dec T1 T2 with
     | left _ => binding_Hole T1 (mode_plus n1 n2)
-    | right _ => binding_Hole type_U None
+    | right _ => binding_Hole type_Unit None
     end
-  | _, _ => binding_Hole type_U None
+  | _, _ => binding_Hole type_Unit None
   end.
 
 Definition stimes_var (m' : mode) (b : binding_var) : binding_var := match b with
@@ -750,11 +750,11 @@ Definition stimes (m' : mode) (G : ctx) : ctx :=
 Definition hminus (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => fun binding => binding_Var None type_U
+    | name_Var _ => fun binding => binding_Var None type_Unit
     | name_DH _ => fun binding => match binding with
       | binding_Dest (Some (Lin, (Fin 0))) T n => binding_Hole T n
-      | binding_Dest _ _ _ => binding_Dest None type_U None
-      | binding_Hole _ _ => binding_Hole type_U None
+      | binding_Dest _ _ _ => binding_Dest None type_Unit None
+      | binding_Hole _ _ => binding_Hole type_Unit None
       end
     end
   ) G.
@@ -762,9 +762,9 @@ Definition hminus (G : ctx) : ctx :=
 Definition hminus_inv (G : ctx) : ctx :=
   Finitely.map (fun n =>
     match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => fun binding => binding_Var None type_U
+    | name_Var _ => fun binding => binding_Var None type_Unit
     | name_DH _ => fun binding => match binding with
-      | binding_Dest _ _ _ => binding_Dest None type_U None
+      | binding_Dest _ _ _ => binding_Dest None type_Unit None
       | binding_Hole T n => binding_Dest (Some (Lin, (Fin 0))) T n
       (* TODO: should we check that n is valid? *)
       end
@@ -838,7 +838,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  *****************************************************************************)
 
 Definition ectxs_fill (C: ectxs) (h':hvar) (H' : hvars) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_AOpenFoc H v => ectx_AOpenFoc (HVars.union (HVars.remove h' H) H') (val_fill v h' H' v')
+  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HVars.union (HVars.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
@@ -904,17 +904,17 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | NotVal t :: :: NotVal {{ tex \texttt{NotVal}~[[t]] }}
   | h1 = h2 :: :: hvar_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
 
-  | G ⫦ v : T :: :: TyR_val
+  | G ⫦ v : T :: :: Ty_val
   | P ⊢ t : T :: :: Ty_term
-  | P ˢ⊢ t : T :: :: Ty_termS
+  | P ˢ⊢ t : T :: :: Ty_sterm
   | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }}
-  | ⊢ C [ t ] : T :: :: Ty_eterm
-  | C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm
+  | ⊢ C [ t ] : T :: :: Ty
+  | C [ t ] ⟶ C' [ t' ] :: :: Sem
 
 parsing
-ctx_U <= ctx_P
-ctx_UDisjoint <= ctx_P
-ctx_P <= ctx_M
-ctx_U left ctx_U
-ctx_UDisjoint left ctx_UDisjoint
+ctx_Union <= ctx_Stimes
+ctx_DisjointUnion <= ctx_Stimes
+ctx_Stimes <= ctx_Hminus
+ctx_Union left ctx_Union
+ctx_DisjointUnion left ctx_DisjointUnion
 term_Val <= term_Paren

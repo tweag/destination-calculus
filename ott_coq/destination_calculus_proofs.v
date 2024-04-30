@@ -170,7 +170,7 @@ Proof. Admitted.
 Lemma cshift_singleton_hvar : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
 Proof. Admitted.
 
-Lemma TyR_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hvars) (h': hvar), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
+Lemma Ty_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hvars) (h': hvar), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
 with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hvars) (h': hvar), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
 Proof.
   - destruct 1.
@@ -1765,8 +1765,8 @@ Ltac hauto_ctx :=
         total_cshift_eq,
         cshift_distrib_on_hminus,
         cshift_distrib_on_hminus_inv,
-        (* TyR_val_cshift,
-        val_A_cshift, *)
+        (* Ty_val_cshift,
+        val_Ampar_cshift, *)
         union_commutative,
         (* union_commutative', *)
         ValidOnly_union_backward,
@@ -1963,32 +1963,32 @@ Ltac crush :=
     [ trivial
     | autorewrite with canonalize in *; workhorse ].
 
-Lemma TyR_val_NoVar : forall (G : ctx) (v : val) (T : type) (TyR: G ⫦ v : T), NoVar G.
+Lemma Ty_val_NoVar : forall (G : ctx) (v : val) (T : type) (Ty: G ⫦ v : T), NoVar G.
 Proof.
-  intros * TyR. induction TyR; unfold NoVar; intros nam b mapstoG contra.
+  intros * Ty. induction Ty; unfold NoVar; intros nam b mapstoG contra.
   - unfold ctx_singleton in mapstoG. rewrite singleton_MapsTo_iff in mapstoG. apply eq_sigT_fst in mapstoG; subst. inversion contra.
   - unfold ctx_singleton in mapstoG. rewrite singleton_MapsTo_iff in mapstoG. apply eq_sigT_fst in mapstoG; subst. inversion contra.
   - unfold ctx_empty in mapstoG. simpl in mapstoG. congruence.
   - unfold DestOnly in H. unfold NoVar in contra. specialize (H nam b mapstoG). destruct nam. { inversion H. } { inversion contra. }
-  - unfold NoVar in IHTyR. specialize (IHTyR nam b mapstoG). congruence.
-  - unfold NoVar in IHTyR. specialize (IHTyR nam b mapstoG). congruence.
+  - unfold NoVar in IHTy. specialize (IHTy nam b mapstoG). congruence.
+  - unfold NoVar in IHTy. specialize (IHTy nam b mapstoG). congruence.
   - assert (In nam (G1 ᴳ+ G2)). { apply In_iff_exists_Some; exists b; tauto. }
     apply In_merge_iff in H. destruct H.
-    + destruct H. unfold NoVar in IHTyR1. specialize (IHTyR1 nam x H). unfold IsVar in IHTyR1. destruct nam. specialize (IHTyR1 I); assumption. inversion contra.
-    + destruct H. unfold NoVar in IHTyR2. specialize (IHTyR2 nam x H). unfold IsVar in IHTyR2. destruct nam. specialize (IHTyR2 I); assumption. inversion contra.
+    + destruct H. unfold NoVar in IHTy1. specialize (IHTy1 nam x H). unfold IsVar in IHTy1. destruct nam. specialize (IHTy1 I); assumption. inversion contra.
+    + destruct H. unfold NoVar in IHTy2. specialize (IHTy2 nam x H). unfold IsVar in IHTy2. destruct nam. specialize (IHTy2 I); assumption. inversion contra.
   - apply map_MapsTo_iff in mapstoG. destruct mapstoG. destruct H.
-    unfold NoVar in IHTyR. specialize (IHTyR nam x H). unfold IsVar in IHTyR. destruct nam. specialize (IHTyR I); assumption. inversion contra.
+    unfold NoVar in IHTy. specialize (IHTy nam x H). unfold IsVar in IHTy. destruct nam. specialize (IHTy I); assumption. inversion contra.
   - assert (In nam (D1 ᴳ+ D2)). { apply In_iff_exists_Some; exists b; tauto. }
     apply In_merge_iff in H. destruct H.
     + assert (In nam (¹↑ ᴳ· D1 ᴳ+ D3)). { apply In_iff_exists_Some. apply In_merge_iff. left. apply In_map_iff. assumption. }
-      destruct H0. unfold NoVar in IHTyR1. specialize (IHTyR1 nam x H0). unfold IsVar in IHTyR1. destruct nam. specialize (IHTyR1 I); assumption. inversion contra.
+      destruct H0. unfold NoVar in IHTy1. specialize (IHTy1 nam x H0). unfold IsVar in IHTy1. destruct nam. specialize (IHTy1 I); assumption. inversion contra.
     + assert (In nam (D2 ᴳ+ (ᴳ- D3))). { apply In_iff_exists_Some. apply In_merge_iff. left. assumption. }
-      destruct H0. unfold NoVar in IHTyR2. specialize (IHTyR2 nam x H0). unfold IsVar in IHTyR2. destruct nam. specialize (IHTyR2 I); assumption. inversion contra.
+      destruct H0. unfold NoVar in IHTy2. specialize (IHTy2 nam x H0). unfold IsVar in IHTy2. destruct nam. specialize (IHTy2 I); assumption. inversion contra.
 Qed.
 
-Lemma TyR_val_H_DestOnly_contra : forall (D : ctx) (h : hvar) (T : type), (D ⫦ ᵛ- h : T) -> DestOnly D -> False.
+Lemma Ty_val_Hole_DestOnly_contra : forall (D : ctx) (h : hvar) (T : type), (D ⫦ ᵛ- h : T) -> DestOnly D -> False.
 Proof.
-  intros D h T TyRv DestOnlyD. inversion TyRv; subst.
+  intros D h T Tyv DestOnlyD. inversion Tyv; subst.
   specialize (DestOnlyD (ʰ h)). unfold DestOnly, ctx_singleton in DestOnlyD. specialize (DestOnlyD (₋ T ‗ ¹ν)). rewrite singleton_MapsTo_iff in DestOnlyD. sfirstorder.
 Qed.
 

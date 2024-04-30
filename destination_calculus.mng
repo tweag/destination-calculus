@@ -117,7 +117,7 @@ Build up to DList.
 \subsection{Syntactic sugar for constructors and commonly used operations}
 
 \ottgrammartabular{
-\otttermS\ottafterlastrule
+\ottsterm\ottafterlastrule
 }
 
 \activespaces
@@ -173,7 +173,7 @@ from⧔' (⮒
 $[[ˢ( t1 , t2 )]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
-‥‥‥‥d ⨞ (,) case ¹ν⮒
+‥‥‥‥(d ⨞ (,)) case ¹ν⮒
 ‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ˢ⨞ t1 ; d2 ˢ⨞ t2⮒
 )
 ]]\end{array}$ \\\hline
@@ -199,12 +199,12 @@ from⧔' (⮒
 
 \subsection{Typing of terms and values}
 
-\ottdefnTyRXXval{}
+\ottdefnTyXXval{}
 \ottdefnTyXXterm{}
 
-\subsection{Derived typing rules for syntactic sugar terms}
+\subsection{Derived typing rules for syntactic sugar forms}
 
-\ottdefnTyXXtermS{}
+\ottdefnTyXXsterm{}
 
 \section{Evaluation contexts and semantics}
 
@@ -218,13 +218,13 @@ from⧔' (⮒
 \subsection{Typing of evaluation contexts and commands}
 
 \ottdefnTyXXectxs{}
-\ottdefnTyXXeterm{}
+\ottdefnTy{}
 
 \subsection{Small-step semantics}
 
-\ottdefnSemXXeterm{}
+\ottdefnSem{}
 
-\section{Remarks on the Coq proofs}
+\section{Proof of type safety using Coq proof assistant}
 
 \begin{itemize}
 \item Not particularly elegant. Max number of goals observed 232
@@ -261,6 +261,14 @@ from⧔' (⮒
   very natural with ott-generated typing rules).
 \item Talk about the use and benefits of Copilot.
 \end{itemize}
+
+\section{Implementation of destination calculus using in-place memory mutations}
+
+What needs to be changed (e.g. linear alloc)
+
+\section{Related work}
+
+\section{Conclusion and future work}
 
 \clearpage{}
 \bibliographystyle{ACM-Reference-Format}
