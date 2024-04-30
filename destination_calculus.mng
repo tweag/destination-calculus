@@ -12,6 +12,11 @@
 \usepackage[supertabular]{ottalt}
 \inputott{destination_calculus_ott.tex}
 \usepackage{ottstyling}
+% Hide "Index for ranges" from the metavars displayed tabular
+\patchcmd{\ottmetavars}{$ \ottmv{k} $ & \ottcom{Index for ranges} \\}{}{}{}
+
+% \setlength\textfloatsep{\baselineskip}
+% \setlength{\intextsep}{\baselineskip}
 
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
 
@@ -72,95 +77,117 @@
 
 \maketitle
 
+\tableofcontents
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Term and value syntax}
+\section{Introduction}
+\section{System in action on simple examples}
+
+Build up to DList.
+
+\section{Limitions of the previous approach}
+
+\subsection{Breadth-first tree traversal}
+\subsection{Storing linear data in destination-based data structures}
+\subsection{Need for scope control}
+
+\section{Updated breadth-first tree traversal}
+
+\clearpage
+
+\section{Language syntax}
+
+\subsection{Names and variables}
 
 \ottmetavars
 
 \ottgrammartabular{
 \otthvar\ottinterrule
-\otthvars\ottinterrule
-\ottterm\ottinterrule
-\ottval\ottinterrule
-%\otteterm\ottafterlastrule
-}
-\ottgrammartabular{
-\ottectx\ottinterrule
-\ottectxs\ottafterlastrule
+\otthvars\ottafterlastrule
 }
 
-\subsection*{Desugaring}
+\subsection{Term and value core syntax}
+
+\ottgrammartabular{
+\ottterm\ottinterrule
+\ottval\ottafterlastrule
+}
+
+\subsection{Syntactic sugar for constructors and commonly used operations}
+
+\ottgrammartabular{
+\otttermS\ottafterlastrule
+}
 
 \activespaces
 
-\noindent$
-[[alloc]]
-\triangleq$ $\begin{array}{l}[[
-  H ⟨ -1 ❟ +1 ⟩
-]]\end{array}$
+\begin{table}[h]
+\centering\small
+\setlength\tabcolsep{0.4ex}
+\begin{tabular}{|lcl|lcl|}
+\hline
 
-\noindent$
-[[from⧔' t]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[alloc]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+  H ⟨ -1 ❟ +1 ⟩
+]]\end{array}$ &
+
+$[[t ˢ⨞ t']]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+t ⨞· (to⧔ t')
+]]\end{array}$ \\\hline
+
+$[[from⧔' t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 (from⧔ (t map un ⟼ un ; ᴇ ¹∞ () )) case ¹ν⮒
 ‥‥( st , ex ) ⟼ ex case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ un ⟼ un ; st
-]]\end{array}$
+]]\end{array}$ &
 
-\noindent$
-[[t ˢ⨞ t']]
-\triangleq$ $\begin{array}[t]{l}[[
-t ⨞· (to⧔ t')
-]]\end{array}$
-
-\noindent$
-[[ˢλ x m ⟼ u]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[ˢλ x m ⟼ u]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ ( λ x m ⟼ u )⮒
 )
-]]\end{array}$
+]]\end{array}$ \\\hline
 
-\noindent$
-[[ˢInl t]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[ˢInl t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ Inl ˢ⨞ t⮒
 )
-]]\end{array}$
+]]\end{array}$ &
 
-\noindent$
-[[ˢInr t]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[ˢInr t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ Inr ˢ⨞ t⮒
 )
-]]\end{array}$
+]]\end{array}$ \\\hline
 
-\noindent$
-[[ˢᴇ m t]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[ˢᴇ m t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ ᴇ m ˢ⨞ t⮒
 )
-]]\end{array}$
+]]\end{array}$ &
 
-\noindent$
-[[ˢ( t1 , t2 )]]
-\triangleq$ $\begin{array}[t]{l}[[
+$[[ˢ( t1 , t2 )]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ (,) case ¹ν⮒
 ‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ˢ⨞ t1 ; d2 ˢ⨞ t2⮒
 )
-]]\end{array}$
+]]\end{array}$ \\\hline
+
+\end{tabular}
+\caption{Desugaring of syntactic sugar forms for terms}
+\label{tab:desugaring}
+\end{table}
+
+\clearpage
 
 \section{Type system}
+
+\subsection{Syntax for types, modes, and typing contexts}
 
 \ottgrammartabular{
 \otttype\ottinterrule
@@ -170,16 +197,30 @@ from⧔' (⮒
 \ottctx\ottafterlastrule
 }
 
-%\clearpage
+\subsection{Typing of terms and values}
 
 \ottdefnTyRXXval{}
 \ottdefnTyXXterm{}
+
+\subsection{Derived typing rules for syntactic sugar terms}
+
 \ottdefnTyXXtermS{}
+
+\section{Evaluation contexts and semantics}
+
+\subsection{Evaluation contexts forms}
+
+\ottgrammartabular{
+\ottectx\ottinterrule
+\ottectxs\ottafterlastrule
+}
+
+\subsection{Typing of evaluation contexts and commands}
+
 \ottdefnTyXXectxs{}
 \ottdefnTyXXeterm{}
 
-\clearpage
-\section{Small-step semantics}
+\subsection{Small-step semantics}
 
 \ottdefnSemXXeterm{}
 

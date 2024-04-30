@@ -2,7 +2,7 @@ defns
 Ty :: '' ::=
 
 defn
-G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing of values (raw) }} by
+G ⫦ v : T :: :: TyR_val :: TyR_val_ {{ com Typing judgment for values }} by
 
 % We must track linearity precisely, but age for received value is arbitrary
 --------------------- :: H
@@ -68,7 +68,7 @@ D2 + (-D3) ⫦ v2 : U [[:TyRv2]]
 D1 + D2 ⫦ hvars(-D3) ⟨v2 ❟ v1⟩ : U ⧔ T
 
 defn
-P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing of terms }} by
+P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
 
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
 {{ DisposableOnly [[P]] }} [[:DisposP]]
@@ -173,7 +173,7 @@ P2 ⊢ t' : U ⧔ T [[:Tytp]]
 P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
 
 defn
-P ˢ⊢ t : T :: :: Ty_termS :: Ty_termS_ {{ com Typing of syntactic sugar forms }} by
+P ˢ⊢ t : T :: :: Ty_termS :: Ty_termS_ {{ com Derived typing judgment for syntactic sugar forms }} by
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 -------------------- :: Alloc
@@ -220,7 +220,7 @@ P22 ⊢ t2 : T2
 P21 + P22 ˢ⊢ ˢ(t1, t2) : T1 ⨂ T2
 
 defn
-D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by
+D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by
 
 % Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus and mult. This would work without fancy things with having dual modes for holes I think. Because hminus will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
 % If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??
@@ -384,7 +384,7 @@ D2 + -D3 ⫦ v2 : U [[:TyRv2]]
 ¹↑·D1 + D3 ⊣ C ∘ (hvars(-D3) ᵒᵖ⟨v2 ❟ ⬜) : T' ↣ U0
 
 defn
-⊢ C [ t ] : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing of extended terms (pair of evaluation context and term) }} by
+⊢ C [ t ] : T :: :: Ty_eterm :: Ty_eterm_ {{ com Typing judgment for commands }} by
 
 {{ ValidOnly [[D]] }} [[:ValidOnlyD]]
 {{ DestOnly [[D]] }} [[:DestOnlyD]]
@@ -402,7 +402,7 @@ Sem :: '' ::=
 % We want theorem that C[t] -->* C[v] where englobing context doesn't change?
 
 defn
-C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of terms using evaluation contexts }} by
+C [ t ] ⟶ C' [ t' ] :: :: Sem_eterm :: Sem_eterm_ {{ com Small-step evaluation of commands }} by
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------------- :: AppFoc1
