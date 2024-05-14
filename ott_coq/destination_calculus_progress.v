@@ -68,7 +68,7 @@ Proof.
   - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
       rename D2 into D', D0 into D2. assert (DestOnly (P ᴳ+ (D1 ᴳ+ D2))) as DestOnlyPuD1uD2. { crush. } rewrite (nDisposable_in_DestOnly P (D1 ᴳ+ D2) DisposP DestOnlyPuD1uD2) in *.
-      exists (C ∘ hvarsᴳ(ᴳ-⁻¹ D3) ᴴ⩲ (maxᴴ(hvars©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hvarsᴳ(ᴳ-⁻¹ D3) ⩲ (maxᴴ(hvars©(C)) + 1)] ❟⬜), (t' ᵗ[x ≔ v1 ᵛ[hvarsᴳ(ᴳ-⁻¹ D3) ⩲ (maxᴴ(hvars©(C)) + 1)]]). constructor; tauto.
+      exists (C ∘ hvarsᴳ(ᴳ-⁻¹ D3) ᴴ⩲ (maxᴴ(hvars©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hvarsᴳ(ᴳ-⁻¹ D3) ⩲ (maxᴴ(hvars©(C)) + 1)] ❟⬜⟩), (t' ᵗ[x ≔ v1 ᵛ[hvarsᴳ(ᴳ-⁻¹ D3) ⩲ (maxᴴ(hvars©(C)) + 1)]]). constructor; tauto.
     * exists (C ∘ ⬜map x ⟼ t'), t. constructor; tauto.
   - rename Tyt into TyToA. destruct (NotVal_dec u).
     * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HVars.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.

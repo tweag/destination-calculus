@@ -381,7 +381,7 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar_Foc
-¹↑·D1 + D3 ⊣ C ∘ (hvars(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜) : T' ↣ U0
+¹↑·D1 + D3 ⊣ C ∘ (hvars(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
 
 defn
 ⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} by
@@ -473,10 +473,10 @@ C[t map x ⟼ t'] ⟶ (C ∘ (⬜ map x ⟼ t'))[t]
 
 {{ [[h']] = [[max(hvars(C)) + 1]] }} [[:hpMaxC]]
 ---------------------------------- :: Map_Red_OpenAmpar_Foc
-C[ H ⟨ v2 ❟ v1 ⟩ map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜))[ t'[x ≔ v1[H⩲h'] ] ]
+C[ H ⟨ v2 ❟ v1 ⟩ map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h'] ] ]
 
 ---------------------------------- :: OpenAmpar_Unfoc
-(C ∘ H ᵒᵖ⟨ v2 ❟ ⬜)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
+(C ∘ H ᵒᵖ⟨ v2 ❟ ⬜⟩)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
 % -------------------------- :: Alloc_Red
 % C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]

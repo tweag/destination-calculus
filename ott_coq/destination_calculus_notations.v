@@ -78,7 +78,7 @@ Notation "'⬜⨞ᴇ' m" := (ectx_FillE_Foc m) (at level 43, no associativity, m
 Notation "'⬜⨞(λ' x '⁔' m '⟼' u ')'" := (ectx_FillF_Foc x m u) (at level 43, m at level 29, x at level 19, u at level 59, no associativity).
 Notation "'⬜⨞·' u" := (ectx_FillComp_Foc1 u) (at level 43, no associativity, u at next level).
 Notation "v '⨞·⬜'" := (ectx_FillComp_Foc2 v) (at level 43, no associativity).
-Notation "H 'ᵒᵖ⟨' v1 '❟⬜'" := (ectx_OpenAmpar_Foc H v1) (at level 31, v1 at level 59, no associativity).
+Notation "H 'ᵒᵖ⟨' v1 '❟⬜⟩'" := (ectx_OpenAmpar_Foc H v1) (at level 31, v1 at level 59, no associativity).
 
 (* Types : 30-59 *)
 Notation "①" := (type_Unit).

@@ -166,7 +166,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillF_Foc {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | ⬜ ⨞· t' :: :: FillComp_Foc1 {{ tex [[⬜]]\triangleleft\!\mybullet\,[[t']] }}
   | v ⨞· ⬜ :: :: FillComp_Foc2 {{ tex [[v]]\triangleleft\!\mybullet\,[[⬜]] }}
-  | H ᵒᵖ⟨ v2 ❟ ⬜ :: :: OpenAmpar_Foc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]] }} {{ com Open ampar, binding hole names in the next components }}
+  | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar_Foc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
   | ( c ) :: S :: Paren {{ coq [[c]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -243,7 +243,7 @@ Defined.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 grammar
 
-ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Pi }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
+ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
   | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
   | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}

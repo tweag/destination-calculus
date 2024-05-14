@@ -1,5 +1,4 @@
 % -*- latex -*-
-\pdfmapfile{+zi4-sl.map}
 \documentclass[acmsmall, screen]{acmart}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -100,19 +99,37 @@ Build up to DList.
 
 \subsection{Names and variables}
 
+The destination calculus uses two classes of names: regular (meta) variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet.
+
 \ottmetavars
+\ottgrammartabular{
+\otthvar\ottafterlastrule
+}
+
+Hole names are represented by natural numbers under the hood, so they can act both as relative or absolute offsets in memory. Typically, when a structure is effectively allocated, its hole names are shifted by the maximum hole name encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
+
+We sometimes need to keep track of hole names bound by a particular runtime value or evaluation context, hence we also define sets of hole names $[[H]], [[H1]], [[H2]]\ldots$.
 
 \ottgrammartabular{
-\otthvar\ottinterrule
 \otthvars\ottafterlastrule
 }
 
+Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshvar{[}[[H ⩲ h']]\ottshvar{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
+
 \subsection{Term and value core syntax}
+
+Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
+
+In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a runtime representation for data structures. We only need to keep the \emph{ampar} form $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives.
 
 \ottgrammartabular{
 \ottterm\ottinterrule
 \ottval\ottafterlastrule
 }
+
+Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}.
+
+$\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the ampar --- the one containing destinations of that ampar --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the ampar is inaccessible as it is being mutated behind the scenes by the destination-filling primitives.
 
 \subsection{Syntactic sugar for constructors and commonly used operations}
 
@@ -129,7 +146,7 @@ Build up to DList.
 \hline
 
 $[[alloc]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
-  H ⟨ +1 ❟ -1 ⟩
+  { 1 } ⟨ +1 ❟ -1 ⟩
 ]]\end{array}$ &
 
 $[[t ˢ⨞ t']]$ & $\triangleq$ & $\begin{array}[t]{l}[[
