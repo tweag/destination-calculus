@@ -18,6 +18,17 @@
 % \setlength{\intextsep}{\baselineskip}
 
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
+\newcommand\sepimp{\mathrel{-\mkern-6mu*}}
+\newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
+\makeatletter
+\newcommand{\smallbullet}{} % for safety
+\DeclareRobustCommand\smallbullet{%
+  \mathord{\mathpalette\smallbullet@{0.5}}%
+}
+\newcommand{\smallbullet@}[2]{%
+  \vcenter{\hbox{\scalebox{#2}{$\m@th#1\bullet$}}}%
+}
+\makeatother
 
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
@@ -97,6 +108,26 @@ Build up to DList.
 
 \section{Language syntax}
 
+\subsection{Introducing the \emph{ampar}}
+
+Minamide's work\cite{minamide_functional_1998} is the earliest record we could find of a functional calculus integrating the idea of incomplete data structures (structures with holes) that exist as first class values and can be interacted with by the user.
+
+In that paper, a structure with a hole is named \emph{hole abstraction}. In the body of a hole abstraction, the bound \emph{hole variable} should be used linearly (exactly once), and must only be used as a parameter of a data constructor. In other terms, the bound \emph{hole variable} cannot be pattern-matched on or used as a parameter of a function call. A hole abstraction is thus a weak form of linear lambda abstraction, which just moves a piece of data into a bigger data structure.
+
+In fact, the type of hole abstraction $\ottstype{([[T1]], [[T2]]) hfun}$ in Minamine's work shares a lot of similarity with the separating implication or \emph{magic wand} $\ottstype{[[T1]] \sepimp [[T2]]}$ from separation logic: given a piece of memory matching description $[[T1]]$, we obtain a (complete) piece of memory matching description $[[T2]]$.
+
+Now, in classical linear logic, we know we can transform linear implication $\ottstype{[[T1]] \multimap [[T2]]}$ into $\ottstype{[[T1]]^{\bot}~\parr~[[T2]]}$. Doing so for the \emph{wand} type $\ottstype{([[T1]], [[T2]]) hfun}$ or $\ottstype{[[T1]] \sepimp [[T2]]}$ gives $\ottstype{\lfloor[[T1]]\rfloor~ \widehat{\parr}~[[T2]]}$, where $\ottstype{\lfloor\smallbullet\rfloor}$ is memory negation, and $\ottstype{\widehat{\parr}}$ is a memory \emph{par} (weaker than the CLL \emph{par} that allows more ``interaction'' of its two sides).
+
+Transforming the hole abstraction from its original implication form to a \emph{par} form let us consider the type $\ottstype{\lfloor[[T1]]\rfloor}$ of \emph{sink} or \emph{destination} of $[[T1]]$ as a first class component of our calculus. We also get to see the hole abstraction aka memory par as a pair-like structure, where the two sides might be coupled together in a way that prevent using both of them simultaneously.
+
+\paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
+
+In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $[[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
+
+In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] : \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be filled with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] : [[T]]$ and its linked destination $[[-h]] : \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
+
+As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ in $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
+
 \subsection{Names and variables}
 
 The destination calculus uses two classes of names: regular (meta) variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet.
@@ -120,7 +151,7 @@ Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ 
 
 Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
-In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives.
+In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
 \ottgrammartabular{
 \ottterm\ottinterrule
