@@ -128,6 +128,31 @@ In destination calculus though, we don't have an involutive memory negation $\ot
 
 As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ in $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
 
+However, we can recover a memory abstraction that is usable in practice if we know the nature of an memory par side:
+\begin{itemize}
+  \item if the memory par side is a value made only of inert elements and destinations (negative polarity), then we can pattern-match/map on it, but we cannot store it away to free up the other side;
+  \item if the memory par side is a value made only of inert elements and holes (positive polarity), then we can store it away in a bigger struct and free up the associated destinations (this is not an issue as the bigger struct will be locked by an memory par too), but we cannot pattern-match/map on it as it (may) contains holes;
+  \item if one memory par side is only made of inert elements, we can in fact convert the memory par to a pair, as the memory par doesn't have any form of interaction between its sides.
+\end{itemize}
+
+It is important to note that the type of an memory par side is not really enough to determine the nature of the side, as a hole of type $[[T]]$ and and inert value of type $[[T]]$ are indistinguishable at the type level.
+
+So we introduced a more restricted form of memory par, named \emph{ampar}, for \emph{asymmetrical memory par}, in which:
+\begin{itemize}
+  \item the left side is made of inert elements (normal values or destinations from previous scopes) and/or holes if and only if those holes are compensated by destinations on the right side;
+  \item the right side is made of inert elements and/or destinations.
+\end{itemize}
+
+As the right side cannot contain any holes, it is always safe to pattern-match or map on it. Because the left side cannot contain destinations from the current scope, it is always safe to store it away in a bigger struct and release the right side.
+
+Finally, it is enough to check for the absence of destinations in the right side (which we can do easily just by looking at its type) to convert an \emph{ampar} to a pair, as any remaining hole on the left side would be compensated by a destination on the right side.
+
+\paragraph{Destinations from previous scopes are inert}
+
+In destination calculus, scopes are delimited by the $\ottkw{map}$ operation over ampars. Anytime a $\ottkw{map}$ happens, we enter a new scope, and any preexisting destination or variable see its age increased by one ($\ottsmode{[[↑]]}$). As soon as a destination or variable is no longer of age 0 ($\ottsmode{[[ν]]}$), it cannot be used actively but only passively (e.g. it cannot be applied if it is a function, or used to store a value if it is a destination, but it can be stored away in a dest, or pattern-matched on).
+
+This is a core feature of the language that ensures part of its safety.
+
 \subsection{Names and variables}
 
 The destination calculus uses two classes of names: regular (meta) variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet.
@@ -147,7 +172,7 @@ We sometimes need to keep track of hole names bound by a particular runtime valu
 
 Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshvar{[}[[H ⩲ h']]\ottshvar{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
 
-\subsection{Term and value core syntax}
+\subsection{Term and value core syntax}\label{ssec:core-syntax}
 
 Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
@@ -169,6 +194,10 @@ $\ottkw{from}_{\ottstype{\ltimes}}$ is used to convert an \emph{ampar} to a pair
 The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-filling primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
+
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors can only take other values as arguments, not terms. Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives.
+
+$\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the left side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
 \ottgrammartabular{
 \ottsterm\ottafterlastrule
