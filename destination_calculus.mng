@@ -92,14 +92,85 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
+
+Destination-passing style programming takes its root in the early days of imperative programming. In such language, the programmer is responsible for managing memory allocation and deallocation, and thus is it often unpractical for function calls to allocate memory for their results themselves. Instead, the caller allocates memory for the result of the callee, and passes the address of this output memory cell to the callee as an argument. This is called an \emph{out parameter}, \emph{mutable reference}, or even \emph{destination}.
+
+But destination-passing style is not limited to imperative settings; it can be used in functional programming as well. One example is the linear destination-based API for arrays in Haskell\cite{bernardy_linear_2019}, which enables the user to build an array efficiently in a write-once fashion, without sacrificing the language identity and main guarantees. In this context, a destination points to a yet-unfilled memory slot of the array, and is said to be \emph{consumed} as soon as the associated hole is filled. In this paper, we continue on the same line: we present a linear $\lambda-$calculus embedding the concept of \emph{destinations} as first-class values, in order to provide a write-once memory scheme for pure, functional programming languages.
+
+Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
+
 \section{System in action on simple examples}
 
-Build up to DList.
+\activespaces
+
+The idea of destination calculus is to provide a building canvas for data structures, represented as a special pair-like structure, called an \emph{ampar}, whose left side is the structure being built, and whose right side carries destinations pointing to holes present in the left side.
+
+A \emph{hole}, denoted $[[+h]]$ in the language, is a memory cell that has not been written to yet. In a practical application, a \emph{hole} would contain garbage data left by the previous use of the memory location, and thus should not be read in any circumstances (or it could lead to a segmentation fault!).
+
+A \emph{destination}, denoted $[[-h]]$, is the address of a hole. It is meant to be one-use only; unlike mutable references which can often be reused.
+
+The simplest form of ampar is a single empty cell on the left with a destination pointing to it on the right: $[[{ h } ⟨ +h ❟ -h ⟩]]$. This ampar is highly analogous to the identity function: the final structure on the left side will correspond to what is fed in the right side.
+
+The main operation to operate on an ampar is $\ottkw{map}$, which binds the right side of the ampar to a variable, while temporarily forgetting about the left side (the incomplete structure that is being mutated behind the scenes).
+
+$[[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]]$ 
+reduces to $[[ { h' } ⟨ Inl +h' ❟ -h' ⟩ ]]$ then to $[[ { } ⟨ Inl () ❟ () ⟩ ]]$
+
+The destination-filling primitive $[[⨞]][[Inl]]$ will in fact follow the destination on the left-hand side and write an $[[Inl]]$ data constructor to the hole pointed by the destination. A new destination $[[-h']]$ is returned to represented the (yet unspecified) payload for the $[[Inl]]$ constructor.
+
+This new destination $[[-h']]$ is then passed to the destination-filling primitive $[[⨞]][[()]]$, which writes a unit value to the hole pointed by $[[-h']]$. The unit data constructor $[[()]]$ doesn't hold any payload, so there is no new destination to return here (so $[[()]]$ is returned by the primitive instead).
+
+\paragraph{Arbitrary building order}
+
+As mentioned earlier, one key point of destination calculus is being able to build a structure in any desired order. For example, one can build a balanced binary tree of depth two by first building the skeleton, then giving values to the right leaves, then to the left leaves.
+
+Let's build the skeleton first:
+
+\noindent$[[t1]] \coloneq [[
+{ h1 } ⟨ +h1 ❟ -h1 ⟩ map d1 ⟼⮒
+‥‥d1 ⨞ (,) case ¹ν (d2, d3) ⟼⮒
+‥‥‥‥d2 ⨞ (,) case ¹ν (d4, d5) ⟼⮒
+‥‥‥‥‥‥d3 ⨞ (,) case ¹ν (d6, d7) ⟼ ˢ[d4, d5, d6, d7]
+]]$
+
+evaluates to:
+
+$[[ { h4, h5, h6, h7 } ⟨ ((+h4, +h5), (+h6, +h7)) ❟ ˢ[-h4, -h5, -h6, -h7] ⟩ ]]$
+
+We can see that the skeleton of the tree is here on the left-hand side, but leaves are unspecified yet (so are represented by holes). Let's now fill the right leaves:
+
+\noindent$[[t2]] \coloneq [[
+t1 map d ⟼⮒
+‥‥d case ¹ν ˢ[d4, d5, d6, d7] ⟼⮒
+‥‥‥‥d5 ⨞ Inr ⨞ () ; d7 ⨞ Inr ⨞ () ; ˢ[d4, d6]
+]]$
+
+reduces to
+
+$[[ { h4, h6 } ⟨ ((+h4, Inr ()), (+h6, Inr ())) ❟ ˢ[-h4, -h6] ⟩ ]]$
+
+Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally fill them:
+
+\noindent$[[t3]] \coloneq [[
+t2 map d ⟼⮒
+‥‥d case ¹ν ˢ[d4, d6] ⟼⮒
+‥‥‥‥d4 ⨞ Inl ⨞ () ; d6 ⨞ Inr ⨞ ()
+]]$
+
+$[[t3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]]$ which is now a complete structure. There is no destination remaining on the right-hand side.
+
+We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
 \section{Limitions of the previous approach}
 
+Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
+
+Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.
+
+\subsection{Why stored destinations are problematic}
+
 \subsection{Breadth-first tree traversal}
-\subsection{Storing linear data in destination-based data structures}
+
 \subsection{Need for scope control}
 
 \section{Updated breadth-first tree traversal}
@@ -122,28 +193,28 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 \paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
 
-In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $[[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
+In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $![[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
 
 In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] : \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be filled with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] : [[T]]$ and its linked destination $[[-h]] : \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
 
-As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ in $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
+As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ originating from $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
 
 However, we can recover a memory abstraction that is usable in practice if we know the nature of an memory par side:
 \begin{itemize}
-  \item if the memory par side is a value made only of inert elements and destinations (negative polarity), then we can pattern-match/map on it, but we cannot store it away to free up the other side;
-  \item if the memory par side is a value made only of inert elements and holes (positive polarity), then we can store it away in a bigger struct and free up the associated destinations (this is not an issue as the bigger struct will be locked by an memory par too), but we cannot pattern-match/map on it as it (may) contains holes;
+  \item if the memory par side is a value made only of inert elements and destinations (negative polarity), then we can pattern-match/$\ottkw{map}$ on it, but we cannot store it away to free up the other side;
+  \item if the memory par side is a value made only of inert elements and holes (positive polarity), then we can store it away in a bigger struct and free up the associated destinations (this is not an issue as the bigger struct will be locked by an memory par too), but we cannot pattern-match/$\ottkw{map}$ on it as it (may) contains holes;
   \item if one memory par side is only made of inert elements, we can in fact convert the memory par to a pair, as the memory par doesn't have any form of interaction between its sides.
 \end{itemize}
 
 It is important to note that the type of an memory par side is not really enough to determine the nature of the side, as a hole of type $[[T]]$ and and inert value of type $[[T]]$ are indistinguishable at the type level.
 
-So we introduced a more restricted form of memory par, named \emph{ampar}, for \emph{asymmetrical memory par}, in which:
+So we introduced a more restricted form of memory par, named \emph{ampar} ($\ottstype{\ltimes}$), for \emph{asymmetrical memory par}, in which:
 \begin{itemize}
   \item the left side is made of inert elements (normal values or destinations from previous scopes) and/or holes if and only if those holes are compensated by destinations on the right side;
   \item the right side is made of inert elements and/or destinations.
 \end{itemize}
 
-As the right side cannot contain any holes, it is always safe to pattern-match or map on it. Because the left side cannot contain destinations from the current scope, it is always safe to store it away in a bigger struct and release the right side.
+As the right side cannot contain any holes, it is always safe to pattern-match or $\ottkw{map}$ on it. Because the left side cannot contain destinations from the current scope, it is always safe to store it away in a bigger struct and release the right side.
 
 Finally, it is enough to check for the absence of destinations in the right side (which we can do easily just by looking at its type) to convert an \emph{ampar} to a pair, as any remaining hole on the left side would be compensated by a destination on the right side.
 
@@ -156,6 +227,8 @@ This is a core feature of the language that ensures part of its safety.
 \subsection{Names and variables}
 
 The destination calculus uses two classes of names: regular (meta) variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet.
+
+\visiblespaces
 
 \ottmetavars
 \ottgrammartabular{

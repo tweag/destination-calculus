@@ -73,6 +73,9 @@ hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \o
 % LANGUAGE SYNTAX (STATIC)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+casem :: casem ::= {{ coq mode }}
+  | case m :: M :: CaseM {{ tex \vartriangleright\!\ottkw{case}_{[[m]]}\, }} {{ coq [[m]] }}
+
 term, t, u :: 'term_' ::= {{ com Term }}
   | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
@@ -81,6 +84,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | t casem ˢ [ x1 , .. , xk ] ⟼ u :: S :: PatPList {{ com Pattern-match on pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
   | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex [[t]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
@@ -102,6 +106,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b1]][[sp1]]\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | t case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
+  | t casem b sp ˢ [ x1 , .. , xk ] ⟼ u :: S :: PatPListsp {{ com Pattern-match on pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
   % Here we have to redefined all sugar construct in the same way as in sterm
   | alloc :: S :: SugarAlloc {{ coq (sterm_Alloc) }} {{ tex \ottkw{alloc} }}
@@ -112,6 +117,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | ˢInr t :: S :: SugarRight {{ coq (sterm_Right [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\ottsctor{Inr}\,[[t]] }}
   | ˢᴇ m t :: S :: SugarExp {{ coq (sterm_Exp [[m]] [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\expcons{[[m]]}\,[[t]] }}
   | ˢ( t1 , t2 ) :: S :: SugarProd {{ coq (sterm_Prod [[t1]] [[t2]]) }} {{ tex \,\!^{\scriptscriptstyle s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
+  | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
 sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (sterm_Alloc) }}
@@ -122,6 +128,7 @@ sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | ˢInr t :: M :: SugarRight {{ com Allocate right variant }} {{ coq (sterm_Right [[t]]) }}
   | ˢᴇ m t :: M :: SugarExp {{ com Allocate exponential }} {{ coq (sterm_Exp [[m]] [[t]]) }}
   | ˢ( t1 , t2 ) :: M :: SugarProd {{ com Allocate product }} {{ coq (sterm_Prod [[t1]] [[t2]]) }}
+  | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ com Allocate pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
 val, v :: 'val_' ::= {{ com Value }}
   | + h :: :: Hole {{ com Hole }} {{ tex [[h]] }}
@@ -132,6 +139,7 @@ val, v :: 'val_' ::= {{ com Value }}
   | Inr v :: :: Right {{ com Right variant for sum }}
   | ᴇ m v :: :: Exp {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: Prod {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
+  | ˢ [ v1 , .. , vk ] :: S :: SugarPList {{ com Pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
   | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
   | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
@@ -878,6 +886,7 @@ terminals :: 'terminals_' ::=
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
   | ⩲ :: :: rename {{ tex \pluseq }}
+  | ˢ :: :: sugar {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex} }}
 
 % === Contexts ===
   | + :: :: union {{ tex + }}
