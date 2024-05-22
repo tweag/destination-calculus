@@ -7,6 +7,13 @@
 \usepackage{amssymb}
 \usepackage{subcaption}
 
+% For faulty code
+\usepackage[normalem]{ulem}
+\makeatletter
+\def\uwave{\bgroup \markoverwith{\lower3.5\p@\hbox{\sixly \textcolor{red}{\char58}}}\ULon}
+\font\sixly=lasy6 % does not re-load if already loaded, so no memory problem.
+\makeatother
+
 % For OTT rendering
 \usepackage[supertabular]{ottalt}
 \inputott{destination_calculus_ott.tex}
@@ -72,6 +79,8 @@
 \email{thomas.bagrel@loria.fr}
 \email{thomas.bagrel@tweag.io}
 
+% On introduit de la mutation controlée dans les FP languages sans endommager la pureté (comme la lazyness peut être vu aussi)
+
 \begin{abstract}
   We present the destination calculus, a linear $\lambda-$calculus for
   pure, functional memory updates. We introduce the
@@ -87,7 +96,7 @@
 
 \maketitle
 
-\tableofcontents
+%\tableofcontents
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -161,7 +170,7 @@ $[[t3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]
 
 We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
-\section{Limitions of the previous approach}
+\section{Limitations of the previous approach}
 
 Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
 
@@ -177,15 +186,35 @@ We have to mark the value being fed in a destination as linearly consumed, so th
 
 As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been filled \emph{now}, only that it will be filled later. So our assumption above doesn't hold in general case.
 
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} : \ottstype{(\lfloor[[T]]\rfloor\,_{[[¹]]}\!\ottstype{\to}\,[[①]])\,_{[[¹]]}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
 
-$\ottkw{alloc'} : \ottstype{(\lfloor[[T]]\rfloor\,_{[[¹]]}\!\ottstype{\to}\,[[①]])\,_{[[¹]]}\!\ottstype{\to}\,[[T]]}$
+The morally correct semantics (in destination calculus pseudo-syntax) would be:
 
-It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
+\noindent$\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~;~\ottkw{deref}~[[-h]] \}$
 
-The morally correct semantics would be:
+It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
 
-$\ottkw{alloc'}~(\lambda[[d]]_{\,[[¹]]\!}\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{let}~[[-h]]\coloneq\ottkw{newDest}~\ottkw{in}~[[ t[d ≔ -h] ]]~;~\ottkw{deref}~[[-h]]$
+\noindent$\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[d ⨞ Inl ⨞ ()]])$
+
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~;~\ottkw{deref}~[[-h]] \}$
+
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$
+
+$~[[⟶]]~ [[Inl ()]]$
+
+However this falls short when calls to $\ottkw{alloc'}$ are nested in the following way (where $[[dd]]$ : $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ : $\ottstype{\lfloor[[①]]\rfloor}$):
+
+\noindent$\ottkw{alloc'}~(\lambda\,[[dd]]\,_{[[¹]]}\!\!\mapsto\,\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[dd ˢ⨞ d]]))$
+
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[-hd ˢ⨞ d]])~;~\ottkw{deref}~[[-hd]] \}$
+
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~;~\ottkw{deref}~[[-h]] \}~;~\ottkw{deref}~[[-hd]] \}$
+
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~;~\ottkw{deref}~[[-hd]] \}$
+
+The original term $\ottkw{alloc'}~(\lambda\,[[dd]]\,_{[[¹]]}\!\!\mapsto\,\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
+
+One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination, as long as destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ are allowed. And forbidding destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ gets annoying very fast: typing rules are no longer as simple, parametric polymorphism is not really possible for most functions without a system of constraints to ensure the absence of $\ottstype{\lfloor\!\!\rfloor}$ in anything we want to store, etc.
 
 \subsection{Breadth-first tree traversal}
 
@@ -211,7 +240,7 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 \paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
 
-In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $![[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
+In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $[[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
 
 In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] : \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be fed with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] : [[T]]$ and its linked destination $[[-h]] : \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
 

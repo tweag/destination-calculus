@@ -24,7 +24,7 @@
 \definecolor{typcolor}{HTML}{176FC1} % blue, bold
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
 \definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
-\definecolor{mvcolor}{HTML}{F35EB7} % pink, sf
+\definecolor{mvcolor}{HTML}{000000} % F35EB7 pink, sf
 \definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
 
 \renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathit{#1} } }
@@ -91,9 +91,9 @@
 
 % Lambda abstraction with and without type annotation
 % \newcommand{\lam}[3]{\ottsctor{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
-\newcommand{\lamnt}[3]{\ottsctor{\lambda}{#1}_{\,#2\!}\!\mapsto\,#3}
-\newcommand{\lamvnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{v}}\!\lambda}{#1}_{\,#2\!}\!\mapsto\,#3}
-\newcommand{\lamsnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{s}}\!\lambda}{#1}_{\,#2\!}\!\mapsto\,#3}
+\newcommand{\lamnt}[3]{\ottsctor{\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
+\newcommand{\lamvnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{v}}\!\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
+\newcommand{\lamsnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{s}}\!\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
 % \newcommand{\Lam}[2]{\ottsctor{\Lambda}\,#1\,\textbf{.}\,#2}
 
 % Constructor for exponential

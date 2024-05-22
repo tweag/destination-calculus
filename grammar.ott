@@ -53,7 +53,7 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 
 grammar
 
-hvar, h :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
+hvar, h, hd :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
   | 1 :: S :: 1 {{ coq 1 }} {{ tex \ottshvar{1} }}
   | 2 :: S :: 2 {{ coq 2 }} {{ tex \ottshvar{2} }}
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}

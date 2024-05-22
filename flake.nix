@@ -126,6 +126,9 @@
                 bbold
                 tipa
                 halloweenmath pict2e
+
+                # for erroneuous code
+                ulem
                 ;
             })
           ];
