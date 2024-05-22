@@ -116,9 +116,9 @@ The main operation to operate on an ampar is $\ottkw{map}$, which binds the righ
 $[[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]]$ 
 reduces to $[[ { h' } ⟨ Inl +h' ❟ -h' ⟩ ]]$ then to $[[ { } ⟨ Inl () ❟ () ⟩ ]]$
 
-The destination-filling primitive $[[⨞]][[Inl]]$ will in fact follow the destination on the left-hand side and write an $[[Inl]]$ data constructor to the hole pointed by the destination. A new destination $[[-h']]$ is returned to represented the (yet unspecified) payload for the $[[Inl]]$ constructor.
+The destination-feeding primitive $[[⨞]][[Inl]]$ will in fact follow the destination on the left-hand side and write an $[[Inl]]$ data constructor to the hole pointed by the destination. A new destination $[[-h']]$ is returned to represented the (yet unspecified) payload for the $[[Inl]]$ constructor.
 
-This new destination $[[-h']]$ is then passed to the destination-filling primitive $[[⨞]][[()]]$, which writes a unit value to the hole pointed by $[[-h']]$. The unit data constructor $[[()]]$ doesn't hold any payload, so there is no new destination to return here (so $[[()]]$ is returned by the primitive instead).
+This new destination $[[-h']]$ is then passed to the destination-feeding primitive $[[⨞]][[()]]$, which writes a unit value to the hole pointed by $[[-h']]$. The unit data constructor $[[()]]$ doesn't hold any payload, so there is no new destination to return here (so $[[()]]$ is returned by the primitive instead).
 
 \paragraph{Arbitrary building order}
 
@@ -149,7 +149,7 @@ reduces to
 
 $[[ { h4, h6 } ⟨ ((+h4, Inr ()), (+h6, Inr ())) ❟ ˢ[-h4, -h6] ⟩ ]]$
 
-Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally fill them:
+Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally feed them:
 
 \noindent$[[t3]] \coloneq [[
 t2 map d ⟼⮒
@@ -168,6 +168,24 @@ Everything described above is in fact already possible in destination-passing st
 Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.
 
 \subsection{Why stored destinations are problematic}
+
+One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been filled.
+
+However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
+
+We have to mark the value being fed in a destination as linearly consumed, so that it cannot be both stored away (to be used later) and pattern-matched on/used in the current context. But that means we have to mark the destination $[[d]] : \ottstype{\lfloor[[T']]\rfloor}$ as linearly consumed too when it is fed to $[[dd]] : \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
+
+As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been filled \emph{now}, only that it will be filled later. So our assumption above doesn't hold in general case.
+
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:
+
+$\ottkw{alloc'} : \ottstype{(\lfloor[[T]]\rfloor\,_{[[¹]]}\!\ottstype{\to}\,[[①]])\,_{[[¹]]}\!\ottstype{\to}\,[[T]]}$
+
+It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
+
+The morally correct semantics would be:
+
+$\ottkw{alloc'}~(\lambda[[d]]_{\,[[¹]]\!}\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{let}~[[-h]]\coloneq\ottkw{newDest}~\ottkw{in}~[[ t[d ≔ -h] ]]~;~\ottkw{deref}~[[-h]]$
 
 \subsection{Breadth-first tree traversal}
 
@@ -195,7 +213,7 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $![[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
 
-In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] : \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be filled with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] : [[T]]$ and its linked destination $[[-h]] : \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
+In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] : \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be fed with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] : [[T]]$ and its linked destination $[[-h]] : \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
 
 As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ originating from $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
 
@@ -249,7 +267,7 @@ Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ 
 
 Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
-In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
+In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-feeding primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
 \ottgrammartabular{
 \ottterm\ottinterrule
@@ -258,17 +276,17 @@ In fact, the grammatical class of values $[[v]]$, presented as a subset of terms
 
 Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}.
 
-$\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the \emph{ampar} --- the one containing destinations of that \emph{ampar} --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the \emph{ampar} is inaccessible as it is being mutated behind the scenes by the destination-filling primitives.
+$\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the \emph{ampar} --- the one containing destinations of that \emph{ampar} --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the \emph{ampar} is inaccessible as it is being mutated behind the scenes by the destination-feeding primitives.
 
 $\ottkw{to}_{\ottstype{\ltimes}}$ embeds an already completed structure in an \emph{ampar} whose left side is the structure, and right side is unit. We have an operator \textsc{FillComp} ($\triangleleft\mybullet$) allowing to compose two \emph{ampar}s by writing the root of the second one to a destination of the first one, so by throwing $\ottkw{to}_{\ottstype{\ltimes}}$ to the mix, we can compose an \emph{ampar} with a normal (completed) structure (see the sugar operator \textsc{FillLeaf} ($\triangleleft$) in Section~\ref{ssec:sugar}).
 
 $\ottkw{from}_{\ottstype{\ltimes}}$ is used to convert an \emph{ampar} to a pair, when the right side of the \emph{ampar} is an exponential of the form $[[ᴇ ¹∞ v]]$. Indeed, when the right side has such form, it cannot contains destinations (as destinations always have a finite age), thus it cannot contain holes in its left side either (as holes on the left side are always compensated 1:1 by a destination on the right side). As a result, it is valid to convert an \emph{ampar} to a pair in these circumstances. $\ottkw{from}_{\ottstype{\ltimes}}$ is in particular used to extract a structure from its \emph{ampar} building shell when it is complete (see the sugar operator $\ottkw{from'}_{\ottstype{\ltimes}}$ in Section~\ref{ssec:sugar}).
 
-The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-filling primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-feeding primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
 
-As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors can only take other values as arguments, not terms. Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives.
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors can only take other values as arguments, not terms. Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-feeding primitives.
 
 $\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the left side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
