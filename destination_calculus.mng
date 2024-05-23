@@ -104,7 +104,7 @@
 
 Destination-passing style programming takes its root in the early days of imperative programming. In such language, the programmer is responsible for managing memory allocation and deallocation, and thus is it often unpractical for function calls to allocate memory for their results themselves. Instead, the caller allocates memory for the result of the callee, and passes the address of this output memory cell to the callee as an argument. This is called an \emph{out parameter}, \emph{mutable reference}, or even \emph{destination}.
 
-But destination-passing style is not limited to imperative settings; it can be used in functional programming as well. One example is the linear destination-based API for arrays in Haskell\cite{bernardy_linear_2019}, which enables the user to build an array efficiently in a write-once fashion, without sacrificing the language identity and main guarantees. In this context, a destination points to a yet-unfilled memory slot of the array, and is said to be \emph{consumed} as soon as the associated hole is filled. In this paper, we continue on the same line: we present a linear $\lambda-$calculus embedding the concept of \emph{destinations} as first-class values, in order to provide a write-once memory scheme for pure, functional programming languages.
+But destination-passing style is not limited to imperative settings; it can be used in functional programming as well. One example is the linear destination-based API for arrays in Haskell\cite{bernardy_linear_2018}, which enables the user to build an array efficiently in a write-once fashion, without sacrificing the language identity and main guarantees. In this context, a destination points to a yet-unfilled memory slot of the array, and is said to be \emph{consumed} as soon as the associated hole is filled. In this paper, we continue on the same line: we present a linear $\lambda-$calculus embedding the concept of \emph{destinations} as first-class values, in order to provide a write-once memory scheme for pure, functional programming languages.
 
 Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
 
@@ -214,15 +214,62 @@ $~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwav
 
 The original term $\ottkw{alloc'}~(\lambda\,[[dd]]\,_{[[¹]]}\!\!\mapsto\,\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
 
-One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination, as long as destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ are allowed. And forbidding destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ gets annoying very fast: typing rules are no longer as simple, parametric polymorphism is not really possible for most functions without a system of constraints to ensure the absence of $\ottstype{\lfloor\!\!\rfloor}$ in anything we want to store, etc.
+One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination\footnote{This type has in fact existed during the early prototypes of destination calculus, but we removed it as it doesn't solve the scope escape for destination and is indistinguishable in practice from the unit type.}, as long as destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ are allowed. And forbidding destinations of type $\ottstype{\lfloor\,\ottstype{\lfloor\!\!\rfloor}\,\rfloor}$ gets annoying very fast: typing rules are no longer as simple, parametric polymorphism is not really possible for most functions without a system of constraints to ensure the absence of $\ottstype{\lfloor\!\!\rfloor}$ in anything we want to store, etc.
 
-\subsection{Breadth-first tree traversal}
+\subsection{Age control to prevent scope escape of destinations}
 
-\subsection{Need for scope control}
+The solution we chose is to instead track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-feeding primitives.
 
-\section{Updated breadth-first tree traversal}
+Age is represented by a commutative semiring, where $[[ν]]$ indicates that a destination originates from the current scope, and $[[↑]]$ indicates that it originates from the scope just before. We also extend ages to variables (a variable of age $[[a]]$ stands for a value of age $[[a]]$). Finally, age $[[∞]]$ is introduced for variables standing in place of a non-age-controlled value. In particular, destinations can never have age $[[∞]]$ in practice.
 
-\clearpage
+Semiring addition $\ottsmode{+}$ is used to find the age of a variable or destination that is used in two different branches of a program. Semiring multiplication $[[·]]$ corresponds to age composition, and is in fact an integer sum on scope indices.
+$[[∞]]$ is absorbing for both addition and multiplication.
+
+Given $[[↑]]^{0} = [[ν]]$ and $[[↑]]^{n} = [[↑]][[·]][[↑]]^{n-1}$, we have the following age operation tables:
+
+\begin{minipage}{0.5\textwidth}
+\centering
+\begin{tabular}{|c|c|c|}\hline
+$\ottsmode{+}$ & $[[↑]]^{n}$               & $[[∞]]$ \\\hline
+$[[↑]]^{m}$    & $\text{if }n = m\text{ then }[[↑]]^{n}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
+$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
+\end{tabular}
+\end{minipage}\begin{minipage}{0.5\textwidth}
+\centering
+\begin{tabular}{|c|c|c|}\hline
+$[[·]]$        & $[[↑]]^{n}$               & $[[∞]]$ \\\hline
+$[[↑]]^{m}$    & $[[↑]]^{n+m}$ & $[[∞]]$ \\\hline
+$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
+\end{tabular}
+\end{minipage}
+
+Age commutative semiring is then combined with the multiplicity commutative semiring from~\cite{bernardy_linear_2018} to form a canonical product commutative semiring that is used to represent the mode of each typing context binding in our final type system.
+
+The main restriction to prevent parent scope escape is materialized in these simplified typing rules:
+
+\ottusedrule{%
+\ottdrule{%
+}{
+ \ottshvar{\destminus} \ottshvar{h} :\!_{\!  \ottsmode{\nu}   }\ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor}   \,\vdash\,   \ottshvar{\destminus} \ottshvar{h}   \ottsym{:}   \ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor} }{%
+{\ottdrulename{Ty\_val\_Dest$^{\star}$}}{}%
+}}
+\ottusedrule{%
+\ottdrule{%
+\ottpremise{\Theta_{{\mathrm{1}}}  \,\vdash\,  \ottnt{t}  \ottsym{:}   \ottstype{\lfloor} \ottstype{T} \ottstype{\rfloor} }%
+\ottpremise{\Theta_{{\mathrm{2}}}  \,\vdash\,  \ottnt{t'}  \ottsym{:}  \ottstype{T}}%
+}{
+\Theta_{{\mathrm{1}}}  +  \ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}} \,\vdash\,   \ottnt{t} \triangleleft\!\, \ottnt{t'}   \ottsym{:}   \ottstype{1} }{%
+{\ottdrulename{Ty\_term\_FillLeaf$^{\star}$}}{}%
+}}
+\medskip
+
+Typing a destination $[[-h]]$ requires $[[-h]]$ to have age $[[ν]]$ in the context. And when storing a value through a destination, the ages of the value's dependencies in the context must be one higher than the corresponding ages required to type the value alone (this is the meaning of $\ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}}$).
+
+Such a rule system prevents in particular the previous faulty expression $[[-hd ˢ⨞ -h]]$ where $[[-hd]]$ originates from the context parent to the one of $[[-h]]$.
+
+\section{(Updated) breadth-first tree traversal}
+
+
 
 \section{Language syntax}
 
