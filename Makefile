@@ -54,8 +54,8 @@ destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl d
 nix::
 	nix-shell --pure --run make
 
-continous-nix:: nix
-	nix-shell --pure --run "ls destination_calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make"
+continuous::
+	ls destination_calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make
 
 coq: Makefile.coq $(OTT_COQ)
 	$(MAKE) -f Makefile.coq
