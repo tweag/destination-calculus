@@ -39,6 +39,20 @@
 
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
+\newcommand\btriangleq{\pmb{\triangleq}}
+\newlength{\interdefskip}
+\setlength{\interdefskip}{0.1cm}
+\newcommand{\newtype}[3][\phantom{\mathttbf{ator}}]{\mathttbf{type}#1\,\phantom{a}#2~\btriangleq~#3\\[\interdefskip]}
+\newcommand{\newoperator}[5][]{\mathttbf{operator}#1\,\phantom{a}\!\!\!\!\begin{array}[t]{l}%
+  #2 ~\pmb{:}~ #3 \\
+  #4 ~\btriangleq~ #5
+\end{array}\\[\interdefskip]}
+
+\newcommand{\newoperatorb}[5][]{\mathttbf{operator}#1\\\myspace{1}\!\!\!\!\begin{array}[t]{l}%
+  #2 ~\pmb{:}~ #3 \\
+  #4 ~\btriangleq~ #5
+\end{array}\\[\interdefskip]}
+\newcommand{\figureratio}{0.87}
 
 \begin{document}
 
@@ -245,7 +259,7 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 
 Age commutative semiring is then combined with the multiplicity commutative semiring from~\cite{bernardy_linear_2018} to form a canonical product commutative semiring that is used to represent the mode of each typing context binding in our final type system.
 
-The main restriction to prevent parent scope escape is materialized in these simplified typing rules:
+The main restriction to prevent parent scope escape is materialized in these simplified typing rules:\smallskip
 
 \ottusedrule{%
 \ottdrule{%
@@ -261,7 +275,7 @@ The main restriction to prevent parent scope escape is materialized in these sim
 \Theta_{{\mathrm{1}}}  +  \ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}} \,\vdash\,   \ottnt{t} \triangleleft\!\, \ottnt{t'}   \ottsym{:}   \ottstype{1} }{%
 {\ottdrulename{Ty\_term\_FillLeaf$^{\star}$}}{}%
 }}
-\medskip
+\smallskip
 
 Typing a destination $[[-h]]$ requires $[[-h]]$ to have age $[[ν]]$ in the context. And when storing a value through a destination, the ages of the value's dependencies in the context must be one higher than the corresponding ages required to type the value alone (this is the meaning of $\ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}}$).
 
@@ -269,7 +283,112 @@ Such a rule system prevents in particular the previous faulty expression $[[-hd 
 
 \section{(Updated) breadth-first tree traversal}
 
+\begin{figure}[h]
 
+  \scalebox{\figureratio}{\begin{minipage}{\linewidth}$
+\newtype[~\mathttbf{rec}]{[[Int]]}{[[① ⨁ Int]]}
+\newoperator
+    {\ottkw{zero}}{[[Int]]}
+    {[[zero]]}{[[Inl ()]]}
+\newoperator
+    {\ottkw{succ}}{[[Int ¹ν → Int]]}
+    {[[succ x]]}{[[ˢInr x]]}
+\newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
+\newoperator
+    {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ n ¹ν → ①]]}
+    {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
+\newoperator
+    {\triangleleft\ottsctor{(:)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
+    {[[d ⨞ (:)]]}{[[d ⨞Inr ⨞(,)]]}
+\newtype{[[DList T]]}{[[(List T) ⧔ (⌊ List T ⌋ ¹ν)]]}
+\newoperator
+    {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
+    {[[x append y]]}{\!\!\!\begin{array}[t]{l}[[
+x map d ⟼ d ⨞ (:) case ¹ν⮒
+‥‥(dh, dt) ⟼ dh ˢ⨞ y ; dt
+]]\end{array}}
+\newoperator
+    {\ottkw{concat}}{[[DList T ¹ν → DList T ¹ν → DList T]]}
+    {[[x concat x']]}{[[x map d ⟼ d ⨞· x']]}
+\newoperator
+    {\ottkw{to}_{\ottstype{List} }}{[[DList T ¹ν → List T]]}
+    {[[toList x]]}{[[from⧔' (x map d ⟼ d ⨞ [])]]}
+\newtype{[[Queue T]]}{[[(List T) ⨂ (DList T)]]}
+\newoperator
+    {\ottkw{singleton}}{[[T ¹ν → Queue T]]}
+    {[[singleton x]]}{[[ˢ(ˢInr ˢ(x, Inl ()), alloc)]]}
+\newoperator
+    {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
+    {[[x enqueue y]]}{[[x case ¹ν (x1, x2) ⟼ ˢ(x1, x2 append y)]]}
+\newoperator
+    {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ Queue T)]]}
+    {[[dequeue x]]}{\!\!\!\begin{array}[t]{l}[[
+x case ¹ν⮒
+‥‥(x, y) ⟼ x case ¹ν {⮒
+‥‥‥‥Inl un ⟼ un ; toList y case ¹ν {⮒
+‥‥‥‥‥‥Inl un ⟼ ˢInl un,⮒
+‥‥‥‥‥‥Inr y' ⟼ y' case ¹ν⮒
+‥‥‥‥‥‥‥‥(y1', y2') ⟼ ˢInr ˢ(y1', ˢ(y2', alloc))⮒
+‥‥‥‥},⮒
+‥‥‥‥Inr x' ⟼ x' case ¹ν⮒
+‥‥‥‥‥‥(x1', y1') ⟼ ˢInr ˢ(x1', ˢ(y1', y))⮒
+‥‥}
+]]\end{array}}
+\newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
+\newoperator
+    {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
+    {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
+\newoperator
+    {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
+    {[[d ⨞ Node]]}{[[d ⨞Inr ⨞(,) case ¹ν (dn, dlr) ⟼ ˢ(dn, dlr ⨞(,))]]}
+$\end{minipage}}
+
+\caption{Boilerplate for breadth-first tree traversal}
+\label{fig:impl-boilerplate-bfs}
+\end{figure}
+
+\begin{figure}[h]
+
+\scalebox{\figureratio}{\begin{minipage}{\linewidth}$
+\newoperatorb[~\mathttbf{rec}]
+  {\ottkw{go}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
+  {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
+dequeue q case ¹ν {⮒
+‥‥Inl un ⟼ un ; st,⮒
+‥‥Inr x ⟼ x case ¹ν⮒
+‥‥‥‥(x', q') ⟼ x' case ¹ν⮒
+‥‥‥‥‥‥(tr, dtr) ⟼ tr case ¹ν {⮒
+‥‥‥‥‥‥‥‥Inl un ⟼ un ; dtr ⨞ Nil ; go f st q',⮒
+‥‥‥‥‥‥‥‥Inr y ⟼ y case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥(y', y'') ⟼ y'' case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥(trl, trr) ⟼ dtr ⨞ Node case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dn, dlr) ⟼ dlr case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dl, dr) ⟼ ༼f st༽ y' case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(st', y'') ⟼⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥dn ˢ⨞ y'' ; go f st' (q' enqueue ˢ(trl, dl) enqueue ˢ(trr, dr))⮒
+‥‥‥‥‥‥}⮒
+}
+]]\end{array}}
+\newoperatorb
+  {\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Tree T1 ¹ν → Tree T2 ⨂ (! ¹∞ S)]]}
+  {[[mapAccumBFS f st tr]]}{\!\!\!\begin{array}[t]{l}[[
+from⧔' (alloc map dtr ⟼ go f st (singleton ˢ(tr, dtr)))
+]]\end{array}}
+\newoperatorb
+  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Int) ⨂ Int]]}
+  {[[relabelDPS tr]]}{\!\!\!\begin{array}[t]{l}[[
+mapAccumBFS⮒
+‥‥(ˢλ ex ¹ν ⟼ ˢλ un ¹ν ⟼ un ; ex case ¹ν⮒
+‥‥‥‥ᴇ ¹∞ ex' ⟼ ex' case ¹∞⮒
+‥‥‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st))⮒
+‥‥(ˢᴇ ¹∞ (ˢᴇ ων (succ zero)))⮒
+‥‥tr
+]]\end{array}}
+$\end{minipage}}
+
+\caption{Breadth-first tree traversal in destination-passing style}
+\label{fig:impl-bfs}
+\end{figure}
 
 \section{Language syntax}
 
@@ -378,49 +497,49 @@ $\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ott
 \begin{tabular}{|lcl|lcl|}
 \hline
 
-$[[alloc]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[alloc]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
   { 1 } ⟨ +1 ❟ -1 ⟩
 ]]\end{array}$ &
 
-$[[t ˢ⨞ t']]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[t ˢ⨞ t']]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 t ⨞· (to⧔ t')
 ]]\end{array}$ \\\hline
 
-$[[from⧔' t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[from⧔' t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 (from⧔ (t map un ⟼ un ; ᴇ ¹∞ () )) case ¹ν⮒
 ‥‥( st , ex ) ⟼ ex case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ un ⟼ un ; st
 ]]\end{array}$ &
 
-$[[ˢλ x m ⟼ u]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[ˢλ x m ⟼ u]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ ( λ x m ⟼ u )⮒
 )
 ]]\end{array}$ \\\hline
 
-$[[ˢInl t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[ˢInl t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ Inl ˢ⨞ t⮒
 )
 ]]\end{array}$ &
 
-$[[ˢInr t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[ˢInr t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ Inr ˢ⨞ t⮒
 )
 ]]\end{array}$ \\\hline
 
-$[[ˢᴇ m t]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[ˢᴇ m t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ ᴇ m ˢ⨞ t⮒
 )
 ]]\end{array}$ &
 
-$[[ˢ( t1 , t2 )]]$ & $\triangleq$ & $\begin{array}[t]{l}[[
+$[[ˢ( t1 , t2 )]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥(d ⨞ (,)) case ¹ν⮒

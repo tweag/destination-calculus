@@ -35,9 +35,9 @@ Proof.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v  t' : U) as TyApp.
-        { apply (Ty_term_App m D1 D2 (ᵥ₎ v) t' U T); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := ᵥ₎ v  t').
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ t' $ ᵥ₎ v : U) as TyApp.
+        { apply (Ty_term_App m D1 D2 t' (ᵥ₎ v) U T); tauto. }
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := t' $ ᵥ₎ v).
       all: crush.
     - (* Sem-App_Foc2 *)
       inversion Tyt; subst.
@@ -50,11 +50,11 @@ Proof.
       inversion Tyt; subst. rename Tyv into Tyvp, TyC into TyCc, D0 into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
-      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v  ᵥ₎ v' : U) as TyApp.
-        { apply (Ty_term_App m D1 D2 (ᵥ₎ v) (ᵥ₎ v') U T); tauto. }
+      assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v' $ ᵥ₎ v : U) as TyApp.
+        { apply (Ty_term_App m D1 D2 (ᵥ₎ v') (ᵥ₎ v) U T); tauto. }
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
-      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := (ᵥ₎ v)  (ᵥ₎ v')).
+      constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := (ᵥ₎ v') $ (ᵥ₎ v)).
       all: crush.
     - (* Sem-App_Red *)
       inversion Tyt; subst.

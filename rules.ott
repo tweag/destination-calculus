@@ -87,7 +87,7 @@ P + { x : m T } ⊢ x : T
 P1 ⊢ t : T [[:Tyt]]
 P2 ⊢ t' : T m → U [[:Tytp]]
 ----------------- :: App
-m·P1 + P2 ⊢ t  t' : U
+m·P1 + P2 ⊢ t' t : U
 
 P1 ⊢ t : ① [[:Tyt]]
 P2 ⊢ u : U [[:Tyu]]
@@ -236,7 +236,7 @@ D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evalua
 m·D1 + D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 ⊢ t' : T m → U [[:Tytp]]
 ----------------- :: App_Foc1
-D1 ⊣ C ∘ (⬜  t') : T ↣ U0
+D1 ⊣ C ∘ (t' ⬜) : T ↣ U0
 
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
@@ -246,7 +246,7 @@ D1 ⊣ C ∘ (⬜  t') : T ↣ U0
 m·D1 + D2 ⊣ C : U ↣ U0 [[:TyC]]
 D1 ⊢ v : T [[:Tyv]]
 ----------------- :: App_Foc2
-D2 ⊣ C ∘ (v  ⬜) : (T m → U) ↣ U0
+D2 ⊣ C ∘ (⬜ v) : (T m → U) ↣ U0
 
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
@@ -406,20 +406,20 @@ C [ t ] ⟶ C' [ t' ] :: :: Sem :: Sem_ {{ com Small-step evaluation of commands
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------------- :: App_Foc1
-C[t  t'] ⟶ (C ∘ (⬜  t'))[t]
+C[t' t] ⟶ (C ∘ (t' ⬜))[t]
 
 ----------------------------- :: App_Unfoc1
-(C ∘ (⬜  t'))[v] ⟶ C[v  t']
+(C ∘ (t' ⬜))[v] ⟶ C[t' v]
 
 {{ NotVal [[t']] }} [[:NotValtp]]
 ----------------------------- :: App_Foc2
-C[v  t'] ⟶ (C ∘ (v  ⬜))[t']
+C[t' v] ⟶ (C ∘ (⬜ v))[t']
 
 ----------------------------- :: App_Unfoc2
-(C ∘ (v  ⬜))[v'] ⟶ C[v  v']
+(C ∘ (⬜ v))[v'] ⟶ C[v' v]
 
 ------------------ :: App_Red
-C[v  (ᵛλ x m ⟼ u) ] ⟶ C[u[x ≔ v] ]
+C[(ᵛλ x m ⟼ u) v] ⟶ C[u[x ≔ v] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: PatU_Foc

@@ -46,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y, d, dd, un, ex, st, f ::= {{ com Variable names }}
+metavar var, x, y, d, dd, un, ex, st, tr, trl, trr, dtr, f, dh, dt, dn, dlr, dl, dr, q ::= {{ com Variable names }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
@@ -79,7 +79,7 @@ casem :: casem ::= {{ coq mode }}
 term, t, u :: 'term_' ::= {{ com Term }}
   | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
-  | t  t' :: :: App {{ com Application }} {{ tex [[t]]\vartriangleright\![[t']] }}
+  | t' t :: :: App {{ com Application }} {{ tex [[t']]~[[t]] }}
   | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;[[u]] }}
   | t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
@@ -102,8 +102,8 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | b1 sp t b2 :: S :: BreakSpacing1 {{ coq [[t]] }}
   | b sp t :: S :: BreakSpaacing2 {{ coq [[t]] }}
   % | t b spe :: S :: BreakSpacing3 {{ coq [[t]] }}
-  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 } :: S :: PatSsp1 {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b1]][[sp1]]\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b1]][[sp1]]\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 } :: S :: PatSsp1 {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | t case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
   | t casem b sp ˢ [ x1 , .. , xk ] ⟼ u :: S :: PatPListsp {{ com Pattern-match on pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
@@ -118,6 +118,23 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | ˢᴇ m t :: S :: SugarExp {{ coq (sterm_Exp [[m]] [[t]]) }} {{ tex \,\!^{\scriptscriptstyle s}\hspace{-0.15ex}\expcons{[[m]]}\,[[t]] }}
   | ˢ( t1 , t2 ) :: S :: SugarProd {{ coq (sterm_Prod [[t1]] [[t2]]) }} {{ tex \,\!^{\scriptscriptstyle s}\!\ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
   | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
+
+  | zero :: S :: SugarZero {{ coq (term_Val val_Unit) }} {{ tex \ottkw{zero} }}
+  | succ t :: S :: SugarSucc {{ coq (term_Succ [[t]]) }} {{ tex \ottkw{succ}~[[t]] }}
+  | t ⨞ [] :: S :: SugarFillEmpty {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{[]} }}
+  | t ⨞ (:) :: S :: SugarFillCons {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{(:)} }}
+  | t append t' :: S :: SugarSnoc {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{append}~[[t']] }}
+  | t concat t' :: S :: SugarConcat {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{concat}~[[t']] }}
+  | toList t :: S :: SugarToList {{ coq (term_Val val_Unit) }} {{ tex \ottkw{to}_{\ottstype{List} }~[[t]] }}
+  | singleton t :: S :: SugarSingleton {{ coq (term_Val val_Unit) }} {{ tex \ottkw{singleton}~[[t]] }}
+  | t enqueue t' :: S :: SugarEnqueue {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{enqueue}~[[t']] }}
+  | dequeue t :: S :: SugarDequeue {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dequeue}~[[t]] }}
+  | t ⨞ Nil :: S :: SugarFillNil {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Nil} }}
+  | t ⨞ Node :: S :: SugarFillNode {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Node} }}
+  | go t1 t2 t3 :: S :: SugarGo {{ coq (term_Val val_Unit) }} {{ tex \ottkw{go}\,[[t1]]~[[t2]]~[[t3]] }}
+  | mapAccumBFS t1 t2 t3 :: S :: SugarMapAccumBFS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{mapAccumBFS}\,[[t1]]~[[t2]]~[[t3]] }}
+  | relabelDPS t :: S :: SugarRelabelDPS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{relabelDPS}~[[t]] }}
+  | ༼ t ༽ :: S :: InvisParen {{ coq [[t]] }} {{ tex [[t]] }}
 
 sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (sterm_Alloc) }}
@@ -156,8 +173,8 @@ ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
-  | ⬜  t' :: :: App_Foc1 {{ tex [[⬜]]\vartriangleright\![[t']] }}
-  | v  ⬜ :: :: App_Foc2  {{ tex [[v]]\vartriangleright\![[⬜]] }}
+  | t' ⬜ :: :: App_Foc1 {{ tex [[t']]~[[⬜]] }}
+  | ⬜ v :: :: App_Foc2  {{ tex [[⬜]]~[[v]] }}
   | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]~;[[u]] }}
   | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
@@ -181,7 +198,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
 % TYPING SYNTAX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
+type, T, U, S :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-equality decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec. }}
   | ① :: :: Unit {{ tex \ottstype{1} }} {{ com Unit }}
   | T1 ⨁ T2 :: :: Sum {{ tex [[T1]]\ottstype{\oplus}[[T2]] }} {{ com Sum }}
   | T1 ⨂ T2 :: :: Prod {{ tex [[T1]]\ottstype{\otimes}[[T2]] }} {{ com Product }}
@@ -190,6 +207,13 @@ type, T, U :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq-eq
   | T m → U :: :: Fun {{ tex [[T]]\,_{[[m]]}\!\ottstype{\to}\,[[U]] }} {{ com Function }}
   | ⌊ T ⌋ m :: :: Dest {{ tex \ottstype{\lfloor}\,\!_{[[m]]}\,[[T]]\ottstype{\rfloor} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
+
+  | Int :: S :: SugarInt {{ tex \ottstype{Int} }} {{ coq type_Unit }}
+  | List T :: S :: SugarList {{ tex \ottstype{List}~[[T]] }} {{ coq type_Unit }}
+  | DList T :: S :: SugarDList {{ tex \ottstype{DList}~[[T]] }} {{ coq type_Unit }}
+  | Queue T :: S :: SugarQueue {{ tex \ottstype{Queue}~[[T]] }} {{ coq type_Unit }}
+  | Tree T :: S :: SugarTree {{ tex \ottstype{Tree}~[[T]] }} {{ coq type_Unit }}
+  | X :: S :: SugarTypeVar {{ tex \ottmv{X} }} {{ coq type_Unit }}
 
 mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }} {{ coq option (mul * age) }}
   | p a :: :: Pair {{ com Pair of a multiplicity and age }} {{ tex [[p]]\hspace{-0.15ex}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
@@ -862,6 +886,10 @@ spacing, sp :: 'sp_' ::= {{ tex \ottssp{[[spacing]]} }}
   | ‥‥‥‥‥‥‥‥ :: :: space4 {{ tex \myspace{4} }}
   | ‥‥‥‥‥‥‥‥‥‥ :: :: space5 {{ tex \myspace{5} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space6 {{ tex \myspace{6} }}
+  | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space7 {{ tex \myspace{7} }}
+  | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space8 {{ tex \myspace{8} }}
+  | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space9 {{ tex \myspace{9} }}
+  | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space10 {{ tex \myspace{10} }}
 
 % spacing_end, spe :: 'spe_' ::= {{ tex \ottssp{[[spacing_end]]} }}
 %   | …… :: :: space1e {{ tex \myspace{1} }}

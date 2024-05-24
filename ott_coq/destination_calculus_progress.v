@@ -22,8 +22,8 @@ Proof.
   intros C t U0 Tyj CNilOrNotValt. inversion Tyj; subst. inversion Tyt; subst.
   inversion TyC; subst. all: try rename TyC into TyCc. all: try rename C0 into C. all: try rename TyC0 into TyC. all: try rename T0 into T. all: try rename D0 into D; try rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
   - exfalso. apply CNilOrNotValt. exists v. all: reflexivity.
-  - exists C, (ᵥ₎ v  t'). constructor.
-  - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v  ᵥ₎ v'). constructor.
+  - exists C, ( t' $ ᵥ₎ v). constructor.
+  - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v' $ ᵥ₎ v). constructor.
   - exists C, (ᵥ₎ v ᵗ; u). constructor.
   - exists C, (ᵥ₎ v caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). constructor.
   - exists C, (ᵥ₎ v caseᵖ m ᵗ( x1, x2) ⟼ u). constructor.

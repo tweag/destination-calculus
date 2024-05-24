@@ -63,7 +63,7 @@ Definition hvars : Type := HVars.t.
 Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
  | term_Var (x:var) (*r Variable *)
- | term_App (t:term) (t':term) (*r Application *)
+ | term_App (t':term) (t:term) (*r Application *)
  | term_PatU (t:term) (u:term) (*r Pattern-match on unit *)
  | term_PatS (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (*r Pattern-match on sum *)
  | term_PatP (t:term) (m:mode) (x1:var) (x2:var) (u:term) (*r Pattern-match on product *)
@@ -124,6 +124,8 @@ Inductive name : Type :=
 
 Definition ectxs : Type := (list ectx).
 
+Definition casem : Type := mode.
+
 Inductive binding_var : Type := 
  | binding_Var (m:mode) (T:type).
 
@@ -135,13 +137,83 @@ Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
 Defined.
 Hint Resolve eq_type : ott_coq_equality.
+(** induction principles *)
+Section val_term_rect.
+
+Variables
+  (P_val : val -> Prop)
+  (P_term : term -> Prop).
+
+Hypothesis
+  (H_val_Hole : forall (h:hvar), P_val (val_Hole h))
+  (H_val_Dest : forall (h:hvar), P_val (val_Dest h))
+  (H_val_Unit : P_val val_Unit)
+  (H_val_Fun : forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_val (val_Fun x m u))
+  (H_val_Left : forall (v:val), P_val v -> P_val (val_Left v))
+  (H_val_Right : forall (v:val), P_val v -> P_val (val_Right v))
+  (H_val_Exp : forall (m:mode), forall (v:val), P_val v -> P_val (val_Exp m v))
+  (H_val_Prod : forall (v1:val), P_val v1 -> forall (v2:val), P_val v2 -> P_val (val_Prod v1 v2))
+  (H_val_Ampar : forall (H:hvars), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
+  (H_term_Val : forall (v:val), P_val v -> P_term (term_Val v))
+  (H_term_Var : forall (x:var), P_term (term_Var x))
+  (H_term_App : forall (t':term), P_term t' -> forall (t:term), P_term t -> P_term (term_App t' t))
+  (H_term_PatU : forall (t:term), P_term t -> forall (u:term), P_term u -> P_term (term_PatU t u))
+  (H_term_PatS : forall (t:term), P_term t -> forall (m:mode), forall (x1:var), forall (u1:term), P_term u1 -> forall (x2:var), forall (u2:term), P_term u2 -> P_term (term_PatS t m x1 u1 x2 u2))
+  (H_term_PatP : forall (t:term), P_term t -> forall (m:mode), forall (x1:var), forall (x2:var), forall (u:term), P_term u -> P_term (term_PatP t m x1 x2 u))
+  (H_term_PatE : forall (t:term), P_term t -> forall (m:mode), forall (n:mode), forall (x:var), forall (u:term), P_term u -> P_term (term_PatE t m n x u))
+  (H_term_Map : forall (t:term), P_term t -> forall (x:var), forall (t':term), P_term t' -> P_term (term_Map t x t'))
+  (H_term_ToA : forall (u:term), P_term u -> P_term (term_ToA u))
+  (H_term_FromA : forall (t:term), P_term t -> P_term (term_FromA t))
+  (H_term_FillU : forall (t:term), P_term t -> P_term (term_FillU t))
+  (H_term_FillL : forall (t:term), P_term t -> P_term (term_FillL t))
+  (H_term_FillR : forall (t:term), P_term t -> P_term (term_FillR t))
+  (H_term_FillE : forall (t:term), P_term t -> forall (m:mode), P_term (term_FillE t m))
+  (H_term_FillP : forall (t:term), P_term t -> P_term (term_FillP t))
+  (H_term_FillF : forall (t:term), P_term t -> forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_term (term_FillF t x m u))
+  (H_term_FillComp : forall (t:term), P_term t -> forall (t':term), P_term t' -> P_term (term_FillComp t t'))
+.
+
+Fixpoint term_ott_ind (n:term) : P_term n :=
+  match n as x return P_term x with
+  | (term_Val v) => H_term_Val v (val_ott_ind v)
+  | (term_Var x) => H_term_Var x
+  | (term_App t' t) => H_term_App t' (term_ott_ind t') t (term_ott_ind t)
+  | (term_PatU t u) => H_term_PatU t (term_ott_ind t) u (term_ott_ind u)
+  | (term_PatS t m x1 u1 x2 u2) => H_term_PatS t (term_ott_ind t) m x1 u1 (term_ott_ind u1) x2 u2 (term_ott_ind u2)
+  | (term_PatP t m x1 x2 u) => H_term_PatP t (term_ott_ind t) m x1 x2 u (term_ott_ind u)
+  | (term_PatE t m n x u) => H_term_PatE t (term_ott_ind t) m n x u (term_ott_ind u)
+  | (term_Map t x t') => H_term_Map t (term_ott_ind t) x t' (term_ott_ind t')
+  | (term_ToA u) => H_term_ToA u (term_ott_ind u)
+  | (term_FromA t) => H_term_FromA t (term_ott_ind t)
+  | (term_FillU t) => H_term_FillU t (term_ott_ind t)
+  | (term_FillL t) => H_term_FillL t (term_ott_ind t)
+  | (term_FillR t) => H_term_FillR t (term_ott_ind t)
+  | (term_FillE t m) => H_term_FillE t (term_ott_ind t) m
+  | (term_FillP t) => H_term_FillP t (term_ott_ind t)
+  | (term_FillF t x m u) => H_term_FillF t (term_ott_ind t) x m u (term_ott_ind u)
+  | (term_FillComp t t') => H_term_FillComp t (term_ott_ind t) t' (term_ott_ind t')
+end
+with val_ott_ind (n:val) : P_val n :=
+  match n as x return P_val x with
+  | (val_Hole h) => H_val_Hole h
+  | (val_Dest h) => H_val_Dest h
+  | val_Unit => H_val_Unit 
+  | (val_Fun x m u) => H_val_Fun x m u (term_ott_ind u)
+  | (val_Left v) => H_val_Left v (val_ott_ind v)
+  | (val_Right v) => H_val_Right v (val_ott_ind v)
+  | (val_Exp m v) => H_val_Exp m v (val_ott_ind v)
+  | (val_Prod v1 v2) => H_val_Prod v1 (val_ott_ind v1) v2 (val_ott_ind v2)
+  | (val_Ampar H v2 v1) => H_val_Ampar H v2 (val_ott_ind v2) v1 (val_ott_ind v1)
+end.
+
+End val_term_rect.
 
 (** subrules *)
 Definition is_sterm_of_term (t_5:term) : bool :=
   match t_5 with
   | (term_Val v) => false
   | (term_Var x) => false
-  | (term_App t t') => false
+  | (term_App t' t) => false
   | (term_PatU t u) => false
   | (term_PatS t m x1 u1 x2 u2) => false
   | (term_PatP t m x1 x2 u) => false
@@ -770,7 +842,11 @@ Inductive spacing : Type :=
  | sp_space3 : spacing
  | sp_space4 : spacing
  | sp_space5 : spacing
- | sp_space6 : spacing.
+ | sp_space6 : spacing
+ | sp_space7 : spacing
+ | sp_space8 : spacing
+ | sp_space9 : spacing
+ | sp_space10 : spacing.
 
 Inductive line_break : Type := 
  | b_break : line_break.
@@ -846,11 +922,11 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (DisjointPx: P #  (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )
      (Subtypem:  (Some (pair   Lin     (Fin 0)  ))  <: m ),
      Ty_term  (union  P    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  (term_Var x) T
- | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t t':term) (U T:type)
+ | Ty_term_App : forall (m:mode) (P1 P2:ctx) (t' t:term) (U T:type)
      (Validm: IsValid m )
      (Tyt: Ty_term P1 t T)
      (Tytp: Ty_term P2 t' (type_Fun T m U)),
-     Ty_term  (union   (stimes  m   P1 )    P2 )  (term_App t t') U
+     Ty_term  (union   (stimes  m   P1 )    P2 )  (term_App t' t) U
  | Ty_term_PatU : forall (P1 P2:ctx) (t u:term) (U:type)
      (Tyt: Ty_term P1 t type_Unit)
      (Tyu: Ty_term P2 u U),
@@ -1096,18 +1172,18 @@ with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
 
 (* defns Sem *)
 Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
- | Sem_App_Foc1 : forall (C:ectxs) (t t':term)
+ | Sem_App_Foc1 : forall (C:ectxs) (t' t:term)
      (NotValt: NotVal t ),
-     Sem C (term_App t t')   (cons   (ectx_App_Foc1 t')    C )   t
+     Sem C (term_App t' t)   (cons   (ectx_App_Foc1 t')    C )   t
  | Sem_App_Unfoc1 : forall (C:ectxs) (t':term) (v:val),
-     Sem   (cons   (ectx_App_Foc1 t')    C )   (term_Val v) C (term_App (term_Val v) t')
- | Sem_App_Foc2 : forall (C:ectxs) (v:val) (t':term)
+     Sem   (cons   (ectx_App_Foc1 t')    C )   (term_Val v) C (term_App t' (term_Val v))
+ | Sem_App_Foc2 : forall (C:ectxs) (t':term) (v:val)
      (NotValtp: NotVal t' ),
-     Sem C (term_App (term_Val v) t')   (cons   (ectx_App_Foc2 v)    C )   t'
+     Sem C (term_App t' (term_Val v))   (cons   (ectx_App_Foc2 v)    C )   t'
  | Sem_App_Unfoc2 : forall (C:ectxs) (v v':val),
-     Sem   (cons   (ectx_App_Foc2 v)    C )   (term_Val v') C (term_App (term_Val v) (term_Val v'))
- | Sem_App_Red : forall (C:ectxs) (v:val) (x:var) (m:mode) (u:term),
-     Sem C (term_App (term_Val v) (term_Val  (val_Fun x m u) )) C  (term_sub  u   x   v ) 
+     Sem   (cons   (ectx_App_Foc2 v)    C )   (term_Val v') C (term_App (term_Val v') (term_Val v))
+ | Sem_App_Red : forall (C:ectxs) (x:var) (m:mode) (u:term) (v:val),
+     Sem C (term_App (term_Val  (val_Fun x m u) ) (term_Val v)) C  (term_sub  u   x   v ) 
  | Sem_PatU_Foc : forall (C:ectxs) (t u:term)
      (NotValt: NotVal t ),
      Sem C (term_PatU t u)   (cons   (ectx_PatU_Foc u)    C )   t
