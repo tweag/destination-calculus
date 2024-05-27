@@ -46,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y, d, dd, un, ex, st, tr, trl, trr, dtr, f, dh, dt, dn, dlr, dl, dr, q ::= {{ com Variable names }}
+metavar var, x, y, d, dd, un, ex, st, tree, tl, tr, dtree, f, dh, dt, dv, dtlr, dtl, dtr, q ::= {{ com Variable names }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}

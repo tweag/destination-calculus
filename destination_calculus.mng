@@ -184,13 +184,20 @@ $[[t3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]
 
 We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
+\subsection{Efficient queue implementation}\label{ssec:efficient-queue}
+
+TODO: in progress
+
+Idea: the normal list is used in read-only fashion, and is kept in order, while the destination-based difference list is used in a write-only fashion, taking advantage of its $\mathcal{O}(1)$ $\ottkw{append}$ operation. When the front list is exhausted, we just have to transform the difference list into a normal list in a $\mathcal{O}(1)$ operation, instead of the usual $\mathcal{O}(n)$ $\ottkw{reverse}$ operation to put the back list in order in the reference implementation.
+
+
 \section{Limitations of the previous approach}
 
 Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
 
 Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.
 
-\subsection{Why stored destinations are problematic}
+\subsection{Why stored destinations are problematic}\label{ssec:problem-stored-dests}
 
 One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been filled.
 
@@ -283,6 +290,24 @@ Such a rule system prevents in particular the previous faulty expression $[[-hd 
 
 \section{(Updated) breadth-first tree traversal}
 
+The core example that showcases the power of destination-passing style programming with first-class destination is breadth-first tree traversal:
+
+\begin{quote}
+  Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
+\end{quote}
+
+Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree i.e., building the leaves first and going up to the root.
+
+In~\cite{bagrel_destination-passing_2024}, the author presents a DPS implementation that relies on safe, controlled mutations, so as to build the final tree in a single pass over the input tree. His implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\mathit{input subtree}\rangle, \langle\mathit{dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
+
+However, as evoked earlier in Section~\ref{ssec:problem-stored-dests}, The API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. It is thus reliant on regular constructor-based Haskell data structures for destination storage.
+
+This is quite impractical as we would like to use the efficient, destination-based queue implementation from Section~\ref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. In our present work fortunately, thanks to the finer age-control mechanism, we can store linear resources in destination-based structures without any issue. Our system is in fact self-contained, as any structure, whatever the use for it be, can be built using a small core of destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, see Section~\ref{ssec:sugar}). The implementation for the efficient queue is presented as part of Figure~\ref{fig:impl-boilerplate-bfs}.
+
+The implementation of breadth-first traversal presented in Figure~\ref{fig:impl-bfs} is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
+
+The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer is also linear in its two arguments. The state has to wrapped in exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing. We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
+
 \begin{figure}[h]
 
   \scalebox{\figureratio}{\begin{minipage}{\linewidth}$
@@ -340,7 +365,7 @@ x case ¹ν⮒
     {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
     {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
-    {[[d ⨞ Node]]}{[[d ⨞Inr ⨞(,) case ¹ν (dn, dlr) ⟼ ˢ(dn, dlr ⨞(,))]]}
+    {[[d ⨞ Node]]}{[[d ⨞Inr ⨞(,) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
 $\end{minipage}}
 
 \caption{Boilerplate for breadth-first tree traversal}
@@ -357,32 +382,32 @@ dequeue q case ¹ν {⮒
 ‥‥Inl un ⟼ un ; st,⮒
 ‥‥Inr x ⟼ x case ¹ν⮒
 ‥‥‥‥(x', q') ⟼ x' case ¹ν⮒
-‥‥‥‥‥‥(tr, dtr) ⟼ tr case ¹ν {⮒
-‥‥‥‥‥‥‥‥Inl un ⟼ un ; dtr ⨞ Nil ; go f st q',⮒
+‥‥‥‥‥‥(tree, dtree) ⟼ tree case ¹ν {⮒
+‥‥‥‥‥‥‥‥Inl un ⟼ un ; dtree ⨞ Nil ; go f st q',⮒
 ‥‥‥‥‥‥‥‥Inr y ⟼ y case ¹ν⮒
 ‥‥‥‥‥‥‥‥‥‥(y', y'') ⟼ y'' case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥(trl, trr) ⟼ dtr ⨞ Node case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dn, dlr) ⟼ dlr case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dl, dr) ⟼ ༼f st༽ y' case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥(tl, tr) ⟼ dtree ⨞ Node case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dv, dtlr) ⟼ dtlr case ¹ν⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dtl, dtr) ⟼ ༼f st༽ y' case ¹ν⮒
 ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(st', y'') ⟼⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥dn ˢ⨞ y'' ; go f st' (q' enqueue ˢ(trl, dl) enqueue ˢ(trr, dr))⮒
+‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥dv ˢ⨞ y'' ; go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))⮒
 ‥‥‥‥‥‥}⮒
 }
 ]]\end{array}}
 \newoperatorb
   {\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Tree T1 ¹ν → Tree T2 ⨂ (! ¹∞ S)]]}
-  {[[mapAccumBFS f st tr]]}{\!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map dtr ⟼ go f st (singleton ˢ(tr, dtr)))
+  {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
+from⧔' (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperatorb
-  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Int) ⨂ Int]]}
-  {[[relabelDPS tr]]}{\!\!\!\begin{array}[t]{l}[[
+  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Int) ⨂ (! ¹∞ (! ων Int))]]}
+  {[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
 mapAccumBFS⮒
 ‥‥(ˢλ ex ¹ν ⟼ ˢλ un ¹ν ⟼ un ; ex case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ ex' ⟼ ex' case ¹∞⮒
 ‥‥‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st))⮒
 ‥‥(ˢᴇ ¹∞ (ˢᴇ ων (succ zero)))⮒
-‥‥tr
+‥‥tree
 ]]\end{array}}
 $\end{minipage}}
 
@@ -483,7 +508,7 @@ The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[�
 
 As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors can only take other values as arguments, not terms. Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-feeding primitives.
 
-$\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the left side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
+$\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the right side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
 \ottgrammartabular{
 \ottsterm\ottafterlastrule
