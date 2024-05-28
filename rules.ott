@@ -177,7 +177,7 @@ P ˢ⊢ t : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syn
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 -------------------- :: Alloc
-P ˢ⊢ alloc : T ⧔ (⌊ T ⌋ ¹ν)
+P ˢ⊢ alloc : T ⧔ ⌊ T ⌋ ¹ν
 
 P ⊢ t : T ⧔ ① [[:Tyt]]
 ---------------- :: FromA'
@@ -220,7 +220,7 @@ P22 ⊢ t2 : T2
 P21 + P22 ˢ⊢ ˢ(t1, t2) : T1 ⨂ T2
 
 defn
-D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T]]\ottstype{\rightarrowtail}[[U0]] }} by
+D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]] }} by
 
 % Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus_inv and mult. This would work without fancy things with having dual modes for holes I think. Because hminus_inv will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
 % If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??

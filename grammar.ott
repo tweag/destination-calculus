@@ -46,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y, d, dd, un, ex, st, tree, tl, tr, dtree, f, dh, dt, dv, dtlr, dtl, dtr, q ::= {{ com Variable names }}
+metavar var, x, y, d, dd, un, xs, ex, st, tree, tl, tr, dtree, f, dh, dt, dx, dxs, dv, dtlr, dtl, dtr, q ::= {{ com Variable names }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
@@ -80,7 +80,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | v :: :: Val {{ com Value }}
   | x :: :: Var {{ com Variable }}
   | t' t :: :: App {{ com Application }} {{ tex [[t']]~[[t]] }}
-  | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]~;[[u]] }}
+  | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\patu[[u]] }}
   | t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
@@ -175,7 +175,7 @@ ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | t' ⬜ :: :: App_Foc1 {{ tex [[t']]~[[⬜]] }}
   | ⬜ v :: :: App_Foc2  {{ tex [[⬜]]~[[v]] }}
-  | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]~;[[u]] }}
+  | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]\patu[[u]] }}
   | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
   | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
@@ -921,10 +921,11 @@ terminals :: 'terminals_' ::=
 
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex \longrightarrow }}
-  | ⊢ :: :: vdash {{ tex \,\vdash\, }}
-  | ˢ⊢ :: :: svdash {{ tex \phantom{a}^{\scriptscriptstyle s}\!\!\vdash\, }}
-  | ⊣ :: :: dashv {{ tex \,\dashv\, }}
-  | ⫦ :: :: dvdash {{ tex \,\Vdash\, }}
+  | ⊢ :: :: vdash {{ tex \,\pmb{\vdash}\, }}
+  | ˢ⊢ :: :: svdash {{ tex \pmb{\phantom{a}^{\scriptscriptstyle s}\!\!\vdash}\, }}
+  | ⊣ :: :: dashv {{ tex \,\pmb{\dashv}\, }}
+  | ⫦ :: :: dvdash {{ tex \,\pmb{\Vdash}\, }}
+  | : :: :: colon {{ tex \pmb{:} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -944,7 +945,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G ⫦ v : T :: :: Ty_val
   | P ⊢ t : T :: :: Ty_term
   | P ˢ⊢ t : T :: :: Ty_sterm
-  | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]]:[[T1]]\ottstype{\rightarrowtail}[[T2]] }}
+  | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T1]]\ottstype{\rightarrowtail}[[T2]] }}
   | ⊢ C [ t ] : T :: :: Ty
   | C [ t ] ⟶ C' [ t' ] :: :: Sem
 
