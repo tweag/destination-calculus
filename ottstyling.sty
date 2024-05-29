@@ -12,7 +12,16 @@
 \newcommand{\bbcomma}{\mathrel{\hspace*{-0.2ex}\raisebox{-1.3ex}{\textasciicircum}}\hspace*{-0.5ex}}
 
 % Allow sans-serif + bold font in math mode
-\DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sbc}{n}
+
+\newcommand{\textBF}[1]{%
+    \pdfliteral direct {2 Tr 0.1 w} %the second factor is the boldness
+     #1%
+    \pdfliteral direct {0 Tr 0 w}%
+}
+
+
+% \DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sb}{n}
+\newcommand{\mathsfbf}[1]{\mathsf{\textBF{#1}}}
 \DeclareMathAlphabet{\mathttbf}{T1}{\ttdefault}{b}{n}
 % If slanted TT is ever needed: (tried, works decently well)
 % https://tex.stackexchange.com/questions/183204/inconsolata-italics
@@ -23,21 +32,21 @@
 % \definecolor{??color}{HTML}{F8980F} % yellow-orange, underlined
 \definecolor{typcolor}{HTML}{176FC1} % blue, bold
 \definecolor{spcolor}{HTML}{1C5737} % dark green, not official one
-\definecolor{modecolor}{HTML}{00AAA0} % green-blue, tt
-\definecolor{mvcolor}{HTML}{000000} % F35EB7 pink, sf
+\definecolor{modecolor}{HTML}{F35EB7} % green-blue, tt
+\definecolor{mvcolor}{HTML}{000000} % 00AAA0 pink, sf
 \definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
 
-\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathit{#1} } }
-\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathtt{#1} } }
-\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathtt{#1} } }
+\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathit{#1}}}
+\renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathit{#1}}}
+\renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1}}}
 
-\newcommand{\ottstype}[1]{\textcolor{typcolor}{\mathtt{#1} } }
-\newcommand{\ottsxval}[1]{\textcolor{ntcolor}{\mathtt{\replacewv{\overline{#1} } } } }
-\newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathtt{#1} } }
-\newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1} } }
+\newcommand{\ottstype}[1]{\textcolor{typcolor}{\mathsf{#1}}}
+\newcommand{\ottsxval}[1]{\textcolor{ntcolor}{\mathit{\replacewv{\overline{#1}}}}}
+\newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1}}}
+\newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1}}}
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
-\newcommand{\ottshvar}[1]{\textcolor{hvarcolor}{\mathtt{#1} } }
-\newcommand{\ottsmode}[1]{\textcolor{modecolor}{\mathtt{#1} } }
+\newcommand{\ottshvar}[1]{\textcolor{hvarcolor}{\mathit{#1}}}
+\newcommand{\ottsmode}[1]{\textcolor{modecolor}{\mathsf{#1}}}
 
 % Replace normal l with fancy round l in label names
 % \newcommand{\replacelell}[1]{%
@@ -58,11 +67,11 @@
 % Used to allow tabs and newlines in OTT terms
 \def\activespaces{
   \def\mynewline{\\}
-  \def\myspace##1{\myrepeat{##1}{\phantom{\texttt{aa}} } }
+  \def\myspace##1{\myrepeat{##1}{\phantom{\texttt{aaa}}}}
 }
 \def\visiblespaces{
   \def\mynewline{\ottssp{\backslash\!n} }
-  \def\myspace##1{\myrepeat{##1}{\ottssp{\langle \ldots \rangle} } }
+  \def\myspace##1{\myrepeat{##1}{\ottssp{\langle\ldots\rangle}}}
 }
 \visiblespaces{}
 \makeatletter
@@ -74,6 +83,19 @@
     \endgroup
   }
 \makeatother
+
+% \def\showcasem{
+%   \def\mycasem##1{##1}
+% }
+% \def\hidecasem{
+%   \def\mycasem##1{}
+% }
+% \showcasem
+% \newcommand{\withhiddencasem}[1]{%
+%   \hidecasem%
+%   #1%
+%   \showcasem%
+% }
 
 % Short equal operator and assignment operator
 \makeatletter
@@ -91,11 +113,11 @@
 
 % Lambda abstraction with and without type annotation
 % \newcommand{\lam}[3]{\ottsctor{\lambda}\,#1\!:\!#2\,\textbf{.}\,#3}
-\newcommand{\lamnt}[3]{\ottsctor{\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
-\newcommand{\lamvnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{v}}\!\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
-\newcommand{\lamsnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{s}}\!\lambda}\,{#1}\,_{#2}\!\!\mapsto\,#3}
+\newcommand{\lamnt}[3]{\ottsctor{\lambda}{#1}\,_{\myfunvm{#2}}\!\!\mapsto#3}
+\newcommand{\lamvnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{v}}\!\lambda}{#1}\,_{\myfunvm{#2}}\!\!\mapsto#3}
+\newcommand{\lamsnt}[3]{\ottsctor{\,\!^{\scriptscriptstyle \mathit{s}}\!\lambda}{#1}\,_{\myfunvm{#2}}\!\!\mapsto#3}
 % \newcommand{\Lam}[2]{\ottsctor{\Lambda}\,#1\,\textbf{.}\,#2}
-\newcommand{\munt}[2]{\ottsctor{\mu}\,{#1}\,\mapsto\,#2}
+\newcommand{\munt}[2]{\ottsctor{\mu}{#1}\,\mapsto#2}
 
 % Constructor for exponential
 \newcommand{\expcons}[1]{\ottsctor{\scriptstyle E}_{#1}\,}

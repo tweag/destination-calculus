@@ -38,24 +38,38 @@
 }
 \makeatother
 
+\makeatletter
+\newcommand{\oset}[3][0ex]{%
+  \mathrel{\mathop{#3}\limits^{
+    \vbox to#1{\kern-2\ex@
+    \hbox{$\scriptstyle#2$}\vss}}}}
+\makeatother
+
+\def\mycasem#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
+\def\myfunvm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
+\def\myfuntm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
+\def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
+\def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
+
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
 \newcommand\btriangleq{\pmb{\triangleq}}
+\newcommand\btriangleqrec{\oset{\mathrm{rec}}{\pmb{\triangleq}}}
 \newlength{\interdefskip}
 \setlength{\interdefskip}{0.1cm}
-\newcommand{\newtype}[3][\phantom{\mathttbf{ator}}]{\mathttbf{type}#1\,\phantom{a}#2~\btriangleq~#3\\[\interdefskip]}
-\newcommand{\newoperator}[5][]{\mathttbf{operator}#1\,\phantom{a}\!\!\!\!\begin{array}[t]{l}%
+\newcommand{\newtype}[3][]{#2~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~#3\\[\interdefskip]}
+\newcommand{\newoperator}[5][]{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
   #2 ~\pmb{:}~ #3 \\
-  #4 ~\btriangleq~ #5
+  #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
 \end{array}\\[\interdefskip]}
 
-\newcommand{\newoperatorb}[5][]{\mathttbf{operator}#1\\\myspace{1}\!\!\!\!\begin{array}[t]{l}%
+\newcommand{\newoperatorb}[5][]{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
   #2 ~\pmb{:}~ #3 \\
-  #4 ~\btriangleq~ #5
+  #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
 \end{array}\\[\interdefskip]}
-\newcommand{\figureratio}{0.87}
+\newcommand{\figureratio}{0.8}
 \NewEnviron{codefig}[1]{\begin{figure}[h]
-  \scalebox{\figureratio}{\begin{minipage}{\linewidth}$\BODY$\end{minipage}}
+  \begin{minipage}{\figureratio\linewidth}{\small$\BODY$}\end{minipage}
 
   #1
   \end{figure}}
@@ -155,11 +169,11 @@ As mentioned earlier, one key point of destination calculus is being able to bui
 
 Let's build the skeleton first:
 
-\noindent$[[t1]] \coloneq [[
+\noindent$[[x1]] \coloneq [[
 { h1 } ⟨ +h1 ❟ -h1 ⟩ map d1 ⟼⮒
-‥‥d1 ⨞ (,) case ¹ν (d2, d3) ⟼⮒
-‥‥‥‥d2 ⨞ (,) case ¹ν (d4, d5) ⟼⮒
-‥‥‥‥‥‥d3 ⨞ (,) case ¹ν (d6, d7) ⟼ ˢ[d4, d5, d6, d7]
+‥‥(d1 ⨞ (,)) case ¹ν (d2, d3) ⟼⮒
+‥‥‥‥(d2 ⨞ (,)) case ¹ν (d4, d5) ⟼⮒
+‥‥‥‥‥‥(d3 ⨞ (,)) case ¹ν (d6, d7) ⟼ ˢ[d4, d5, d6, d7]
 ]]$
 
 evaluates to:
@@ -168,8 +182,8 @@ $[[ { h4, h5, h6, h7 } ⟨ ((+h4, +h5), (+h6, +h7)) ❟ ˢ[-h4, -h5, -h6, -h7] �
 
 We can see that the skeleton of the tree is here on the left-hand side, but leaves are unspecified yet (so are represented by holes). Let's now fill the right leaves:
 
-\noindent$[[t2]] \coloneq [[
-t1 map d ⟼⮒
+\noindent$[[x2]] \coloneq [[
+x1 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d5, d6, d7] ⟼⮒
 ‥‥‥‥d5 ⨞ Inr ⨞ () ; d7 ⨞ Inr ⨞ () ; ˢ[d4, d6]
 ]]$
@@ -180,13 +194,13 @@ $[[ { h4, h6 } ⟨ ((+h4, Inr ()), (+h6, Inr ())) ❟ ˢ[-h4, -h6] ⟩ ]]$
 
 Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally feed them:
 
-\noindent$[[t3]] \coloneq [[
-t2 map d ⟼⮒
+\noindent$[[x3]] \coloneq [[
+x2 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d6] ⟼⮒
 ‥‥‥‥d4 ⨞ Inl ⨞ () ; d6 ⨞ Inr ⨞ ()
 ]]$
 
-$[[t3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]]$ which is now a complete structure. There is no destination remaining on the right-hand side.
+$[[x3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]]$ which is now a complete structure. There is no destination remaining on the right-hand side.
 
 We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
@@ -196,7 +210,7 @@ If we suppose equirecursive types and a fixed-point operator, then destination-c
 
 \paragraph{Linked lists}
 
-For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Instead of defining the usual \textsc{Nil} $\ottsctor{[]}$ and \textsc{Cons} $\ottsctor{(:)}$ constructors, we define the more general \textsc{FillNil} $\triangleleft\ottsctor{[]}$ and \textsc{FillCons} $\triangleleft\ottsctor{(:)}$ operators, as presented in Figure~\ref{fig:impl-list}.
+For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Instead of defining the usual \textsc{Nil} $\ottsctor{[]}$ and \textsc{Cons} $\ottsctor{(::)}$ constructors, we define the more general \textsc{FillNil} $\triangleleft\ottsctor{[]}$ and \textsc{FillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
 
 \begin{codefig}{\caption{List implementation in equirecursive destination calculus}\label{fig:impl-list}}
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
@@ -204,8 +218,8 @@ For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto 
     {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ n ¹ν → ①]]}
     {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
-    {\triangleleft\ottsctor{(:)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
-    {[[d ⨞ (:)]]}{[[d ⨞Inr ⨞(,)]]}
+    {\triangleleft\ottsctor{(::)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
+    {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 \end{codefig}
 
 The \textsc{FillNil} operator consumes a destination of list and fills its associated hole with the value $[[Inl ()]]$ representing the \textsc{Nil} constructor in our encoding. It returns unit $[[()]]$ as there is no new hole/destination created in the process.
@@ -215,8 +229,8 @@ The \textsc{FillCons} operator consumes a destination of list as an input, and w
 There is a duality between constructors and destinations-feeding operators (we will dig into it more in Section~\ref{ssec:ampar-motivation}), and that stays true for our newly user-defined operators. If we reverse the arrow direction and remove the destination symbols from \textsc{FillCons} signature, we get $[[T ⨂ (List T) ¹ν → List T]]$ which is the type of the usual \textsc{Cons} constructor! We can in fact recover the \textsc{Cons} constructor:
 
 $\newoperator
-  {\ottsctor{(:)}}{[[T ⨂ (List T) ¹ν → List T]]}
-  {\ottsctor{(:)}~[[x]]~[[xs]]}{[[alloc map d ⟼ d ⨞ (:) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}$
+  {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
+  {\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}$
 
 Going from a \textsc{Fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
 
@@ -232,19 +246,19 @@ In destination calculus, we can go even further, and represent difference lists 
 \newtype{[[DList T]]}{[[(List T) ⧔ (⌊ List T ⌋ ¹ν)]]}
 \newoperator
     {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
-    {[[x append y]]}{\!\!\!\begin{array}[t]{l}[[
-x map d ⟼ d ⨞ (:) case ¹ν⮒
-‥‥(dh, dt) ⟼ dh ˢ⨞ y ; dt
+    {[[ys append y]]}{\!\!\!\begin{array}[t]{l}[[
+ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
+‥‥(dy, dys') ⟼ dy ˢ⨞ y ; dys'
 ]]\end{array}}
 \newoperator
     {\ottkw{concat}}{[[DList T ¹ν → DList T ¹ν → DList T]]}
-    {[[x concat x']]}{[[x map d ⟼ d ⨞· x']]}
+    {[[ys concat ys']]}{[[ys map d ⟼ d ⨞· ys']]}
 \newoperator
     {\ottkw{to}_{\ottstype{List} }}{[[DList T ¹ν → List T]]}
-    {[[toList x]]}{[[from⧔' (x map d ⟼ d ⨞ [])]]}
+    {[[toList ys]]}{[[from⧔' (ys map d ⟼ d ⨞ [])]]}
 \end{codefig}
 
-The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textsc{FillCons} to link a new hollow \textsc{Cons} cell at the end of the list, and then handles the two associated destinations $[[dh]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
+The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textsc{FillCons} to link a new hollow \textsc{Cons} cell at the end of the list, and then handles the two associated destinations $[[dy]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
 
 The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole left at the end of the first one. This is done using the \textsc{FillComp} primitive $\triangleleft\mybullet \pmb{:} [[⌊ U1 ⌋n ¹ν → U1 ⧔ U2 ¹↑ · n → U2]]$\footnote{In this particular context, $[[U1]] = [[List T]]$ and $[[U2]] = [[⌊ List T ⌋¹ν]]$, so \textsc{FillComp} has signature $\triangleleft\mybullet \pmb{:} [[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$}. It takes a destination on its left-hand side, and an ampar on its right-hand side. The left side of the ampar (type $[[U1]]$) is fed to the destination (so the incomplete structure is written to a larger incomplete structure from which the destination originated from), and the right side of the ampar (type $[[U2]]$) is returned.
 
@@ -269,20 +283,17 @@ With access to efficient difference lists, as shown in the previous paragraph, w
     {[[singleton x]]}{[[ˢ(ˢInr ˢ(x, Inl ()), alloc)]]}
 \newoperator
     {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
-    {[[x enqueue y]]}{[[x case ¹ν (x1, x2) ⟼ ˢ(x1, x2 append y)]]}
+    {[[q enqueue y]]}{[[q case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
 \newoperator
-    {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ Queue T)]]}
-    {[[dequeue x]]}{\!\!\!\begin{array}[t]{l}[[
-x case ¹ν⮒
-‥‥(x, y) ⟼ x case ¹ν {⮒
-‥‥‥‥Inl un ⟼ un ; toList y case ¹ν {⮒
-‥‥‥‥‥‥Inl un ⟼ ˢInl un,⮒
-‥‥‥‥‥‥Inr y' ⟼ y' case ¹ν⮒
-‥‥‥‥‥‥‥‥(y1', y2') ⟼ ˢInr ˢ(y1', ˢ(y2', alloc))⮒
-‥‥‥‥},⮒
-‥‥‥‥Inr x' ⟼ x' case ¹ν⮒
-‥‥‥‥‥‥(x1', y1') ⟼ ˢInr ˢ(x1', ˢ(y1', y))⮒
-‥‥}
+    {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ (Queue T))]]}
+    {[[dequeue q]]}{\!\!\!\begin{array}[t]{l}[[
+q case ¹ν {⮒
+‥‥ˢ(ˢInr ˢ(x, xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
+‥‥ˢ(Inl (), ys) ⟼ (toList ys) case ¹ν {⮒
+‥‥‥‥Inl () ⟼ Inl (),⮒
+‥‥‥‥ˢInr ˢ(x, xs) ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
+‥‥}⮒
+}
 ]]\end{array}}
 \end{codefig}
 
@@ -290,7 +301,7 @@ The $\ottkw{singleton}$ operator creates a pair of a list with a single element,
 
 The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
 
-The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list $[[x]]$. If there is, it extracts the element $[[x1']]$ by removing the first \textsc{Cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(y1', y)]]$. If there isn't, it converts the difference list $[[y]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[y1']]$ is found, then it returns it alongside the updated queue, made of the tail $[[y2']]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
+The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list. If there is, it extracts the element $[[x]]$ by removing the first \textsc{Cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue, made of the tail $[[xs]]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
 
 \section{Limitations of the previous approach}
 
@@ -308,15 +319,15 @@ We have to mark the value being fed in a destination as linearly consumed, so th
 
 As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been filled \emph{now}, only that it will be filled later. So our assumption above doesn't hold in general case.
 
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{[[¹]]}\!\ottstype{\to}\,[[①]])\,_{[[¹]]}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[①]])\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
 
 The morally correct semantics (in destination calculus pseudo-syntax) would be:
 
-\noindent$\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}$
+\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}$
 
 It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
 
-\noindent$\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[d ⨞ Inl ⨞ ()]])$
+\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]])$
 
 $~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \}$
 
@@ -326,15 +337,15 @@ $~[[⟶]]~ [[Inl ()]]$
 
 However this falls short when calls to $\ottkw{alloc'}$ are nested in the following way (where $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$):
 
-\noindent$\ottkw{alloc'}~(\lambda\,[[dd]]\,_{[[¹]]}\!\!\mapsto\,\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[dd ˢ⨞ d]]))$
+\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$
 
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \}$
+$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \}$
 
 $~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \}$
 
 $~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}$
 
-The original term $\ottkw{alloc'}~(\lambda\,[[dd]]\,_{[[¹]]}\!\!\mapsto\,\ottkw{alloc'}~(\lambda\,[[d]]\,_{[[¹]]}\!\!\mapsto\,[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
+The original term $\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
 
 One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination ; there is always a way to cheat the system and make a destination escape to a parent scope. This distinct type for effects has in fact existed during the early prototypes of destination calculus, but we removed it as it doesn't solve the scope escape for destination and is indistinguishable in practice from the unit type.
 
@@ -399,7 +410,7 @@ The core example that showcases the power of destination-passing style programmi
 
 Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree i.e., building the leaves first and going up to the root.
 
-In~\cite{bagrel_destination-passing_2024}, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. His implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\mathit{input subtree}\rangle, \langle\mathit{dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
+In~\cite{bagrel_destination-passing_2024}, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. His implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\text{\itshape input subtree}\rangle, \langle\text{\itshape dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
 
 However, as evoked earlier in Section~\ref{ssec:problem-stored-dests}, The API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. It is thus reliant on regular constructor-based Haskell data structures for destination storage.
 
@@ -426,26 +437,22 @@ The first important difference is that in the destination calculus implementatio
     {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
     {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
-    {[[d ⨞ Node]]}{[[d ⨞Inr ⨞(,) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
+    {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
 \end{codefig}
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperatorb[~\mathttbf{rec}]
   {\ottkw{go}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
   {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
-dequeue q case ¹ν {⮒
-‥‥Inl un ⟼ un ; st,⮒
-‥‥Inr x ⟼ x case ¹ν⮒
-‥‥‥‥(x', q') ⟼ x' case ¹ν⮒
-‥‥‥‥‥‥(tree, dtree) ⟼ tree case ¹ν {⮒
-‥‥‥‥‥‥‥‥Inl un ⟼ un ; dtree ⨞ Nil ; go f st q',⮒
-‥‥‥‥‥‥‥‥Inr y ⟼ y case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥(y', y'') ⟼ y'' case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥(tl, tr) ⟼ dtree ⨞ Node case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dv, dtlr) ⟼ dtlr case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(dtl, dtr) ⟼ ༼f st༽ y' case ¹ν⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥(st', y'') ⟼⮒
-‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥dv ˢ⨞ y'' ; go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))⮒
+(dequeue q) case ¹ν {⮒
+‥‥Inl () ⟼ st,⮒
+‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
+‥‥‥‥Inl () ⟼ dtree ⨞ Nil ; go f st q',⮒
+‥‥‥‥ˢInr ˢ(x, ˢ(tl, tr)) ⟼ (dtree ⨞ Node) case ¹ν⮒
+‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ (༼f st༽ x) case ¹ν⮒
+‥‥‥‥‥‥‥‥(st', y) ⟼ dy ˢ⨞ y ; go f st' (⮒
+‥‥‥‥‥‥‥‥‥‥q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr)⮒
+‥‥‥‥‥‥‥‥)⮒
 ‥‥‥‥‥‥}⮒
 }
 ]]\end{array}}
