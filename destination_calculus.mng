@@ -46,15 +46,15 @@
 \makeatother
 
 \def\mycasem#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
-\def\myfunvm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
-\def\myfuntm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
+\def\myfunvm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{\,\,}{#1}}
+\def\myfuntm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{\,}{#1}}
 \def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
 \newcommand\btriangleq{\pmb{\triangleq}}
-\newcommand\btriangleqrec{\oset{\mathrm{rec}}{\pmb{\triangleq}}}
+\newcommand\btriangleqrec{\oset{\mathsf{rec}}{\pmb{\triangleq}}}
 \newlength{\interdefskip}
 \setlength{\interdefskip}{0.1cm}
 \newcommand{\newtype}[3][]{#2~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~#3\\[\interdefskip]}
@@ -243,7 +243,7 @@ Difference lists are a data structure that allows for efficient concatenation. I
 In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow: thanks to an ampar, we can handle incomplete structures safely, with no need to complete them immediately. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$ : it returns an incomplete list with no items in it, and a destination pointing to that cell so that the list can be built later through destination-feeding primitives, together in an ampar: $[[List T ⧔ ⌊List T⌋ ¹ν]]$. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist}.
 
 \begin{codefig}{\caption{Difference list implementation in equirecursive destination calculus}\label{fig:impl-dlist}}
-\newtype{[[DList T]]}{[[(List T) ⧔ (⌊ List T ⌋ ¹ν)]]}
+\newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
 \newoperator
     {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
     {[[ys append y]]}{\!\!\!\begin{array}[t]{l}[[
@@ -453,7 +453,7 @@ The first important difference is that in the destination calculus implementatio
 ‥‥‥‥‥‥‥‥(st', y) ⟼ dy ˢ⨞ y ; go f st' (⮒
 ‥‥‥‥‥‥‥‥‥‥q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr)⮒
 ‥‥‥‥‥‥‥‥)⮒
-‥‥‥‥‥‥}⮒
+‥‥}⮒
 }
 ]]\end{array}}
 \newoperatorb

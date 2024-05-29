@@ -54,8 +54,8 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 grammar
 
 hvar, h, hd :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
-  | 1 :: S :: 1 {{ coq 1 }} {{ tex \ottshvar{1} }}
-  | 2 :: S :: 2 {{ coq 2 }} {{ tex \ottshvar{2} }}
+  | 1 :: S :: 1 {{ coq 1 }} {{ tex \textcolor{hvarcolor}{\mathtt{\scriptstyle0x}1} }}
+  | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hvarcolor}{\mathtt{\scriptstyle0x}2} }}
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
   | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathsfbf{max}(}[[H]]\ottshvar{)} }}
@@ -131,8 +131,8 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | dequeue t :: S :: SugarDequeue {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dequeue}~[[t]] }}
   | t ⨞ Nil :: S :: SugarFillNil {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Nil} }}
   | t ⨞ Node :: S :: SugarFillNode {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Node} }}
-  | go t1 t2 t3 :: S :: SugarGo {{ coq (term_Val val_Unit) }} {{ tex \ottkw{go}\,[[t1]]~[[t2]]~[[t3]] }}
-  | mapAccumBFS t1 t2 t3 :: S :: SugarMapAccumBFS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{mapAccumBFS}\,[[t1]]~[[t2]]~[[t3]] }}
+  | go t1 t2 t3 :: S :: SugarGo {{ coq (term_Val val_Unit) }} {{ tex \ottkw{go}~[[t1]]~[[t2]]~[[t3]] }}
+  | mapAccumBFS t1 t2 t3 :: S :: SugarMapAccumBFS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{mapAccumBFS}~[[t1]]~[[t2]]~[[t3]] }}
   | relabelDPS t :: S :: SugarRelabelDPS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{relabelDPS}~[[t]] }}
   | ༼ t ༽ :: S :: InvisParen {{ coq [[t]] }} {{ tex [[t]] }}
 
@@ -280,7 +280,7 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{
   | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
   | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
   | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex [[h]]:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
-  | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}\,[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
+  | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
   | m · G :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
   | G1 , G2 :: M :: DisjointUnion {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
