@@ -226,7 +226,7 @@ While linked lists are optimized for the prepend operation (\textsc{Cons}), they
 
 Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \textcolor{red}{\square}$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion.
 
-In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow! The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]] \pmb{:} [[List T ⧔ ⌊List T⌋ ¹ν]]$ primitive already does : it returns an incomplete list with no items in it (i.e. an empty memory cell with type $[[List T]]$), and a destination pointing to that cell so that the list can be built later through destination-feeding primitives. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist}.
+In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow: thanks to an ampar, we can handle incomplete structures safely, with no need to complete them immediately. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$ : it returns an incomplete list with no items in it, and a destination pointing to that cell so that the list can be built later through destination-feeding primitives, together in an ampar: $[[List T ⧔ ⌊List T⌋ ¹ν]]$. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist}.
 
 \begin{codefig}{\caption{Difference list implementation in equirecursive destination calculus}\label{fig:impl-dlist}}
 \newtype{[[DList T]]}{[[(List T) ⧔ (⌊ List T ⌋ ¹ν)]]}
@@ -285,6 +285,12 @@ x case ¹ν⮒
 ‥‥}
 ]]\end{array}}
 \end{codefig}
+
+The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).
+
+The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
+
+The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list $[[x]]$. If there is, it extracts the element $[[x1']]$ by removing the first \textsc{Cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(y1', y)]]$. If there isn't, it converts the difference list $[[y]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[y1']]$ is found, then it returns it alongside the updated queue, made of the tail $[[y2']]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
 
 \section{Limitations of the previous approach}
 
@@ -402,7 +408,7 @@ This is quite impractical as we would like to use the efficient, destination-bas
 
 The implementation for the efficient queue as well as other  is presented as part of Figure~\ref{fig:impl-boilerplate-bfs}.
 
-The implementation of breadth-first traversal presented in Figure~\ref{fig:impl-bfs} is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
+Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
 
 The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer is also linear in its two arguments. The state has to wrapped in exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing. We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
 
