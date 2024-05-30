@@ -31,18 +31,18 @@
 \makeatletter
 \newcommand{\smallbullet}{} % for safety
 \DeclareRobustCommand\smallbullet{%
-  \mathord{\mathpalette\smallbullet@{0.5}}%
+\mathord{\mathpalette\smallbullet@{0.5}}%
 }
 \newcommand{\smallbullet@}[2]{%
-  \vcenter{\hbox{\scalebox{#2}{$\m@th#1\bullet$}}}%
+\vcenter{\hbox{\scalebox{#2}{$\m@th#1\bullet$}}}%
 }
 \makeatother
 
 \makeatletter
 \newcommand{\oset}[3][0ex]{%
-  \mathrel{\mathop{#3}\limits^{
-    \vbox to#1{\kern-2\ex@
-    \hbox{$\scriptstyle#2$}\vss}}}}
+\mathrel{\mathop{#3}\limits^{
+  \vbox to#1{\kern-2\ex@
+  \hbox{$\scriptstyle#2$}\vss}}}}
 \makeatother
 
 \def\mycasem#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
@@ -56,25 +56,25 @@
 \newcommand\btriangleq{\pmb{\triangleq}}
 \newcommand\btriangleqrec{\oset{\mathsf{rec}}{\pmb{\triangleq}}}
 \newlength{\interdefskip}
-\setlength{\interdefskip}{0.1cm}
+\setlength{\interdefskip}{0.15cm}
 \newcommand{\newtype}[3][]{#2~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~#3\\[\interdefskip]}
 \newcommand{\newoperator}[5][]{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
-  #2 ~\pmb{:}~ #3 \\
-  #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
+#2 ~\pmb{:}~ #3 \\
+#4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
 \end{array}\\[\interdefskip]}
 
 \newcommand{\newoperatorb}[5][]{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
-  #2 ~\pmb{:}~ #3 \\
-  #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
+#2 ~\pmb{:}~ #3 \\
+#4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
 \end{array}\\[\interdefskip]}
-\newcommand{\figureratio}{0.85}
+\newcommand{\figureratio}{0.9}
 \newcommand{\codehere}[1]{\begin{center}\begin{minipage}{\figureratio\linewidth}{\small$#1$}\end{minipage}\end{center}}
 \NewEnviron{codefig}[2][h]{\begin{figure}[#1]
-  \codehere{\BODY}#2
-  \end{figure}}
+\codehere{\BODY}#2
+\end{figure}}
 \NewEnviron{ottfig}[2][h]{\begin{figure}[#1]\visiblespaces
-  \small\BODY\activespaces #2
-  \end{figure}}
+\small\BODY\activespaces #2
+\end{figure}}
 
 \begin{document}
 
@@ -90,27 +90,27 @@
 \author{Arnaud Spiwack}
 \orcid{0TBD-0TBD-0TBD-0TBD}
 \affiliation{
-  \institution{Tweag}
-  \department{OSPO}
-  \position{Director, Research}
-  \city{Paris}
-  \country{France}
+\institution{Tweag}
+\department{OSPO}
+\position{Director, Research}
+\city{Paris}
+\country{France}
 }
 \email{arnaud.spiwack@tweag.io}
 
 \author{Thomas Bagrel}
 \orcid{0009-0008-8700-2741}
 \affiliation{
-  \institution{LORIA/Inria}
-  \department{MOSEL VERIDIS}
-  \city{Nancy}
-  \country{France}
+\institution{LORIA/Inria}
+\department{MOSEL VERIDIS}
+\city{Nancy}
+\country{France}
 }
 \affiliation{
-  \institution{Tweag}
-  \department{OSPO}
-  \city{Paris}
-  \country{France}
+\institution{Tweag}
+\department{OSPO}
+\city{Paris}
+\country{France}
 }
 \email{thomas.bagrel@loria.fr}
 \email{thomas.bagrel@tweag.io}
@@ -118,16 +118,16 @@
 % On introduit de la mutation controlée dans les FP languages sans endommager la pureté (comme la lazyness peut être vu aussi)
 
 \begin{abstract}
-  We present the destination calculus, a linear $\lambda-$calculus for
-  pure, functional memory updates. We introduce the
-  syntax, type system, and operational semantics of the destination
-  calculus, and prove type safety formally in the Coq proof assistant.
-  
-  We show how the principles of the destination calculus can form a theoretical ground
-  for destination-passing style programming in functional languages. In particular,
-  we detail how the present work can be applied to Linear Haskell to lift the main 
-  restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
-  We illustrate this with a range of pseudo-Haskell examples.
+We present the destination calculus, a linear $\lambda-$calculus for
+pure, functional memory updates. We introduce the
+syntax, type system, and operational semantics of the destination
+calculus, and prove type safety formally in the Coq proof assistant.
+
+We show how the principles of the destination calculus can form a theoretical ground
+for destination-passing style programming in functional languages. In particular,
+we detail how the present work can be applied to Linear Haskell to lift the main 
+restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
+We illustrate this with a range of pseudo-Haskell examples.
 \end{abstract}
 
 \maketitle
@@ -158,8 +158,8 @@ The simplest form of ampar is a single empty cell on the left with a destination
 
 The main operation to operate on an ampar is $\ottkw{map}$, which binds the right side of the ampar to a variable, while temporarily forgetting about the left side (the incomplete structure that is being mutated behind the scenes):
 
-\codehere{\begin{array}{cl}
-       & [[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]] \\
+\codehere{\!\!\!\begin{array}{cl}
+      & [[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]] \\
 [[⟶]] & [[ { h' } ⟨ Inl +h' ❟ -h' ⟩ ]] \\
 [[⟶]] & [[ { } ⟨ Inl () ❟ () ⟩ ]]
 \end{array}}
@@ -174,12 +174,12 @@ As mentioned earlier, one key point of destination calculus is being able to bui
 
 Let's build the skeleton first:
 
-\codehere{[[x1]] \coloneq[[
+\codehere{[[x1]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 { h1 } ⟨ +h1 ❟ -h1 ⟩ map d1 ⟼⮒
 ‥‥(d1 ⨞ (,)) case ¹ν (d2, d3) ⟼⮒
 ‥‥‥‥(d2 ⨞ (,)) case ¹ν (d4, d5) ⟼⮒
 ‥‥‥‥‥‥(d3 ⨞ (,)) case ¹ν (d6, d7) ⟼ ˢ[d4, d5, d6, d7]
-]]}
+]]\end{array}}
 
 \noindent This evaluates to:
 
@@ -187,11 +187,11 @@ Let's build the skeleton first:
 
 We can see that the skeleton of the tree is here on the left-hand side, but leaves are unspecified yet (so are represented by holes). Let's now fill the right leaves:
 
-\codehere{[[x2]] \coloneq [[
+\codehere{[[x2]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 x1 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d5, d6, d7] ⟼⮒
 ‥‥‥‥d5 ⨞ Inr ⨞ () ; d7 ⨞ Inr ⨞ () ; ˢ[d4, d6]
-]]}
+]]\end{array}}
 
 \noindent This reduces to:
 
@@ -199,11 +199,11 @@ x1 map d ⟼⮒
 
 Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally feed them:
 
-\codehere{[[x3]] \coloneq [[
+\codehere{[[x3]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 x2 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d6] ⟼⮒
 ‥‥‥‥d4 ⨞ Inl ⨞ () ; d6 ⨞ Inr ⨞ ()
-]]}
+]]\end{array}}
 
 \noindent $[[x3]]$ reduces to:
 
@@ -224,11 +224,11 @@ For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto 
 \begin{codefig}{\caption{List implementation in equirecursive destination calculus}\label{fig:impl-list}}
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
 \newoperator
-    {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ n ¹ν → ①]]}
-    {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
+  {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ n ¹ν → ①]]}
+  {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
-    {\triangleleft\ottsctor{(::)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
-    {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
+  {\triangleleft\ottsctor{(::)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
+  {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 \end{codefig}
 
 The \textsc{FillNil} operator consumes a destination of list and fills its associated hole with the value $[[Inl ()]]$ representing the \textsc{Nil} constructor in our encoding. It returns unit $[[()]]$ as there is no new hole/destination created in the process.
@@ -238,8 +238,8 @@ The \textsc{FillCons} operator consumes a destination of list as an input, and w
 There is a duality between constructors and destinations-feeding operators (we will dig into it more in Section~\ref{ssec:ampar-motivation}), and that stays true for our newly user-defined operators. If we reverse the arrow direction and remove the destination symbols from \textsc{FillCons} signature, we get $[[T ⨂ (List T) ¹ν → List T]]$ which is the type of the usual \textsc{Cons} constructor! We can in fact recover the \textsc{Cons} constructor:
 
 \codehere{\newoperator
-  {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-  {\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}}
+{\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
+{\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}}
 
 Going from a \textsc{Fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
 
@@ -254,17 +254,17 @@ In destination calculus, we can go even further, and represent difference lists 
 \begin{codefig}{\caption{Difference list implementation in equirecursive destination calculus}\label{fig:impl-dlist}}
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
 \newoperator
-    {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
-    {[[ys append y]]}{\!\!\!\begin{array}[t]{l}[[
+  {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
+  {[[ys append y]]}{\!\!\!\begin{array}[t]{l}[[
 ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
 ‥‥(dy, dys') ⟼ dy ˢ⨞ y ; dys'
 ]]\end{array}}
 \newoperator
-    {\ottkw{concat}}{[[DList T ¹ν → DList T ¹ν → DList T]]}
-    {[[ys concat ys']]}{[[ys map d ⟼ d ⨞· ys']]}
+  {\ottkw{concat}}{[[DList T ¹ν → DList T ¹ν → DList T]]}
+  {[[ys concat ys']]}{[[ys map d ⟼ d ⨞· ys']]}
 \newoperator
-    {\ottkw{to}_{\ottstype{List} }}{[[DList T ¹ν → List T]]}
-    {[[toList ys]]}{[[from⧔' (ys map d ⟼ d ⨞ [])]]}
+  {\ottkw{to}_{\ottstype{List} }}{[[DList T ¹ν → List T]]}
+  {[[toList ys]]}{[[from⧔' (ys map d ⟼ d ⨞ [])]]}
 \end{codefig}
 
 The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textsc{FillCons} to link a new hollow \textsc{Cons} cell at the end of the list, and then handles the two associated destinations $[[dy]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
@@ -288,14 +288,14 @@ With access to efficient difference lists, as shown in the previous paragraph, w
 \begin{codefig}{\caption{Queue implementation in equirecursive destination calculus}\label{fig:impl-queue}}
 \newtype{[[Queue T]]}{[[(List T) ⨂ (DList T)]]}
 \newoperator 
-    {\ottkw{singleton}}{[[T ¹ν → Queue T]]}
-    {[[singleton x]]}{[[ˢ(ˢInr ˢ(x, Inl ()), alloc)]]}
+  {\ottkw{singleton}}{[[T ¹ν → Queue T]]}
+  {[[singleton x]]}{[[ˢ(ˢInr ˢ(x, Inl ()), alloc)]]}
 \newoperator
-    {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
-    {[[q enqueue y]]}{[[q case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
+  {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
+  {[[q enqueue y]]}{[[q case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
 \newoperator
-    {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ (Queue T))]]}
-    {[[dequeue q]]}{\!\!\!\begin{array}[t]{l}[[
+  {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ (Queue T))]]}
+  {[[dequeue q]]}{\!\!\!\begin{array}[t]{l}[[
 q case ¹ν {⮒
 ‥‥ˢ(ˢInr ˢ(x, xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
 ‥‥ˢ(Inl (), ys) ⟼ (toList ys) case ¹ν {⮒
@@ -336,8 +336,8 @@ The morally correct semantics (in destination calculus pseudo-syntax) would be:
 
 It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
 
-\codehere{\begin{array}{cl}
-       & \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]]) \\
+\codehere{\!\!\!\begin{array}{cl}
+      & \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]]) \\
 [[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \} \\
 [[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} \\
 [[⟶]] & [[Inl ()]]
@@ -345,8 +345,8 @@ It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed 
 
 However this falls short when calls to $\ottkw{alloc'}$ are nested in the following way (where $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$):
 
-\codehere{\begin{array}{cl}
-       & \ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]])) \\
+\codehere{\!\!\!\begin{array}{cl}
+      & \ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]])) \\
 [[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \} \\
 [[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \} \\
 [[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}
@@ -399,7 +399,7 @@ The main restriction to prevent parent scope escape is materialized the simplifi
 \ottusedrule{%
 \ottdrule{%
 }{
- \ottshvar{\destminus} \ottshvar{h} :\!_{\!  \ottsmode{\nu}   }\ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor}   \,\vdash\,   \ottshvar{\destminus} \ottshvar{h}   \ottsym{:}   \ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor} }{%
+\ottshvar{\destminus} \ottshvar{h} :\!_{\!  \ottsmode{\nu}   }\ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor}   \,\vdash\,   \ottshvar{\destminus} \ottshvar{h}   \ottsym{:}   \ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor} }{%
 {\ottdrulename{Ty\_val\_Dest$^{\star}$}}{}%
 }}
 \ottusedrule{%
@@ -412,7 +412,7 @@ The main restriction to prevent parent scope escape is materialized the simplifi
 }}
 \end{ottfig}
 
-Typing a destination $[[-h]]$ requires $[[-h]]$ to have age $[[ν]]$ in the context. And when storing a value through a destination, the ages of the value's dependencies in the context must be one higher than the corresponding ages required to type the value alone (this is the meaning of $\ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}}$).
+Typing a destination $[[-h]]$ alone requires $[[-h]]$ to have age $[[ν]]$ in the context. And when storing a value through a destination, the ages of the value's dependencies in the context must be one higher than the corresponding ages required to type the value alone (this is the meaning of $\ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}}$).
 
 Such a rule system prevents in particular the previous faulty expression $[[-hd ˢ⨞ -h]]$ where $[[-hd]]$ originates from the context parent to the one of $[[-h]]$.
 
@@ -421,7 +421,7 @@ Such a rule system prevents in particular the previous faulty expression $[[-hd 
 The core example that showcases the power of destination-passing style programming with first-class destination is breadth-first tree traversal:
 
 \begin{quote}
-  Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
+Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
 \end{quote}
 
 Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree i.e., building the leaves first and going up to the root.
@@ -435,26 +435,29 @@ This is quite impractical as we would like to use the efficient, destination-bas
 Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
 
 \begin{codefig}{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}
-\newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
-\newoperator
-    {\ottkw{zero}}{[[Nat]]}
-    {[[zero]]}{[[Inl ()]]}
-\newoperator
-    {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
-    {[[succ x]]}{[[ˢInr x]]}
+\begin{minipage}[t]{0.68\textwidth}\vspace{-0.15cm}$
 \newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
 \newoperator
-    {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
-    {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
+  {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
+  {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
-    {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
-    {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
+  {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
+  {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}$\end{minipage}
+\vrule height 0.02\textheight\hspace{0.5cm}
+\begin{minipage}[t]{0.31\textwidth}$
+\newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
+\newoperator
+  {\ottkw{zero}}{[[Nat]]}
+  {[[zero]]}{[[Inl ()]]}
+\newoperator
+  {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
+  {[[succ x]]}{[[ˢInr x]]}$\end{minipage}
 \end{codefig}
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperatorb[~\mathttbf{rec}]
-  {\ottkw{go}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
-  {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
+{\ottkw{go}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
+{[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
 (dequeue q) case ¹ν {⮒
 ‥‥Inl () ⟼ st,⮒
 ‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
@@ -468,13 +471,13 @@ Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for im
 }
 ]]\end{array}}
 \newoperatorb
-  {\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Tree T1 ¹ν → Tree T2 ⨂ (! ¹∞ S)]]}
-  {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
+{\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Tree T1 ¹ν → Tree T2 ⨂ (! ¹∞ S)]]}
+{[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
 from⧔ (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperatorb
-  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
-  {[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
+{\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
+{[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
 mapAccumBFS⮒
 ‥‥(ˢλ ex ¹ν ⟼ ˢλ un ¹ν ⟼ un ; ex case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ ex' ⟼ ex' case ¹∞⮒
@@ -518,17 +521,17 @@ As a result, in destination calculus, we cannot have the same kind of cut rule a
 
 However, we can recover a memory abstraction that is usable in practice if we know the nature of an memory par side:
 \begin{itemize}
-  \item if the memory par side is a value made only of inert elements and destinations (negative polarity), then we can pattern-match/$\ottkw{map}$ on it, but we cannot store it away to free up the other side;
-  \item if the memory par side is a value made only of inert elements and holes (positive polarity), then we can store it away in a bigger struct and free up the associated destinations (this is not an issue as the bigger struct will be locked by an memory par too), but we cannot pattern-match/$\ottkw{map}$ on it as it (may) contains holes;
-  \item if one memory par side is only made of inert elements, we can in fact convert the memory par to a pair, as the memory par doesn't have any form of interaction between its sides.
+\item if the memory par side is a value made only of inert elements and destinations (negative polarity), then we can pattern-match/$\ottkw{map}$ on it, but we cannot store it away to free up the other side;
+\item if the memory par side is a value made only of inert elements and holes (positive polarity), then we can store it away in a bigger struct and free up the associated destinations (this is not an issue as the bigger struct will be locked by an memory par too), but we cannot pattern-match/$\ottkw{map}$ on it as it (may) contains holes;
+\item if one memory par side is only made of inert elements, we can in fact convert the memory par to a pair, as the memory par doesn't have any form of interaction between its sides.
 \end{itemize}
 
 It is important to note that the type of an memory par side is not really enough to determine the nature of the side, as a hole of type $[[T]]$ and and inert value of type $[[T]]$ are indistinguishable at the type level.
 
 So we introduced a more restricted form of memory par, named \emph{ampar} ($\ottstype{\ltimes}$), for \emph{asymmetrical memory par}, in which:
 \begin{itemize}
-  \item the left side is made of inert elements (normal values or destinations from previous scopes) and/or holes if and only if those holes are compensated by destinations on the right side;
-  \item the right side is made of inert elements and/or destinations.
+\item the left side is made of inert elements (normal values or destinations from previous scopes) and/or holes if and only if those holes are compensated by destinations on the right side;
+\item the right side is made of inert elements and/or destinations.
 \end{itemize}
 
 As the right side cannot contain any holes, it is always safe to pattern-match or $\ottkw{map}$ on it. Because the left side cannot contain destinations from the current scope, it is always safe to store it away in a bigger struct and release the right side.
@@ -596,66 +599,53 @@ $\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ott
 
 All the desugarings are presented in Figure~\ref{fig:desugaring}.
 
-\begin{figure}[h]
-\centering\small
-\setlength\tabcolsep{0.4ex}
-\begin{tabular}{|lcl|lcl|}
-\hline
-
-$[[alloc]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
-  { 1 } ⟨ +1 ❟ -1 ⟩
-]]\end{array}$ &
-
-$[[t ˢ⨞ t']]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
-t ⨞· (to⧔ t')
-]]\end{array}$ \\\hline
-
-$[[from⧔' t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
+\begin{codefig}{\caption{Desugaring of syntactic sugar forms for terms}\label{fig:desugaring}}
+\begin{minipage}[t]{0.62\textwidth}$
+[[alloc]] \btriangleq \!\!\!\begin{array}[t]{l}[[
+{ 1 } ⟨ +1 ❟ -1 ⟩
+]]\end{array}\\[\interdefskip]
+[[from⧔' t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 (from⧔ (t map un ⟼ un ; ᴇ ¹∞ () )) case ¹ν⮒
 ‥‥( st , ex ) ⟼ ex case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ un ⟼ un ; st
-]]\end{array}$ &
-
-$[[ˢλ x m ⟼ u]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
+]]\end{array}\\[\interdefskip]
+[[ˢλ x m ⟼ u]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥d ⨞ ( λ x m ⟼ u )⮒
 )
-]]\end{array}$ \\\hline
-
-$[[ˢInl t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
-from⧔' (⮒
-‥‥alloc map d ⟼⮒
-‥‥‥‥d ⨞ Inl ˢ⨞ t⮒
-)
-]]\end{array}$ &
-
-$[[ˢInr t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
-from⧔' (⮒
-‥‥alloc map d ⟼⮒
-‥‥‥‥d ⨞ Inr ˢ⨞ t⮒
-)
-]]\end{array}$ \\\hline
-
-$[[ˢᴇ m t]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
-from⧔' (⮒
-‥‥alloc map d ⟼⮒
-‥‥‥‥d ⨞ ᴇ m ˢ⨞ t⮒
-)
-]]\end{array}$ &
-
-$[[ˢ( t1 , t2 )]]$ & $\btriangleq$ & $\begin{array}[t]{l}[[
+]]\end{array}\\[\interdefskip]
+[[ˢ( t1 , t2 )]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (⮒
 ‥‥alloc map d ⟼⮒
 ‥‥‥‥(d ⨞ (,)) case ¹ν⮒
 ‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ˢ⨞ t1 ; d2 ˢ⨞ t2⮒
 )
-]]\end{array}$ \\\hline
-
-\end{tabular}
-\caption{Desugaring of syntactic sugar forms for terms}
-\label{fig:desugaring}
-\end{figure}
+]]\end{array}$\end{minipage}
+\vrule height 0.01\textheight\hspace{0.5cm}
+\begin{minipage}[t]{0.38\textwidth}$
+[[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
+t ⨞· (to⧔ t')
+]]\end{array}\\[\interdefskip]
+[[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ Inl ˢ⨞ t⮒
+)
+]]\end{array}\\[\interdefskip]
+[[ˢInr t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ Inr ˢ⨞ t⮒
+)
+]]\end{array}\\[\interdefskip]
+[[ˢᴇ m t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
+from⧔' (⮒
+‥‥alloc map d ⟼⮒
+‥‥‥‥d ⨞ ᴇ m ˢ⨞ t⮒
+)
+]]\end{array}$\end{minipage}
+\end{codefig}
 
 \section{Type system}
 
@@ -700,37 +690,37 @@ from⧔' (⮒
 
 \begin{itemize}
 \item Not particularly elegant. Max number of goals observed 232
-  (solved by a single call to the \verb|congruence| tactic). When you
-  have a computer, brute force is a viable strategy. (in particular,
-  no semiring formalisation, it was quicker to do directly)
+(solved by a single call to the \verb|congruence| tactic). When you
+have a computer, brute force is a viable strategy. (in particular,
+no semiring formalisation, it was quicker to do directly)
 \item Rules generated by ott, same as in the article (up to some
-  notational difference). Contexts are not generated purely by syntax,
-  and are interpreted in a semantic domain (finite functions).
+notational difference). Contexts are not generated purely by syntax,
+and are interpreted in a semantic domain (finite functions).
 \item Reasoning on closed terms avoids almost all complications on
-  binder manipulation. Makes proofs tractable.
+binder manipulation. Makes proofs tractable.
 \item Finite functions: making a custom library was less headache than
-  using existing libraries (including \verb|MMap|). Existing libraries
-  don't provide some of the tools that we needed, but the most important
-  factor ended up being the need for a modicum of dependency between
-  key and value. There wasn't really that out there. Backed by actual
-  functions for simplicity; cost: equality is complicated.
+using existing libraries (including \verb|MMap|). Existing libraries
+don't provide some of the tools that we needed, but the most important
+factor ended up being the need for a modicum of dependency between
+key and value. There wasn't really that out there. Backed by actual
+functions for simplicity; cost: equality is complicated.
 \item Most of the proofs done by author with very little prior
-  experience to Coq.
+experience to Coq.
 \item Did proofs in Coq because context manipulations are tricky.
 \item Context sum made total by adding an extra invalid \emph{mode}
-  (rather than an extra context). It seems to be much simpler this
-  way.
+(rather than an extra context). It seems to be much simpler this
+way.
 \item It might be a good idea to provide statistics on the number of
-  lemmas and size of Coq codebase.
+lemmas and size of Coq codebase.
 \item (possibly) renaming as permutation, inspired by nominal sets,
-  make more lemmas don't require a condition (but some lemmas that
-  wouldn't in a straight renaming do in exchange).
+make more lemmas don't require a condition (but some lemmas that
+wouldn't in a straight renaming do in exchange).
 \item (possibly) methodology: assume a lot of lemmas, prove main
-  theorem, prove assumptions, some wrong, fix. A number of wrong lemma
-  initially assumed, but replacing them by correct variant was always
-  easy to fix in proofs.
+theorem, prove assumptions, some wrong, fix. A number of wrong lemma
+initially assumed, but replacing them by correct variant was always
+easy to fix in proofs.
 \item Axioms that we use and why (in particular setoid equality not
-  very natural with ott-generated typing rules).
+very natural with ott-generated typing rules).
 \item Talk about the use and benefits of Copilot.
 \end{itemize}
 

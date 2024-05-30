@@ -284,8 +284,8 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{
   | m · G :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
   | G1 , G2 :: M :: DisjointUnion {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
-  | -⁻¹ G :: M :: HminusInv {{ coq (hminus_inv [[G]]) }} {{ tex \ottshvar{\destminus^{\scriptscriptstyle\text{-}1} }[[G]] }} {{ com Transforms dest bindings into a hole bindings }}
-  | - G :: M :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{\destminus}[[G]] }}
+  | -⁻¹ D :: M :: HminusInv {{ coq (hminus_inv [[D]]) }} {{ tex \ottshvar{\destminus^{\scriptscriptstyle\text{-}1} }[[D]] }} {{ com Transforms dest bindings into a hole bindings }}
+  | - G :: S :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{\destminus}[[G]] }}
   | G [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | ( G ) :: S :: Paren {{ coq [[G]] }}
 
