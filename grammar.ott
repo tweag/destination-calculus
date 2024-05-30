@@ -208,7 +208,7 @@ type, T, U, S :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq
   | ⌊ T ⌋ m :: :: Dest {{ tex \ottstype{\lfloor}\,\!_{\mydestm{[[m]]} }[[T]]\ottstype{\rfloor} }} {{ com Destination }}
   | ( T ) :: S :: Paren {{ tex \ottstype{(}[[T]]\ottstype{)} }} {{ coq [[T]]}}
 
-  | Int :: S :: SugarInt {{ tex \ottstype{Int} }} {{ coq type_Unit }}
+  | Nat :: S :: SugarNat {{ tex \ottstype{Nat} }} {{ coq type_Unit }}
   | List T :: S :: SugarList {{ tex \ottstype{List}~[[T]] }} {{ coq type_Unit }}
   | DList T :: S :: SugarDList {{ tex \ottstype{DList}~[[T]] }} {{ coq type_Unit }}
   | Queue T :: S :: SugarQueue {{ tex \ottstype{Queue}~[[T]] }} {{ coq type_Unit }}

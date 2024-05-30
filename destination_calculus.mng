@@ -67,11 +67,13 @@
   #2 ~\pmb{:}~ #3 \\
   #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~ #5
 \end{array}\\[\interdefskip]}
-\newcommand{\figureratio}{0.8}
-\NewEnviron{codefig}[1]{\begin{figure}[h]
-  \begin{minipage}{\figureratio\linewidth}{\small$\BODY$}\end{minipage}
-
-  #1
+\newcommand{\figureratio}{0.85}
+\newcommand{\codehere}[1]{\begin{center}\begin{minipage}{\figureratio\linewidth}{\small$#1$}\end{minipage}\end{center}}
+\NewEnviron{codefig}[2][h]{\begin{figure}[#1]
+  \codehere{\BODY}#2
+  \end{figure}}
+\NewEnviron{ottfig}[2][h]{\begin{figure}[#1]\visiblespaces
+  \small\BODY\activespaces #2
   \end{figure}}
 
 \begin{document}
@@ -154,10 +156,13 @@ A \emph{destination}, denoted $[[-h]]$, is the address of a hole. It is meant to
 
 The simplest form of ampar is a single empty cell on the left with a destination pointing to it on the right: $[[{ h } ⟨ +h ❟ -h ⟩]]$. This ampar is highly analogous to the identity function: the final structure on the left side will correspond to what is fed in the right side.
 
-The main operation to operate on an ampar is $\ottkw{map}$, which binds the right side of the ampar to a variable, while temporarily forgetting about the left side (the incomplete structure that is being mutated behind the scenes).
+The main operation to operate on an ampar is $\ottkw{map}$, which binds the right side of the ampar to a variable, while temporarily forgetting about the left side (the incomplete structure that is being mutated behind the scenes):
 
-$[[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]]$ 
-reduces to $[[ { h' } ⟨ Inl +h' ❟ -h' ⟩ ]]$ then to $[[ { } ⟨ Inl () ❟ () ⟩ ]]$
+\codehere{\begin{array}{cl}
+       & [[ { h } ⟨ +h ❟ -h ⟩ map d ⟼ d ⨞ Inl ⨞ () ]] \\
+[[⟶]] & [[ { h' } ⟨ Inl +h' ❟ -h' ⟩ ]] \\
+[[⟶]] & [[ { } ⟨ Inl () ❟ () ⟩ ]]
+\end{array}}
 
 The destination-feeding primitive $[[⨞]][[Inl]]$ will in fact follow the destination on the left-hand side and write an $[[Inl]]$ data constructor to the hole pointed by the destination. A new destination $[[-h']]$ is returned to represented the (yet unspecified) payload for the $[[Inl]]$ constructor.
 
@@ -169,38 +174,42 @@ As mentioned earlier, one key point of destination calculus is being able to bui
 
 Let's build the skeleton first:
 
-\noindent$[[x1]] \coloneq [[
+\codehere{[[x1]] \coloneq[[
 { h1 } ⟨ +h1 ❟ -h1 ⟩ map d1 ⟼⮒
 ‥‥(d1 ⨞ (,)) case ¹ν (d2, d3) ⟼⮒
 ‥‥‥‥(d2 ⨞ (,)) case ¹ν (d4, d5) ⟼⮒
 ‥‥‥‥‥‥(d3 ⨞ (,)) case ¹ν (d6, d7) ⟼ ˢ[d4, d5, d6, d7]
-]]$
+]]}
 
-evaluates to:
+\noindent This evaluates to:
 
-$[[ { h4, h5, h6, h7 } ⟨ ((+h4, +h5), (+h6, +h7)) ❟ ˢ[-h4, -h5, -h6, -h7] ⟩ ]]$
+\codehere{[[ { h4, h5, h6, h7 } ⟨ ((+h4, +h5), (+h6, +h7)) ❟ ˢ[-h4, -h5, -h6, -h7] ⟩ ]]}
 
 We can see that the skeleton of the tree is here on the left-hand side, but leaves are unspecified yet (so are represented by holes). Let's now fill the right leaves:
 
-\noindent$[[x2]] \coloneq [[
+\codehere{[[x2]] \coloneq [[
 x1 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d5, d6, d7] ⟼⮒
 ‥‥‥‥d5 ⨞ Inr ⨞ () ; d7 ⨞ Inr ⨞ () ; ˢ[d4, d6]
-]]$
+]]}
 
-reduces to
+\noindent This reduces to:
 
-$[[ { h4, h6 } ⟨ ((+h4, Inr ()), (+h6, Inr ())) ❟ ˢ[-h4, -h6] ⟩ ]]$
+\codehere{[[ { h4, h6 } ⟨ ((+h4, Inr ()), (+h6, Inr ())) ❟ ˢ[-h4, -h6] ⟩ ]]}
 
 Now only left leaves are left unspecified, that's why the associated destinations $[[-h4]]$ and $[[-h6]]$ are the only left on the right side. We can finally feed them:
 
-\noindent$[[x3]] \coloneq [[
+\codehere{[[x3]] \coloneq [[
 x2 map d ⟼⮒
 ‥‥d case ¹ν ˢ[d4, d6] ⟼⮒
 ‥‥‥‥d4 ⨞ Inl ⨞ () ; d6 ⨞ Inr ⨞ ()
-]]$
+]]}
 
-$[[x3]]$ reduces to $[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]]$ which is now a complete structure. There is no destination remaining on the right-hand side.
+\noindent $[[x3]]$ reduces to:
+
+\codehere{[[ {} ⟨ ((Inl (), Inr ()), (Inl (), Inr ())) ❟ () ⟩ ]]}
+
+\noindent which is now a complete structure. There is no destination remaining on the right-hand side.
 
 We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
@@ -228,9 +237,9 @@ The \textsc{FillCons} operator consumes a destination of list as an input, and w
 
 There is a duality between constructors and destinations-feeding operators (we will dig into it more in Section~\ref{ssec:ampar-motivation}), and that stays true for our newly user-defined operators. If we reverse the arrow direction and remove the destination symbols from \textsc{FillCons} signature, we get $[[T ⨂ (List T) ¹ν → List T]]$ which is the type of the usual \textsc{Cons} constructor! We can in fact recover the \textsc{Cons} constructor:
 
-$\newoperator
+\codehere{\newoperator
   {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-  {\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}$
+  {\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}}
 
 Going from a \textsc{Fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
 
@@ -323,27 +332,25 @@ The issue is particularly visible when trying to give semantics to the $\ottkw{a
 
 The morally correct semantics (in destination calculus pseudo-syntax) would be:
 
-\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}$
+\codehere{\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}}
 
 It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
 
-\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]])$
-
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \}$
-
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$
-
-$~[[⟶]]~ [[Inl ()]]$
+\codehere{\begin{array}{cl}
+       & \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]]) \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} \\
+[[⟶]] & [[Inl ()]]
+\end{array}}
 
 However this falls short when calls to $\ottkw{alloc'}$ are nested in the following way (where $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$):
 
-\noindent$\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$
-
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \}$
-
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \}$
-
-$~[[⟶]]~ \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}$
+\codehere{\begin{array}{cl}
+       & \ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]])) \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}
+\end{array}}
 
 The original term $\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
 
@@ -358,7 +365,12 @@ Age is represented by a commutative semiring, where $[[ν]]$ indicates that a de
 Semiring addition $\ottsmode{+}$ is used to find the age of a variable or destination that is used in two different branches of a program. Semiring multiplication $[[·]]$ corresponds to age composition, and is in fact an integer sum on scope indices.
 $[[∞]]$ is absorbing for both addition and multiplication.
 
-Given $[[↑]]^{0} = [[ν]]$ and $[[↑]]^{n} = [[↑]][[·]][[↑]]^{n-1}$, we have the following age operation tables:
+Truth tables for operators $\ottsmode{+}$ and $\ottsmode{·}$ on ages are presented in Figure~\ref{fig:age-tables}.
+
+\begin{figure}[h]\centering
+We pose $[[↑]]^{0} = [[ν]]$ and $[[↑]]^{n} = [[↑]][[·]][[↑]]^{n-1}$
+
+\medskip
 
 \begin{minipage}{0.5\textwidth}
 \centering
@@ -376,10 +388,14 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \end{minipage}
 
+\caption{Truth tables for age operators}\label{fig:age-tables}
+\end{figure}
+
 Age commutative semiring is then combined with the multiplicity commutative semiring from~\cite{bernardy_linear_2018} to form a canonical product commutative semiring that is used to represent the mode of each typing context binding in our final type system.
 
-The main restriction to prevent parent scope escape is materialized in these simplified typing rules:\smallskip
+The main restriction to prevent parent scope escape is materialized the simplified typing rules of Figure~\ref{fig:age-control-simpl}.
 
+\begin{ottfig}{\caption{Simplified typing rules for age control of destinations}\label{fig:age-control-simpl}}
 \ottusedrule{%
 \ottdrule{%
 }{
@@ -394,7 +410,7 @@ The main restriction to prevent parent scope escape is materialized in these sim
 \Theta_{{\mathrm{1}}}  +  \ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}} \,\vdash\,   \ottnt{t} \triangleleft\!\, \ottnt{t'}   \ottsym{:}   \ottstype{1} }{%
 {\ottdrulename{Ty\_term\_FillLeaf$^{\star}$}}{}%
 }}
-\smallskip
+\end{ottfig}
 
 Typing a destination $[[-h]]$ requires $[[-h]]$ to have age $[[ν]]$ in the context. And when storing a value through a destination, the ages of the value's dependencies in the context must be one higher than the corresponding ages required to type the value alone (this is the meaning of $\ottsmode{\uparrow} \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} }  \Theta_{{\mathrm{2}}}$).
 
@@ -416,20 +432,15 @@ However, as evoked earlier in Section~\ref{ssec:problem-stored-dests}, The API p
 
 This is quite impractical as we would like to use the efficient, destination-based queue implementation from Section~\ref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. In our present work fortunately, thanks to the finer age-control mechanism, we can store linear resources in destination-based structures without any issue. Our system is in fact self-contained, as any structure, whatever the use for it be, can be built using a small core of destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, see Section~\ref{ssec:sugar}).
 
-
-The implementation for the efficient queue as well as other  is presented as part of Figure~\ref{fig:impl-boilerplate-bfs}.
-
 Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
 
-The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer is also linear in its two arguments. The state has to wrapped in exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing. We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
-
 \begin{codefig}{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}
-\newtype[~\mathttbf{rec}]{[[Int]]}{[[① ⨁ Int]]}
+\newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
 \newoperator
-    {\ottkw{zero}}{[[Int]]}
+    {\ottkw{zero}}{[[Nat]]}
     {[[zero]]}{[[Inl ()]]}
 \newoperator
-    {\ottkw{succ}}{[[Int ¹ν → Int]]}
+    {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
     {[[succ x]]}{[[ˢInr x]]}
 \newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
 \newoperator
@@ -459,10 +470,10 @@ The first important difference is that in the destination calculus implementatio
 \newoperatorb
   {\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ων→ (! ¹∞ S) ¹ν → Tree T1 ¹ν → Tree T2 ⨂ (! ¹∞ S)]]}
   {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
+from⧔ (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperatorb
-  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Int) ⨂ (! ¹∞ (! ων Int))]]}
+  {\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
   {[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
 mapAccumBFS⮒
 ‥‥(ˢλ ex ¹ν ⟼ ˢλ un ¹ν ⟼ un ; ex case ¹ν⮒
@@ -472,6 +483,16 @@ mapAccumBFS⮒
 ‥‥tree
 ]]\end{array}}
 \end{codefig}
+
+The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer that is applied to each input node to get the output node value is also linear in its two arguments. The state has to wrapped in exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing (with $\ottkw{from}_{\ottstype{\ltimes}}$). We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
+
+The $\ottkw{go}$ function is in charge of consuming the queue containing the pairs of input subtrees and destinations to the corresponding output subtrees. It dequeues the first pair, and processes it. If the input subtree is $\ottsctor{Nil}$, it feeds $\ottsctor{Nil}$ to the destination for the output tree and continues the processing of next elements with unchanged state. If the input subtree is a node, it writes a hollow $\ottsctor{Node}$ constructor to the hole pointed to by the destination, processes the value of the node with the stateful transformer $[[f]]$, and continues the processing of the updated queue where children subtrees and their accompanying destinations have been enqueued.
+
+$\ottkw{mapAccumBFS}$ is in charge of spawning the initial memory slot for the output tree together with the associated destination, and preparing the initial queue containing a single pair, made of the whole input tree and the aforementioned destination.
+
+$\ottkw{relabelDPS}$ is a special case of $\ottkw{mapAccumBFS}$ that takes the skeleton of a tree (where node values are all unit) and returns a tree of integers, with the same skeleton, but with node values replaced by naturals $1\ldots|T|$ in breadth-first order. The higher-order function passed to $\ottkw{mapAccumBFS}$ is quite verbose: it must consume the previous node value (unit), using $\fatsemi$, then extract the state (representing the next natural number to attribute to a node) from its two nested exponential constructors, and finally return a pair, whose left side is the incremented natural wrapped back into its two exponential layers (new state), and whose right side is the plain natural representing the node value for the output subtree.
+
+Two exponentials are needed here. The first one $\ottstype{!}_{[[¹∞]]}$ is part of $\ottkw{from}_{\ottstype{\ltimes}}$ contract, and ensures that the state cannot capture destinations, so that it can be returned at the end of the processing (as $\ottkw{go}$ runs under a $\ottkw{map}$ over an ampar). The second one $\ottstype{!}_{[[ων]]}$ allows the natural number to be used in a non-linear fashion: it is used once in $[[succ st]]$ to serve as the new state, and another time as the value for the output node. With a more general $\ottkw{from}_{\ottstype{\ltimes}}$ operator, we would be able to use just one exponential layer $\ottstype{!}_{[[ω∞]]}$ over the natural number to achieve the same result.
 
 \section{Language syntax}
 
@@ -522,35 +543,34 @@ This is a core feature of the language that ensures part of its safety.
 
 \subsection{Names and variables}
 
-The destination calculus uses two classes of names: regular (meta) variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet.
+The destination calculus uses two classes of names: regular variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet, as illustrated in Figure~\ref{fig:grammar-names}.
 
-\visiblespaces
-
-\ottmetavars
-\ottgrammartabular{
-\otthvar\ottafterlastrule
-}
-
-Hole names are represented by natural numbers under the hood, so they can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole names are shifted by the maximum hole name encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
+Hole names are represented by natural numbers under the hood, so they can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hole name encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
 
 We sometimes need to keep track of hole names bound by a particular runtime value or evaluation context, hence we also define sets of hole names $[[H]], [[H1]], [[H2]]\ldots$.
 
+Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshvar{[}[[H ⩲ h']]\ottshvar{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
+
+\begin{ottfig}{\caption{Grammar for variable, hole and destination names}\label{fig:grammar-names}}
+\ottmetavars
 \ottgrammartabular{
+\otthvar\ottinterrule
 \otthvars\ottafterlastrule
 }
-
-Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshvar{[}[[H ⩲ h']]\ottshvar{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
+\end{ottfig}
 
 \subsection{Term and value core syntax}\label{ssec:core-syntax}
 
-Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
+Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms, which is presented in Figure~\ref{fig:grammar-terms} is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
-In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-feeding primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
-
+\begin{ottfig}{\caption{Grammar for terms}\label{fig:grammar-terms}}
 \ottgrammartabular{
 \ottterm\ottinterrule
 \ottval\ottafterlastrule
 }
+\end{ottfig}
+
+In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-feeding primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
 Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}.
 
@@ -564,17 +584,19 @@ The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[�
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
 
-As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors can only take other values as arguments, not terms. Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-feeding primitives.
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-feeding primitives in Figure~\ref{fig:sugar}.
 
-$\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the right side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
-
+\begin{ottfig}{\caption{Syntactic sugar forms for terms}\label{fig:sugar}}
 \ottgrammartabular{
 \ottsterm\ottafterlastrule
 }
+\end{ottfig}
 
-\activespaces
+$\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the right side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
-\begin{table}[h]
+All the desugarings are presented in Figure~\ref{fig:desugaring}.
+
+\begin{figure}[h]
 \centering\small
 \setlength\tabcolsep{0.4ex}
 \begin{tabular}{|lcl|lcl|}
@@ -632,10 +654,8 @@ from⧔' (⮒
 
 \end{tabular}
 \caption{Desugaring of syntactic sugar forms for terms}
-\label{tab:desugaring}
-\end{table}
-
-\clearpage
+\label{fig:desugaring}
+\end{figure}
 
 \section{Type system}
 
