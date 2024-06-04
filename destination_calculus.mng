@@ -144,9 +144,44 @@ But destination-passing style is not limited to imperative settings; it can be u
 
 Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
 
-\section{System in action on simple examples}
+\section{Working with destinations}
 
 \activespaces
+
+\codehere{\newoperator
+{fillWithUnit}{[[⌊ ① ⌋ ¹ν ¹ν → ①]]}
+{fillWithUnit~d}{[[d ⨞ ()]]}}
+
+\codehere{\newoperator
+{fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
+{fillWithInl~d}{[[d ⨞ Inl]]}}
+
+\codehere{\newoperator
+{fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
+{fillWithAPair~d}{[[d ⨞ (,)]]}}
+
+\codehere{\newoperator
+{fillWithInl'}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
+{fillWithInl'~x}{[[x map d ⟼ d ⨞ Inl]]}}
+
+\phantom{a}\TODO{remove the argument in the signature}
+\codehere{\newoperator
+{[[ˢInl x]]}{[[T ¹ν → T ⨁ U]]}
+{[[ˢInl x]]}{[[from⧔' (alloc map d ⟼ d ⨞ Inl ˢ⨞ x)]]}}
+
+\phantom{a}\TODO{remove the arguments in the signature}
+\codehere{\newoperator
+{[[ˢ(x, y)]]}{[[T ¹ν → U ¹ν → T ⨂ U]]}
+{[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
+
+\codehere{\newoperator
+{forget}{[[T]]}
+{forget}{[[from⧔' (alloc map d ⟼ ())]]}}
+
+\phantom{a}\TODO{Syntactic sugar: let}
+\codehere{\newoperator
+{overwrite}{[[T¹ν → T ⨁ U]]}
+{overwrite~x}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}
 
 The idea of destination calculus is to provide a building canvas for data structures, represented as a special pair-like structure, called an \emph{ampar}, whose left side is the structure being built, and whose right side carries destinations pointing to holes present in the left side.
 
@@ -737,3 +772,8 @@ What needs to be changed (e.g. linear alloc)
 \bibliography{bibliography}{}
 
 \end{document}
+
+% Local Variables:
+% eval: (auto-fill-mode 0)
+% eval: (visual-line-mode 1)
+% End:
