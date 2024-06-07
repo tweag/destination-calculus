@@ -7,6 +7,7 @@
 \usepackage{amssymb}
 \usepackage{subcaption}
 \usepackage{environ}
+\usepackage[plain]{fancyref}
 
 % For faulty code
 \usepackage[normalem]{ulem}
@@ -51,6 +52,7 @@
 \def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
+\newcommand{\destcalculus}{$\lambda_d$ }
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
 \newcommand\btriangleq{\pmb{\triangleq}}
@@ -146,15 +148,27 @@ Why is it important to have destinations as first-class values? Because it allow
 
 \section{Working with destinations}
 
+\phantom{a}\TODO{Some introductory words}
+
+\subsection{Building up a vocabulary}
+
 \activespaces
 
+In its simplest form, destination-passing, much like continuation-passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you can have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$. For instance here is a destination-passing version of the identity function
+
 \codehere{\newoperator
-{fillWithUnit}{[[⌊ ① ⌋ ¹ν ¹ν → ①]]}
-{fillWithUnit~d}{[[d ⨞ ()]]}}
+{dId}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
+{dId~x~d}{[[d ˢ⨞ x]]}}
+
+The form $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) is the simplest way to use a destination. But we don't have to fill a destination with a whole value in a single step. Destinations can be filled piecemeal.
 
 \codehere{\newoperator
 {fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
 {fillWithInl~d}{[[d ⨞ Inl]]}}
+
+In this example, we're building a value of type $[[T ⨁ U]]$ by saying that the outermost constructor is  $[[Inl]]$. Notice that we are constructing the term from the outermost constructor inward: we've built a term of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$. This will turn out to be a key ingredient in the expressiveness of destination-passing.
+
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialised memory (see \Fref{sec:implementation}). But where destination really differ from continuation is when there are seve
 
 \codehere{\newoperator
 {fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
@@ -164,9 +178,8 @@ Why is it important to have destinations as first-class values? Because it allow
 {fillWithInl'}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
 {fillWithInl'~x}{[[x map d ⟼ d ⨞ Inl]]}}
 
-\phantom{a}\TODO{remove the argument in the signature}
 \codehere{\newoperator
-{[[ˢInl x]]}{[[T ¹ν → T ⨁ U]]}
+{[[Inl]]}{[[T ¹ν → T ⨁ U]]}
 {[[ˢInl x]]}{[[from⧔' (alloc map d ⟼ d ⨞ Inl ˢ⨞ x)]]}}
 
 \phantom{a}\TODO{remove the arguments in the signature}
@@ -248,7 +261,7 @@ x2 map d ⟼⮒
 
 We also see that structure can in fact be built in several stages with ease, with other operations taking place in-between.
 
-\subsection{Progressing towards an efficient queue implementation}\label{ssec:efficient-queue}
+\subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
 If we suppose equirecursive types and a fixed-point operator, then destination-calculus becomes expressive enough to build any usual data structure.
 
@@ -760,6 +773,7 @@ very natural with ott-generated typing rules).
 \end{itemize}
 
 \section{Implementation of destination calculus using in-place memory mutations}
+\label{sec:implementation}
 
 What needs to be changed (e.g. linear alloc)
 

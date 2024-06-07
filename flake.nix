@@ -62,6 +62,7 @@
               inherit (pkgs.texlive)
                 scheme-basic
                 acmart
+                fancyref
 
                 # acmart dependencies
                 amscls
