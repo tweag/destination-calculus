@@ -37,7 +37,10 @@
   \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
   % ^^ Need for pgfsyspdfmark apparently?
   \ifx\noeditingmarks\undefined
-      \setlength{\marginparwidth}{1.2cm} % A size that matches the new PACMPL format
+      % Adapting to acmart's small margins
+      \setlength{\marginparsep}{0.3em}
+      \setlength{\marginparwidth}{1.4cm}
+
       \newcommand{\Red}[1]{{\color{red}{#1}}}
       \newcommand{\newaudit}[1]{{\color{blue}{#1}}}
       \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
@@ -95,7 +98,7 @@
 \def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
-\newcommand{\destcalculus}{$\lambda_d$ }
+\newcommand{\destcalculus}{\ensuremath{\lambda_d} }
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
 \newcommand\btriangleq{\pmb{\triangleq}}
@@ -197,13 +200,14 @@ Why is it important to have destinations as first-class values? Because it allow
 
 \activespaces
 
-In its simplest form, destination passing, much like continuation passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you can have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$. For instance here is a destination-passing version of the identity function
+In its simplest form, destination passing, much like continuation passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$ ($[[⌊ U ⌋ ¹ν]]$ is read “destination of type $[[U]]$”). For instance here is a destination-passing version of the identity function
 
 \codehere{\newoperator
 {dId}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
 {dId~x~d}{[[d ˢ⨞ x]]}}
 
 The form $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) is the simplest way to use a destination. But we don't have to fill a destination with a whole value in a single step. Destinations can be filled piecemeal.
+\unsure{Maybe it would be wise to explain the notations for sums and tuples, since the linear-logic notations are less standard than the ccc ones}\unsure{We probably want to give a reading for the fill-with-a-constructor construction.}
 
 \codehere{\newoperator
 {fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
@@ -217,12 +221,16 @@ Yet, everything we've shown so far could have been done with continuations. So i
 {fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
 {fillWithAPair~d}{[[d ⨞ (,)]]}}
 
-To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but $fillWithAPair$ doesn't exist on continuations.
+To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $fillWithAPair$ doesn't exist on continuations.
 
-\paragraph{Partial terms}
-Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary that, while a destination used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, we use a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ ARNAUD NEXT
+\paragraph{Values with holes}
+Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary remark that, while a destination is used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ a value of type $[[S]]$ missing a value of type $[[T]]$ (we say it has a hole of type $[[T]]$). There can be several holes, in which case the right-hand side is a tuple of destinations: $[[S ⧔ ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]$.
 
-\unsure{It may be more readable to have $fillWithInl'$ and $fillWithAPair'$ side by side. Maybe they're too wide though}
+The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $S \parr T^\perp$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That values with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called \verb+Incomplete+ in~\cite{bagrel_destination-passing_2024}
+
+Destinations always exist within the context of a term with holes. To access the destinations \destcalculus provides a $\ottkw{map}$ constructions, which lets us apply a function to the right-hand side of an ampar:
+
+\unsure{It may be more readable to have fillWithInl' and fillWithAPair' side by side. Maybe they're too wide though}
 \codehere{\newoperator
 {fillWithInl'}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
 {fillWithInl'~x}{[[x map d ⟼ d ⨞ Inl]]}}
@@ -231,18 +239,21 @@ Let's now turn to how we can use the result of filling destinations. Observe, as
 {fillWithAPair'}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
 {fillWithAPair'~x}{[[x map d ⟼ d ⨞ Inl]]}}
 
+To tie this up, we need a way to introduce and to eliminate values with holes. Values with holes are introduced with $[[alloc]]$ which creates a value $[[T ⧔ ⌊ T ⌋ ¹ν]]$, which is simply a hole expecting a value of type $[[T]]$. Values with holes are eliminated with $[[from⧔' t]] : [[S⧔① ¹ν → S]]$:\critical{remove these t} if all the destinations have been filled, then a value with holes is really just a value.
+
+Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show the definition of $[[Inl]]$ and $[[(,)]]$, the other constructors are derived similarly.
+
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
 {[[ˢInl x]]}{[[from⧔' (alloc map d ⟼ d ⨞ Inl ˢ⨞ x)]]}}
 
-\phantom{a}\TODO{remove the arguments in the signature}
 \codehere{\newoperator
-{[[ˢ(x, y)]]}{[[T ¹ν → U ¹ν → T ⨂ U]]}
+{[[(,)]]}{[[T ¹ν → U ¹ν → T ⨂ U]]}
 {[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
 
 
 \paragraph{Purity}
-At this point, the reader may be forgiven for being distressed. \TODO{This whole paragraph}
+At this point, the reader may be forgiven for feeling distressed. \TODO{This whole paragraph}
 
 \codehere{\newoperator
 {forget}{[[T]]}
@@ -526,6 +537,7 @@ Typing a destination $[[-h]]$ alone requires $[[-h]]$ to have age $[[ν]]$ in th
 Such a rule system prevents in particular the previous faulty expression $[[-hd ˢ⨞ -h]]$ where $[[-hd]]$ originates from the context parent to the one of $[[-h]]$.
 
 \section{(Updated) breadth-first tree traversal}
+\label{sec:bft}
 
 The core example that showcases the power of destination-passing style programming with first-class destination is breadth-first tree traversal:
 
