@@ -7,7 +7,7 @@
 \usepackage{amssymb}
 \usepackage{subcaption}
 \usepackage{environ}
-\usepackage[plain]{fancyref}
+\usepackage[capitalize]{cleveref}
 
 % For faulty code
 \usepackage[normalem]{ulem}
@@ -25,6 +25,49 @@
 
 % \setlength\textfloatsep{\baselineskip}
 % \setlength{\intextsep}{\baselineskip}
+
+%%%%%%%%%%%%%%%%% Editing marks %%%%%%%%%%%%%%%%%
+
+  % TOGGLE ME to turn off all the commentary:
+  \InputIfFileExists{no-editing-marks}{
+    \def\noeditingmarks{}
+  }
+
+  \usepackage{xargs}
+  \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+  % ^^ Need for pgfsyspdfmark apparently?
+  \ifx\noeditingmarks\undefined
+      \setlength{\marginparwidth}{1.2cm} % A size that matches the new PACMPL format
+      \newcommand{\Red}[1]{{\color{red}{#1}}}
+      \newcommand{\newaudit}[1]{{\color{blue}{#1}}}
+      \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
+      \newenvironment{alt}{\color{red}}{}
+
+      \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+      \newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
+      \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+      \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+      \newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+      \newcommand{\improvement}[1]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink]{#1}}
+      \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
+  \else
+  %    \newcommand{\Red}[1]{#1}
+      \newcommand{\Red}[1]{{\color{red}{#1}}}
+      \newcommand{\newaudit}[1]{#1}
+      \newcommand{\note}[1]{}
+      \newenvironment{alt}{}{}
+  %    \renewcommand\todo[2]{}
+      \newcommand{\unsure}[2][1=]{}
+      \newcommand{\info}[2][1=]{}
+      \newcommand{\change}[2]{}
+      \newcommand{\inconsistent}[2]{}
+      \newcommand{\critical}[2]{}
+      \newcommand{\improvement}[1]{}
+      \newcommand{\resolved}[2]{}
+
+  \fi
+
+%%%%%%%%%%%%%%%%% /Editing marks %%%%%%%%%%%%%%%%%
 
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
@@ -154,7 +197,7 @@ Why is it important to have destinations as first-class values? Because it allow
 
 \activespaces
 
-In its simplest form, destination-passing, much like continuation-passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you can have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$. For instance here is a destination-passing version of the identity function
+In its simplest form, destination passing, much like continuation passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you can have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$. For instance here is a destination-passing version of the identity function
 
 \codehere{\newoperator
 {dId}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
@@ -166,17 +209,27 @@ The form $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) is the simplest 
 {fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
 {fillWithInl~d}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of type $[[T ⨁ U]]$ by saying that the outermost constructor is  $[[Inl]]$. Notice that we are constructing the term from the outermost constructor inward: we've built a term of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$. This will turn out to be a key ingredient in the expressiveness of destination-passing.
+In this example, we're building a value of type $[[T ⨁ U]]$ by saying that the outermost constructor is  $[[Inl]]$. Notice that we are constructing the term from the outermost constructor inward: we've built a term of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$\inconsistent{For some reason this $[[t]]$ is grey.}. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
-Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialised memory (see \Fref{sec:implementation}). But where destination really differ from continuation is when there are seve
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialised memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling tuples:
 
 \codehere{\newoperator
 {fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
 {fillWithAPair~d}{[[d ⨞ (,)]]}}
 
+To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but $fillWithAPair$ doesn't exist on continuations.
+
+\paragraph{Partial terms}
+Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary that, while a destination used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, we use a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ ARNAUD NEXT
+
+\unsure{It may be more readable to have $fillWithInl'$ and $fillWithAPair'$ side by side. Maybe they're too wide though}
 \codehere{\newoperator
 {fillWithInl'}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
 {fillWithInl'~x}{[[x map d ⟼ d ⨞ Inl]]}}
+
+\codehere{\newoperator
+{fillWithAPair'}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
+{fillWithAPair'~x}{[[x map d ⟼ d ⨞ Inl]]}}
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
@@ -187,6 +240,10 @@ Yet, everything we've shown so far could have been done with continuations. So i
 {[[ˢ(x, y)]]}{[[T ¹ν → U ¹ν → T ⨂ U]]}
 {[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
 
+
+\paragraph{Purity}
+At this point, the reader may be forgiven for being distressed. \TODO{This whole paragraph}
+
 \codehere{\newoperator
 {forget}{[[T]]}
 {forget}{[[from⧔' (alloc map d ⟼ ())]]}}
@@ -195,6 +252,10 @@ Yet, everything we've shown so far could have been done with continuations. So i
 \codehere{\newoperator
 {overwrite}{[[T¹ν → T ⨁ U]]}
 {overwrite~x}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}
+
+\phantom{a}\TODO{An example pattern-matching on the left-hand of an ampar}
+
+\paragraph{Previous stuff to sort out}\TODO{Sort out}
 
 The idea of destination calculus is to provide a building canvas for data structures, represented as a special pair-like structure, called an \emph{ampar}, whose left side is the structure being built, and whose right side carries destinations pointing to holes present in the left side.
 
