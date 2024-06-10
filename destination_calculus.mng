@@ -197,6 +197,7 @@ Why is it important to have destinations as first-class values? Because it allow
 \phantom{a}\TODO{Some introductory words}
 
 \subsection{Building up a vocabulary}
+\label{sec:build-up-vocab}
 
 \activespaces
 
@@ -206,14 +207,18 @@ In its simplest form, destination passing, much like continuation passing, is ta
 {dId}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
 {dId~x~d}{[[d ˢ⨞ x]]}}
 
-The form $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) is the simplest way to use a destination. But we don't have to fill a destination with a whole value in a single step. Destinations can be filled piecemeal.
+We think of a destination as a reference to an uninitialized memory location, and $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) as writing $[[x]]$ to the memory location.
+
+The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a whole value in a single step. Destinations can be filled piecemeal.
 \unsure{Maybe it would be wise to explain the notations for sums and tuples, since the linear-logic notations are less standard than the ccc ones}\unsure{We probably want to give a reading for the fill-with-a-constructor construction.}
 
 \codehere{\newoperator
 {fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
 {fillWithInl~d}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of type $[[T ⨁ U]]$ by saying that the outermost constructor is  $[[Inl]]$. Notice that we are constructing the term from the outermost constructor inward: we've built a term of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$\inconsistent{For some reason this $[[t]]$ is grey.}. This will turn out to be a key ingredient in the expressiveness of destination passing.
+In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\_$\unsure{Introduce the terminology “hollow constructor” here?}, write a pointer to that block to the location that $[[d]]$ points to, and return a destination to the uninitialized argument of $[[Inl]]$.
+
+Notice that we are constructing the term from the outermost constructor inward: we've built a value of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$\inconsistent{For some reason this $[[t]]$ is grey.}. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
 Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling tuples:
 
@@ -270,37 +275,33 @@ A similar situation can happen if we reuse a destination.\critical{This is a ter
 {overwrite}{[[T¹ν → T ⨁ U]]}
 {overwrite~x}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}
 
-These programs are rejected by \destcalculus, ensuring that \destcalculus is a pure and safe languages.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
+These programs are rejected by \destcalculus, using a linear type system, ensuring that \destcalculus is a pure and safe languages.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
 
 Linearity of destination isn't the only measure that we need to take in order to ensure that uninitialized memory is never read. Indeed consider a value of type $[[v]]:[[S⧔T]]$. In memory $[[v]]$ is a value of type $[[S]]$ except that it has some uninitialized memory. So we have really careful when we read anything in $[[v]]$. In \destcalculus we take the bluntest restriction: we simply do not give any way to read $[[v]]$ at all. \change{The related work must mention that Minamide has this same restriction. Whereas as SNAX (semi-axiomatisable sequent calculus) doesn't, in exchange of having the ability to wait on unfilled destination and requiring a parallel execution semantics.}\unsure{I wanted to have an example here, but I couldn't find a natural way to write something bad since we truly don't have a tool to write them.}
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
-If we suppose equirecursive types and a fixed-point operator, then destination-calculus becomes expressive enough to build any usual data structure.
+If we suppose equirecursive types and a fixed-point operator, then \destcalculus becomes expressive enough to build any usual data structure.
 
 \paragraph{Linked lists}
 
-For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Instead of defining the usual \textsc{Nil} $\ottsctor{[]}$ and \textsc{Cons} $\ottsctor{(::)}$ constructors, we define the more general \textsc{FillNil} $\triangleleft\ottsctor{[]}$ and \textsc{FillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
+For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Following the recipe that we've outline so far, instead of defining the usual \textsc{Nil} $\ottsctor{[]}$ and \textsc{Cons} $\ottsctor{(::)}$ constructors, we define the more general \textsc{FillNil}\unsure{Arnaud hasn't used in the previous section small-caps name for constructors and operations. If we are to use them in the next few sections, it would be good to introduce this vocabulary early.} $\triangleleft\ottsctor{[]}$ and \textsc{FillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
 
 \begin{codefig}{\caption{List implementation in equirecursive destination calculus}\label{fig:impl-list}}
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
 \newoperator
-  {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ n ¹ν → ①]]}
+  {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ ¹ν ¹ν → ①]]}
   {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
 \newoperator
-  {\triangleleft\ottsctor{(::)}}{[[⌊ List T ⌋ n ¹ν → ⌊ T⌋ n ⨂ ⌊ List T ⌋ n]]}
+  {\triangleleft\ottsctor{(::)}}{[[⌊ List T ⌋ ¹ν ¹ν → ⌊ T⌋ ¹ν ⨂ ⌊ List T ⌋ ¹ν]]}
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 \end{codefig}
 
-The \textsc{FillNil} operator consumes a destination of list and fills its associated hole with the value $[[Inl ()]]$ representing the \textsc{Nil} constructor in our encoding. It returns unit $[[()]]$ as there is no new hole/destination created in the process.
-
-The \textsc{FillCons} operator consumes a destination of list as an input, and writes a hollow \textsc{Cons} constructor (represented by $[[Inr (+h1, +h2)]]$ in our encoding) to the hole pointed by the destination. It then returns a pair of destinations $[[-h1]]$ and $[[-h2]]$ to represent the two holes in the hollow \textsc{Cons} constructor ($[[-h1]]$ is a destination for the list item, and $[[-h2]]$ is for the list tail). This behavior is hidden behind the primitives $[[⨞]][[Inr]]\pmb{:}[[⌊① ⨁ (T ⨂ (List T))⌋ n ¹ν → ⌊T ⨂ (List T)⌋ n]]$ (choosing the right branch of a sum type by writing a hollow $[[Inr]]$ constructor) and $[[⨞]][[(,)]]\pmb{:}[[⌊T ⨂ (List T)⌋ n ¹ν → ⌊T⌋ n ⨂ ⌊List T⌋ n]]$ (transforming a destination of pair to a pair of destination by writing a hollow pair constructor).
-
-There is a duality between constructors and destinations-feeding operators (we will dig into it more in Section~\ref{ssec:ampar-motivation}), and that stays true for our newly user-defined operators. If we reverse the arrow direction and remove the destination symbols from \textsc{FillCons} signature, we get $[[T ⨂ (List T) ¹ν → List T]]$ which is the type of the usual \textsc{Cons} constructor! We can in fact recover the \textsc{Cons} constructor:
+Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textsc{Cons} constructor: $[[T ⨂ (List T) ¹ν → List T]]$:
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{\ottsctor{(::)}~[[x]]~[[xs]]}{[[alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs]]}}
+{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
 
 Going from a \textsc{Fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
 
@@ -367,7 +368,7 @@ q case ¹ν {⮒
 ]]\end{array}}
 \end{codefig}
 
-The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).
+The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).\change{Replace by the empty queue}
 
 The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
 
