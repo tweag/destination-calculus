@@ -215,7 +215,7 @@ The form $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) is the simplest 
 
 In this example, we're building a value of type $[[T ⨁ U]]$ by saying that the outermost constructor is  $[[Inl]]$. Notice that we are constructing the term from the outermost constructor inward: we've built a term of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$\inconsistent{For some reason this $[[t]]$ is grey.}. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
-Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialised memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling tuples:
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling tuples:
 
 \codehere{\newoperator
 {fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
@@ -224,9 +224,9 @@ Yet, everything we've shown so far could have been done with continuations. So i
 To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $fillWithAPair$ doesn't exist on continuations.
 
 \paragraph{Values with holes}
-Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary remark that, while a destination is used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ a value of type $[[S]]$ missing a value of type $[[T]]$ (we say it has a hole of type $[[T]]$). There can be several holes, in which case the right-hand side is a tuple of destinations: $[[S ⧔ ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]$.
+Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary remark that, while a destination is used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ a value of type $[[S]]$ missing a value of type $[[T]]$ (we say it has a hole of type $[[T]]$). There can be several holes, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$.\improvement{Somewhere around this point it would be good to explain the difference between holes and destinations.}
 
-The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $S \parr T^\perp$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That values with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called \verb+Incomplete+ in~\cite{bagrel_destination-passing_2024}
+The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $S \parr T^\perp$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That values with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called \verb+Incomplete+ in~\cite{bagrel_destination-passing_2024}.
 
 Destinations always exist within the context of a term with holes. To access the destinations \destcalculus provides a $\ottkw{map}$ constructions, which lets us apply a function to the right-hand side of an ampar:
 
@@ -239,9 +239,9 @@ Destinations always exist within the context of a term with holes. To access the
 {fillWithAPair'}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
 {fillWithAPair'~x}{[[x map d ⟼ d ⨞ Inl]]}}
 
-To tie this up, we need a way to introduce and to eliminate values with holes. Values with holes are introduced with $[[alloc]]$ which creates a value $[[T ⧔ ⌊ T ⌋ ¹ν]]$, which is simply a hole expecting a value of type $[[T]]$. Values with holes are eliminated with $[[from⧔' t]] : [[S⧔① ¹ν → S]]$:\critical{remove these t} if all the destinations have been filled, then a value with holes is really just a value.
+To tie this up, we need a way to introduce and to eliminate values with holes. Values with holes are introduced with $[[alloc]]$ which creates a value $[[T ⧔ ⌊ T ⌋ ¹ν]]$, which is simply a hole expecting a value of type $[[T]]$. Values with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $[[from⧔ t]]$. It will be discussed in \cref{sec:type-system}.} $[[from⧔' t]] : [[S⧔① ¹ν → S]]$:\critical{remove these t} if all the destinations have been filled, then a value with holes is really just a value.
 
-Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show the definition of $[[Inl]]$ and $[[(,)]]$, the other constructors are derived similarly.
+Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show the definition of $[[Inl]]$ and $[[(,)]]$, the other constructors are derived similarly.\unsure{Wording slightly awkward. Revisit at some point. Maybe point out that it makes destinations strictly more expressive than traditional constructor. Maybe discuss as Thomas did at some point that this means that the order in which a structure is built is actually arbitrary, not just outside-in.}
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
@@ -253,18 +253,26 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 
 
 \paragraph{Purity}
-At this point, the reader may be forgiven for feeling distressed. \TODO{This whole paragraph}
+At this point, the reader may be forgiven for feeling distressed at all the talk of filling by mutation\improvement{Make sure that we make it clear} and uninitialized memory. How is it consistent with our claim to be building a pure language\improvement{Ensure that we do claim that}?\unsure{Let's revisit the phrasing of this couple of sentences at some point, it's not utterly elegant.}
+
+Indeed, unrestricted use of destination can lead to rather catastrophic results. The simplest such issue happens when we forget to fill a destination:
 
 \codehere{\newoperator
 {forget}{[[T]]}
 {forget}{[[from⧔' (alloc map d ⟼ ())]]}}
+
+Here, $forget$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory. So any attempt to use $forget$ will read uninitialized memory.
+
+A similar situation can happen if we reuse a destination.\critical{This is a terrible example, because what's really happening here is that we're forgetting a destination. Let's find a true problem of writing several times. Maybe some order-dependence issue?}
 
 \phantom{a}\TODO{Syntactic sugar: let}
 \codehere{\newoperator
 {overwrite}{[[T¹ν → T ⨁ U]]}
 {overwrite~x}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}
 
-\phantom{a}\TODO{An example pattern-matching on the left-hand of an ampar}
+These programs are rejected by \destcalculus, ensuring that \destcalculus is a pure and safe languages.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
+
+Linearity of destination isn't the only measure that we need to take in order to ensure that uninitialized memory is never read. Indeed consider a value of type $[[v]]:[[S⧔T]]$. In memory $[[v]]$ is a value of type $[[S]]$ except that it has some uninitialized memory. So we have really careful when we read anything in $[[v]]$. In \destcalculus we take the bluntest restriction: we simply do not give any way to read $[[v]]$ at all. \change{The related work must mention that Minamide has this same restriction. Whereas as SNAX (semi-axiomatisable sequent calculus) doesn't, in exchange of having the ability to wait on unfilled destination and requiring a parallel execution semantics.}\unsure{I wanted to have an example here, but I couldn't find a natural way to write something bad since we truly don't have a tool to write them.}
 
 \paragraph{Previous stuff to sort out}\TODO{Sort out}
 
@@ -769,6 +777,7 @@ from⧔' (⮒
 \end{codefig}
 
 \section{Type system}
+\label{sec:type-system}
 
 \subsection{Syntax for types, modes, and typing contexts}
 
@@ -863,4 +872,6 @@ What needs to be changed (e.g. linear alloc)
 % Local Variables:
 % eval: (auto-fill-mode 0)
 % eval: (visual-line-mode 1)
+% ispell-local-dictionary: "en_US"
 % End:
+% LocalWords:  ampar
