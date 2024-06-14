@@ -378,9 +378,9 @@ The $\ottkw{dequeue}$ operator is more complex though. It first checks if there 
 
 Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
 
-Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.
+Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.\improvement{Don't start with the solution, start with the problem. Then we can explain how previous attempts addresses it. In JFLA: fill's right-hand operand wants omega, in Minamide/Tail-modulo-context, we can't store destinations to begin with.}
 
-\subsection{Why stored destinations are problematic}\label{ssec:problem-stored-dests}
+\subsection{The problem with stored destinations}\label{ssec:problem-stored-dests}
 
 One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been filled.
 
@@ -390,9 +390,9 @@ We have to mark the value being fed in a destination as linearly consumed, so th
 
 As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been filled \emph{now}, only that it will be filled later. So our assumption above doesn't hold in general case.
 
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[①]])\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we really much want in our system!
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[①]])\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we very much want in our system!
 
-The morally correct semantics (in destination calculus pseudo-syntax) would be:
+The morally correct semantics (in destination calculus pseudo-syntax) would be:\unsure{I'm [Arnaud] really unsure about introducing this one-off notation that we're never using again. Even though I like the use of the underwave to highlight the problem.}
 
 \codehere{\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}}
 
@@ -416,9 +416,12 @@ However this falls short when calls to $\ottkw{alloc'}$ are nested in the follow
 
 The original term $\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
 
+\improvement{I remember that we did wonder about that at some point, so it's worth preempting the question. Though I'd rather we found a slightly different example that doesn't exploit the return type of fill than a paragraph recounting our life story.}
 One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination ; there is always a way to cheat the system and make a destination escape to a parent scope. This distinct type for effects has in fact existed during the early prototypes of destination calculus, but we removed it as it doesn't solve the scope escape for destination and is indistinguishable in practice from the unit type.
 
 \subsection{Age control to prevent scope escape of destinations}
+
+\unsure{I don't think this is the right place for this section. It should appear in the formal system I think.}
 
 The solution we chose is to instead track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-feeding primitives.
 
@@ -427,7 +430,7 @@ Age is represented by a commutative semiring, where $[[ν]]$ indicates that a de
 Semiring addition $\ottsmode{+}$ is used to find the age of a variable or destination that is used in two different branches of a program. Semiring multiplication $[[·]]$ corresponds to age composition, and is in fact an integer sum on scope indices.
 $[[∞]]$ is absorbing for both addition and multiplication.
 
-Truth tables for operators $\ottsmode{+}$ and $\ottsmode{·}$ on ages are presented in Figure~\ref{fig:age-tables}.
+Tables for the operations $\ottsmode{+}$ and $\ottsmode{·}$ on ages are presented in Figure~\ref{fig:age-tables}.
 
 \begin{figure}[h]\centering
 We pose $[[↑]]^{0} = [[ν]]$ and $[[↑]]^{n} = [[↑]][[·]][[↑]]^{n-1}$
@@ -450,7 +453,7 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \end{minipage}
 
-\caption{Truth tables for age operators}\label{fig:age-tables}
+\caption{Tables for age operations}\label{fig:age-tables}
 \end{figure}
 
 Age commutative semiring is then combined with the multiplicity commutative semiring from~\cite{bernardy_linear_2018} to form a canonical product commutative semiring that is used to represent the mode of each typing context binding in our final type system.
@@ -478,7 +481,7 @@ Typing a destination $[[-h]]$ alone requires $[[-h]]$ to have age $[[ν]]$ in th
 
 Such a rule system prevents in particular the previous faulty expression $[[-hd ˢ⨞ -h]]$ where $[[-hd]]$ originates from the context parent to the one of $[[-h]]$.
 
-\section{(Updated) breadth-first tree traversal}
+\section{Breadth-first tree traversal}
 \label{sec:bft}
 
 The core example that showcases the power of destination-passing style programming with first-class destination is breadth-first tree traversal:
@@ -489,13 +492,14 @@ Given a tree, create a new one of the same shape, but with the values at the nod
 
 Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree i.e., building the leaves first and going up to the root.
 
-In~\cite{bagrel_destination-passing_2024}, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. His implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\text{\itshape input subtree}\rangle, \langle\text{\itshape dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
+In~\cite{bagrel_destination-passing_2024}, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. Their implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\text{\itshape input subtree}\rangle, \langle\text{\itshape dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
 
+\improvement{Rework the next couple of paragraph to flow a little bit better.}
 However, as evoked earlier in Section~\ref{ssec:problem-stored-dests}, The API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. It is thus reliant on regular constructor-based Haskell data structures for destination storage.
 
 This is quite impractical as we would like to use the efficient, destination-based queue implementation from Section~\ref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. In our present work fortunately, thanks to the finer age-control mechanism, we can store linear resources in destination-based structures without any issue. Our system is in fact self-contained, as any structure, whatever the use for it be, can be built using a small core of destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, see Section~\ref{ssec:sugar}).
 
-Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.
+Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.\unsure{There's way too many mode annotations here. If we are to do that we have to dedicate some space above to explaining the modes and what all the constructions around them mean.}
 
 \begin{codefig}{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}
 \begin{minipage}[t]{0.68\textwidth}\vspace{-0.15cm}$
@@ -550,7 +554,7 @@ mapAccumBFS⮒
 ]]\end{array}}
 \end{codefig}
 
-The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer that is applied to each input node to get the output node value is also linear in its two arguments. The state has to wrapped in exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing (with $\ottkw{from}_{\ottstype{\ltimes}}$). We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
+The first important difference is that in the destination calculus implementation, the input tree of type $[[Tree T1]]$ is consumed linearly. The stateful transformer that is applied to each input node to get the output node value is also linear in its two arguments. The state has to be wrapped in an exponential $\ottstype{!_{[[¹∞]]}}$ so that it can be extracted from the right side of the ampar at the end of the processing (with $\ottkw{from}_{\ottstype{\ltimes}}$). We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
 
 The $\ottkw{go}$ function is in charge of consuming the queue containing the pairs of input subtrees and destinations to the corresponding output subtrees. It dequeues the first pair, and processes it. If the input subtree is $\ottsctor{Nil}$, it feeds $\ottsctor{Nil}$ to the destination for the output tree and continues the processing of next elements with unchanged state. If the input subtree is a node, it writes a hollow $\ottsctor{Node}$ constructor to the hole pointed to by the destination, processes the value of the node with the stateful transformer $[[f]]$, and continues the processing of the updated queue where children subtrees and their accompanying destinations have been enqueued.
 
@@ -558,7 +562,7 @@ $\ottkw{mapAccumBFS}$ is in charge of spawning the initial memory slot for the o
 
 $\ottkw{relabelDPS}$ is a special case of $\ottkw{mapAccumBFS}$ that takes the skeleton of a tree (where node values are all unit) and returns a tree of integers, with the same skeleton, but with node values replaced by naturals $1\ldots|T|$ in breadth-first order. The higher-order function passed to $\ottkw{mapAccumBFS}$ is quite verbose: it must consume the previous node value (unit), using $\fatsemi$, then extract the state (representing the next natural number to attribute to a node) from its two nested exponential constructors, and finally return a pair, whose left side is the incremented natural wrapped back into its two exponential layers (new state), and whose right side is the plain natural representing the node value for the output subtree.
 
-Two exponentials are needed here. The first one $\ottstype{!}_{[[¹∞]]}$ is part of $\ottkw{from}_{\ottstype{\ltimes}}$ contract, and ensures that the state cannot capture destinations, so that it can be returned at the end of the processing (as $\ottkw{go}$ runs under a $\ottkw{map}$ over an ampar). The second one $\ottstype{!}_{[[ων]]}$ allows the natural number to be used in a non-linear fashion: it is used once in $[[succ st]]$ to serve as the new state, and another time as the value for the output node. With a more general $\ottkw{from}_{\ottstype{\ltimes}}$ operator, we would be able to use just one exponential layer $\ottstype{!}_{[[ω∞]]}$ over the natural number to achieve the same result.
+Two exponentials are needed here. The first one $\ottstype{!}_{[[¹∞]]}$ is part of $\ottkw{from}_{\ottstype{\ltimes}}$ contract, and ensures that the state cannot capture destinations, so that it can be returned at the end of the processing (as $\ottkw{go}$ runs under a $\ottkw{map}$ over an ampar). The second one $\ottstype{!}_{[[ων]]}$ allows the natural number to be used in a non-linear fashion: it is used once in $[[succ st]]$ to serve as the new state, and another time as the value for the output node. With a more general\unsure{To Thomas: didn't you tell me you had plan of making something more general for this very case? I don't remember clearly. If so, don't forget to improve here} $\ottkw{from}_{\ottstype{\ltimes}}$ operator, we would be able to use just one exponential layer $\ottstype{!}_{[[ω∞]]}$ over the natural number to achieve the same result.\unsure{I'm [Arnaud] honestly uncomfortable at the quantity of mathematics written in this section without macros and completely uncorrelated from OTT. If we change any notation, we'll have to trawl through a lot of text to make sure they are properly propagated.}
 
 \section{Language syntax}
 
