@@ -5,6 +5,7 @@
 \RequirePackage{bbold}
 \RequirePackage[safe]{tipa}
 \RequirePackage{halloweenmath}
+\RequirePackage{calc}
 
 % Big comma for Ampar
 % \DeclareSymbolFont{bbsymbol}{U}{bbold}{m}{n}
@@ -36,7 +37,7 @@
 \definecolor{mvcolor}{HTML}{000000} % 00AAA0 pink, sf
 \definecolor{hvarcolor}{HTML}{F14B2D} % red, itshape
 
-\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathit{#1}}}
+\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathrm{#1}}}
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathit{#1}}}
 \renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1}}}
 
@@ -177,3 +178,5 @@
 
 \newcommand{\destminus}{\to}
 \newcommand{\patu}{\,\fatsemi\,}
+
+\newcommand{\alignedin}{\hspace*{\widthof{$\ottkw{let}$}-\widthof{$\ottkw{in}$}}\ottkw{in}}

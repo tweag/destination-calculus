@@ -132,6 +132,9 @@
 
                 # for erroneuous code
                 ulem
+
+                # for aligned let
+                tools
                 ;
             })
           ];

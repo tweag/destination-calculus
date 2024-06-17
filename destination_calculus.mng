@@ -74,6 +74,7 @@
 
 \newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
+\newcommand{\textopname}[1]{``#1''}
 \newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
 \makeatletter
 \newcommand{\smallbullet}{} % for safety
@@ -98,6 +99,7 @@
 \def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
+\newcommand{\holesq}{\textcolor{red}{\square}}
 \newcommand{\destcalculus}{\ensuremath{\lambda_d} }
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
@@ -188,7 +190,7 @@ We illustrate this with a range of pseudo-Haskell examples.
 
 Destination-passing style programming takes its root in the early days of imperative programming. In such language, the programmer is responsible for managing memory allocation and deallocation, and thus is it often unpractical for function calls to allocate memory for their results themselves. Instead, the caller allocates memory for the result of the callee, and passes the address of this output memory cell to the callee as an argument. This is called an \emph{out parameter}, \emph{mutable reference}, or even \emph{destination}.
 
-But destination-passing style is not limited to imperative settings; it can be used in functional programming as well. One example is the linear destination-based API for arrays in Haskell\cite{bernardy_linear_2018}, which enables the user to build an array efficiently in a write-once fashion, without sacrificing the language identity and main guarantees. In this context, a destination points to a yet-unfilled memory slot of the array, and is said to be \emph{consumed} as soon as the associated hole is filled. In this paper, we continue on the same line: we present a linear $\lambda-$calculus embedding the concept of \emph{destinations} as first-class values, in order to provide a write-once memory scheme for pure, functional programming languages.
+But destination-passing style is not limited to imperative settings; it can be used in functional programming as well. One example is the linear destination-based API for arrays in Haskell\cite{bernardy_linear_2018}, which enables the user to build an array efficiently in a write-once fashion, without sacrificing the language identity and main guarantees. In this context, a destination points to a yet-unfilled memory slot of the array, and is said to be \emph{consumed} as soon as the associated hole is written to. In this paper, we continue on the same line: we present a linear $\lambda-$calculus embedding the concept of \emph{destinations} as first-class values, in order to provide a write-once memory scheme for pure, functional programming languages.
 
 Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
 
@@ -201,11 +203,11 @@ Why is it important to have destinations as first-class values? Because it allow
 
 \activespaces
 
-In its simplest form, destination passing, much like continuation passing, is taking as an argument a location where to return a value to (we say that the destination is filled). Instead of $[[T ¹ν → U]]$, in \destcalculus you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$ ($[[⌊ U ⌋ ¹ν]]$ is read “destination of type $[[U]]$”). For instance here is a destination-passing version of the identity function
+In its simplest form, destination passing, much like continuation passing, is the idea of explicitly receiving a location where to return a value to (we say that the destination is filled when the supplied location is written to). Instead of a function with signature $[[T ¹ν → U]]$, in \destcalculus you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination of type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
 
 \codehere{\newoperator
-{dId}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
-{dId~x~d}{[[d ˢ⨞ x]]}}
+{\ottkw{dId}}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
+{\ottkw{dId}~[[x]]~[[d]]}{[[d ˢ⨞ x]]}}
 
 We think of a destination as a reference to an uninitialized memory location, and $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) as writing $[[x]]$ to the memory location.
 
@@ -213,40 +215,45 @@ The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't 
 \unsure{Maybe it would be wise to explain the notations for sums and tuples, since the linear-logic notations are less standard than the ccc ones}\unsure{We probably want to give a reading for the fill-with-a-constructor construction.}
 
 \codehere{\newoperator
-{fillWithInl}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
-{fillWithInl~d}{[[d ⨞ Inl]]}}
+{\ottkw{fillWithInl}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
+{\ottkw{fillWithInl}~[[d]]}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\_$\unsure{Introduce the terminology “hollow constructor” here?}, write a pointer to that block to the location that $[[d]]$ points to, and return a destination to the uninitialized argument of $[[Inl]]$.
+In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\holesq$\unsure{Introduce the terminology “hollow constructor” here?}, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
 
-Notice that we are constructing the term from the outermost constructor inward: we've built a value of the form $[[Inl]]~\_$ but we have yet to describe the constructor's payload. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a $[[t]]$ and only then can we use $[[Inl]]$ and make an $[[ˢInl t]]$\inconsistent{For some reason this $[[t]]$ is grey.}. This will turn out to be a key ingredient in the expressiveness of destination passing.
+Notice that we are constructing the term from the outermost constructor inward: we've built a value of the form $[[Inl]]~\holesq$ but we have yet to describe the constructor's payload (we call such incomplete values ``hollow cosntructors''). This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$\inconsistent{For some reason this $[[v]]$ is grey. $\to$ Thomas : that's the case for non-terminals in the grammar}. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
-Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling tuples:
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling destination of tuples:
 
 \codehere{\newoperator
-{fillWithAPair}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
-{fillWithAPair~d}{[[d ⨞ (,)]]}}
+{\ottkw{fillWithAPair}}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
+{\ottkw{fillWithAPair}~[[d]]}{[[d ⨞ (,)]]}}
 
-To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $fillWithAPair$ doesn't exist on continuations.
+To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $\ottkw{fillWithAPair}$ doesn't exist on continuations.
 
 \paragraph{Values with holes}
-Let's now turn to how we can use the result of filling destinations. Observe, as a preliminary remark that, while a destination is used to build a value, it doesn't always build a value of the same type. For instance, $fillWithInl$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$, but this destination is used to build a value of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ a value of type $[[S]]$ missing a value of type $[[T]]$ (we say it has a hole of type $[[T]]$). There can be several holes, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$.\improvement{Somewhere around this point it would be good to explain the difference between holes and destinations.}
+Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete (we say it has a hole of type $[[T]]$). There can be several holes in $[[S]]$, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$. It's important to note that a hole of type $[[T]]$ in $[[S]]$ means that $[[S]]$ has some \improvement{Somewhere around this point it would be good to explain the difference between holes and destinations. $\to$ Thomas: see DIFF-HOLE-DEST}
 
-The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $S \parr T^\perp$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That values with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called \verb+Incomplete+ in~\cite{bagrel_destination-passing_2024}.
+The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus in Section~\ref{ssec:ampar-motivation}. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $\ottstype{S \parr T^\perp}$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That values with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called \verb+Incomplete+ in~\cite{bagrel_destination-passing_2024}.
 
-Destinations always exist within the context of a term with holes. To access the destinations \destcalculus provides a $\ottkw{map}$ constructions, which lets us apply a function to the right-hand side of an ampar:
+Destinations always exist within the context of a structure with holes. A hole of type $[[T]]$ inside $[[S]]$ represents the fact that $[[S]]$ contains uninitialized memory that will have to hold a $[[T]]$ for $[[S]]$ to be readable without errors; it only denotes the absence of a value and thus cannot be manipulated directly. A destination $[[⌊ T ⌋ ¹ν]]$, on the other hand, is a first-class value that witnesses the presence of a hole of type $[[T]]$ inside $[[S]]$ and can be used to complete the structure\improvement{DIFF-HOLE-DEST}. To access the destinations, \destcalculus provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of an ampar:
 
 \unsure{It may be more readable to have fillWithInl' and fillWithAPair' side by side. Maybe they're too wide though}
+
+\medskip
+
+\noindent\begin{minipage}{0.5\textwidth}
 \codehere{\newoperator
-{fillWithInl'}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
-{fillWithInl'~x}{[[x map d ⟼ d ⨞ Inl]]}}
-
+{\ottkw{fillWithInl'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
+{\ottkw{fillWithInl'}~[[x]]}{[[x map d ⟼ d ⨞ Inl]]}}
+\end{minipage}\begin{minipage}{0.5\textwidth}
 \codehere{\newoperator
-{fillWithAPair'}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
-{fillWithAPair'~x}{[[x map d ⟼ d ⨞ Inl]]}}
+{\ottkw{fillWithAPair'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
+{\ottkw{fillWithAPair'}~[[x]]}{[[x map d ⟼ d ⨞ Inl]]}}
+\end{minipage}
 
-To tie this up, we need a way to introduce and to eliminate values with holes. Values with holes are introduced with $[[alloc]]$ which creates a value $[[T ⧔ ⌊ T ⌋ ¹ν]]$, which is simply a hole expecting a value of type $[[T]]$. Values with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $[[from⧔ t]]$. It will be discussed in \cref{sec:type-system}.} $[[from⧔' t]] : [[S⧔① ¹ν → S]]$:\critical{remove these t} if all the destinations have been filled, then a value with holes is really just a value.
+To tie this up, we need a way to introduce and to eliminate values with holes. Values with holes are introduced with $[[alloc]]$ which creates a value $[[T ⧔ ⌊ T ⌋ ¹ν]]$, which is simply a hole expecting a value of type $[[T]]$. Values with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottstype{\ltimes} }$. It will be discussed in \cref{sec:type-system}.} $\ottkw{from}_{\ottstype{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been filled, then a value with holes is really just a normal, complete value.
 
-Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show the definition of $[[Inl]]$ and $[[(,)]]$, the other constructors are derived similarly.\unsure{Wording slightly awkward. Revisit at some point. Maybe point out that it makes destinations strictly more expressive than traditional constructor. Maybe discuss as Thomas did at some point that this means that the order in which a structure is built is actually arbitrary, not just outside-in.}
+Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.\unsure{Wording slightly awkward. Revisit at some point. Maybe point out that it makes destinations strictly more expressive than traditional constructor. Maybe discuss as Thomas did at some point that this means that the order in which a structure is built is actually arbitrary, not just outside-in.}
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
@@ -257,27 +264,27 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 {[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
 
 
-\paragraph{Purity}
+\paragraph{Purity}\unsure{Thomas: I do not really like this paragraph. I would like this paragraph to be the other way around: we want a pure model, in particular a model that doesn't break observable immutability. So write-(exactly)-once memory model, with no way to read before every hole has been written to. Thus we need a linear type system.}
 At this point, the reader may be forgiven for feeling distressed at all the talk of filling by mutation\improvement{Make sure that we make it clear} and uninitialized memory. How is it consistent with our claim to be building a pure language\improvement{Ensure that we do claim that}?\unsure{Let's revisit the phrasing of this couple of sentences at some point, it's not utterly elegant.}
 
 Indeed, unrestricted use of destination can lead to rather catastrophic results. The simplest such issue happens when we forget to fill a destination:
 
 \codehere{\newoperator
-{forget}{[[T]]}
-{forget}{[[from⧔' (alloc map d ⟼ ())]]}}
+{\ottkw{forget}}{[[T]]}
+{\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
 
-Here, $forget$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory. So any attempt to use $forget$ will read uninitialized memory.
+Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory. So any attempt to use $\ottkw{forget}$ will read uninitialized memory.
 
 A similar situation can happen if we reuse a destination.\critical{This is a terrible example, because what's really happening here is that we're forgetting a destination. Let's find a true problem of writing several times. Maybe some order-dependence issue?}
 
-\phantom{a}\TODO{Syntactic sugar: let}
+\phantom{a}\TODO{Syntactic sugar: let $\to$ Thomas: I added $[[let x ≔ t in u]]$ and its linebreak-allowing versions}
 \codehere{\newoperator
-{overwrite}{[[T¹ν → T ⨁ U]]}
-{overwrite~x}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}
+{\ottkw{overwrite}}{[[T¹ν → T ⨁ U]]}
+{\ottkw{overwrite}~[[x]]}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}\unsure{It took me too much time to understand what was happening there and why it is wrong}
 
-These programs are rejected by \destcalculus, using a linear type system, ensuring that \destcalculus is a pure and safe languages.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
+These programs are rejected by \destcalculus, using a linear type system, ensuring that \destcalculus is a pure and safe language.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
 
-Linearity of destination isn't the only measure that we need to take in order to ensure that uninitialized memory is never read. Indeed consider a value of type $[[v]]:[[S⧔T]]$. In memory $[[v]]$ is a value of type $[[S]]$ except that it has some uninitialized memory. So we have really careful when we read anything in $[[v]]$. In \destcalculus we take the bluntest restriction: we simply do not give any way to read $[[v]]$ at all. \change{The related work must mention that Minamide has this same restriction. Whereas as SNAX (semi-axiomatisable sequent calculus) doesn't, in exchange of having the ability to wait on unfilled destination and requiring a parallel execution semantics.}\unsure{I wanted to have an example here, but I couldn't find a natural way to write something bad since we truly don't have a tool to write them.}
+Linearity of destination isn't the only measure that we need to take in order to ensure that uninitialized memory is never read. Indeed consider a value of type $[[v]]:[[S⧔T]]$. In memory $[[v]]$ is a value of type $[[S]]$ except that it has some uninitialized memory\critical{This is quite incorrect, $[[v]]$ is rather a pair, and only its left side cannot be read. At least, if we stick to a general $[[T]]$ on the right hand side, it would be too much of a lie to say that there isn't anything else than a $[[S]]$ in memory}. So we have really careful when we read anything in $[[v]]$. In \destcalculus we take the bluntest restriction: we simply do not give any way to read $[[v]]$ at all. \change{The related work must mention that Minamide has this same restriction. Whereas as SNAX (semi-axiomatisable sequent calculus) doesn't, in exchange of having the ability to wait on unfilled destination and requiring a parallel execution semantics. $\to$ Thomas: in SNAX we thus get involutive dest, and symetric ampar, as everything is now a promise}\unsure{I wanted to have an example here, but I couldn't find a natural way to write something bad since we truly don't have a tool to write them.}
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
@@ -285,7 +292,7 @@ If we suppose equirecursive types and a fixed-point operator, then \destcalculus
 
 \paragraph{Linked lists}
 
-For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Following the recipe that we've outline so far, instead of defining the usual \textsc{Nil} $\ottsctor{[]}$ and \textsc{Cons} $\ottsctor{(::)}$ constructors, we define the more general \textsc{FillNil}\unsure{Arnaud hasn't used in the previous section small-caps name for constructors and operations. If we are to use them in the next few sections, it would be good to introduce this vocabulary early.} $\triangleleft\ottsctor{[]}$ and \textsc{FillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
+For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Following the recipe that we've outline so far, instead of defining the usual \textopname{nil} $\ottsctor{[]}$ and \textopname{cons} $\ottsctor{(::)}$ constructors, we define the more general \textopname{fillNil}\unsure{Arnaud hasn't used in the previous section small-caps name for constructors and operations. If we are to use them in the next few sections, it would be good to introduce this vocabulary early.} $\triangleleft\ottsctor{[]}$ and \textopname{fillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
 
 \begin{codefig}{\caption{List implementation in equirecursive destination calculus}\label{fig:impl-list}}
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
@@ -297,21 +304,21 @@ For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto 
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 \end{codefig}
 
-Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textsc{Cons} constructor: $[[T ⨂ (List T) ¹ν → List T]]$:
+Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textopname{cons} constructor: $[[T ⨂ (List T) ¹ν → List T]]$:
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
 {\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
 
-Going from a \textsc{Fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
+Going from a \textopname{fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
 
 \paragraph{Difference lists}
 
-While linked lists are optimized for the prepend operation (\textsc{Cons}), they are not efficient for appending or concatenation, as it requires a full copy (or traversal at least) of the first list before the last cons cell can be changed to point to the head of the second list.
+While linked lists are optimized for the prepend operation (\textopname{cons}), they are not efficient for appending or concatenation, as it requires a full copy (or traversal at least) of the first list before the last cons cell can be changed to point to the head of the second list.
 
-Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \textcolor{red}{\square}$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion.
+Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \holesq$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion.
 
-In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow: thanks to an ampar, we can handle incomplete structures safely, with no need to complete them immediately. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$ : it returns an incomplete list with no items in it, and a destination pointing to that cell so that the list can be built later through destination-feeding primitives, together in an ampar: $[[List T ⧔ ⌊List T⌋ ¹ν]]$. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist}.
+In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow: thanks to an ampar, we can handle incomplete structures safely, with no need to complete them immediately. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$ : it returns an incomplete list with no items in it, and a destination pointing to that cell so that the list can be built later through destination-filling primitives, together in an ampar: $[[List T ⧔ ⌊List T⌋ ¹ν]]$. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist}.
 
 \begin{codefig}{\caption{Difference list implementation in equirecursive destination calculus}\label{fig:impl-dlist}}
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
@@ -329,13 +336,13 @@ ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
   {[[toList ys]]}{[[from⧔' (ys map d ⟼ d ⨞ [])]]}
 \end{codefig}
 
-The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textsc{FillCons} to link a new hollow \textsc{Cons} cell at the end of the list, and then handles the two associated destinations $[[dy]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
+The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textopname{fillCons} to link a new hollow \textopname{cons} cell at the end of the list, and then handles the two associated destinations $[[dy]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
 
-The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole left at the end of the first one. This is done using the \textsc{FillComp} primitive $\triangleleft\mybullet \pmb{:} [[⌊ U1 ⌋n ¹ν → U1 ⧔ U2 ¹↑ · n → U2]]$\footnote{In this particular context, $[[U1]] = [[List T]]$ and $[[U2]] = [[⌊ List T ⌋¹ν]]$, so \textsc{FillComp} has signature $\triangleleft\mybullet \pmb{:} [[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$}. It takes a destination on its left-hand side, and an ampar on its right-hand side. The left side of the ampar (type $[[U1]]$) is fed to the destination (so the incomplete structure is written to a larger incomplete structure from which the destination originated from), and the right side of the ampar (type $[[U2]]$) is returned.
+The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole left at the end of the first one. This is done using the \textopname{fillComp} primitive $\triangleleft\mybullet \pmb{:} [[⌊ U1 ⌋n ¹ν → U1 ⧔ U2 ¹↑ · n → U2]]$\footnote{In this particular context, $[[U1]] = [[List T]]$ and $[[U2]] = [[⌊ List T ⌋¹ν]]$, so \textopname{fillComp} has signature $\triangleleft\mybullet \pmb{:} [[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$}. It takes a destination on its left-hand side, and an ampar on its right-hand side. The left side of the ampar (type $[[U1]]$) is fed to the destination (so the incomplete structure is written to a larger incomplete structure from which the destination originated from), and the right side of the ampar (type $[[U2]]$) is returned.
 
 Here the left side of the second ampar is the second incomplete list, which is pasted at the end of the first incomplete list, consuming the destination of the first difference list in the process. Then the right side of the second ampar, that is to say the destination to the yet-unspecified tail of the second difference list, is returned, and stored back in the resulting ampar (thus serves as the new destination to the tail of the the resulting difference list).
 
-Finally, the $\ottkw{to}_{\ottstype{List}}$ operator converts a difference list to a regular list by filling the hole left in the incomplete list using \textsc{FillNil}.
+Finally, the $\ottkw{to}_{\ottstype{List}}$ operator converts a difference list to a regular list by writing the \textopname{nil} constructor to the hole left in the incomplete list using \textopname{fillNil}.
 
 We can note that although this exemple is typical of destination-style programming, it doesn't use the first-class nature of destinations that our calculus allows, and thus can be implemented in other destination-passing style frameworks such as~\cite{bour_tmc_2021} and~\cite{leijen_trmc_2023}. We will see in the next sections what kind of programs can be benefit from first-class destinations.
 
@@ -343,7 +350,7 @@ We can note that although this exemple is typical of destination-style programmi
 
 The usual functional encoding for a queue is two use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reversed order (e.g the latest inserted element will be at the front of the second list).
 
-With such a queue implementation, dequeueing the front element is efficient (just pattern-match on the first cons cell of the first list, $\mathcal{O}(1)$), and enqueuing a new element is efficient too (just add a new \textsc{Cons} cell at the front of the second list, $\mathcal{O}(1)$ too). However, when the first list is depleted, one has to transfer elements from the second list to the first one, and as such, has to reverse the second list, which is a $\mathcal{O}(n)$ operation (although it is amortized).
+With such a queue implementation, dequeueing the front element is efficient (just pattern-match on the first cons cell of the first list, $\mathcal{O}(1)$), and enqueuing a new element is efficient too (just add a new \textopname{cons} cell at the front of the second list, $\mathcal{O}(1)$ too). However, when the first list is depleted, one has to transfer elements from the second list to the first one, and as such, has to reverse the second list, which is a $\mathcal{O}(n)$ operation (although it is amortized).
 
 With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to maintain a quick $\ottkw{enqueue}$ operation (still $\mathcal{O}(1)$), but remove the need for a $\ottkw{reverse}$ operation (as $\ottkw{to}_{\ottstype{List} }$ is $\mathcal{O}(1)$ for difference lists). Nothing needs to change for the first list. The corresponding implementation is presented in Figure~\ref{fig:impl-queue}.
 
@@ -372,36 +379,36 @@ The $\ottkw{singleton}$ operator creates a pair of a list with a single element,
 
 The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
 
-The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list. If there is, it extracts the element $[[x]]$ by removing the first \textsc{Cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue, made of the tail $[[xs]]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
+The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list. If there is, it extracts the element $[[x]]$ by removing the first \textopname{cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue, made of the tail $[[xs]]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
 
 \section{Limitations of the previous approach}
 
 Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
 
-Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textsc{FillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textsc{FillLeaf}.\improvement{Don't start with the solution, start with the problem. Then we can explain how previous attempts addresses it. In JFLA: fill's right-hand operand wants omega, in Minamide/Tail-modulo-context, we can't store destinations to begin with.}
+Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textopname{fillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textopname{fillLeaf}.\improvement{Don't start with the solution, start with the problem. Then we can explain how previous attempts addresses it. In JFLA: fill's right-hand operand wants omega, in Minamide/Tail-modulo-context, we can't store destinations to begin with.}
 
 \subsection{The problem with stored destinations}\label{ssec:problem-stored-dests}
 
-One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been filled.
+One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been written to.
 
 However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
 
 We have to mark the value being fed in a destination as linearly consumed, so that it cannot be both stored away (to be used later) and pattern-matched on/used in the current context. But that means we have to mark the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ as linearly consumed too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
 
-As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been filled \emph{now}, only that it will be filled later. So our assumption above doesn't hold in general case.
+As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been written to \emph{now}, only that it will be written to later. So our assumption above doesn't hold in general case.
 
 The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[①]])\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we very much want in our system!
 
 The morally correct semantics (in destination calculus pseudo-syntax) would be:\unsure{I'm [Arnaud] really unsure about introducing this one-off notation that we're never using again. Even though I like the use of the underwave to highlight the problem.}
 
-\codehere{\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}}
+\codehere{\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[t]]) ~[[⟶]]~ \ottkw{withTmpStore}~\{ [[h]] \assigneq \holesq \}~\ottkw{do}~\{ [[ t[d ≔ -h] ]]~\patu~\ottkw{deref}~[[-h]] \}}
 
 It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
 
 \codehere{\!\!\!\begin{array}{cl}
       & \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[d ⨞ Inl ⨞ ()]]) \\
-[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \} \\
-[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \coloneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \assigneq \holesq \}~\ottkw{do}~\{ [[-h ⨞ Inl ⨞ ()]]~\patu~\ottkw{deref}~[[-h]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[h]] \assigneq [[Inl ()]] \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} \\
 [[⟶]] & [[Inl ()]]
 \end{array}}
 
@@ -409,21 +416,21 @@ However this falls short when calls to $\ottkw{alloc'}$ are nested in the follow
 
 \codehere{\!\!\!\begin{array}{cl}
       & \ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]])) \\
-[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \} \\
-[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \} \\
-[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \coloneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \assigneq \holesq \}~\ottkw{do}~\{ \ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[-hd ˢ⨞ d]])~\patu~\ottkw{deref}~[[-hd]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \assigneq \holesq \}~\ottkw{do}~\{ \ottkw{withTmpStore}~\{ [[h]] \assigneq \holesq \}~\ottkw{do}~\{ [[-hd ˢ⨞ -h]]~\patu~\ottkw{deref}~[[-h]] \}~\patu~\ottkw{deref}~[[-hd]] \} \\
+[[⟶]] & \ottkw{withTmpStore}~\{ [[hd]] \assigneq [[-h]] \}~\ottkw{do}~\{ \uwave{ \ottkw{withTmpStore}~\{ [[h]] \assigneq \holesq \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \} }~\patu~\ottkw{deref}~[[-hd]] \}
 \end{array}}
 
-The original term $\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been filled, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \coloneq \_ \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
+The original term $\ottkw{alloc'}~(\ottsctor{\lambda}[[dd]]\,_{\mymul{[[¹]]}}\!\!\mapsto\ottkw{alloc'}~(\ottsctor{\lambda}[[d]]\,_{\mymul{[[¹]]}}\!\!\mapsto[[dd ˢ⨞ d]]))$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and consumes $[[d]]$ linearly. However, we see that because $[[-h]]$ escaped to the parent scope by being stored in a destination of destination coming from the parent scope, the hole $[[h]]$ has not been written to, and thus the inner expression $\ottkw{withTmpStore}~\{ [[h]] \assigneq \holesq \}~\ottkw{do}~\{ \ottkw{deref}~[[-h]] \}$ cannot reduce in a meaningful way.
 
 \improvement{I remember that we did wonder about that at some point, so it's worth preempting the question. Though I'd rather we found a slightly different example that doesn't exploit the return type of fill than a paragraph recounting our life story.}
-One could argue that the issue comes from the destination-feeding primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of feeding a destination ; there is always a way to cheat the system and make a destination escape to a parent scope. This distinct type for effects has in fact existed during the early prototypes of destination calculus, but we removed it as it doesn't solve the scope escape for destination and is indistinguishable in practice from the unit type.
+One could argue that the issue comes from the destination-filling primitive $\triangleleft$ returning unit instead of a special value of a distinct \emph{effect} type. However, the same issue arise if we introduce a distinct type $\ottstype{\lfloor\!\!\rfloor}$ for the effect of filling a destination ; there is always a way to cheat the system and make a destination escape to a parent scope. This distinct type for effects has in fact existed during the early prototypes of destination calculus, but we removed it as it doesn't solve the scope escape for destination and is indistinguishable in practice from the unit type.
 
 \subsection{Age control to prevent scope escape of destinations}
 
 \unsure{I don't think this is the right place for this section. It should appear in the formal system I think.}
 
-The solution we chose is to instead track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-feeding primitives.
+The solution we chose is to instead track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-filling primitives.
 
 Age is represented by a commutative semiring, where $[[ν]]$ indicates that a destination originates from the current scope, and $[[↑]]$ indicates that it originates from the scope just before. We also extend ages to variables (a variable of age $[[a]]$ stands for a value of age $[[a]]$). Finally, age $[[∞]]$ is introduced for variables standing in place of a non-age-controlled value. In particular, destinations can never have age $[[∞]]$ in practice.
 
@@ -574,17 +581,17 @@ In that paper, a structure with a hole is named \emph{hole abstraction}. In the 
 
 In fact, the type of hole abstraction $\ottstype{([[T1]], [[T2]]) hfun}$ in Minamine's work shares a lot of similarity with the separating implication or \emph{magic wand} $\ottstype{[[T1]] \sepimp [[T2]]}$ from separation logic: given a piece of memory matching description $[[T1]]$, we obtain a (complete) piece of memory matching description $[[T2]]$.
 
-Now, in classical linear logic, we know we can transform linear implication $\ottstype{[[T1]] \multimap [[T2]]}$ into $\ottstype{[[T1]]^{\bot}~\parr~[[T2]]}$. Doing so for the \emph{wand} type $\ottstype{([[T1]], [[T2]]) hfun}$ or $\ottstype{[[T1]] \sepimp [[T2]]}$ gives $\ottstype{\lfloor[[T1]]\rfloor~ \widehat{\parr}~[[T2]]}$, where $\ottstype{\lfloor\smallbullet\rfloor}$ is memory negation, and $\ottstype{\widehat{\parr}}$ is a memory \emph{par} (weaker than the CLL \emph{par} that allows more ``interaction'' of its two sides).
+Now, in classical linear logic, we know we can transform linear implication $\ottstype{[[T1]] \multimap [[T2]]}$ into $\ottstype{[[T1]]^{\perp}~\parr~[[T2]]}$. Doing so for the \emph{wand} type $\ottstype{([[T1]], [[T2]]) hfun}$ or $\ottstype{[[T1]] \sepimp [[T2]]}$ gives $\ottstype{\lfloor[[T1]]\rfloor~ \widehat{\parr}~[[T2]]}$, where $\ottstype{\lfloor\smallbullet\rfloor}$ is memory negation, and $\ottstype{\widehat{\parr}}$ is a memory \emph{par} (weaker than the CLL \emph{par} that allows more ``interaction'' of its two sides).
 
 Transforming the hole abstraction from its original implication form to a \emph{par} form let us consider the type $\ottstype{\lfloor[[T1]]\rfloor}$ of \emph{sink} or \emph{destination} of $[[T1]]$ as a first class component of our calculus. We also get to see the hole abstraction aka memory par as a pair-like structure, where the two sides might be coupled together in a way that prevent using both of them simultaneously.
 
 \paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
 
-In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $[[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\bot}$, or $\ottstype{[[T]]^{\bot^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\bot}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\bot}$, the two potential forms of the eliminator of $[[T]]$ are equal.
+In CLL, the cut rule states that given $\ottstype{[[T1]]~\parr~[[T2]]}$, we can free up $[[T1]]$ by providing an eliminator of $[[T2]]$, or free up $[[T2]]$ by providing an eliminator of $[[T1]]$. The eliminator of $[[T]]$ can be $\ottstype{[[T]]^\perp}$, or $\ottstype{[[T]]^{\perp^{-1}}} = [[T']]$ if $[[T]]$ is already of the form $\ottstype{[[T']]^\perp}$. In a classical setting, thanks to the involutive nature of negation $\ottstype{\smallbullet^\perp}$, the two potential forms of the eliminator of $[[T]]$ are equal.
 
 In destination calculus though, we don't have an involutive memory negation $\ottstype{\lfloor\smallbullet\rfloor}$. If we are provided with a destination of destination $[[-h']] \pmb{:} \ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$, we know that some structure is expecting to store a destination of type $\ottstype{\lfloor[[T]]\rfloor}$. If ever that structure is consumed, then the destination stored inside will have to be fed with a value (remember we are in a linear calculus). So if we allocate a new memory slot of type $[[+h]] \pmb{:} [[T]]$ and its linked destination $[[-h]] \pmb{:} \ottstype{\lfloor[[T]]\rfloor}$, and write $[[-h]]$ to the memory slot pointed to by $[[-h']]$, then we can get back a value of type $[[T]]$ at $[[+h]]$ if ever the structure pointed to by $[[-h']]$ is consumed. Thus, a destination of destination is only equivalent to the promise of an eventual value, not an immediate usable one.
 
-As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been filled! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ originating from $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
+As a result, in destination calculus, we cannot have the same kind of cut rule as in CLL. This is, in fact, the part of destination calculus that was the hardest to design, and the source of a lot of early errors. For a destination of type $\ottstype{\lfloor[[T]]\rfloor}$, both storing it through a destination of destination $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$ or using it to store a value of type $[[T]]$ constitute a linear use of the destination. But only the latter is a genuine consumption in the sense that it guarantees that the hole associated to the destination has been written to! Storing away the destination of type $\ottstype{\lfloor[[T]]\rfloor}$ originating from $\ottstype{[[T]]~\widehat{\parr}~\lfloor[[T]]\rfloor}$ (through a destination of destination of type $\ottstype{\lfloor\lfloor[[T]]\rfloor\rfloor}$) should not allow to free up the $[[T]]$, as it would in a CLL-like setting.
 
 However, we can recover a memory abstraction that is usable in practice if we know the nature of an memory par side:
 \begin{itemize}
@@ -640,21 +647,27 @@ Destination calculus is based on linear simply-typed $\lambda$-calculus, with bu
 }
 \end{ottfig}
 
-In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-feeding primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
+In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
 Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}.
 
-$\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the \emph{ampar} --- the one containing destinations of that \emph{ampar} --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the \emph{ampar} is inaccessible as it is being mutated behind the scenes by the destination-feeding primitives.
+$\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the \emph{ampar} --- the one containing destinations of that \emph{ampar} --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the \emph{ampar} is inaccessible as it is being mutated behind the scenes by the destination-filling primitives.
 
-$\ottkw{to}_{\ottstype{\ltimes}}$ embeds an already completed structure in an \emph{ampar} whose left side is the structure, and right side is unit. We have an operator \textsc{FillComp} ($\triangleleft\mybullet$) allowing to compose two \emph{ampar}s by writing the root of the second one to a destination of the first one, so by throwing $\ottkw{to}_{\ottstype{\ltimes}}$ to the mix, we can compose an \emph{ampar} with a normal (completed) structure (see the sugar operator \textsc{FillLeaf} ($\triangleleft$) in Section~\ref{ssec:sugar}).
+$\ottkw{to}_{\ottstype{\ltimes}}$ embeds an already completed structure in an \emph{ampar} whose left side is the structure, and right side is unit. We have an operator \textopname{fillComp} ($\triangleleft\mybullet$) allowing to compose two \emph{ampar}s by writing the root of the second one to a destination of the first one, so by throwing $\ottkw{to}_{\ottstype{\ltimes}}$ to the mix, we can compose an \emph{ampar} with a normal (completed) structure (see the sugar operator \textopname{fillLeaf} ($\triangleleft$) in Section~\ref{ssec:sugar}).
 
 $\ottkw{from}_{\ottstype{\ltimes}}$ is used to convert an \emph{ampar} to a pair, when the right side of the \emph{ampar} is an exponential of the form $[[ᴇ ¹∞ v]]$. Indeed, when the right side has such form, it cannot contains destinations (as destinations always have a finite age), thus it cannot contain holes in its left side either (as holes on the left side are always compensated 1:1 by a destination on the right side). As a result, it is valid to convert an \emph{ampar} to a pair in these circumstances. $\ottkw{from}_{\ottstype{\ltimes}}$ is in particular used to extract a structure from its \emph{ampar} building shell when it is complete (see the sugar operator $\ottkw{from'}_{\ottstype{\ltimes}}$ in Section~\ref{ssec:sugar}).
 
-The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-feeding primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-filling primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+
+\paragraph{Values} There are two important things to note on the value class.
+
+First, a variable cannot contains any free variable. This will be better visible in the typing rule for function value form \textsc{Ty-val-Fun}, but a value only admits hole and destination type bindings in its typing context, no variable binding. This is quite useful for substitution lemmas, as no undesired capture can happen.
+
+Secondly, values are allowed to have holes inside (represented by names $[[h]]$, $[[h1]]$, $[[h2]]$\ldots), but a value used as a term isn't allowed to have any free hole (i.e. a hole that is not compensated by an associated destination inside an ampar). This is enforced by the typing context $[[D]]$ meaning ``destination-only'' in the rule \textsc{Ty-term-Val}.
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
 
-As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-feeding primitives in Figure~\ref{fig:sugar}.
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives in Figure~\ref{fig:sugar}.
 
 \begin{ottfig}{\caption{Syntactic sugar forms for terms}\label{fig:sugar}}
 \ottgrammartabular{
@@ -731,6 +744,8 @@ from⧔' (⮒
 
 \ottdefnTyXXval{}
 \ottdefnTyXXterm{}
+
+Typing rules for usual types values, application and $\ottkw{case}$ statements follows closely the ones from~\cite{bernardy_linear_2018}.
 
 \subsection{Derived typing rules for syntactic sugar forms}
 

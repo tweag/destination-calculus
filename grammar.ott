@@ -79,11 +79,11 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t' t :: :: App {{ com Application }} {{ tex [[t']]~[[t]] }}
   | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\patu[[u]] }}
   | t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
   | t case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
   | t case m t' ⟼ u :: S :: SugarPatNested {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,[[t']][[⟼]][[u]] }} % Coq translation is a placeholder
   | t case m { t1 ⟼ u1 , t2 ⟼ u2 } :: S :: SugarPatNestedS {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex [[t]]\vartriangleright\!\ottkw{case}_{\mycasem{[[m]]} }\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]]\} }} % Coq translation is a placeholder
-  | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex [[t]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +
+  | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex [[t]]\vartriangleright\!\ottkw{map}~[[x]][[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
   % | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
@@ -134,6 +134,9 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | go t1 t2 t3 :: S :: SugarGo {{ coq (term_Val val_Unit) }} {{ tex \ottkw{go}~[[t1]]~[[t2]]~[[t3]] }}
   | mapAccumBFS t1 t2 t3 :: S :: SugarMapAccumBFS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{mapAccumBFS}~[[t1]]~[[t2]]~[[t3]] }}
   | relabelDPS t :: S :: SugarRelabelDPS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{relabelDPS}~[[t]] }}
+  | let x ≔ t in u :: S :: SugarLet {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]]~\ottkw{in}~[[u]] }}
+  | let x ≔ t b in u :: S :: SugarLetSp1 {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]][[b]]\alignedin{}~[[u]] }}
+  | let x ≔ t b sp in u :: S :: SugarLetSp2 {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]][[b]][[sp]]\alignedin{}~[[u]] }}
   | ༼ t ༽ :: S :: InvisParen {{ coq [[t]] }} {{ tex [[t]] }}
 
 sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
@@ -177,9 +180,9 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ v :: :: App_Foc2  {{ tex [[⬜]]~[[v]] }}
   | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]\patu[[u]] }}
   | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
+  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
   | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{case}_{[[m]]}\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ map x ⟼ t' :: :: Map_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{map}~[[x]]\![[⟼]][[t']] }} % (+ bind x in u +)
+  | ⬜ map x ⟼ t' :: :: Map_Foc {{ tex [[⬜]]\vartriangleright\!\ottkw{map}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
 
   | to⧔ ⬜ :: :: ToA_Foc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }}
   | from⧔ ⬜ :: :: FromA_Foc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }}
