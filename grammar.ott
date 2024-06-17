@@ -54,8 +54,8 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 grammar
 
 hvar, h, hd :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
-  | 1 :: S :: 1 {{ coq 1 }} {{ tex \textcolor{hvarcolor}{\mathtt{\scriptstyle0x}1} }}
-  | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hvarcolor}{\mathtt{\scriptstyle0x}2} }}
+  | 1 :: S :: 1 {{ coq 1 }} {{ tex \textcolor{hvarcolor}{\mathtt{1} } }}
+  | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hvarcolor}{\mathtt{2} } }}
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
   | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
   | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathsfbf{max}(}[[H]]\ottshvar{)} }}
@@ -151,7 +151,7 @@ sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ com Allocate pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
 val, v :: 'val_' ::= {{ com Value }}
-  | + h :: :: Hole {{ com Hole }} {{ tex [[h]] }}
+  | + h :: :: Hole {{ com Hole }} {{ tex \ottshvar{\hboxed{[[h]]} } }}
   | - h :: :: Dest {{ tex \ottshvar{\destminus}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | ᵛλ x m ⟼ u :: :: Fun {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Function with no free variable }} % (+ bind x in t +)
@@ -224,13 +224,13 @@ mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }
   | m1 · ... · mk :: S :: Times {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
   | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
 
-mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring, first component of modality) }} {{ coq _mul }}
+mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring, first component of mode) }} {{ coq _mul }}
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear use }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear use }} {{ coq Ur }}
   | p1 . ... . pk :: S :: Times {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
-age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second component of modality) }} {{ coq ext_nat }}
+age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second component of mode) }} {{ coq ext_nat }}
   | ν :: :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now }} {{ coq (Fin 0) }}
   | ↑ :: :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
   | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static }} {{ coq Inf }}
@@ -282,7 +282,7 @@ ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
   | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
   | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
-  | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex [[h]]:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
+  | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{\hboxed{[[h]]} }:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
   | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
   | m · G :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
   | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
@@ -925,9 +925,9 @@ terminals :: 'terminals_' ::=
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex \longrightarrow }}
   | ⊢ :: :: vdash {{ tex \,\pmb{\vdash}\, }}
-  | ˢ⊢ :: :: svdash {{ tex \pmb{\phantom{a}^{\scriptscriptstyle s}\!\!\vdash}\, }}
+  | ˢ⊢ :: :: svdash {{ tex \!\!\pmb{\phantom{a}^{\scriptscriptstyle \mathrm{s} }\!\!\vdash}\, }}
   | ⊣ :: :: dashv {{ tex \,\pmb{\dashv}\, }}
-  | ⫦ :: :: dvdash {{ tex \,\pmb{\Vdash}\, }}
+  | ⫦ :: :: dvdash {{ tex \!\!\pmb{\phantom{a}^{\scriptscriptstyle \mathrm{v} }\!\!\vdash}\, }}
   | : :: :: colon {{ tex \pmb{:} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

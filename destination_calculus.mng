@@ -99,7 +99,6 @@
 \def\mydestm#1{\ifthenelse{\equal{#1}{[[¹ν]]}}{}{#1}}
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
-\newcommand{\holesq}{\textcolor{red}{\square}}
 \newcommand{\destcalculus}{\ensuremath{\lambda_d} }
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
@@ -638,9 +637,9 @@ Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ 
 
 \subsection{Term and value core syntax}\label{ssec:core-syntax}
 
-Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms, which is presented in Figure~\ref{fig:grammar-terms} is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
+Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms, which is presented in Figure~\ref{fig:grammar-term-val} is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
-\begin{ottfig}{\caption{Grammar for terms}\label{fig:grammar-terms}}
+\begin{ottfig}{\caption{Grammar for terms and values}\label{fig:grammar-term-val}}
 \ottgrammartabular{
 \ottterm\ottinterrule
 \ottval\ottafterlastrule
@@ -649,7 +648,7 @@ Destination calculus is based on linear simply-typed $\lambda$-calculus, with bu
 
 In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the \emph{ampar} value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
-Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}.
+Pattern-matching on every type of structure (except unit) is parametrized by a mode $[[m]]$ to which the scrutinee is consumed. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell\cite{bernardy_linear_2018}. We omit the mode annotation on $\ottkw{case}$ statements and lambda abstractions when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring.
 
 $\ottkw{map}$ is the main primitive to operate on an \emph{ampar}, which represents an incomplete data structure whose building is in progress. $\ottkw{map}$ binds the right-hand side of the \emph{ampar} --- the one containing destinations of that \emph{ampar} --- to a variable, allowing those destinations to be operated on by destination-filling primitives. The left-hand side of the \emph{ampar} is inaccessible as it is being mutated behind the scenes by the destination-filling primitives.
 
@@ -663,13 +662,13 @@ The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[�
 
 First, a variable cannot contains any free variable. This will be better visible in the typing rule for function value form \textsc{Ty-val-Fun}, but a value only admits hole and destination type bindings in its typing context, no variable binding. This is quite useful for substitution lemmas, as no undesired capture can happen.
 
-Secondly, values are allowed to have holes inside (represented by names $[[h]]$, $[[h1]]$, $[[h2]]$\ldots), but a value used as a term isn't allowed to have any free hole (i.e. a hole that is not compensated by an associated destination inside an ampar). This is enforced by the typing context $[[D]]$ meaning ``destination-only'' in the rule \textsc{Ty-term-Val}.
+Secondly, values are allowed to have holes inside (represented by $[[+h]]$, $[[+h1]]$, $[[+h2]]$\ldots), but a value used as a term isn't allowed to have any free hole (i.e. a hole that is not compensated by an associated destination inside an ampar). This is enforced by the typing context $[[D]]$ meaning ``destination-only'' in the rule \textsc{Ty-term-Val}.
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
 
-As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives in Figure~\ref{fig:sugar}.
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives in Figure~\ref{fig:grammar-sterm}.
 
-\begin{ottfig}{\caption{Syntactic sugar forms for terms}\label{fig:sugar}}
+\begin{ottfig}{\caption{Syntactic sugar forms for terms}\label{fig:grammar-sterm}}
 \ottgrammartabular{
 \ottsterm\ottafterlastrule
 }
@@ -730,8 +729,15 @@ from⧔' (⮒
 \section{Type system}
 \label{sec:type-system}
 
-\subsection{Syntax for types, modes, and typing contexts}
+The type system of \destcalculus is highly inspired from Linear Haskell~\cite{bernardy_linear_2018}. In particular, it uses the same additive/multiplicative approach on mode as Linear Haskell for linearity enforcement, except here we use a product semiring for mode that keeps track of both age and multiplicity of variables (whereas only multiplicity is tracked in the former).
 
+As \destcalculus is based on intuitionistic linear logic, it provides multiplicative conjunction $\ottstype{\otimes}$ (product type) and additive disjunction (sum type) $\ottstype{\oplus}$. It also provides a function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ that are both parametrized by a mode $[[m]]$. We omit the mode annotation on the function arrow, as well as on the destination type, when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring.
+
+A mode is either a pair of a multiplicity and an age, or the special symbol $[[☠]]$ representing an unsatisfiable requirement for a variable in a typing context (e.g. a variable that is used with different types in two branches of a $\ottkw{case}$ statement on a sum type). This special mode ``invalid'' $[[☠]]$ is only used in the formal proof of type safety of \destcalculus, when summing typing contexts. However, every mode $[[m]]$ present in the typing rules of this paper is assumed to be valid (i.e. made of a pair of a multiplicity and an age), and every typing context in a rule premises is assumed to contain only valid modes too.
+
+\subsection{Types, modes, and typing contexts}
+
+\begin{ottfig}{\caption{Types, modes, and typing contexts}\label{fig:grammar-type-mode-ctx}}
 \ottgrammartabular{
 \otttype\ottinterrule
 \ottmode\ottinterrule
@@ -739,35 +745,44 @@ from⧔' (⮒
 \ottage\ottinterrule
 \ottctx\ottafterlastrule
 }
+\end{ottfig}
 
 \subsection{Typing of terms and values}
 
+\begin{ottfig}{\caption{Typing rules for values and terms}\label{fig:ty-term-val}}
 \ottdefnTyXXval{}
 \ottdefnTyXXterm{}
-
-Typing rules for usual types values, application and $\ottkw{case}$ statements follows closely the ones from~\cite{bernardy_linear_2018}.
+\end{ottfig}
 
 \subsection{Derived typing rules for syntactic sugar forms}
 
-\ottdefnTyXXsterm{}
+\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}
+  \ottdefnTyXXsterm{}
+\end{ottfig}
 
 \section{Evaluation contexts and semantics}
 
 \subsection{Evaluation contexts forms}
 
+\begin{ottfig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}
 \ottgrammartabular{
 \ottectx\ottinterrule
 \ottectxs\ottafterlastrule
 }
+\end{ottfig}
 
 \subsection{Typing of evaluation contexts and commands}
 
+\begin{ottfig}{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}
 \ottdefnTyXXectxs{}
 \ottdefnTy{}
+\end{ottfig}
 
 \subsection{Small-step semantics}
 
+\begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
 \ottdefnSem{}
+\end{ottfig}
 
 \section{Proof of type safety using Coq proof assistant}
 
