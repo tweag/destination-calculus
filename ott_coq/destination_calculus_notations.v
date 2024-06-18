@@ -4,15 +4,15 @@ Require Import Dest.destination_calculus_ott.
 Require Import Dest.ext_nat.
 
 (* Var, holes and dests names : 15-19 *)
-Notation "'maxᴴ(' H ')'" := (hvar_max H) (at level 0, no associativity).
-Notation "h 'ʰ[' H '⩲' k ] " := (hvar_cshift h H k) (at level 15, H at level 24, k at level 19, no associativity).
+Notation "'maxᴴ(' H ')'" := (hname_max H) (at level 0, no associativity).
+Notation "h 'ʰ[' H '⩲' k ] " := (hname_cshift h H k) (at level 15, H at level 24, k at level 19, no associativity).
 
 (* Hole names sets : 21-24 *)
-Notation "'ᴴ{' b , .. , c '}'" := (hvars_ (cons b .. (cons c nil) ..)) (at level 0, no associativity).
-Notation "H1 '∪' H2" := (HVars.union H1 H2) (at level 24, left associativity, H2 at next level).
-Notation "H 'ᴴ⩲' h" := (hvars_shift H h) (at level 21, h at level 19, no associativity).
-Notation "'hvarsᴳ(' G ')'" := (hvars_ctx G) (at level 0, no associativity).
-Notation "'hvars©(' C ')'" := (hvars_ectxs C) (at level 0, no associativity).
+Notation "'ᴴ{' b , .. , c '}'" := (hnames_ (cons b .. (cons c nil) ..)) (at level 0, no associativity).
+Notation "H1 '∪' H2" := (HNames.union H1 H2) (at level 24, left associativity, H2 at next level).
+Notation "H 'ᴴ⩲' h" := (hnames_shift H h) (at level 21, h at level 19, no associativity).
+Notation "'hnamesᴳ(' G ')'" := (hnames_ctx G) (at level 0, no associativity).
+Notation "'hnames©(' C ')'" := (hnames_ectxs C) (at level 0, no associativity).
 
 (* Terms : 40-59 *)
 Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).

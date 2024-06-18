@@ -65,7 +65,7 @@ n·G ⫦ ᴇ n v' : ! n T
 ¹↑·D1 + D3 ⫦ v1 : T [[:Tyv1]]
 D2 + (-⁻¹D3) ⫦ v2 : U [[:Tyv2]]
 ---------------- :: Ampar
-D1 + D2 ⫦ hvars(-⁻¹D3) ⟨v2 ❟ v1⟩ : U ⧔ T
+D1 + D2 ⫦ hnames(-⁻¹D3) ⟨v2 ❟ v1⟩ : U ⧔ T
 
 defn
 P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
@@ -371,7 +371,7 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 {{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
 {{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]
 {{ [[D2]] # [[D3]] }} [[:Disjoint2D3]]
-{{ [[hvars(C)]] ## [[hvars(-⁻¹D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
+{{ [[hnames(C)]] ## [[hnames(-⁻¹D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
@@ -381,7 +381,7 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar_Foc
-¹↑·D1 + D3 ⊣ C ∘ (hvars(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
+¹↑·D1 + D3 ⊣ C ∘ (hnames(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
 
 defn
 ⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} by
@@ -471,7 +471,7 @@ C[t map x ⟼ t'] ⟶ (C ∘ (⬜ map x ⟼ t'))[t]
 ----------------------- :: Map_Unfoc
 (C ∘ (⬜ map x ⟼ t'))[v] ⟶ C[v map x ⟼ t']
 
-{{ [[h']] = [[max(hvars(C)) + 1]] }} [[:hpMaxC]]
+{{ [[h']] = [[max(hnames(C)) + 1]] }} [[:hpMaxC]]
 ---------------------------------- :: Map_Red_OpenAmpar_Foc
 C[ H ⟨ v2 ❟ v1 ⟩ map x ⟼ t'] ⟶ (C ∘ (H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h'] ] ]
 
@@ -519,7 +519,7 @@ C[t ⨞ Inl] ⟶ (C ∘ (⬜ ⨞ Inl))[t]
 ------------------------------------- :: FillL_Unfoc
 (C ∘ (⬜ ⨞ Inl))[v] ⟶ C[v ⨞ Inl]
 
-{{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillL_Red
 C[-h ⨞ Inl] ⟶ C[h ≔ {h'+1} Inl  +(h'+1)][-(h'+1)]
 
@@ -530,7 +530,7 @@ C[t ⨞ Inr] ⟶ (C ∘ (⬜ ⨞ Inr))[t]
 ------------------------------------- :: FillR_Unfoc
 (C ∘ (⬜ ⨞ Inr))[v] ⟶ C[v ⨞ Inr]
 
-{{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillR_Red
 C[-h ⨞ Inr] ⟶ C[h ≔ {h'+1} Inr  +(h'+1)][-(h'+1)]
 
@@ -541,7 +541,7 @@ C[t ⨞ ᴇ m] ⟶ (C ∘ (⬜ ⨞ ᴇ m))[t]
 ------------------------------------- :: FillE_Unfoc
 (C ∘ (⬜ ⨞ ᴇ m))[v] ⟶ C[v ⨞ ᴇ m]
 
-{{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillE_Red
 C[-h ⨞ ᴇ m] ⟶ C[h ≔ {h'+1} ᴇ m  +(h'+1)][-(h'+1)]
 
@@ -552,7 +552,7 @@ C[t ⨞ (,)] ⟶ (C ∘ (⬜ ⨞ (,)))[t]
 ------------------------------------- :: FillP_Unfoc
 (C ∘ (⬜ ⨞ (,)))[v] ⟶ C[v ⨞ (,)]
 
-{{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 --------------------------------------- :: FillP_Red
 C[-h ⨞ (,)] ⟶ C[h ≔ {h'+1,h'+2} ( +(h'+1), +(h'+2))][( -(h'+1), -(h'+2) )]
 
@@ -580,6 +580,6 @@ C[v ⨞· t'] ⟶ (C ∘ (v ⨞· ⬜))[t']
 ------------------------------------- :: FillComp_Unfoc2
 (C ∘ (v ⨞· ⬜))[v'] ⟶ C[v ⨞· v']
 
-{{ [[h']] = [[max(hvars(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 ---------------------------------------- :: FillComp_Red
 C[-h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h') v2[H⩲h'] ][v1[H⩲h'] ]

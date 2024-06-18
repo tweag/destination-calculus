@@ -25,8 +25,8 @@ Module Nat' <: OrderedTypeWithLeibniz.
   Proof. trivial.
   Qed.
 End Nat'.
-Module HVars := MSetList.MakeWithLeibniz(Nat').
-Module HVarsFacts := MSetFacts.Facts(HVars).
+Module HNames := MSetList.MakeWithLeibniz(Nat').
+Module HNamesFacts := MSetFacts.Facts(HNames).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -54,11 +54,11 @@ Definition age : Type := ext_nat.
 
 Definition mul : Type := _mul.
 
-Definition hvar : Type := nat.
+Definition hname : Type := nat.
 
 Definition mode : Type := option (mul * age).
 
-Definition hvars : Type := HVars.t.
+Definition hnames : Type := HNames.t.
 
 Inductive term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
@@ -79,15 +79,15 @@ Inductive term : Type :=  (*r Term *)
  | term_FillF (t:term) (x:var) (m:mode) (u:term) (*r Fill destination with function *)
  | term_FillComp (t:term) (t':term) (*r Fill destination with root of other ampar *)
 with val : Type :=  (*r Value *)
- | val_Hole (h:hvar) (*r Hole *)
- | val_Dest (h:hvar) (*r Destination *)
+ | val_Hole (h:hname) (*r Hole *)
+ | val_Dest (h:hname) (*r Destination *)
  | val_Unit : val (*r Unit *)
  | val_Fun (x:var) (m:mode) (u:term) (*r Function with no free variable *)
  | val_Left (v:val) (*r Left variant for sum *)
  | val_Right (v:val) (*r Right variant for sum *)
  | val_Exp (m:mode) (v:val) (*r Exponential *)
  | val_Prod (v1:val) (v2:val) (*r Product *)
- | val_Ampar (H:hvars) (v2:val) (v1:val) (*r Ampar *).
+ | val_Ampar (H:hnames) (v2:val) (v1:val) (*r Ampar *).
 
 Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_App_Foc1 (t':term)
@@ -107,7 +107,7 @@ Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_FillF_Foc (x:var) (m:mode) (u:term)
  | ectx_FillComp_Foc1 (t':term)
  | ectx_FillComp_Foc2 (v:val)
- | ectx_OpenAmpar_Foc (H:hvars) (v2:val) (*r Open ampar, binding hole names in the next components *).
+ | ectx_OpenAmpar_Foc (H:hnames) (v2:val) (*r Open ampar, binding hole names in the next components *).
 
 Inductive type : Type :=  (*r Type *)
  | type_Unit : type (*r Unit *)
@@ -120,7 +120,7 @@ Inductive type : Type :=  (*r Type *)
 
 Inductive name : Type := 
  | name_Var (x:var)
- | name_DH (h:hvar).
+ | name_DH (h:hname).
 
 Definition ectxs : Type := (list ectx).
 
@@ -145,15 +145,15 @@ Variables
   (P_term : term -> Prop).
 
 Hypothesis
-  (H_val_Hole : forall (h:hvar), P_val (val_Hole h))
-  (H_val_Dest : forall (h:hvar), P_val (val_Dest h))
+  (H_val_Hole : forall (h:hname), P_val (val_Hole h))
+  (H_val_Dest : forall (h:hname), P_val (val_Dest h))
   (H_val_Unit : P_val val_Unit)
   (H_val_Fun : forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_val (val_Fun x m u))
   (H_val_Left : forall (v:val), P_val v -> P_val (val_Left v))
   (H_val_Right : forall (v:val), P_val v -> P_val (val_Right v))
   (H_val_Exp : forall (m:mode), forall (v:val), P_val v -> P_val (val_Exp m v))
   (H_val_Prod : forall (v1:val), P_val v1 -> forall (v2:val), P_val v2 -> P_val (val_Prod v1 v2))
-  (H_val_Ampar : forall (H:hvars), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
+  (H_val_Ampar : forall (H:hnames), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
   (H_term_Val : forall (v:val), P_val v -> P_term (term_Val v))
   (H_term_Var : forall (x:var), P_term (term_Var x))
   (H_term_App : forall (t':term), P_term t' -> forall (t:term), P_term t -> P_term (term_App t' t))
@@ -237,7 +237,7 @@ Definition binding_type_of (n : name) : Type :=
   | name_DH _ => binding_dh
   end.
 
-Definition cast_binding_rename (h : hvar) (h' : hvar) (b : binding_type_of (name_DH h)): binding_type_of (name_DH h') :=
+Definition cast_binding_rename (h : hname) (h' : hname) (b : binding_type_of (name_DH h)): binding_type_of (name_DH h') :=
   b.
 
 Definition name_eq_dec (x y : name) : {x = y} + {x<>y}.
@@ -254,54 +254,54 @@ Definition ctx : Type := Finitely.T name binding_type_of.
  * NAMES
  *****************************************************************************)
 
-Definition shift_one (h' : hvar) (h'' : hvar) : Permutation.Transposition.T :=
+Definition shift_one (h' : hname) (h'' : hname) : Permutation.Transposition.T :=
   {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|}
 .
 
-Definition shift_perm (H : hvars) (h' : hvar) : Permutation.T :=
-  List.map (shift_one h') (HVars.elements H)
+Definition shift_perm (H : hnames) (h' : hname) : Permutation.T :=
+  List.map (shift_one h') (HNames.elements H)
 .
 
-Definition hvar_cshift (h : hvar) (H : HVars.t) (h' : hvar) : hvar :=
+Definition hname_cshift (h : hname) (H : HNames.t) (h' : hname) : hname :=
   Permutation.sem (shift_perm H h') h
 .
 
-Fixpoint hvars_ (l : list nat) : HVars.t :=
+Fixpoint hnames_ (l : list nat) : HNames.t :=
   match l with
-  | nil => HVars.empty
-  | h :: t => HVars.add h (hvars_ t)
+  | nil => HNames.empty
+  | h :: t => HNames.add h (hnames_ t)
   end.
 
-Definition hvar_max (H : HVars.t) : nat := match HVars.max_elt H with
+Definition hname_max (H : HNames.t) : nat := match HNames.max_elt H with
   | Some h => h
   | None => 0
   end.
 
-Definition hvars_shift (H : HVars.t) (h' : nat) : HVars.t :=
-  HVars.fold (fun h acc => HVars.add (h + h') acc) H HVars.empty.
+Definition hnames_shift (H : HNames.t) (h' : nat) : HNames.t :=
+  HNames.fold (fun h acc => HNames.add (h + h') acc) H HNames.empty.
 
-Definition hvars_cshift (H H': HVars.t) (h' : nat) : HVars.t :=
-  HVars.fold (fun h acc => HVars.add (hvar_cshift h H' h') acc) H HVars.empty.
+Definition hnames_cshift (H H': HNames.t) (h' : nat) : HNames.t :=
+  HNames.fold (fun h acc => HNames.add (hname_cshift h H' h') acc) H HNames.empty.
 
-Fixpoint hvars_dom (dom: list name) : HVars.t :=
+Fixpoint hnames_dom (dom: list name) : HNames.t :=
   match dom with
-  | nil => HVars.empty
-  | name_Var _ :: xs => hvars_dom xs
-  | name_DH h :: xs => HVars.add h (hvars_dom xs)
+  | nil => HNames.empty
+  | name_Var _ :: xs => hnames_dom xs
+  | name_DH h :: xs => HNames.add h (hnames_dom xs)
   end.
-Definition hvars_ctx (G : ctx) : HVars.t :=
-  hvars_dom (dom G).
+Definition hnames_ctx (G : ctx) : HNames.t :=
+  hnames_dom (dom G).
 
-Fixpoint hvars_ectxs (C : ectxs) : HVars.t := match C with
-  | nil => HVars.empty
+Fixpoint hnames_ectxs (C : ectxs) : HNames.t := match C with
+  | nil => HNames.empty
   | cons c xs => let H := match c with
     | ectx_OpenAmpar_Foc H' v => H'
-    | _ => HVars.empty
-  end in (HVars.union H (hvars_ectxs xs))
+    | _ => HNames.empty
+  end in (HNames.union H (hnames_ectxs xs))
 end.
 
-Definition HDisjoint (H1 H2 : HVars.t) : Prop :=
-  HVars.Empty (HVars.inter H1 H2).
+Definition HDisjoint (H1 H2 : HNames.t) : Prop :=
+  HNames.Empty (HNames.inter H1 H2).
 
 Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
@@ -352,7 +352,7 @@ Qed.
 Definition sterm_Alloc :=
   (term_Val
     (val_Ampar
-      (hvars_ (1 :: nil))
+      (hnames_ (1 :: nil))
       (val_Hole 1)
       (val_Dest 1)
     )
@@ -465,7 +465,7 @@ Definition sterm_Prod (t1 t2 : term) :=
  * VALUES
  *****************************************************************************)
 
-Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
+Fixpoint val_fill (va: val) (h':hname) (H':hnames) (v':val) : val := match va with
   | val_Hole h => match Nat.eq_dec h h' with | left _ => v' | right _ => val_Hole h end
   | val_Dest h => val_Dest h
   | val_Unit => val_Unit
@@ -477,19 +477,19 @@ Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
   | val_Ampar H v2 v1 => val_Ampar H v2 v1 (* No foreign hole allowed in ampar *)
 end.
 
-Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
+Fixpoint val_cshift (va : val) (H : hnames) (h' : hname) : val :=
   match va with
-  | val_Hole h => val_Hole (hvar_cshift h H h')
-  | val_Dest h => val_Dest (hvar_cshift h H h')
+  | val_Hole h => val_Hole (hname_cshift h H h')
+  | val_Dest h => val_Dest (hname_cshift h H h')
   | val_Unit => val_Unit
   | val_Fun x m u => val_Fun x m (term_cshift u H h') (* We can have dests captured in a function *)
   | val_Left v => val_Left (val_cshift v H h')
   | val_Right v => val_Right (val_cshift v H h')
   | val_Exp m v => val_Exp m (val_cshift v H h')
   | val_Prod v1 v2 => val_Prod (val_cshift v1 H h') (val_cshift v2 H h')
-  | val_Ampar H' v2 v1 => val_Ampar (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_Ampar H' v2 v1 => val_Ampar (hnames_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
-with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
+with term_cshift (te : term) (H : hnames) (h' : hname) : term :=
   match te with
   | term_Val v => term_Val (val_cshift v H h')
   | term_Var x => term_Var x
@@ -792,7 +792,7 @@ Next Obligation.
   tauto.
 Qed.
 
-Definition ctx_cshift (G : ctx) (H : hvars) (h' : hvar) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
+Definition ctx_cshift (G : ctx) (H : hnames) (h' : hname) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
 
 Definition DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
 
@@ -828,8 +828,8 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
-Definition ectxs_fill (C: ectxs) (h':hvar) (H' : hvars) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HVars.union (HVars.remove h' H) H') (val_fill v h' H' v')
+Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
+  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
@@ -858,11 +858,11 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _FinAgeOnly (G:ctx)
  | _DisposableOnly (G:ctx)
  | _Disjoint (G1:ctx) (G2:ctx)
- | _HDisjoint (H1:hvars) (H2:hvars)
+ | _HDisjoint (H1:hnames) (H2:hnames)
  | _IsValid (m:mode)
  | _ModeSubtype (m1:mode) (m2:mode)
  | _NotVal (t:term)
- | _hvar_eq (h1:hvar) (h2:hvar)
+ | _hname_eq (h1:hname) (h2:hname)
  | _Ty_val (G:ctx) (v:val) (T:type)
  | _Ty_term (P:ctx) (t:term) (T:type)
  | _Ty_sterm (P:ctx) (t:term) (T:type)
@@ -873,9 +873,9 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
 
 (* defns Ty *)
 Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
- | Ty_val_Hole : forall (h:hvar) (T:type),
+ | Ty_val_Hole : forall (h:hname) (T:type),
      Ty_val  (ctx_singleton (name_DH  h ) (binding_Hole  T    (Some (pair   Lin     (Fin 0)  ))  ))  (val_Hole h) T
- | Ty_val_Dest : forall (h:hvar) (T:type) (n:mode),
+ | Ty_val_Dest : forall (h:hname) (T:type) (n:mode),
      Ty_val  (ctx_singleton (name_DH  h ) (binding_Dest   (Some (pair   Lin     (Fin 0)  ))    T   n ))  (val_Dest h) (type_Dest T n)
  | Ty_val_Unit : 
      Ty_val  ctx_empty  val_Unit type_Unit
@@ -910,7 +910,7 @@ Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
      (DisjointD2D3: D2 # D3 )
      (Tyv1: Ty_val  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )  v1 T)
      (Tyv2: Ty_val  (union  D2     (hminus_inv  D3 )   )  v2 U),
-     Ty_val  (union  D1   D2 )  (val_Ampar  (hvars_ctx   (hminus_inv  D3 )  )  v2 v1) (type_Ampar U T)
+     Ty_val  (union  D1   D2 )  (val_Ampar  (hnames_ctx   (hminus_inv  D3 )  )  v2 v1) (type_Ampar U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Val : forall (P D:ctx) (v:val) (T:type)
      (DisposP: DisposableOnly P )
@@ -1159,8 +1159,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD3: ValidOnly D3 )
      (TyC: Ty_ectxs  (union  D1   D2 )  C  (type_Ampar U T')  U0)
      (Tyv2: Ty_val  (union  D2    (hminus_inv  D3 )  )  v2 U),
-      (hvars_ectxs  C )  ##  (hvars_ctx   (hminus_inv  D3 )  )   ->
-     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hvars_ctx   (hminus_inv  D3 )  )  v2)    C )  T' U0
+      (hnames_ectxs  C )  ##  (hnames_ctx   (hminus_inv  D3 )  )   ->
+     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hnames_ctx   (hminus_inv  D3 )  )  v2)    C )  T' U0
 with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
  | Ty_cmd : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)
      (ValidOnlyD: ValidOnly D )
@@ -1219,10 +1219,10 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem C (term_Map t x t')   (cons   (ectx_Map_Foc x t')    C )   t
  | Sem_Map_Unfoc : forall (C:ectxs) (x:var) (t':term) (v:val),
      Sem   (cons   (ectx_Map_Foc x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
- | Sem_Map_Red_OpenAmpar_Foc : forall (C:ectxs) (H:hvars) (v2 v1:val) (x:var) (t':term) (h':hvar)
-     (hpMaxC: h' =  (  (hvar_max   (hvars_ectxs  C )  )   +   1  )  ),
-     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar_Foc  (hvars_shift  H   h' )   (val_cshift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h' )  ) 
- | Sem_OpenAmpar_Unfoc : forall (C:ectxs) (H:hvars) (v2 v1:val),
+ | Sem_Map_Red_OpenAmpar_Foc : forall (C:ectxs) (H:hnames) (v2 v1:val) (x:var) (t':term) (h':hname)
+     (hpMaxC: h' =  (  (hname_max   (hnames_ectxs  C )  )   +   1  )  ),
+     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar_Foc  (hnames_shift  H   h' )   (val_cshift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h' )  ) 
+ | Sem_OpenAmpar_Unfoc : forall (C:ectxs) (H:hnames) (v2 v1:val),
      Sem   (cons  (ectx_OpenAmpar_Foc H v2)   C )   (term_Val v1) C (term_Val (val_Ampar H v2 v1))
  | Sem_ToA_Foc : forall (C:ectxs) (u:term)
      (NotValu: NotVal u ),
@@ -1230,60 +1230,60 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
  | Sem_ToA_Unfoc : forall (C:ectxs) (v2:val),
      Sem   (cons   ectx_ToA_Foc    C )   (term_Val v2) C (term_ToA (term_Val v2))
  | Sem_ToA_Red : forall (C:ectxs) (v2:val),
-     Sem C (term_ToA (term_Val v2)) C (term_Val (val_Ampar  (hvars_  nil )  v2 val_Unit))
+     Sem C (term_ToA (term_Val v2)) C (term_Val (val_Ampar  (hnames_  nil )  v2 val_Unit))
  | Sem_FromA_Foc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FromA t)   (cons   ectx_FromA_Foc    C )   t
  | Sem_FromA_Unfoc : forall (C:ectxs) (v:val),
      Sem   (cons   ectx_FromA_Foc    C )   (term_Val v) C (term_FromA (term_Val v))
  | Sem_FromA_Red : forall (C:ectxs) (v2 v1:val),
-     Sem C (term_FromA (term_Val (val_Ampar  (hvars_  nil )  v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))) C (term_Val (val_Prod v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))
+     Sem C (term_FromA (term_Val (val_Ampar  (hnames_  nil )  v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))) C (term_Val (val_Prod v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))
  | Sem_FillU_Foc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FillU t)   (cons   ectx_FillU_Foc    C )   t
  | Sem_FillU_Unfoc : forall (C:ectxs) (v:val),
      Sem   (cons   ectx_FillU_Foc    C )   (term_Val v) C (term_FillU (term_Val v))
- | Sem_FillU_Red : forall (C:ectxs) (h:hvar),
-     Sem C (term_FillU (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hvars_  nil )    val_Unit )  (term_Val val_Unit)
+ | Sem_FillU_Red : forall (C:ectxs) (h:hname),
+     Sem C (term_FillU (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  nil )    val_Unit )  (term_Val val_Unit)
  | Sem_FillL_Foc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FillL t)   (cons   ectx_FillL_Foc    C )   t
  | Sem_FillL_Unfoc : forall (C:ectxs) (v:val),
      Sem   (cons   ectx_FillL_Foc    C )   (term_Val v) C (term_FillL (term_Val v))
- | Sem_FillL_Red : forall (C:ectxs) (h h':hvar)
-     (hpMaxCh: h' =  (  (hvar_max   (HVars.union   (hvars_ectxs  C )     (hvars_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillL (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hvars_  (cons  ( h'  +   1  )  nil) )    (val_Left (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
+ | Sem_FillL_Red : forall (C:ectxs) (h h':hname)
+     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
+     Sem C (term_FillL (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Left (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
  | Sem_FillR_Foc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FillR t)   (cons   ectx_FillR_Foc    C )   t
  | Sem_FillR_Unfoc : forall (C:ectxs) (v:val),
      Sem   (cons   ectx_FillR_Foc    C )   (term_Val v) C (term_FillR (term_Val v))
- | Sem_FillR_Red : forall (C:ectxs) (h h':hvar)
-     (hpMaxCh: h' =  (  (hvar_max   (HVars.union   (hvars_ectxs  C )     (hvars_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillR (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hvars_  (cons  ( h'  +   1  )  nil) )    (val_Right (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
+ | Sem_FillR_Red : forall (C:ectxs) (h h':hname)
+     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
+     Sem C (term_FillR (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Right (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
  | Sem_FillE_Foc : forall (C:ectxs) (t:term) (m:mode)
      (NotValt: NotVal t ),
      Sem C (term_FillE t m)   (cons   (ectx_FillE_Foc m)    C )   t
  | Sem_FillE_Unfoc : forall (C:ectxs) (m:mode) (v:val),
      Sem   (cons   (ectx_FillE_Foc m)    C )   (term_Val v) C (term_FillE (term_Val v) m)
- | Sem_FillE_Red : forall (C:ectxs) (h:hvar) (m:mode) (h':hvar)
-     (hpMaxCh: h' =  (  (hvar_max   (HVars.union   (hvars_ectxs  C )     (hvars_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillE (term_Val (val_Dest h)) m)  (ectxs_fill  C   h    (hvars_  (cons  ( h'  +   1  )  nil) )    (val_Exp m (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
+ | Sem_FillE_Red : forall (C:ectxs) (h:hname) (m:mode) (h':hname)
+     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
+     Sem C (term_FillE (term_Val (val_Dest h)) m)  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Exp m (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
  | Sem_FillP_Foc : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FillP t)   (cons   ectx_FillP_Foc    C )   t
  | Sem_FillP_Unfoc : forall (C:ectxs) (v:val),
      Sem   (cons   ectx_FillP_Foc    C )   (term_Val v) C (term_FillP (term_Val v))
- | Sem_FillP_Red : forall (C:ectxs) (h h':hvar)
-     (hpMaxCh: h' =  (  (hvar_max   (HVars.union   (hvars_ectxs  C )     (hvars_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillP (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hvars_  ((app (cons  ( h'  +   1  )  nil) (app (cons  ( h'  +   2  )  nil) nil))) )    (val_Prod (val_Hole   ( h'  +   1  )  ) (val_Hole   ( h'  +   2  )  )) )  (term_Val (val_Prod (val_Dest   ( h'  +   1  )  ) (val_Dest   ( h'  +   2  )  )))
+ | Sem_FillP_Red : forall (C:ectxs) (h h':hname)
+     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
+     Sem C (term_FillP (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  ((app (cons  ( h'  +   1  )  nil) (app (cons  ( h'  +   2  )  nil) nil))) )    (val_Prod (val_Hole   ( h'  +   1  )  ) (val_Hole   ( h'  +   2  )  )) )  (term_Val (val_Prod (val_Dest   ( h'  +   1  )  ) (val_Dest   ( h'  +   2  )  )))
  | Sem_FillF_Foc : forall (C:ectxs) (t:term) (x:var) (m:mode) (u:term)
      (NotValt: NotVal t ),
      Sem C (term_FillF t x m u)   (cons   (ectx_FillF_Foc x m u)    C )   t
  | Sem_FillF_Unfoc : forall (C:ectxs) (x:var) (m:mode) (u:term) (v:val),
      Sem   (cons   (ectx_FillF_Foc x m u)    C )   (term_Val v) C (term_FillF (term_Val v) x m u)
- | Sem_FillF_Red : forall (C:ectxs) (h:hvar) (x:var) (m:mode) (u:term),
-     Sem C (term_FillF (term_Val (val_Dest h)) x m u)  (ectxs_fill  C   h    (hvars_  nil )    (val_Fun x m u) )  (term_Val val_Unit)
+ | Sem_FillF_Red : forall (C:ectxs) (h:hname) (x:var) (m:mode) (u:term),
+     Sem C (term_FillF (term_Val (val_Dest h)) x m u)  (ectxs_fill  C   h    (hnames_  nil )    (val_Fun x m u) )  (term_Val val_Unit)
  | Sem_FillComp_Foc1 : forall (C:ectxs) (t t':term)
      (NotValt: NotVal t ),
      Sem C (term_FillComp t t')   (cons   (ectx_FillComp_Foc1 t')    C )   t
@@ -1294,8 +1294,8 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem C (term_FillComp (term_Val v) t')   (cons   (ectx_FillComp_Foc2 v)    C )   t'
  | Sem_FillComp_Unfoc2 : forall (C:ectxs) (v v':val),
      Sem   (cons   (ectx_FillComp_Foc2 v)    C )   (term_Val v') C (term_FillComp (term_Val v) (term_Val v'))
- | Sem_FillComp_Red : forall (C:ectxs) (h:hvar) (H:hvars) (v2 v1:val) (h':hvar)
-     (hpMaxCh: h' =  (  (hvar_max   (HVars.union   (hvars_ectxs  C )     (hvars_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hvars_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) ).
+ | Sem_FillComp_Red : forall (C:ectxs) (h:hname) (H:hnames) (v2 v1:val) (h':hname)
+     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
+     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) ).
 
 

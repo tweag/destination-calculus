@@ -470,7 +470,7 @@ The main restriction to prevent parent scope escape is materialized the simplifi
 \ottusedrule{%
 \ottdrule{%
 }{
-\ottshvar{\destminus} \ottshvar{h} :\!_{\!  \ottsmode{\nu}   }\ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor}   \,\vdash\,   \ottshvar{\destminus} \ottshvar{h}   \ottsym{:}   \ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor} }{%
+\ottshname{\destminus} \ottshname{h} :\!_{\!  \ottsmode{\nu}   }\ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor}   \,\vdash\,   \ottshname{\destminus} \ottshname{h}   \ottsym{:}   \ottstype{\lfloor}\ottstype{T} \ottstype{\rfloor} }{%
 {\ottdrulename{Ty\_val\_Dest$^{\star}$}}{}%
 }}
 \ottusedrule{%
@@ -619,19 +619,19 @@ This is a core feature of the language that ensures part of its safety.
 
 \subsection{Names and variables}
 
-The destination calculus uses two classes of names: regular variable names $[[x]], [[y]]$, and hnames, $[[h]], [[h1]], [[h2]]$ which are identifiers for a memory cell that hasn't been written to yet, as illustrated in Figure~\ref{fig:grammar-names}.
+The destination calculus uses two classes of names: regular variable names $[[x]], [[y]]$, and \emph{hnames} $[[h]], [[h1]], [[h2]]$ which are identifiers for a memory cell that hasn't been written to yet, as illustrated in Figure~\ref{fig:grammar-names}.
 
-Hole names are represented by natural numbers under the hood, so they can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hole name encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
+Hole names are represented by natural numbers under the hood, so they can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hname encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
 
-We sometimes need to keep track of hole names bound by a particular runtime value or evaluation context, hence we also define sets of hole names $[[H]], [[H1]], [[H2]]\ldots$.
+We sometimes need to keep track of hnames bound by a particular runtime value or evaluation context, hence we also define sets of hnames $[[H]], [[H1]], [[H2]]\ldots$.
 
-Shifting all hole names in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshvar{[}[[H ⩲ h']]\ottshvar{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
+Shifting all hnames in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We also define a conditional shift operation $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ which shifts each hname appearing in the operand to the left of the brackets by $[[h']]$ if this hname is also member of $[[H]]$. This conditional shift can be used on a single hname, a value, or a typing context.
 
 \begin{ottfig}{\caption{Grammar for variable, hole and destination names}\label{fig:grammar-names}}
 \ottmetavars
 \ottgrammartabular{
-\otthvar\ottinterrule
-\otthvars\ottafterlastrule
+\otthname\ottinterrule
+\otthnames\ottafterlastrule
 }
 \end{ottfig}
 
@@ -758,16 +758,32 @@ Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms.
 
 In every figure,
 \begin{itemize}
-  \item $\Gamma$ denotes a typing context made only of holes and destination bindings,
-  \item $\Theta$ denotes a typing context made only of destination and variable bindings,
-  \item $\Delta$ denotes a typing context made only of destination bindings.
+  \item $[[O]]$ denotes an arbitrary typing context, with no particular constraints;
+  \item $[[G]]$ denotes a typing context made only of holes and destination bindings;
+  \item $[[P]]$ denotes a typing context made only of destination and variable bindings;
+  \item $[[D]]$ denotes a typing context made only of destination bindings.
 \end{itemize}
 
-Destinations and holes are two faces of the same coin, as seen in Section~\ref{sec:build-up-vocab}, and must always be in 1:1 correspondance. Thus, the core idea of the type system is to have hole bindings $[[{ + h : T n }]]$ and destination bindings $[[{ - h : m ⌊ T ⌋ n }]]$, in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts. Hole bindings and destination bindings are meant to compensate each other in the typing context, a bit like how matter (positive polarity, hole) and antimatter (negative polarity, destination) annihilate each other. That way, the typing context of a term can stay constant during reduction, even when destination-filling primitives are evaluated to build up data structures.
+Destinations and holes are two faces of the same coin, as seen in Section~\ref{sec:build-up-vocab}, and must always be in 1:1 correspondance. Thus, the core idea of the type system is to have hole bindings $[[{ + h : T n }]]$ (hname in positive polarity) and destination bindings $[[{ - h : m ⌊ T ⌋ n }]]$ (hname in negative polarity), in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts. Hole bindings and destination bindings of the same hname are meant to compensate each other in the typing context, a bit like how matter (positive polarity, hole) and antimatter (negative polarity, destination) annihilate each other. That way, the typing context of a term can stay constant during reduction, even when destination-filling primitives are evaluated to build up data structures, as those linearly consume a destination and write to a hole which makes it disappear.
 
-However, that annihilation between a destination and a hole of the same name is only allowed to happen around an ampar, as it is the ampar connective that ties the two sides together. In more technical terms, the ampar is where the two polarities of a name are bound together (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$).
+However, that annihilation between a destination and a hole having the same hname is only allowed to happen around an ampar, as it is the ampar connective that bind the two polarities of a name together (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$). In fact, an ampar can be seen as a sort of lambda-abstraction, whose body (containing holes instead of variables) and sink/input site are split on two sides, and magically interconnected through the ampar connective.
 
-As a result, the sum of typing contexts, used in almost all rules, results in an erroneous context when the input operands contains the same name but in different polarities: $\{[[{ + h : T n }]]\} + \{[[{ - h : ¹ν ⌊ T ⌋ n }]]\} = \{[[{ + h : ① ☠ }]]\}$ (the fact that the result is a hole binding instead of a destination binding, is purely arbitrary ; the only important bit is to have an ``invalid'' mode on the result binding). Instead, in the only position where the annihilation is allowed to happen, that is to say the \textsc{Ty-val-Ampar} rule, we explicitly identify and remove the parts of input contexts that can interact and annihilate each other, in the form of $[[D]]$ in the right side context and $[[-⁻¹ D]]$ for the left one.
+Thus, the sum of typing contexts, used in almost all rules, results in an erroneous context when the input operands contains the same hname but in different polarities: $\{[[{ + h : T n }]]\} + \{[[{ - h : ¹ν ⌊ T ⌋ n }]]\} = \{[[{ + h : ① ☠ }]]\}$ (the fact that the result is a hole binding instead of a destination binding is purely arbitrary ; the only important bit here is to have an ``invalid'' mode on the result binding). An individual context is also not allowed to contain a same hname in two different bindings. Instead, in the only position where the annihilation is allowed to happen, that is to say the \textsc{Ty-val-Ampar} rule, we explicitly identify and remove the parts of input contexts that can interact and annihilate each other, in the form of $[[D]]$ in the right side context and $[[-⁻¹ D]]$ for the left one.
+
+$\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is a point-wise operation on typing bindings of a context where:
+
+\[\left\{\begin{array}{rcl}
+  [[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] &=& [[{ + h : T n }]] \\
+  \ottshname{\destminus^{\scriptscriptstyle\text{-}1} }(\ottnt{n} :\!_{\![[m]]}[[T]]) &=& \ottnt{n} :\!_{\![[☠]]}[[①]] \quad\text{otherwise}
+\end{array}\right.\]
+
+Only input contexts $[[D]]$ made only of destination bindings, with leftmost mode being $[[¹ν]]$ results in a valid output context, which is then only composed of hole bindings.
+
+It might be time to discuss what modes mean for hole and destination bindings.
+
+A hole binding $[[{ + h : T n }]]$ has only one mode, $[[n]]$, that indicates the mode a value must have to be written to it. To this day, the only way for a value to have a mode is to capture a destination, as destinations are the only intrinsically linear values in the calculus, but we will see in Section~\ref{sec:implementation} that other forms of intrinsic linearity can be added to the langage for practical reasons. We see the mode of a hole coming into play when a hole is located behind an exponential constructor: we should only write a non-linear value to the hole $[[+h]]$ in $[[ᴇ ων +h]]$
+
+On the other hand, a destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ has two modes. The left-most one, $[[m]]$, tells how the destination is used as a normal value, especially if the destination get stored in a destination of destination or passed as a function argument. The right-most one, $[[n]]$, corresponds to the mode of its associated hole, and thus how it behaves when filled with a value. We'll see in an instant how a binding can \emph{grow old}, but let's just remember for now that a destination can only be filled with a value when $\ottsmode{\mathsfbf{age}(}[[m]]\ottsmode{)} = [[ν]]$. As soon at it gets older (only the mode $[[m]]$ is affected, the mode $[[n]]$ of its associated hole never changes), it behaves like a normal value and can only be stored, passed around, or returned. \TODO{Say that m is always LinFinAgeOnly at runtime}
 
 \subsection{Derived typing rules for syntactic sugar forms}
 

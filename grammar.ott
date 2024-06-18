@@ -19,8 +19,8 @@ Module Nat' <: OrderedTypeWithLeibniz.
   Proof. trivial.
   Qed.
 End Nat'.
-Module HVars := MSetList.MakeWithLeibniz(Nat').
-Module HVarsFacts := MSetFacts.Facts(HVars).
+Module HNames := MSetList.MakeWithLeibniz(Nat').
+Module HNamesFacts := MSetFacts.Facts(HNames).
 
 (* We need to predefine eq_dec for mode so that Ott can generate eq_dec for type *)
 (* Will be aliased later to mul *)
@@ -53,21 +53,21 @@ indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
 
 grammar
 
-hvar, h, hd :: 'hvar_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshvar{[[hvar]]} }}
-  | 1 :: S :: 1 {{ coq 1 }} {{ tex \textcolor{hvarcolor}{\mathtt{1} } }}
-  | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hvarcolor}{\mathtt{2} } }}
-  | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshvar{+}[[h']] }}
-  | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hvar_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
-  | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hvar_max [[H]]) }} {{ tex \ottshvar{\mathsfbf{max}(}[[H]]\ottshvar{)} }}
-  | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshvar{(}[[h]]\ottshvar{)} }}
+hname, h, hd :: 'hname_' ::= {{ com Hole (or destination) name, represented by a natural number }} {{ coq nat }} {{ tex \ottshname{[[hname]]} }}
+  | 1 :: S :: 1 {{ coq 1 }} {{ tex \textcolor{hnamecolor}{\mathtt{1} } }}
+  | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hnamecolor}{\mathtt{2} } }}
+  | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\ottshname{+}[[h']] }}
+  | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hname_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
+  | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hname_max [[H]]) }} {{ tex \ottshname{\mathsfbf{max}(}[[H]]\ottshname{)} }}
+  | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex \ottshname{(}[[h]]\ottshname{)} }}
 
-hvars, H :: 'hvars_' ::= {{ com Set of hole names }} {{ coq HVars.t }} {{ tex \ottshvar{[[hvars]]} }}
-  | { h1 , .. , hk } :: :: FromList {{ coq (hvars_ [[h1..hk]]) }}
-  | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HVars.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshvar{\cup}\,[[H2]] }}
-  | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hvars_shift [[H]] [[h']]) }}
-  | 'hvars(' G ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[G]]$ }} {{ tex \ottshvar{\mathsfbf{hvars}(}[[G]]\ottshvar{)} }} {{ coq (hvars_ctx [[G]]) }}
-  | 'hvars(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshvar{\mathsfbf{hvars}(}[[C]]\ottshvar{)} }} {{ coq (hvars_ectxs [[C]]) }}
-  | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshvar{(}[[H]]\ottshvar{)} }}
+hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex \ottshname{[[hnames]]} }}
+  | { h1 , .. , hk } :: :: FromList {{ coq (hnames_ [[h1..hk]]) }}
+  | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\cup}\,[[H2]] }}
+  | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hnames_shift [[H]] [[h']]) }}
+  | 'hnames(' G ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[G]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[G]]\ottshname{)} }} {{ coq (hnames_ctx [[G]]) }}
+  | 'hnames(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[C]]\ottshname{)} }} {{ coq (hnames_ectxs [[C]]) }}
+  | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshname{(}[[H]]\ottshname{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LANGUAGE SYNTAX (STATIC)
@@ -151,8 +151,8 @@ sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ com Allocate pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
 val, v :: 'val_' ::= {{ com Value }}
-  | + h :: :: Hole {{ com Hole }} {{ tex \ottshvar{\hboxed{[[h]]} } }}
-  | - h :: :: Dest {{ tex \ottshvar{\destminus}[[h]] }} {{ com Destination }}
+  | + h :: :: Hole {{ com Hole }} {{ tex \ottshname{\hboxed{[[h]]} } }}
+  | - h :: :: Dest {{ tex \ottshname{\destminus}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
   | ᵛλ x m ⟼ u :: :: Fun {{ tex \lamvnt{[[x]]}{[[m]]}{[[u]]} }} {{ com Function with no free variable }} % (+ bind x in t +)
   | Inl v :: :: Left {{ com Left variant for sum }}
@@ -161,7 +161,7 @@ val, v :: 'val_' ::= {{ com Value }}
   | ( v1 , v2 ) :: :: Prod {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | ˢ [ v1 , .. , vk ] :: S :: SugarPList {{ com Pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
   | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
-  | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
+  | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -263,7 +263,7 @@ Definition binding_type_of (n : name) : Type :=
   | name_DH _ => binding_dh
   end.
 
-Definition cast_binding_rename (h : hvar) (h' : hvar) (b : binding_type_of (name_DH h)): binding_type_of (name_DH h') :=
+Definition cast_binding_rename (h : hname) (h' : hname) (b : binding_type_of (name_DH h)): binding_type_of (name_DH h') :=
   b.
 
 Definition name_eq_dec (x y : name) : {x = y} + {x<>y}.
@@ -278,19 +278,19 @@ Defined.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 grammar
 
-ctx, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
+ctx, O {{ tex \Omega }}, G {{ tex \Gamma }}, D {{ tex \Delta }}, P {{ tex \Theta }} :: 'ctx_' ::= {{ com Typing context }} {{ coq Finitely.T name binding_type_of }}
   % | ⦅ mvar mdest mhole ⦆ :: :: Maps {{ com Actual representation of contexts for Coq proofs (cannot hide) }} {{ tex \llparenthesis\,[[mvar]]~[[mdest]]~[[mhole]]\,\rrparenthesis }}
   | { } :: S :: Empty {{ coq ctx_empty }} {{ tex \, }}
   | { x : m T } :: :: VarSing {{ coq (ctx_singleton (name_Var [[x]]) (binding_Var [[m]] [[T]])) }} {{ tex [[x]]:\!_{\![[m]]}[[T]] }} {{ com Variable typing binding }}
-  | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshvar{\hboxed{[[h]]} }:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
-  | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshvar{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
-  | m · G :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[G]]) }}
-  | G1 + G2 :: M :: Union {{ coq (union [[G1]] [[G2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
-  | G1 , G2 :: M :: DisjointUnion {{ coq (union [[G1]] [[G2]]) }} {{ com Disjoint sum }} {{ tex [[G1]],~[[G2]] }}
-  | -⁻¹ D :: M :: HminusInv {{ coq (hminus_inv [[D]]) }} {{ tex \ottshvar{\destminus^{\scriptscriptstyle\text{-}1} }[[D]] }} {{ com Transforms dest bindings into a hole bindings }}
-  | - G :: S :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshvar{\destminus}[[G]] }}
-  | G [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[G]] [[H]] [[h']]) }} {{ tex [[G]]\ottshvar{[}[[H]][[⩲]][[h']]\ottshvar{]} }}
-  | ( G ) :: S :: Paren {{ coq [[G]] }}
+  | { + h : T n } :: :: HoleSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Hole [[T]] [[n]])) }} {{ tex \ottshname{\hboxed{[[h]]} }:\!_{\![[n]]}[[T]] }} {{ com Hole typing binding }}
+  | { - h : m ⌊ T ⌋ n } :: :: DestSing {{ coq (ctx_singleton (name_DH [[h]]) (binding_Dest [[m]] [[T]] [[n]])) }} {{ tex \ottshname{\destminus}[[h]]:\!_{\![[m]]}\ottstype{\lfloor}\,\!_{[[n]]}[[T]]\ottstype{\rfloor} }} {{ com Destination typing binding }}
+  | m · O :: M :: Stimes {{ com Multiply the leftmost mode of each binding by $[[m]]$ }} {{ coq (stimes [[m]] [[O]]) }}
+  | O1 + O2 :: M :: Union {{ coq (union [[O1]] [[O2]]) }} {{ com Sum (incompatible bindings get tagged with $\ottsmode{\skull}$) }}
+  | O1 , O2 :: M :: DisjointUnion {{ coq (union [[O1]] [[O2]]) }} {{ com Disjoint sum }} {{ tex [[O1]],~[[O2]] }}
+  | -⁻¹ D :: M :: HminusInv {{ coq (hminus_inv [[D]]) }} {{ tex \ottshname{\destminus^{\scriptscriptstyle\text{-}1} }[[D]] }} {{ com Transforms dest bindings into a hole bindings }}
+  | - G :: S :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshname{\destminus}[[G]] }}
+  | O [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[O]] [[H]] [[h']]) }} {{ tex [[O]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
+  | ( O ) :: S :: Paren {{ coq [[O]] }}
 
 embed
 {{ coq
@@ -298,54 +298,54 @@ embed
  * NAMES
  *****************************************************************************)
 
-Definition shift_one (h' : hvar) (h'' : hvar) : Permutation.Transposition.T :=
+Definition shift_one (h' : hname) (h'' : hname) : Permutation.Transposition.T :=
   {| Permutation.Transposition.from := h''; Permutation.Transposition.to := h''+h'|}
 .
 
-Definition shift_perm (H : hvars) (h' : hvar) : Permutation.T :=
-  List.map (shift_one h') (HVars.elements H)
+Definition shift_perm (H : hnames) (h' : hname) : Permutation.T :=
+  List.map (shift_one h') (HNames.elements H)
 .
 
-Definition hvar_cshift (h : hvar) (H : HVars.t) (h' : hvar) : hvar :=
+Definition hname_cshift (h : hname) (H : HNames.t) (h' : hname) : hname :=
   Permutation.sem (shift_perm H h') h
 .
 
-Fixpoint hvars_ (l : list nat) : HVars.t :=
+Fixpoint hnames_ (l : list nat) : HNames.t :=
   match l with
-  | nil => HVars.empty
-  | h :: t => HVars.add h (hvars_ t)
+  | nil => HNames.empty
+  | h :: t => HNames.add h (hnames_ t)
   end.
 
-Definition hvar_max (H : HVars.t) : nat := match HVars.max_elt H with
+Definition hname_max (H : HNames.t) : nat := match HNames.max_elt H with
   | Some h => h
   | None => 0
   end.
 
-Definition hvars_shift (H : HVars.t) (h' : nat) : HVars.t :=
-  HVars.fold (fun h acc => HVars.add (h + h') acc) H HVars.empty.
+Definition hnames_shift (H : HNames.t) (h' : nat) : HNames.t :=
+  HNames.fold (fun h acc => HNames.add (h + h') acc) H HNames.empty.
 
-Definition hvars_cshift (H H': HVars.t) (h' : nat) : HVars.t :=
-  HVars.fold (fun h acc => HVars.add (hvar_cshift h H' h') acc) H HVars.empty.
+Definition hnames_cshift (H H': HNames.t) (h' : nat) : HNames.t :=
+  HNames.fold (fun h acc => HNames.add (hname_cshift h H' h') acc) H HNames.empty.
 
-Fixpoint hvars_dom (dom: list name) : HVars.t :=
+Fixpoint hnames_dom (dom: list name) : HNames.t :=
   match dom with
-  | nil => HVars.empty
-  | name_Var _ :: xs => hvars_dom xs
-  | name_DH h :: xs => HVars.add h (hvars_dom xs)
+  | nil => HNames.empty
+  | name_Var _ :: xs => hnames_dom xs
+  | name_DH h :: xs => HNames.add h (hnames_dom xs)
   end.
-Definition hvars_ctx (G : ctx) : HVars.t :=
-  hvars_dom (dom G).
+Definition hnames_ctx (G : ctx) : HNames.t :=
+  hnames_dom (dom G).
 
-Fixpoint hvars_ectxs (C : ectxs) : HVars.t := match C with
-  | nil => HVars.empty
+Fixpoint hnames_ectxs (C : ectxs) : HNames.t := match C with
+  | nil => HNames.empty
   | cons c xs => let H := match c with
     | ectx_OpenAmpar_Foc H' v => H'
-    | _ => HVars.empty
-  end in (HVars.union H (hvars_ectxs xs))
+    | _ => HNames.empty
+  end in (HNames.union H (hnames_ectxs xs))
 end.
 
-Definition HDisjoint (H1 H2 : HVars.t) : Prop :=
-  HVars.Empty (HVars.inter H1 H2).
+Definition HDisjoint (H1 H2 : HNames.t) : Prop :=
+  HNames.Empty (HNames.inter H1 H2).
 
 Notation "H1 '##' H2" := (HDisjoint H1 H2) (at level 50, no associativity).
 
@@ -396,7 +396,7 @@ Qed.
 Definition sterm_Alloc :=
   (term_Val
     (val_Ampar
-      (hvars_ (1 :: nil))
+      (hnames_ (1 :: nil))
       (val_Hole 1)
       (val_Dest 1)
     )
@@ -509,7 +509,7 @@ Definition sterm_Prod (t1 t2 : term) :=
  * VALUES
  *****************************************************************************)
 
-Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
+Fixpoint val_fill (va: val) (h':hname) (H':hnames) (v':val) : val := match va with
   | val_Hole h => match Nat.eq_dec h h' with | left _ => v' | right _ => val_Hole h end
   | val_Dest h => val_Dest h
   | val_Unit => val_Unit
@@ -521,19 +521,19 @@ Fixpoint val_fill (va: val) (h':hvar) (H':hvars) (v':val) : val := match va with
   | val_Ampar H v2 v1 => val_Ampar H v2 v1 (* No foreign hole allowed in ampar *)
 end.
 
-Fixpoint val_cshift (va : val) (H : hvars) (h' : hvar) : val :=
+Fixpoint val_cshift (va : val) (H : hnames) (h' : hname) : val :=
   match va with
-  | val_Hole h => val_Hole (hvar_cshift h H h')
-  | val_Dest h => val_Dest (hvar_cshift h H h')
+  | val_Hole h => val_Hole (hname_cshift h H h')
+  | val_Dest h => val_Dest (hname_cshift h H h')
   | val_Unit => val_Unit
   | val_Fun x m u => val_Fun x m (term_cshift u H h') (* We can have dests captured in a function *)
   | val_Left v => val_Left (val_cshift v H h')
   | val_Right v => val_Right (val_cshift v H h')
   | val_Exp m v => val_Exp m (val_cshift v H h')
   | val_Prod v1 v2 => val_Prod (val_cshift v1 H h') (val_cshift v2 H h')
-  | val_Ampar H' v2 v1 => val_Ampar (hvars_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
+  | val_Ampar H' v2 v1 => val_Ampar (hnames_cshift H' H h') (val_cshift v2 H h') (val_cshift v1 H h') (* We can have foreign dests captured in both sides of an ampar, but this shouldn't touch H' *)
   end
-with term_cshift (te : term) (H : hvars) (h' : hvar) : term :=
+with term_cshift (te : term) (H : hnames) (h' : hname) : term :=
   match te with
   | term_Val v => term_Val (val_cshift v H h')
   | term_Var x => term_Var x
@@ -836,7 +836,7 @@ Next Obligation.
   tauto.
 Qed.
 
-Definition ctx_cshift (G : ctx) (H : hvars) (h' : hvar) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
+Definition ctx_cshift (G : ctx) (H : hnames) (h' : hname) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
 
 Definition DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
 
@@ -872,8 +872,8 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
-Definition ectxs_fill (C: ectxs) (h':hvar) (H' : hvars) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HVars.union (HVars.remove h' H) H') (val_fill v h' H' v')
+Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
+  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
@@ -943,7 +943,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | IsValid m :: :: IsValid {{ tex \texttt{IsValid}~[[m]] }}
   | ModeSubtype m1 m2 :: :: ModeSubtype {{ tex \texttt{ModeSubtype}~[[m1]]~[[m2]] }}
   | NotVal t :: :: NotVal {{ tex \texttt{NotVal}~[[t]] }}
-  | h1 = h2 :: :: hvar_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
+  | h1 = h2 :: :: hname_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
 
   | G ⫦ v : T :: :: Ty_val
   | P ⊢ t : T :: :: Ty_term
