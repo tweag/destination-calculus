@@ -619,7 +619,7 @@ This is a core feature of the language that ensures part of its safety.
 
 \subsection{Names and variables}
 
-The destination calculus uses two classes of names: regular variable names $[[x]], [[y]]$, and hole names, $[[h]], [[h1]], [[h2]]$ which represents the identifier or address of a memory cell that hasn't been written to yet, as illustrated in Figure~\ref{fig:grammar-names}.
+The destination calculus uses two classes of names: regular variable names $[[x]], [[y]]$, and hnames, $[[h]], [[h1]], [[h2]]$ which are identifiers for a memory cell that hasn't been written to yet, as illustrated in Figure~\ref{fig:grammar-names}.
 
 Hole names are represented by natural numbers under the hood, so they can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hole name encountered so far in the program ; this corresponds to finding the next unused memory cell in which to write new data.
 
@@ -729,12 +729,6 @@ from⧔' (⮒
 \section{Type system}
 \label{sec:type-system}
 
-The type system of \destcalculus is highly inspired from Linear Haskell~\cite{bernardy_linear_2018}. In particular, it uses the same additive/multiplicative approach on mode as Linear Haskell for linearity enforcement, except here we use a product semiring for mode that keeps track of both age and multiplicity of variables (whereas only multiplicity is tracked in the former).
-
-As \destcalculus is based on intuitionistic linear logic, it provides multiplicative conjunction $\ottstype{\otimes}$ (product type) and additive disjunction (sum type) $\ottstype{\oplus}$. It also provides a function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ that are both parametrized by a mode $[[m]]$. We omit the mode annotation on the function arrow, as well as on the destination type, when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring.
-
-A mode is either a pair of a multiplicity and an age, or the special symbol $[[☠]]$ representing an unsatisfiable requirement for a variable in a typing context (e.g. a variable that is used with different types in two branches of a $\ottkw{case}$ statement on a sum type). This special mode ``invalid'' $[[☠]]$ is only used in the formal proof of type safety of \destcalculus, when summing typing contexts. However, every mode $[[m]]$ present in the typing rules of this paper is assumed to be valid (i.e. made of a pair of a multiplicity and an age), and every typing context in a rule premises is assumed to contain only valid modes too.
-
 \subsection{Types, modes, and typing contexts}
 
 \begin{ottfig}{\caption{Types, modes, and typing contexts}\label{fig:grammar-type-mode-ctx}}
@@ -747,12 +741,33 @@ A mode is either a pair of a multiplicity and an age, or the special symbol $[[�
 }
 \end{ottfig}
 
+The type system of \destcalculus is highly inspired from Linear Haskell~\cite{bernardy_linear_2018}. In particular, it uses the same additive/multiplicative approach on mode as Linear Haskell for linearity enforcement, except here we use a product semiring for mode that keeps track of both age and multiplicity of variables (whereas only multiplicity is tracked in the former).
+
+The grammar of types, modes, and typing context for \destcalculus is presented in Figure~\ref{fig:grammar-type-mode-ctx}. It is based on intuitionistic linear logic, and thus provides multiplicative conjunction $\ottstype{\otimes}$ (product type) and additive disjunction (sum type) $\ottstype{\oplus}$. It also provides a function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ that are both parametrized by a mode $[[m]]$. We omit the mode annotation on the function arrow, as well as on the destination type, when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1987}.
+
+A mode is either a pair of a multiplicity and an age, or the special symbol $[[☠]]$ representing an unsatisfiable requirement for a variable in a typing context (e.g. a variable that is used with different types in two branches of a $\ottkw{case}$ statement on a sum type). This special mode ``invalid'' $[[☠]]$ is only used in the formal proof of type safety of \destcalculus, when summing typing contexts. However, every mode $[[m]]$ present in the typing rules of this paper is assumed to be valid (i.e. made of a pair of a multiplicity and an age), and every typing context in a rule premises is assumed to contain only valid modes too.
+
 \subsection{Typing of terms and values}
 
-\begin{ottfig}{\caption{Typing rules for values and terms}\label{fig:ty-term-val}}
+\begin{ottfig}{\caption{Typing rules for values and terms}\label{fig:ty-val-term}}
 \ottdefnTyXXval{}
 \ottdefnTyXXterm{}
 \end{ottfig}
+
+Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms.
+
+In every figure,
+\begin{itemize}
+  \item $\Gamma$ denotes a typing context made only of holes and destination bindings,
+  \item $\Theta$ denotes a typing context made only of destination and variable bindings,
+  \item $\Delta$ denotes a typing context made only of destination bindings.
+\end{itemize}
+
+Destinations and holes are two faces of the same coin, as seen in Section~\ref{sec:build-up-vocab}, and must always be in 1:1 correspondance. Thus, the core idea of the type system is to have hole bindings $[[{ + h : T n }]]$ and destination bindings $[[{ - h : m ⌊ T ⌋ n }]]$, in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts. Hole bindings and destination bindings are meant to compensate each other in the typing context, a bit like how matter (positive polarity, hole) and antimatter (negative polarity, destination) annihilate each other. That way, the typing context of a term can stay constant during reduction, even when destination-filling primitives are evaluated to build up data structures.
+
+However, that annihilation between a destination and a hole of the same name is only allowed to happen around an ampar, as it is the ampar connective that ties the two sides together. In more technical terms, the ampar is where the two polarities of a name are bound together (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$).
+
+As a result, the sum of typing contexts, used in almost all rules, results in an erroneous context when the input operands contains the same name but in different polarities: $\{[[{ + h : T n }]]\} + \{[[{ - h : ¹ν ⌊ T ⌋ n }]]\} = \{[[{ + h : ① ☠ }]]\}$ (the fact that the result is a hole binding instead of a destination binding, is purely arbitrary ; the only important bit is to have an ``invalid'' mode on the result binding). Instead, in the only position where the annihilation is allowed to happen, that is to say the \textsc{Ty-val-Ampar} rule, we explicitly identify and remove the parts of input contexts that can interact and annihilate each other, in the form of $[[D]]$ in the right side context and $[[-⁻¹ D]]$ for the left one.
 
 \subsection{Derived typing rules for syntactic sugar forms}
 
