@@ -941,7 +941,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G1 # G2 :: :: Disjoint {{ tex [[G1]]\texttt{\#}[[G2]] }}
   | H1 ## H2 :: :: HDisjoint {{ tex [[H1]]\texttt{\#\#}[[H2]] }}
   | IsValid m :: :: IsValid {{ tex \texttt{IsValid}~[[m]] }}
-  | ModeSubtype m1 m2 :: :: ModeSubtype {{ tex \texttt{ModeSubtype}~[[m1]]~[[m2]] }}
+  | m1 <: m2 :: :: ModeSubtype {{ tex [[m1]]~\mathtt{<:}~[[m2]] }}
   | NotVal t :: :: NotVal {{ tex \texttt{NotVal}~[[t]] }}
   | h1 = h2 :: :: hname_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
 

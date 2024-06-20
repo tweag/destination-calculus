@@ -796,11 +796,48 @@ On the other hand, a destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ has two m
 
 In practice, destinations can never have left-most multiplicity $[[ω]]$ or age $[[∞]]$. They can only be linear and have a finite age. Indeed, only \textsc{Ty-val-Ampar} (or more precisely, \textsc{Ty-ectxs-OpenAmpar-Foc}) adds new destination bindings to a typing context, and those initially have mode $[[¹ν]]$, and can only grow old later by increments of $[[↑]]$ (but can never reach age $[[∞]]$). We have formally proved that this property holds during execution. So any typing context of the form $[[{ - h : ωa ⌊ T ⌋ n },O]]$ or $[[{ - h : p∞ ⌊ T ⌋ n },O]]$ is never satisfiable.
 
-\paragraph{Value typing $[[⫦]]$}
+\paragraph{Typing of values $[[⫦]]$}
 
-Values type in a typing context $[[G]]$ made only of hole and destinations bindings. The absence of free variables in values make it easier to prove substitution properties (in particular, we never have to go under an ampar to perform a substitution).
+Values type in a typing context $[[G]]$ made only of hole and destinations bindings. The absence of free variables in values make it easier to prove substitution properties (as we will see in Section~\ref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
 
-Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination have left-most mode $[[¹ν]]$ when used alone.\critical{revisit this if we allow weakening for dests}
+Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination must have left-most mode $[[¹ν]]$ in the typing context to be used (except when a destination is stored away, as we will see later)\critical{revisit this if we allow weakening for dests}. Rules for unit, left and right variants, and product are straightforward.
+
+Rule \textsc{Ty-val-Exp} is rather classic too: we multiply the dependencies $[[G]]$ of the value by the mode $[[n]]$ of the exponential. The intuition is that if $[[v]]$ uses a resource $[[v']]$ twice, then $\expcons{\ottsmode{2}}[[v]]$, that corresponds to two uses of $[[v]]$ (in a system with such a mode), will use $[[v']]$ four times. The mode product on context $[[n·G]]$ in the exponential rule has a somewhat different effect on hole and destination bindings:
+
+\[\left\{\begin{array}{rcl}
+  [[n·({ x : m T })]] &=& [[{ x : n · m T }]] \\
+  [[n·({ + h : T n })]] &=& [[{ + h : T n · n' }]] \\
+  [[n·({ - h : m ⌊ T ⌋ n' })]] &=& [[{ - h : n · m ⌊ T ⌋ n' }]]
+\end{array}\right.\]
+
+On hole bindings $[[{ + h : T n' }]]$, it affects the mode $[[n']]$ of the value the hole can receive, as we said earlier. On destination bindings $[[{ - h : m ⌊ T ⌋ n' }]]$, on the other hand, it affects the mode $[[m]]$ of the destination viewed as a value (the left-most one), but not the mode of the value it can be filled with.\unsure{Do we need more details on what are the consequences of that difference?}
+
+Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions can only contain (captured) destinations, they cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curryfied function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$ ? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
+
+The last important rule, \textsc{Ty-val-Ampar}, is probably the most complex one.
+The left side $[[v2]]$ is the data structure under construction, that may contain holes (in $[[-⁻¹ D3]]$), but also stored destinations from other scopes (in $[[D2]]$). The right side $[[v1]]$ is an arbitrary value, that we can manipulate using $\ottkw{map}$, and that must contain all destinations matching the holes of $[[v2]]$ (these destinations are represented by $[[D3]]$). The right side $[[v1]]$ may also contain stored destinations from other scopes, in $[[¹↑·D1]]$ (in which case those cannot be filled in that scope, because they are at least of age $[[↑]]$, and thus can only be stored or moved around)\unsure{Not sure whether we should explain why $[[D1]]$ is offset by $[[¹↑]]$ in the premise but not in conclusion. The reason is "because it is needed" more than having a good intuition narrative behind it.}. The resulting typing context for the ampar is $[[D1,D2]]$; it doesn't mention $[[-⁻¹ D3]]$ and $[[D3]]$ anymore as they annihilate each other, as we explained previously. $[[D1]]$ and $[[D2]]$, by convention, are made only of destination bindings, and thus we know the annihilation (and thus binding) between holes and destinations for this ampar is indeed maximal. 
+
+The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are true given that $[[-⁻¹ D3]]$ is a valid typing context, so are not really a new restriction on $[[D3]]$. They are mostly used to ease the mechanical proof of type safety for the system.
+
+\paragraph{Typing of terms $[[⊢]]$}
+
+Terms type in a context that can only contain hole and destination bindings. Holes are only allowed in a value shelled by an ampar, so that the hole binding disappear from the typing context (using rule \textsc{Ty-val-Ampar} as we saw before).
+
+The property $\mathtt{DisposableOnly}~[[P]]$ says that $[[P]]$ can only contain variable bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. Only the leaves of the typing tree need to be able to absorb unused disposable variable bindings, that is to say rules \textsc{Ty-term-Val} (it is a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$) and \textsc{Ty-term-Var}.
+
+Rule \textsc{Ty-term-Var} allows for dereliction, with subtyping constraint $[[¹ν <: m]]$ defined as such:
+
+\newcommand{\pleq}{\stackrel{\pmb{\mathrm{p}}}{\mathtt{<:}}}
+\newcommand{\aleq}{\stackrel{\pmb{\mathrm{a}}}{\mathtt{<:}}}
+
+\[\begin{array}{rcl}
+  [[m]] &\mathtt{<:}& [[☠]]\\
+  [[p a]] &\mathtt{<:}& [[p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']] \\
+  [[¹]] &\pleq& [[¹]] \\
+  [[p]] &\pleq& [[ω]] \\
+  [[↑]]^{m} &\aleq& [[↑]]^{n} \Longleftrightarrow m = n \quad \text{(no finite age dereliction ; recall that $[[↑]]^{0} = [[ν]]$)} \\
+  [[a]] &\aleq& [[∞]]
+\end{array}\]
 
 \subsection{Derived typing rules for syntactic sugar forms}
 
@@ -808,7 +845,7 @@ Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or des
   \ottdefnTyXXsterm{}
 \end{ottfig}
 
-\section{Evaluation contexts and semantics}
+\section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
 \subsection{Evaluation contexts forms}
 
@@ -826,7 +863,7 @@ Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or des
 \ottdefnTy{}
 \end{ottfig}
 
-\subsection{Small-step semantics}
+\subsection{Small-step semantics}\label{ssec:sem}
 
 \begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
 \ottdefnSem{}
