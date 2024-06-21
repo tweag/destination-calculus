@@ -126,6 +126,10 @@
 \small\BODY\activespaces #2
 \end{figure}}
 
+\newenvironment{stretchedarray}[2][1]
+  {\bgroup\renewcommand*{\arraystretch}{#1}\begin{array}{#2}}
+  {\end{array}\egroup}
+
 \begin{document}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -825,19 +829,35 @@ Terms type in a context that can only contain hole and destination bindings. Hol
 
 The property $\mathtt{DisposableOnly}~[[P]]$ says that $[[P]]$ can only contain variable bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. Only the leaves of the typing tree need to be able to absorb unused disposable variable bindings, that is to say rules \textsc{Ty-term-Val} (it is a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$) and \textsc{Ty-term-Var}.
 
-Rule \textsc{Ty-term-Var} allows for dereliction, with subtyping constraint $[[¹ν <: m]]$ defined as such:
+Rule \textsc{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν <: m]]$ defined as such:
 
 \newcommand{\pleq}{\stackrel{\pmb{\mathrm{p}}}{\mathtt{<:}}}
 \newcommand{\aleq}{\stackrel{\pmb{\mathrm{a}}}{\mathtt{<:}}}
 
-\[\begin{array}{rcl}
-  [[m]] &\mathtt{<:}& [[☠]]\\
+{\setlength{\arraycolsep}{\widthof{\,}}
+\[\begin{stretchedarray}[3]{l}\left\{\begin{stretchedarray}[1]{rcl}
   [[p a]] &\mathtt{<:}& [[p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']] \\
+  [[m]] &\mathtt{<:}& [[☠]]
+\end{stretchedarray}\right.\\\left\{\begin{stretchedarray}[1]{rcl}
   [[¹]] &\pleq& [[¹]] \\
-  [[p]] &\pleq& [[ω]] \\
+  [[p]] &\pleq& [[ω]]
+\end{stretchedarray}\right.\\\left\{\begin{stretchedarray}[1]{rcl}
   [[↑]]^{m} &\aleq& [[↑]]^{n} \Longleftrightarrow m = n \quad \text{(no finite age dereliction ; recall that $[[↑]]^{0} = [[ν]]$)} \\
   [[a]] &\aleq& [[∞]]
-\end{array}\]
+\end{stretchedarray}\right.\end{stretchedarray}\]
+}
+
+Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is also used to chain destination-filling operations.
+
+Rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} are all parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the argument is multiplied. These rules otherwise follows closely from~\cite{bernardy_linear_2018}.
+
+The Rule \textsc{Ty-term-Map} is where all the safety of the system lies. It opens an ampar, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. The core idea is that $\ottkw{map}$ creates a new scope for $[[x]]$ and $[[t']]$, so anything coming from the current ambiant scope (represented by $[[P2]]$ in the conclusion) appears older (by $[[↑]]$) when we see it from $[[t']]$ point of view. That way we can distinguish $[[x]]$ from anything else that was already bound using age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$  while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
+
+\begin{figure}[h]
+  \includegraphics[width=8cm]{schema_scopes.png}
+  \caption{Scope rules for $\ottkw{map}$ in \destcalculus}
+  \label{fig:scope-rules}
+\end{figure}
 
 \subsection{Derived typing rules for syntactic sugar forms}
 
