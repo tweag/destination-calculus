@@ -934,6 +934,51 @@ What needs to be changed (e.g. linear alloc)
 
 \section{Related work}
 
+\unsure{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
+\subsection{Destination-passing style for efficient memory management}
+In~\cite{shaikhha_destination-passing_2017}, the authors present a destination-based intermediate language for a functional array programming language. They develop a system of destination-specific optimizations and boast near-C performance.
+
+This is the most comprehensive evidence to date of the benefit of destination-passing style for performance in functional programming languages. Although their work is on array programming, while this article focuses on linked data structure. They can therefore benefit of optimizations that are perhaps less valuable for us, such as allocating one contiguous memory chunk for several arrays.
+
+The main difference between their work and ours is that their language is solely an intermediate language: it would be unsound to program in it manually. We, on the other hand, are proposing a type system to make it sound for the programmer to program directly with destinations.
+
+We consider that these two aspects complement each other: good compiler optimization are important to alleviate the burden from the programmer and allowing high-level abstraction; having the possibility to use destinations in code affords the programmer more control would they need it.
+
+\subsection{Tail modulo constructor}
+
+Another example of destinations in a compiler's optimizer is~\cite{bour_tmc_2021}. It's meant to address the perennial problem that the map function on linked lists isn't tail-recursive, hence consumes stack space. The observation is that there's a systematic transformation of functions where the only recursive call is under a constructor to a destination-passing tail-recursive implementation.
+
+Here again, there's no destination in user land, only in the intermediate representation. However, there is a programmatic interface: the programmer annotates a function like
+\begin{verbatim}
+let[@tail_mod_cons] rec map =
+\end{verbatim}
+to ask the compiler to perform the translation. The compiler will then throw an error if it can't. This way, contrary to the optimizations in~\cite{shaikhha_destination-passing_2017}, this optimization is entirely predictable.
+
+This has been available in OCaml since version 4.14. This is the one example we know of of destinations built in a production-grade compiler. Our \destcalculus makes it possible to express the result tail-modulo-constructor in a typed language. It can be used to write programs directly in that style,  or it could serve as a typed target language for and automatic transformation. On the flip-side, tail modulo constructor is too weak to handle
+
+\subsection{A functional representation of data structures with a hole}
+
+The idea of using linear types to safely represent structures with holes dates back to~\cite{minamide_functional_1998}. Our system is strongly inspired by theirs. In their system, we can only compose functions that represent data structures with holes, we can't pattern-match on the result; just like in our system we cannot act on the left-hand side of $[[S ⧔ T]]$, only the right hand part.
+
+In~\cite{minamide_functional_1998}, it's only ever possible to represent structures with a single hole. But this is a rather superficial restriction. The author don't comment on this, but we believe that this restriction only exists for convenience of the exposition: the language is lowered to a language without function abstraction and where composition is performed by combinators. While it's easy to write a combinator for single-argument-function composition, it's cumbersome to write combinators for functions with multiple arguments. But having multiple-hole data structures wouldn't have changed their system in any profound way.
+
+The more important difference is that while their system is based on a type of linear functions, our is based on the linear logic's par combinator. This, in turns, lets us define a type of destinations which are representations of holes in values, which~\cite{minamide_functional_1998} doesn't have. This means that~\cite{minamide_functional_1998} can implement our examples with difference lists and queues from \cref{ssec:efficient-queue}, but it can't do our breadth-first traversal example from \cref{sec:bft}, since storing destinations in a data structure is the essential ingredient of this example.
+
+This ability to store destination does come at a cost though: the system needs this additional notion of ages to ensure that destinations are use soundly. On the other hand, our system is strictly more general, in that the system from~\cite{minamide_functional_1998} can be embedded in \destcalculus, and if one stays in this fragment, we're never confronted with ages. Ages only show up when writing programs that go beyond Minamide's system.
+
+\subsection{Tail modulo context}
+\critical{You'll [Thomas] have to do this section, because I'm not familiar enough with that work}
+\subsection{Destination-passing style programming: a Haskell implementation}
+In~\cite{bagrel_destination-passing_2024}, the author proposes a system much like ours: it has a par-like construct (that they call \verb+Incomplete+), where only the right-hand side can be modified, and a destination type. The main difference is that in their system, $[[d ˢ⨞ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus $[[t]]$ can be linear.\unsure{More of these grey ts I don't know why that is.}
+
+The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes. In order to do a breadth-first search algorithm like in \cref{sec:bft}, they can't use improved queues like we do, they have to use regular functional queues.
+
+However, unlike \destcalculus, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which features linear types. Our \destcalculus, with the age modes, needs more than what Haskell provides. Our system subsumes theirs, however, ages will appear in the typing rules for that fragment.
+
+\subsection{Semi-axiomatic sequent calculus}
+In\critical{Add citation}, the author develop a system where constructors return to a destination rather than allocating memories. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the par connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualisation connective is involutive.
+
+The cost of this elegance is that computations may try to pattern-match on a hole, in which case they must wait for the hole to be filled. So the semantic of holes is that of a future or a promise. In turns this requires the semantic of their calculus to be fully concurrent. Which is a very different point in the design space.
 \section{Conclusion and future work}
 
 \clearpage{}
@@ -947,4 +992,5 @@ What needs to be changed (e.g. linear alloc)
 % eval: (visual-line-mode 1)
 % ispell-local-dictionary: "en_US"
 % End:
-% LocalWords:  ampar
+% LocalWords:  ampar combinators combinator Gentzen sequent
+% LocalWords:  involutive dualisation
