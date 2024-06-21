@@ -767,7 +767,11 @@ A mode is either a pair of a multiplicity and an age, or the special symbol $[[�
 \ottdefnTyXXterm{}
 \end{ottfig}
 
-Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms.
+\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}
+  \ottdefnTyXXsterm{}
+\end{ottfig}
+
+Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms. Figure~\ref{fig:ty-sterm} presents the typing rules for the syntactic sugar forms, that have been derived from primitive rules of Figure~\ref{fig:ty-val-term} and proven formally too.
 
 In every figure,
 \begin{itemize}
@@ -851,7 +855,7 @@ Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is
 
 Rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} are all parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the argument is multiplied. These rules otherwise follows closely from~\cite{bernardy_linear_2018}.
 
-The Rule \textsc{Ty-term-Map} is where all the safety of the system lies. It opens an ampar, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. The core idea is that $\ottkw{map}$ creates a new scope for $[[x]]$ and $[[t']]$, so anything coming from the current ambiant scope (represented by $[[P2]]$ in the conclusion) appears older (by $[[↑]]$) when we see it from $[[t']]$ point of view. That way we can distinguish $[[x]]$ from anything else that was already bound using age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$  while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
+The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies. It opens an ampar, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. The core idea is that $\ottkw{map}$ creates a new scope for $[[x]]$ and $[[t']]$, so anything coming from the current ambiant scope (represented by $[[P2]]$ in the conclusion) appears older (by $[[↑]]$) when we see it from $[[t']]$ point of view. That way we can distinguish $[[x]]$ from anything else that was already bound using age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$  while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
 
 \begin{figure}[h]
   \includegraphics[width=8cm]{schema_scopes.png}
@@ -859,11 +863,14 @@ The Rule \textsc{Ty-term-Map} is where all the safety of the system lies. It ope
   \label{fig:scope-rules}
 \end{figure}
 
-\subsection{Derived typing rules for syntactic sugar forms}
+We see that the left of an ampar (the structure being built) ``takes place'' in the ambiant scope. This is important because when using $\ottkw{from}_{\ottstype{\ltimes} }'$, the left of the ampar is extracted to the ambiant scope (as seen at the bottom of the figure with $[[x22]]$).
 
-\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}
-  \ottdefnTyXXsterm{}
-\end{ottfig}
+The right side however, where destinations are, has its own new, inner scope that is opened when mapped over\unsure{There is a subtle thing here; although we say that the right side of the ampar is in its own inner scope, it doesn't prevent the compensation with holes in the left side in rule \textsc{Ty-val-Ampar}}. When feeding a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope one $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
+
+The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-val-term}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from Figure~\ref{fig:ty-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambiant context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a new scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema.
+
+When we enter a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$, as seen in column \emph{Context}.
+When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottstype{\ltimes} }$, the right side has to be of shape $[[! ¹∞ T]]$, which means it is scope-insensitive, and thus it is safe to extract the right side from its shelled inner scope to the ambiant scope too.\unsure{I don't know where to put these sentences}
 
 \section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
