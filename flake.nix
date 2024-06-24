@@ -61,6 +61,7 @@
             (pkgs.texlive.combine {
               inherit (pkgs.texlive)
                 scheme-basic
+                latexmk
                 acmart
                 cleveref
                 xargs
