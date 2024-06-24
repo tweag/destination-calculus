@@ -770,9 +770,13 @@ A mode is either a pair of a multiplicity and an age, or the special symbol $[[â
 \end{ottfig}
 
 \TODO{Replacer turnstile s par une double barre ou Ã©quivalent}
-\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}
+\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}\bgroup\renewcommand\ottaltinferrule[4]{
+  \inferrule*[fraction={===},narrower=0.3,lab=#1,#2]
+    {#3}
+    {#4}
+}
   \ottdefnTyXXsterm{}
-\end{ottfig}
+\egroup\end{ottfig}
 
 Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms. Figure~\ref{fig:ty-sterm} presents the typing rules for the syntactic sugar forms, that have been derived from primitive rules of Figure~\ref{fig:ty-val-term} and proven formally too.
 

@@ -139,7 +139,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | let x ≔ t b sp in u :: S :: SugarLetSp2 {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]][[b]][[sp]]\alignedin{}~[[u]] }}
   | ༼ t ༽ :: S :: InvisParen {{ coq [[t]] }} {{ tex [[t]] }}
 
-sterm :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
+sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (sterm_Alloc) }}
   | t ˢ⨞ t' :: M :: SugarFillLeaf {{ com Fill destination with supplied term }} {{ coq (sterm_FillLeaf [[t]] [[t']]) }} 
   | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (sterm_FromA' [[t]]) }}
@@ -925,7 +925,7 @@ terminals :: 'terminals_' ::=
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex \longrightarrow }}
   | ⊢ :: :: vdash {{ tex \,\pmb{\vdash}\, }}
-  | ˢ⊢ :: :: svdash {{ tex \!\!\pmb{\phantom{a}^{\scriptscriptstyle \mathrm{s} }\!\!\vdash}\, }}
+  | ˢ⊢ :: :: svdash {{ tex \,\pmb{\vdash}\, }}
   | ⊣ :: :: dashv {{ tex \,\pmb{\dashv}\, }}
   | ⫦ :: :: dvdash {{ tex \!\!\pmb{\phantom{a}^{\scriptscriptstyle \mathrm{v} }\!\!\vdash}\, }}
   | : :: :: colon {{ tex \pmb{:} }}
@@ -947,7 +947,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
 
   | G ⫦ v : T :: :: Ty_val
   | P ⊢ t : T :: :: Ty_term
-  | P ˢ⊢ t : T :: :: Ty_sterm
+  | P ˢ⊢ s : T :: :: Ty_sterm
   | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T1]]\ottstype{\rightarrowtail}[[T2]] }}
   | ⊢ C [ t ] : T :: :: Ty
   | C [ t ] ⟶ C' [ t' ] :: :: Sem
