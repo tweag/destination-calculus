@@ -23,6 +23,14 @@
 \usepackage{ottstyling}
 % Hide "Index for ranges" from the metavars displayed tabular
 \patchcmd{\ottmetavars}{$ \ottmv{k} $ & \ottcom{Index for ranges} \\}{}{}{}
+\patchcmd{\ottdruleTyXXectxsXXOpenAmparXXFoc}{%
+\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
+\ottpremise{\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
+}{\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }\quad\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
+\patchcmd{\ottdruleTyXXvalXXAmpar}{%
+\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
+\ottpremise{\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
+}{\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }\quad\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
 
 % \setlength\textfloatsep{\baselineskip}
 % \setlength{\intextsep}{\baselineskip}
@@ -882,33 +890,63 @@ We see that the left of an ampar (the structure being built) ``takes place'' in 
 
 The right side however, where destinations are, has its own new, inner scope that is opened when mapped over\unsure{There is a subtle thing here; although we say that the right side of the ampar is in its own inner scope, it doesn't prevent the compensation with holes in the left side in rule \textsc{Ty-val-Ampar}}. When feeding a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope one $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
 
-The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-val-term}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from Figure~\ref{fig:ty-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambiant context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a new scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema.
+The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-val-term}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from Figure~\ref{fig:ty-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambiant context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a new scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of the lambda abstraction in \textsc{Ty-term-FillF}.
 
 When we enter a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$, as seen in column \emph{Context}.
 When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottstype{\ltimes} }$, the right side has to be of shape $[[! ¹∞ T]]$, which means it is scope-insensitive, and thus it is safe to extract the right side from its shelled inner scope to the ambiant scope too.\unsure{I don't know where to put these sentences}
 
 \section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
+The semantics of \destcalculus are given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$ (represented by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program.
+
 \subsection{Evaluation contexts forms}
 
 \begin{ottfig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}
-\ottgrammartabular{
-\ottectx\ottinterrule
-\ottectxs\ottafterlastrule
-}
-\end{ottfig}
+  \ottgrammartabular{
+  \ottectx\ottinterrule
+  \ottectxs\ottafterlastrule
+  }
+  \end{ottfig}
+
+The grammar of evaluation contexts is given in Figure~\ref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c1]], [[c2]]\ldots$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to imagine how to build a stack-based interpreter for such a language.
+
+Focusing components are all directly derived from the term syntax, except for the ``open ampar'' focus $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focus component indicates that an ampar is currently being $\ottkw{map}$ped on, with its right hand side $[[v2]]$ (the structure being built) being attached to the ``open ampar'' focus component, while its left hand side (containing destinations) is either in subsequent focus components, or in the term under focus.
+
+We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update structures under construction that are attached to open ampar focus components in the stack. Such a substitution is triggered when a destination $[[-h]]$ is filled in the term under focus, and results in the value $[[v]]$ (that may contain holes itself, e.g. if it is a hollow constructor $[[( +h1, +h2 )]]$) being written to the hole $[[+h]]$ (that must appear somewhere on an open ampar payload). The set $[[H]]$ tracks the potential hole names introduced by value $[[v]]$.
 
 \subsection{Typing of evaluation contexts and commands}
 
-\begin{ottfig}{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}
+Evaluation contexts are typed in a context $[[D]]$ that can only contains destination bindings. $[[D]]$ represents the typing context available for the term that will be put in the box $\square$ of the evaluation context. In other terms, while the typing context of a term is a list of requirements so that it can be typed, the typing context of an evaluation context is the set of bindings that it makes available to the term under focus. As a result, while the typing of a term $[[P ⊢ t : T]]$ is additive (the typing requirements for a function application is the sum of the requirements for the function itself and for its argument), the typing of an evaluation context $[[D ⊣ C : T ↣ U0]]$ is subtractive : adding the focus component $[[t' ⬜]]$ to the stack $[[C]]$ will remove whatever is needed to type $[[t']]$ from the typing context provided by $[[C]]$. The whole typing rules for evaluation contexts $[[C]]$ as well as commands $[[ C[t] ]]$ are presented in Figure~\ref{fig:ty-ectxs-cmd}.
+
+\begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}
 \ottdefnTyXXectxs{}
 \ottdefnTy{}
 \end{ottfig}
 
+An evaluation context has a pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$, where $[[T]]$ denotes the type of the focus (i.e. the type of the term that can be put in the box of the evaluation context) while $[[U0]]$ denotes the type of the resulting command (when the box of the evaluation context is filled with a term).
+
+All typing rules for evaluation contexts can be derived from the ones for the corresponding term (except for the rule \textsc{Ty-ectxs-OpenAmpar-Foc} that is the truly new form). Let's take the rule \textsc{Ty-ectxs-PatP-Foc} as an example:
+
+\begin{itemize}
+  \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP};
+  \item The typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
+  \item The typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} ($[[t]]$ is the term located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
+\end{itemize}
+
+In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, and the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
+
+Composing an evaluation context of pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focus component never affects the type $[[U0]]$ of the future command ; only the type $[[T]]$ of what can be put in the box is altered.
+
 \subsection{Small-step semantics}\label{ssec:sem}
 
 \begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
+\bgroup\renewcommand\ottaltinferrule[4]{
+  \inferrule*[narrower=0.3,right=#1,#2]
+    {#3}
+    {#4}
+}
 \ottdefnSem{}
+\egroup
 \end{ottfig}
 
 \section{Remarks on the formal proofs}
@@ -937,7 +975,7 @@ Record T A B := {
 where \verb+Support l f+ means that \verb+l+ contains the domain of \verb+f+. To make the equality of finite function be strict equality \verb+eq+, we assumed functional extensionality and proof irrelevance. In some circumstances, we've also needed to list the finite functions' domains. But in the definition, the domain is sealed behind a proposition, so we also assumed classical logic as well as indefinite description
 
 \begin{verbatim}
- Axiom constructive_indefinite_description :
+Axiom constructive_indefinite_description :
     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
 \end{verbatim}
 
@@ -994,7 +1032,7 @@ The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations 
 However, unlike \destcalculus, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which features linear types. Our \destcalculus, with the age modes, needs more than what Haskell provides. Our system subsumes theirs, however, ages will appear in the typing rules for that fragment.
 
 \subsection{Semi-axiomatic sequent calculus}
-In\critical{Add citation}, the author develop a system where constructors return to a destination rather than allocating memories. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the par connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualisation connective is involutive.
+In\critical{Add citation}, the author develop a system where constructors return to a destination rather than allocating memory. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the par connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualisation connective is involutive.
 
 The cost of this elegance is that computations may try to pattern-match on a hole, in which case they must wait for the hole to be filled. So the semantic of holes is that of a future or a promise. In turns this requires the semantic of their calculus to be fully concurrent. Which is a very different point in the design space.
 \section{Conclusion and future work}

@@ -371,12 +371,12 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 {{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
 {{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]
 {{ [[D2]] # [[D3]] }} [[:Disjoint2D3]]
-{{ [[hnames(C)]] ## [[hnames(-⁻¹D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
 {{ LinOnly [[D3]] }} [[:LinOnlyD3]]
 {{ FinAgeOnly [[D3]] }} [[:FinAgeOnlyD3]]
+{{ [[hnames(C)]] ## [[hnames(D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
 {{ ValidOnly [[D3]] }} [[:ValidOnlyD3]]
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]

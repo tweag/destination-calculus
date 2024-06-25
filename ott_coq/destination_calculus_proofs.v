@@ -2031,8 +2031,8 @@ Proof.
       { hauto use: LinOnly_union_iff, LinOnly_stimes_forward, (IsLinProof (Fin 1)). }
     assert (FinAgeOnly (¹↑ ᴳ· D1)).
       { hauto use: FinAgeOnly_union_backward, FinAgeOnly_stimes_forward, (IsFinAgeProof Lin 1). }
-    assert ((D1 ᴳ+ D2) # (ᴳ-⁻¹ D3)).
-      { apply (Ty_ectxs_HDisjoint_to_Disjoint C (D1 ᴳ+ D2) (ᴳ-⁻¹ D3) (U ⧔ T') U0); tauto. }
+    assert ((D1 ᴳ+ D2) # D3).
+      { apply (Ty_ectxs_HDisjoint_to_Disjoint C (D1 ᴳ+ D2) D3 (U ⧔ T') U0); tauto. }
     assert ((¹↑ ᴳ· D1) # D3).
       { sblast use: Disjoint_union_l_iff, Disjoint_hminus_inv_r_iff, Disjoint_stimes_l_iff. }
     rewrite LinOnly_union_iff. repeat split. tauto. tauto. tauto. apply FinAgeOnly_union_forward. repeat split. all:tauto.

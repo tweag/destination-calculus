@@ -866,7 +866,8 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
  | _Ty_sterm (P:ctx) (t:term) (T:type)
  | _Ty_ectxs (D:ctx) (C:ectxs) (T1:type) (T2:type) (*r Typing of evaluation contexts *)
  | _Ty (C:ectxs) (t:term) (T:type)
- | _Sem (C:ectxs) (t:term) (C':ectxs) (t':term).
+ | _Sem (C:ectxs) (t:term) (C':ectxs) (t':term)
+ | _Cmd (C:ectxs) (t:term).
 (** definitions *)
 
 (* defns Ty *)
@@ -1157,7 +1158,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD3: ValidOnly D3 )
      (TyC: Ty_ectxs  (union  D1   D2 )  C  (type_Ampar U T')  U0)
      (Tyv2: Ty_val  (union  D2    (hminus_inv  D3 )  )  v2 U),
-      (hnames_ectxs  C )  ##  (hnames_ctx   (hminus_inv  D3 )  )   ->
+      (hnames_ectxs  C )  ##  (hnames_ctx  D3 )   ->
      Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hnames_ctx  D3 )  v2)    C )  T' U0
 with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
  | Ty_cmd : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)

@@ -341,7 +341,7 @@ Proof.
               { unfold HDisjoint. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint. crush. assumption.
             } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
-          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto.  } { rewrite hnames_hminus_inv_eq. assumption. }
+          { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto.  } { assumption. }
     - (* Sem-OpenAmpar_Unfoc *)
       inversion Tyt; subst. rename TyC into TyCc, Tyv into Tyv1. clear H2.
       inversion TyCc; subst. rename H6 into hnamesDisjoint, D0 into D.
@@ -350,7 +350,7 @@ Proof.
         { unfold union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. }
       rewrite <- eqD1uD3PuD in *. clear H0. clear eqD1uD3PuD. clear D.
       assert (D1 ᴳ+ D2 ⊢ ᵥ₎ hnamesᴳ( D3) ⟨ v2 ❟ v1 ⟩ : U ⧔ T) as TyA.
-        { term_Val_no_dispose (D1 ᴳ+ D2). apply Ty_ectxs_HDisjoint_to_Disjoint with (D := D1 ᴳ+ D2) (D' := (ᴳ-⁻¹ D3)) (C := C) (T := U ⧔ T) (U0 := U0) in hnamesDisjoint. apply Ty_val_Ampar. all: trivial. crush.
+        { term_Val_no_dispose (D1 ᴳ+ D2). apply Ty_ectxs_HDisjoint_to_Disjoint with (D := D1 ᴳ+ D2) (D' := D3) (C := C) (T := U ⧔ T) (U0 := U0) in hnamesDisjoint. apply Ty_val_Ampar. all: trivial. crush.
          }
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C (U ⧔ T) U0). tauto. }

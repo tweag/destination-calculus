@@ -952,6 +952,8 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | ⊢ C [ t ] : T :: :: Ty
   | C [ t ] ⟶ C' [ t' ] :: :: Sem
 
+  | C [ t ] :: :: Cmd
+
 parsing
 ctx_Union <= ctx_Stimes
 ctx_DisjointUnion <= ctx_Stimes
