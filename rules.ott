@@ -65,7 +65,7 @@ n·G ⫦ ᴇ n v' : ! n T
 ¹↑·D1 + D3 ⫦ v1 : T [[:Tyv1]]
 D2 + (-⁻¹D3) ⫦ v2 : U [[:Tyv2]]
 ---------------- :: Ampar
-D1 + D2 ⫦ hnames(-⁻¹D3) ⟨v2 ❟ v1⟩ : U ⧔ T
+D1 + D2 ⫦ hnames(D3) ⟨v2 ❟ v1⟩ : U ⧔ T
 
 defn
 P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
@@ -381,7 +381,7 @@ D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar_Foc
-¹↑·D1 + D3 ⊣ C ∘ (hnames(-⁻¹D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
+¹↑·D1 + D3 ⊣ C ∘ (hnames(D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
 
 defn
 ⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} by

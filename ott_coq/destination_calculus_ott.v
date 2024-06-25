@@ -60,7 +60,17 @@ Definition mode : Type := option (mul * age).
 
 Definition hnames : Type := HNames.t.
 
-Inductive term : Type :=  (*r Term *)
+Inductive val : Type :=  (*r Value *)
+ | val_Hole (h:hname) (*r Hole *)
+ | val_Dest (h:hname) (*r Destination *)
+ | val_Unit : val (*r Unit *)
+ | val_Fun (x:var) (m:mode) (u:term) (*r Function with no free variable *)
+ | val_Left (v:val) (*r Left variant for sum *)
+ | val_Right (v:val) (*r Right variant for sum *)
+ | val_Exp (m:mode) (v:val) (*r Exponential *)
+ | val_Prod (v1:val) (v2:val) (*r Product *)
+ | val_Ampar (H:hnames) (v2:val) (v1:val) (*r Ampar *)
+with term : Type :=  (*r Term *)
  | term_Val (v:val) (*r Value *)
  | term_Var (x:var) (*r Variable *)
  | term_App (t':term) (t:term) (*r Application *)
@@ -77,17 +87,7 @@ Inductive term : Type :=  (*r Term *)
  | term_FillE (t:term) (m:mode) (*r Fill destination with exponential constructor *)
  | term_FillP (t:term) (*r Fill destination with product constructor *)
  | term_FillF (t:term) (x:var) (m:mode) (u:term) (*r Fill destination with function *)
- | term_FillComp (t:term) (t':term) (*r Fill destination with root of other ampar *)
-with val : Type :=  (*r Value *)
- | val_Hole (h:hname) (*r Hole *)
- | val_Dest (h:hname) (*r Destination *)
- | val_Unit : val (*r Unit *)
- | val_Fun (x:var) (m:mode) (u:term) (*r Function with no free variable *)
- | val_Left (v:val) (*r Left variant for sum *)
- | val_Right (v:val) (*r Right variant for sum *)
- | val_Exp (m:mode) (v:val) (*r Exponential *)
- | val_Prod (v1:val) (v2:val) (*r Product *)
- | val_Ampar (H:hnames) (v2:val) (v1:val) (*r Ampar *).
+ | term_FillComp (t:term) (t':term) (*r Fill destination with root of other ampar *).
 
 Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_App_Foc1 (t':term)
@@ -124,8 +124,6 @@ Inductive name : Type :=
 
 Definition ectxs : Type := (list ectx).
 
-Definition casem : Type := mode.
-
 Inductive binding_var : Type := 
  | binding_Var (m:mode) (T:type).
 
@@ -138,22 +136,13 @@ decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
 Defined.
 Hint Resolve eq_type : ott_coq_equality.
 (** induction principles *)
-Section val_term_rect.
+Section term_val_rect.
 
 Variables
-  (P_val : val -> Prop)
-  (P_term : term -> Prop).
+  (P_term : term -> Prop)
+  (P_val : val -> Prop).
 
 Hypothesis
-  (H_val_Hole : forall (h:hname), P_val (val_Hole h))
-  (H_val_Dest : forall (h:hname), P_val (val_Dest h))
-  (H_val_Unit : P_val val_Unit)
-  (H_val_Fun : forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_val (val_Fun x m u))
-  (H_val_Left : forall (v:val), P_val v -> P_val (val_Left v))
-  (H_val_Right : forall (v:val), P_val v -> P_val (val_Right v))
-  (H_val_Exp : forall (m:mode), forall (v:val), P_val v -> P_val (val_Exp m v))
-  (H_val_Prod : forall (v1:val), P_val v1 -> forall (v2:val), P_val v2 -> P_val (val_Prod v1 v2))
-  (H_val_Ampar : forall (H:hnames), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
   (H_term_Val : forall (v:val), P_val v -> P_term (term_Val v))
   (H_term_Var : forall (x:var), P_term (term_Var x))
   (H_term_App : forall (t':term), P_term t' -> forall (t:term), P_term t -> P_term (term_App t' t))
@@ -171,9 +160,30 @@ Hypothesis
   (H_term_FillP : forall (t:term), P_term t -> P_term (term_FillP t))
   (H_term_FillF : forall (t:term), P_term t -> forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_term (term_FillF t x m u))
   (H_term_FillComp : forall (t:term), P_term t -> forall (t':term), P_term t' -> P_term (term_FillComp t t'))
+  (H_val_Hole : forall (h:hname), P_val (val_Hole h))
+  (H_val_Dest : forall (h:hname), P_val (val_Dest h))
+  (H_val_Unit : P_val val_Unit)
+  (H_val_Fun : forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_val (val_Fun x m u))
+  (H_val_Left : forall (v:val), P_val v -> P_val (val_Left v))
+  (H_val_Right : forall (v:val), P_val v -> P_val (val_Right v))
+  (H_val_Exp : forall (m:mode), forall (v:val), P_val v -> P_val (val_Exp m v))
+  (H_val_Prod : forall (v1:val), P_val v1 -> forall (v2:val), P_val v2 -> P_val (val_Prod v1 v2))
+  (H_val_Ampar : forall (H:hnames), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
 .
 
-Fixpoint term_ott_ind (n:term) : P_term n :=
+Fixpoint val_ott_ind (n:val) : P_val n :=
+  match n as x return P_val x with
+  | (val_Hole h) => H_val_Hole h
+  | (val_Dest h) => H_val_Dest h
+  | val_Unit => H_val_Unit 
+  | (val_Fun x m u) => H_val_Fun x m u (term_ott_ind u)
+  | (val_Left v) => H_val_Left v (val_ott_ind v)
+  | (val_Right v) => H_val_Right v (val_ott_ind v)
+  | (val_Exp m v) => H_val_Exp m v (val_ott_ind v)
+  | (val_Prod v1 v2) => H_val_Prod v1 (val_ott_ind v1) v2 (val_ott_ind v2)
+  | (val_Ampar H v2 v1) => H_val_Ampar H v2 (val_ott_ind v2) v1 (val_ott_ind v1)
+end
+with term_ott_ind (n:term) : P_term n :=
   match n as x return P_term x with
   | (term_Val v) => H_term_Val v (val_ott_ind v)
   | (term_Var x) => H_term_Var x
@@ -192,21 +202,9 @@ Fixpoint term_ott_ind (n:term) : P_term n :=
   | (term_FillP t) => H_term_FillP t (term_ott_ind t)
   | (term_FillF t x m u) => H_term_FillF t (term_ott_ind t) x m u (term_ott_ind u)
   | (term_FillComp t t') => H_term_FillComp t (term_ott_ind t) t' (term_ott_ind t')
-end
-with val_ott_ind (n:val) : P_val n :=
-  match n as x return P_val x with
-  | (val_Hole h) => H_val_Hole h
-  | (val_Dest h) => H_val_Dest h
-  | val_Unit => H_val_Unit 
-  | (val_Fun x m u) => H_val_Fun x m u (term_ott_ind u)
-  | (val_Left v) => H_val_Left v (val_ott_ind v)
-  | (val_Right v) => H_val_Right v (val_ott_ind v)
-  | (val_Exp m v) => H_val_Exp m v (val_ott_ind v)
-  | (val_Prod v1 v2) => H_val_Prod v1 (val_ott_ind v1) v2 (val_ott_ind v2)
-  | (val_Ampar H v2 v1) => H_val_Ampar H v2 (val_ott_ind v2) v1 (val_ott_ind v1)
 end.
 
-End val_term_rect.
+End term_val_rect.
 
 (** subrules *)
 Definition is_sterm_of_term (t_5:term) : bool :=
@@ -910,7 +908,7 @@ Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
      (DisjointD2D3: D2 # D3 )
      (Tyv1: Ty_val  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )  v1 T)
      (Tyv2: Ty_val  (union  D2     (hminus_inv  D3 )   )  v2 U),
-     Ty_val  (union  D1   D2 )  (val_Ampar  (hnames_ctx   (hminus_inv  D3 )  )  v2 v1) (type_Ampar U T)
+     Ty_val  (union  D1   D2 )  (val_Ampar  (hnames_ctx  D3 )  v2 v1) (type_Ampar U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Val : forall (P D:ctx) (v:val) (T:type)
      (DisposP: DisposableOnly P )
@@ -996,7 +994,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
 with Ty_sterm : ctx -> term -> type -> Prop :=    (* defn Ty_sterm *)
  | Ty_sterm_Alloc : forall (P:ctx) (T:type)
      (DisposP: DisposableOnly P ),
-     Ty_sterm P  (sterm_Alloc)  (type_Ampar T  (type_Dest T  (Some (pair   Lin     (Fin 0)  )) ) )
+     Ty_sterm P  (sterm_Alloc)  (type_Ampar T (type_Dest T  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_sterm_FromA' : forall (P:ctx) (t:term) (T:type)
      (Tyt: Ty_term P t (type_Ampar T type_Unit)),
      Ty_sterm P  (sterm_FromA'  t )  T
@@ -1160,7 +1158,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs  (union  D1   D2 )  C  (type_Ampar U T')  U0)
      (Tyv2: Ty_val  (union  D2    (hminus_inv  D3 )  )  v2 U),
       (hnames_ectxs  C )  ##  (hnames_ctx   (hminus_inv  D3 )  )   ->
-     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hnames_ctx   (hminus_inv  D3 )  )  v2)    C )  T' U0
+     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hnames_ctx  D3 )  v2)    C )  T' U0
 with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
  | Ty_cmd : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)
      (ValidOnlyD: ValidOnly D )

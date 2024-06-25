@@ -196,7 +196,7 @@ Proof.
       constructor. all: auto.
     + cbn. rewrite cshift_distrib_on_stimes.
       constructor. all: auto.
-    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hnames, cshift_distrib_on_hminus_inv.
+    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hnames.
       constructor.
       (* 11 goals *)
       * hauto l: on use: DestOnly_cshift_iff.
@@ -1224,7 +1224,7 @@ Proof.
 Qed.
 Hint Rewrite HSubset_stimes_backward' : propagate_down.
 
-Lemma hnames_minus_eq : forall (D : ctx), hnamesᴳ( (ᴳ-⁻¹ D)) = hnamesᴳ( D).
+Lemma hnames_hminus_inv_eq : forall (D : ctx), hnamesᴳ( (ᴳ-⁻¹ D)) = hnamesᴳ( D).
 Proof.
   intros D. apply HNames.eq_leibniz. unfold HNames.eq. intros h. rewrite! hnames_spec. split.
   - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus_inv in Hin. rewrite In_map_iff in Hin. rewrite <- In_iff_exists_Some. assumption.
@@ -1251,7 +1251,7 @@ Proof.
   - right. apply HIn_stimes_iff in inD1. assert (HNames.In h hnamesᴳ( D1 ᴳ+ D2)).
     { apply HIn_union_iff. left. assumption. }
     specialize (IHTyC h H0). assumption.
-  - left. rewrite hnames_minus_eq. assumption.
+  - left. assumption.
 Qed.
 
 Lemma HDisjoint_to_Disjoint : forall (D D' : ctx), DestOnly D -> hnamesᴳ(D) ## hnamesᴳ(D') -> D # D'.
@@ -1859,7 +1859,7 @@ Ltac hauto_ctx :=
         (* HSubset_union_backward', *)
         HSubset_stimes_backward,
         (* HSubset_stimes_backward', *)
-        hnames_minus_eq,
+        hnames_hminus_inv_eq,
         hnames_hminus_eq,
         hnames_C_wk_hnames_G,
         HDisjoint_to_Disjoint,
@@ -2497,7 +2497,7 @@ Proof. Admitted.
 Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
   D1 # D2 ->
   D1 # D3 ->
-  hnames©(C) ## hnamesᴳ(ᴳ-⁻¹ D3) ->
+  hnames©(C) ## hnamesᴳ( D3) ->
   DestOnly D1 ->
   DestOnly D2 ->
   DestOnly D3 ->
@@ -2509,5 +2509,5 @@ Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (m n : mo
   D3 # ᴳ{- h : m ⌊ U ⌋ n } ->
  D1 ᴳ+ (m · n) ᴳ· D2 ᴳ+ ᴳ{- h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
  D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
- D1 ᴳ+ m ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ(ᴳ-⁻¹ D3) ‗ v ] : T ↣ U0.
+ D1 ᴳ+ m ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.

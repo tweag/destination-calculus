@@ -947,7 +947,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
 
   | G ⫦ v : T :: :: Ty_val
   | P ⊢ t : T :: :: Ty_term
-  | P ˢ⊢ s : T :: :: Ty_sterm
+  | P ˢ⊢ t : T :: :: Ty_sterm
   | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T1]]\ottstype{\rightarrowtail}[[T2]] }}
   | ⊢ C [ t ] : T :: :: Ty
   | C [ t ] ⟶ C' [ t' ] :: :: Sem

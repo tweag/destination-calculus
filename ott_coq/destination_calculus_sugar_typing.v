@@ -26,8 +26,8 @@ Proof.
   apply Ty_term_Val.
   - assumption.
   - rewrite union_empty_r_eq with (G := ᴳ{}).
-    assert (hnamesᴳ(ᴳ-⁻¹ ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
-      { rewrite hnames_minus_eq. unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
+    assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
+      { unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
     rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 10; swap 2 11.
     + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest.
     + rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Hole.
