@@ -81,7 +81,7 @@
 
 %%%%%%%%%%%%%%%%% /Editing marks %%%%%%%%%%%%%%%%%
 
-\newcommand{\TODO}[1]{~\textnormal{\textcolor{red}{TODO: #1} } }
+\newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
 \newcommand{\textopname}[1]{``#1''}
 \newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
@@ -177,8 +177,6 @@
 \email{thomas.bagrel@loria.fr}
 \email{thomas.bagrel@tweag.io}
 
-% On introduit de la mutation controlée dans les FP languages sans endommager la pureté (comme la lazyness peut être vu aussi)
-
 \begin{abstract}
 We present the destination calculus, a linear $\lambda-$calculus for
 pure, functional memory updates. We introduce the
@@ -199,6 +197,9 @@ We illustrate this with a range of pseudo-Haskell examples.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
+
+\TODO{Redire plein de fois: On introduit de la mutation controlee dans les FP languages sans endommager la purete (comme la lazyness peut être vu aussi) + ordre de building flexible
++ des systemes se sont deja interesses a ca, mais nous on subsume tout ca}
 
 Destination-passing style programming takes its root in the early days of imperative programming. In such language, the programmer is responsible for managing memory allocation and deallocation, and thus is it often unpractical for function calls to allocate memory for their results themselves. Instead, the caller allocates memory for the result of the callee, and passes the address of this output memory cell to the callee as an argument. This is called an \emph{out parameter}, \emph{mutable reference}, or even \emph{destination}.
 
@@ -316,7 +317,7 @@ For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto 
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 \end{codefig}
 
-Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textopname{cons} constructor: $[[T ⨂ (List T) ¹ν → List T]]$:
+Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textopname{cons} constructor:
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
@@ -360,7 +361,7 @@ We can note that although this exemple is typical of destination-style programmi
 
 \paragraph{Efficient queue using previously defined structures}
 
-The usual functional encoding for a queue is two use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reversed order (e.g the latest inserted element will be at the front of the second list).
+The usual functional encoding for a queue is to use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reversed order (e.g the latest inserted element will be at the front of the second list).
 
 With such a queue implementation, dequeueing the front element is efficient (just pattern-match on the first cons cell of the first list, $\mathcal{O}(1)$), and enqueuing a new element is efficient too (just add a new \textopname{cons} cell at the front of the second list, $\mathcal{O}(1)$ too). However, when the first list is depleted, one has to transfer elements from the second list to the first one, and as such, has to reverse the second list, which is a $\mathcal{O}(n)$ operation (although it is amortized).
 
@@ -931,25 +932,85 @@ All typing rules for evaluation contexts can be derived from the ones for the co
 
 \begin{itemize}
   \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-val-term};
-  \item The typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
-  \item The typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} ($[[t]]$ is the term located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
+  \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} ($[[t]]$ is the term located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
 \end{itemize}
 
 In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, an the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
 
-As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = \emptyset$.
+As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = [[{ }]]$ (the empty context).
 
 \subsection{Small-step semantics}\label{ssec:sem}
 
-\begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
+We equip \destcalculus with small-step semantics. There are three types of semantic rules:
+\begin{itemize}
+  \item focus rules, where we remove a layer from term $[[t]]$ (which cannot be a value) and push a corresponding focus component on the stack $[[C]]$;
+  \item unfocus rules, where $[[t]]$ is a value and thus we pop a focus component from the stack $[[C]]$ and transform it back to a term, so that a redex appears (or so that another focus/unfocus rule can be triggered);
+  \item reduction rules, where the actual computation logic takes place.
+\end{itemize}
+
+Here is the whole set of rules for \textsc{PatP}:
+
 \bgroup\renewcommand\ottaltinferrule[4]{
-  \inferrule*[narrower=0.3,right=#1,#2]
+  \inferrule*[narrower=0.3,left=#1,#2]
     {#3}
     {#4}
 }
-\ottdefnSem{}
+\renewcommand\arraystretch{2}
+\[\begin{array}{c}\drule{Sem-PatP-Foc}\\
+\drule{Sem-PatP-Unfoc}\\
+\drule{Sem-PatP-Red}
+\end{array}\]
 \egroup
+
+Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focus component on the stack), we only present the set of reduction rules for the system in Figure~\ref{fig:sem}.
+
+\begin{ottfig}[p]{\caption{Small-step semantics}\label{fig:sem}}
+\drules[Sem]{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
+App-Red,
+PatU-Red,
+PatL-Red,
+PatR-Red,
+PatP-Red,
+PatE-Red,
+ToA-Red,
+FromA-Red,
+FillU-Red,
+FillF-Red,
+FillL-Red,
+FillR-Red,
+FillE-Red,
+FillP-Red,
+FillComp-Red,
+Map-Red-OpenAmpar-Foc,
+OpenAmpar-Unfoc}
 \end{ottfig}
+
+The reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottstype{\ltimes} }$ and $\ottkw{from}_{\ottstype{\ltimes} }$ are straightforward.
+
+All reduction rules for destination-filling primitives trigger a substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$ that corresponds to a memory update of a hole $[[+h]]$. \textsc{Sem-FillU-Red} and \textsc{Sem-FillF-Red} do not create any new hole; they only write a value to an existing one. On the other hand, rules \textsc{Sem-FillL-Red}, \textsc{Sem-FillR-Red}, \textsc{Sem-FillE-Red} and \textsc{Sem-FillP-Red} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name. 
+
+Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. The implicit invariant of the system is that we always rename hole names inside an ampar to fresh names when that ampar is $\ottkw{map}$ped on. Names bound by a closed ampar are only local, and thus can shadow already existing names (that's why $[[alloc]]$ is allowed to reuse the same hole name $[[1]]$ at each invocation: it doesn't matter as it desugars to a closed ampar). Thus we only need to take into account the names of already opened ampars --- all part of the evaluation context --- when we want fresh names (either for new holes, or for ampar renaming).
+
+In rule \textsc{Sem-FillComp-Red}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of some focus fragment $[[H' ᵒᵖ⟨ v2' ❟ ⬜⟩]]$ in the evaluation context $[[C]]$. That fragment is not mentioned explicitly in the rule, as the destination $[[-h]]$ is enough to target it. This results in the composition of two structures with holes $[[v2']]$ and $[[v2]]$ through filling of $[[-h]]$. Because we split open the ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ (its left-hand side gets written to a hole, while its right hand side is returned), we need to rename any hole name that it contains to a fresh one, as we do when an ampar is opened in the $\ottkw{map}$ rule. The renaming is carried out by the conditional shift $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ on $[[v2]]$ and $[[v1]]$ (only hole names local to the ampar, represented by the set $[[H]]$, gets renamed).
+
+Last but not least, rules \textsc{Sem-Map-Red-OpenAmpar-Foc} and \textsc{Sem-OpenAmpar-Unfoc} dictates how and when a closed ampar (a term) is converted to an open ampar (a focusing fragment) and vice-versa.
+
+With \textsc{Sem-Map-Red-OpenAmpar-Foc}, the local hole names of the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing fragment $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{map}$ statement (which becomes the new term under focus). This effectively allows the right-hand side of an ampar to be a term instead of a value for a limited time.
+
+The rule \textsc{Sem-OpenAmpar-Unfoc} triggers when the body of a $\ottkw{map}$ statement has reduced to a value. In that case, we can close the ampar, by popping the focus fragment from the stack $[[C]]$ and merging back with $[[v1]]$ to reform a closed ampar.
+
+\paragraph{Type safety} With the semantics now defined, we can state the usual type safety theorems:
+
+\begin{theorem}[Type preservation]
+  If $[[⊢ C [t] : T]]$ and $[[C[t] ⟶ C'[t'] ]]$ then $[[⊢ C' [t'] : T]]$.
+\end{theorem}
+
+\begin{theorem}[Progress]
+  If $[[⊢ C [t] : T]]$ and $\forall [[v]], [[C [t] ]] \neq [[ ⬜[v] ]]$ then $\exists [[C']], [[t']].~[[ C [t] ⟶ C' [t'] ]]$.
+\end{theorem}
+
+A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only contains a fully determined value, and no pending computation. This it is the expected stopping point of the reduction, and any well-typed command is supposed to reach such a form at some point.
 
 \section{Remarks on the formal proofs}
 
@@ -1018,7 +1079,7 @@ This has been available in OCaml since version 4.14. This is the one example we 
 
 The idea of using linear types to safely represent structures with holes dates back to~\cite{minamide_functional_1998}. Our system is strongly inspired by theirs. In their system, we can only compose functions that represent data structures with holes, we can't pattern-match on the result; just like in our system we cannot act on the left-hand side of $[[S ⧔ T]]$, only the right hand part.
 
-In~\cite{minamide_functional_1998}, it's only ever possible to represent structures with a single hole. But this is a rather superficial restriction. The author don't comment on this, but we believe that this restriction only exists for convenience of the exposition: the language is lowered to a language without function abstraction and where composition is performed by combinators. While it's easy to write a combinator for single-argument-function composition, it's cumbersome to write combinators for functions with multiple arguments. But having multiple-hole data structures wouldn't have changed their system in any profound way.
+In~\cite{minamide_functional_1998}, it's only ever possible to represent structures with a single hole. But this is a rather superficial restriction. The author doesn't comment on this, but we believe that this restriction only exists for convenience of the exposition: the language is lowered to a language without function abstraction and where composition is performed by combinators. While it's easy to write a combinator for single-argument-function composition, it's cumbersome to write combinators for functions with multiple arguments. But having multiple-hole data structures wouldn't have changed their system in any profound way.
 
 The more important difference is that while their system is based on a type of linear functions, our is based on the linear logic's par combinator. This, in turns, lets us define a type of destinations which are representations of holes in values, which~\cite{minamide_functional_1998} doesn't have. This means that~\cite{minamide_functional_1998} can implement our examples with difference lists and queues from \cref{ssec:efficient-queue}, but it can't do our breadth-first traversal example from \cref{sec:bft}, since storing destinations in a data structure is the essential ingredient of this example.
 
