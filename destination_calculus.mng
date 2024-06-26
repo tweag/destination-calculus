@@ -925,17 +925,19 @@ Evaluation contexts are typed in a context $[[D]]$ that can only contains destin
 
 An evaluation context has a pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$, where $[[T]]$ denotes the type of the focus (i.e. the type of the term that can be put in the box of the evaluation context) while $[[U0]]$ denotes the type of the resulting command (when the box of the evaluation context is filled with a term).
 
+Composing an evaluation context of pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focus component never affects the type $[[U0]]$ of the future command ; only the type $[[T]]$ of what can be put in the box is altered.
+
 All typing rules for evaluation contexts can be derived from the ones for the corresponding term (except for the rule \textsc{Ty-ectxs-OpenAmpar-Foc} that is the truly new form). Let's take the rule \textsc{Ty-ectxs-PatP-Foc} as an example:
 
 \begin{itemize}
-  \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP};
-  \item The typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
+  \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-val-term};
+  \item The typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
   \item The typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} ($[[t]]$ is the term located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
 \end{itemize}
 
-In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, and the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
+In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, an the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
 
-Composing an evaluation context of pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focus component never affects the type $[[U0]]$ of the future command ; only the type $[[T]]$ of what can be put in the box is altered.
+As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = \emptyset$.
 
 \subsection{Small-step semantics}\label{ssec:sem}
 
