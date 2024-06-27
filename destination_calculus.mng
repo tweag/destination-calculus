@@ -109,6 +109,7 @@
 \def\mymul#1{\ifthenelse{\equal{#1}{[[¹]]}}{}{#1}}
 
 \newcommand{\destcalculus}{\ensuremath{\lambda_d} }
+\newcommand{\destcalculusinplace}{\ensuremath{\lambda_{d\,\ottkw{ip}}} }
 \newtheorem{lem}{Lemma}
 \newtheorem{thm}{Theorem}
 \newcommand\btriangleq{\pmb{\triangleq}}
@@ -592,7 +593,7 @@ $\ottkw{relabelDPS}$ is a special case of $\ottkw{mapAccumBFS}$ that takes the s
 
 Two exponentials are needed here. The first one $\ottstype{!}_{[[¹∞]]}$ is part of $\ottkw{from}_{\ottstype{\ltimes}}$ contract, and ensures that the state cannot capture destinations, so that it can be returned at the end of the processing (as $\ottkw{go}$ runs under a $\ottkw{map}$ over an ampar). The second one $\ottstype{!}_{[[ων]]}$ allows the natural number to be used in a non-linear fashion: it is used once in $[[succ st]]$ to serve as the new state, and another time as the value for the output node. With a more general\unsure{To Thomas: didn't you tell me you had plan of making something more general for this very case? I don't remember clearly. If so, don't forget to improve here} $\ottkw{from}_{\ottstype{\ltimes}}$ operator, we would be able to use just one exponential layer $\ottstype{!}_{[[ω∞]]}$ over the natural number to achieve the same result.\unsure{I'm [Arnaud] honestly uncomfortable at the quantity of mathematics written in this section without macros and completely uncorrelated from OTT. If we change any notation, we'll have to trawl through a lot of text to make sure they are properly propagated.}
 
-\section{Language syntax}
+\section{Language syntax}\label{sec:destcalculus-syntax}
 
 \subsection{Introducing the \emph{ampar}}\label{ssec:ampar-motivation}
 
@@ -911,7 +912,7 @@ The semantics of \destcalculus are given using small-step reductions on a pair $
 
 The grammar of evaluation contexts is given in Figure~\ref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c1]], [[c2]]\ldots$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to imagine how to build a stack-based interpreter for such a language.
 
-Focusing components are all directly derived from the term syntax, except for the ``open ampar'' focus $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focus component indicates that an ampar is currently being $\ottkw{map}$ped on, with its right hand side $[[v2]]$ (the structure being built) being attached to the ``open ampar'' focus component, while its left hand side (containing destinations) is either in subsequent focus components, or in the term under focus.
+Focusing components are all directly derived from the term syntax, except for the ``open ampar'' focus $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focus component indicates that an ampar is currently being $\ottkw{map}$ped on, with its left-hand side $[[v2]]$ (the structure being built) being attached to the ``open ampar'' focus component, while its right-hand side (containing destinations) is either in subsequent focus components, or in the term under focus.
 
 We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update structures under construction that are attached to open ampar focus components in the stack. Such a substitution is triggered when a destination $[[-h]]$ is filled in the term under focus, and results in the value $[[v]]$ (that may contain holes itself, e.g. if it is a hollow constructor $[[( +h1, +h2 )]]$) being written to the hole $[[+h]]$ (that must appear somewhere on an open ampar payload). The set $[[H]]$ tracks the potential hole names introduced by value $[[v]]$.
 
@@ -933,12 +934,12 @@ All typing rules for evaluation contexts can be derived from the ones for the co
 \begin{itemize}
   \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-val-term};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} ($[[t]]$ is the term located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} (the term $[[t]]$ is located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
 \end{itemize}
 
 In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, an the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
 
-As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = [[{ }]]$ (the empty context).
+As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a well-typed, closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = [[{ }]]$ (the empty context).
 
 \subsection{Small-step semantics}\label{ssec:sem}
 
@@ -1014,7 +1015,7 @@ A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only conta
 
 \section{Remarks on the formal proofs}
 
-We've proved type preservation and progress lemmas with the Coq proof assistant.\unsure{We probably want to make sure that the statement of these two lemmas is stated in the type system section} At time of writing, we have assumed, rather than proved, the substitution lemmas. The choice of turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus that we've proved is written in Ott\unsure{a citation maybe}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; some visual simplification is applied by a script to produce the version in the article.
+We've proved type preservation and progress theorems with the Coq proof assistant.\unsure{We probably want to make sure that the statement of these two lemmas is stated in the type system section} At time of writing, we have assumed, rather than proved, the substitution lemmas. The choice of turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus that we've proved is written in Ott\unsure{a citation maybe}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; some visual simplification is applied by a script to produce the version in the article.
 
 Most of the proof was done by an author with little prior experience with Coq. This goes to show that Coq is reasonably approachable even for non-trivial development. The proof is about 6000 lines long, and contains nearly 350 lemmas. Many of the cases of the type preservation and progress lemmas are similar, to handle such repetitive cases using of a large-language-model based autocompletion system has been quite effective.
 
@@ -1049,7 +1050,41 @@ together, they let us extract the domain from the proposition. Again this isn't 
 \section{Implementation of destination calculus using in-place memory mutations}
 \label{sec:implementation}
 
-What needs to be changed (e.g. linear alloc)
+The formal language presented in Sections~\ref{sec:destcalculus-syntax} to~\ref{sec:ectxs-sem} is not meant to be implemented as-is.
+
+First, \destcalculus misses a form of recursion, but we believe that adding equirecursive types and a fix-point operator wouldn't compromise the safety of the system.
+
+Secondly, ampars are not managed linearly in \destcalculus; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ᴇ ων {h} ⟨ Inr (Inl (), +h) ❟ -h ⟩]]$ (representing a non-linear difference list $\expcons{[[ων]]} (0 :: \holesq)$), and then used twice, each time in a different way:
+\codehere{[[
+ᴇ ων {h} ⟨ Inr (Inl (), +h) ❟ -h ⟩ case ¹ν ᴇ ων x ⟼⮒
+‥‥let x1 ≔ x append (succ zero) in⮒
+‥‥let x2 ≔ x append (succ (succ zero)) in⮒
+‥‥‥‥toList (x1 concat x2)
+]]\\[\interdefskip][[⟶]]^*~0 :: 1 :: 0 :: 2 :: []}
+
+It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus. Thanks to the renaming discipline we detailed in Section~\ref{ssec:sem}, every time an ampar is $\ottkw{map}$ped over, its hole names are renamed to fresh ones. So when we call $\ottkw{append}$ to build $[[x1]]$ (which is implemented in terms of $\ottkw{map}$), we sort of allocate a new copy of the ampar before mutating it, effectively achieving a copy-on-write memory scheme. Thus it is safe to operate on $[[x]]$ again to build $[[x2]]$.
+
+In the introduction of the article, we announced a safe framework for in-place memory mutation, so we will uphold this promise now. The key to go from a copy-on-write scheme to an in-place mutation scheme is to force ampars to be linearly managed too. For that we introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$ (remember that unqualified arrows have mode $[[¹ν]]$, so are linear):
+
+\codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
+\ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
+\ottkw{drop} ~\pmb{:}~ [[Token ¹ν → ①]]\\[\interdefskip]
+[[allocCoW]] ~\pmb{:}~ [[T ⧔ ⌊ T ⌋ ¹ν]]\\[\interdefskip]
+[[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]
+\end{array}}
+
+We now have two possible versions of $\ottkw{alloc}$: the new one with an in-place mutation memory model ($\ottkw{ip}$), that has to be managed linearly, and the old one that doesn't have to used linearly, and features a copy-on-write ($\ottkw{cow}$) memory model.
+
+We use the $[[Token]]$ type as an intrinsic source of linearity that infects the ampar returned by $[[allocIP]]$. Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. In the system featuring the $[[Token]]$ type and $[[allocIP]]$, that we call \destcalculusinplace, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ containing a token variable that the user can $\ottkw{dup}$licate and $\ottkw{drop}$ freely to give birth to an arbitrary number of ampars, that will then have to be managed linearly.
+
+Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ is very similar to having a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
+
+In \destcalculusinplace, as ampars are managed linearly, we can change the allocation and renaming mechanisms:
+\begin{itemize}
+  \item the hole name for a new ampar can be chosen fresh right from the start (this corresponds to a new heap allocation );
+  \item adding a new hollow constructor still require fresh freshness/renaming for its hole names (this corresponds to a new heap allocation too);
+  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\!\mybullet$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
+\end{itemize}
 
 \section{Related work}
 
