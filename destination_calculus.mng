@@ -1086,6 +1086,8 @@ In \destcalculusinplace, as ampars are managed linearly, we can change the alloc
   \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\!\mybullet$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
 \end{itemize}
 
+We decided to omit the linearity aspect of ampars in \destcalculus as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.
+
 \section{Related work}
 
 \unsure{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
