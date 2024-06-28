@@ -291,10 +291,9 @@ Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really jus
 
 A similar situation can happen if we reuse a destination.\critical{This is a terrible example, because what's really happening here is that we're forgetting a destination. Let's find a true problem of writing several times. Maybe some order-dependence issue?}
 
-\phantom{a}\TODO{Syntactic sugar: let $\to$ Thomas: I added $[[let x ≔ t in u]]$ and its linebreak-allowing versions}
 \codehere{\newoperator
 {\ottkw{overwrite}}{[[T¹ν → T ⨁ U]]}
-{\ottkw{overwrite}~[[x]]}{[[from⧔' (alloc map d ⟼ (ˢλ d' ¹ν ⟼ d ⨞ Inr; d' ˢ⨞ x) (d ⨞ Inl))]]}}\unsure{It took me too much time to understand what was happening there and why it is wrong}
+{\ottkw{overwrite}~[[x]]}{[[from⧔' (alloc map d ⟼ let d' ≔ d ⨞ Inl in d ⨞ Inr; d' ˢ⨞ x)]]}}\unsure{It took me too much time to understand what was happening there and why it is wrong}
 
 These programs are rejected by \destcalculus, using a linear type system, ensuring that \destcalculus is a pure and safe language.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
 
