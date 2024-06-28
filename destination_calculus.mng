@@ -1137,6 +1137,12 @@ In\critical{Add citation}, the author develop a system where constructors return
 The cost of this elegance is that computations may try to pattern-match on a hole, in which case they must wait for the hole to be filled. So the semantic of holes is that of a future or a promise. In turns this requires the semantic of their calculus to be fully concurrent. Which is a very different point in the design space.
 \section{Conclusion and future work}
 
+Using a system of ages in addition to linearity, \destcalculus is a purely functional calculus which supports destination in a very flexible way. It subsumes existing calculi from the literature for destination passing, allowing both composition of data structures with holes and storing destinations in data structures. Data structures are allowed to have multiple holes, and destinations can be stored in data structures that, themselves, have holes. The latter is the main reason to introduce ages and is key to \destcalculus's flexibility.
+
+We don't anticipate that a system of ages like \destcalculus will actually be used in a programming language: it's unlikely that destination are so central to the design of a programming language that it's worth baking them so deeply in the type system. Perhaps a compiler that makes heavy use of destinations in its optimizer could use \destcalculus as an typed intermediate representation. But, more realistically, our expectation is that \destcalculus can be used as a theoretical framework to analyze destination-passing systems: if an API can be defined in \destcalculus then it's sound.
+
+In fact, we plan to use this very strategy to design an API for destination passing in Haskell, leveraging only the existing linear types, but retaining the possibility of storing destinations in data structures with holes.
+
 \clearpage{}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
