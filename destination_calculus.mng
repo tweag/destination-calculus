@@ -30,7 +30,15 @@
 \patchcmd{\ottdruleTyXXvalXXAmpar}{%
 \ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
 \ottpremise{\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
-}{\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }\quad\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
+}{\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }%
+\quad\quad%
+\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
+\patchcmd{\ottdruleTyXXtermXXPatS}{%
+\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}}%
+\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}%
+}{\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}%
+\quad\quad%
+\Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}}{}{}
 
 % \setlength\textfloatsep{\baselineskip}
 % \setlength{\intextsep}{\baselineskip}
@@ -128,10 +136,10 @@
 \end{array}\\[\interdefskip]}
 \newcommand{\figureratio}{0.9}
 \newcommand{\codehere}[1]{\begin{center}\begin{minipage}{\figureratio\linewidth}{\small$#1$}\end{minipage}\end{center}}
-\NewEnviron{codefig}[2][h]{\begin{figure}[#1]
+\NewEnviron{codefig}[2][t]{\begin{figure}[#1]
 \codehere{\BODY}#2
 \end{figure}}
-\NewEnviron{ottfig}[2][h]{\begin{figure}[#1]\visiblespaces
+\NewEnviron{ottfig}[2][t]{\begin{figure}[#1]\visiblespaces
 \small\BODY\activespaces #2
 \end{figure}}
 
@@ -763,32 +771,32 @@ from⧔' (⮒
 }
 \end{ottfig}
 
-\TODO{2 paragraphes pour décrire le système : typage linéaire comonadique pour les modalités blabla}
+\destcalculus is equipped with a first-order type system, featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Modes have two axes --- multiplicity (i.e. linear/non-linear), and age control --- and they take place on variable bindings in typing contexts, and on function arrows, but are not part of the type itself. The type system is highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}. In particular, it uses the same additive/multiplicative approach on contexts for linearity and age enforcement.
 
-The type system of \destcalculus is highly inspired from Linear Haskell~\cite{bernardy_linear_2018}. In particular, it uses the same additive/multiplicative approach on mode as Linear Haskell for linearity enforcement, except here we use a product semiring for mode that keeps track of both age and multiplicity of variables (whereas only multiplicity is tracked in the former).
+The grammar of types, modes, and typing context for \destcalculus is presented in Figure~\ref{fig:grammar-type-mode-ctx}. As said earlier, the function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ are both parametrized by a mode $[[m]]$; we omit that mode annotation when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
 
-The grammar of types, modes, and typing context for \destcalculus is presented in Figure~\ref{fig:grammar-type-mode-ctx}. It is based on intuitionistic linear logic, and thus provides multiplicative conjunction $\ottstype{\otimes}$ (product type) and additive disjunction (sum type) $\ottstype{\oplus}$. It also provides a function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ that are both parametrized by a mode $[[m]]$. We omit the mode annotation on the function arrow, as well as on the destination type, when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
-
-A mode is either a pair of a multiplicity and an age, or the special symbol $[[☠]]$\critical{remove mention of skull ?} representing an unsatisfiable requirement for a variable in a typing context (e.g. a variable that is used with different types in two branches of a $\ottkw{case}$ statement on a sum type). This special mode ``invalid'' $[[☠]]$ is only used in the formal proof of type safety of \destcalculus, when summing typing contexts. However, every mode $[[m]]$ present in the typing rules of this paper is assumed to be valid (i.e. made of a pair of a multiplicity and an age), and every typing context in a rule premises is assumed to contain only valid modes too.
+% A mode is either a pair of a multiplicity and an age, or the special symbol $[[☠]]$\critical{remove mention of skull ?} representing an unsatisfiable requirement for a variable in a typing context (e.g. a variable that is used with different types in two branches of a $\ottkw{case}$ statement on a sum type). This special mode ``invalid'' $[[☠]]$ is only used in the formal proof of type safety of \destcalculus, when summing typing contexts. However, every mode $[[m]]$ present in the typing rules of this paper is assumed to be valid (i.e. made of a pair of a multiplicity and an age), and every typing context in a rule premises is assumed to contain only valid modes too.
 
 \subsection{Typing of terms and values}
 
-\begin{ottfig}[p]{\caption{Typing rules for values and terms}\label{fig:ty-val-term}}
-\ottdefnTyXXval{}
+\begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}
 \ottdefnTyXXterm{}
-\end{ottfig}
-
-\TODO{Replacer turnstile s par une double barre ou équivalent}
-\begin{ottfig}{\caption{Derived typing rules for syntactic sugar forms}\label{fig:ty-sterm}}\bgroup\renewcommand\ottaltinferrule[4]{
+\bgroup\renewcommand\ottaltinferrule[4]{
   \inferrule*[fraction={===},narrower=0.3,lab=#1,#2]
     {#3}
     {#4}
 }
-  \ottdefnTyXXsterm{}
-\egroup\end{ottfig}
+\ottdefnTyXXsterm{}
+\egroup
+\end{ottfig}
 
-Figure~\ref{fig:ty-val-term} presents the typing rules for values and terms. Figure~\ref{fig:ty-sterm} presents the typing rules for the syntactic sugar forms, that have been derived from primitive rules of Figure~\ref{fig:ty-val-term} and proven formally too.
+\begin{ottfig}{\caption{Typing rules for values}\label{fig:ty-val}}\ottdefnTyXXval{}\end{ottfig}
 
+Destinations and holes are two faces of the same coin, as seen in Section~\ref{sec:build-up-vocab}, and must always be in 1:1 correspondance. Thus, the new idea of our type system is to feature \emph{hole bindings} $[[{ + h : T n }]]$ and \emph{destination bindings} $[[{ - h : m ⌊ T ⌋ n }]]$ in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts.
+
+A destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ mentions two modes, $[[m]]$ and $[[n]]$; but only the former (left one, $[[m]]$) is the actual mode of the binding (in particular, it informs on the age of the destination itself). The latter, $[[n]]$, is part of the destination's type $[[⌊ T ⌋ n]]$ and corresponds to the mode a value has to have to be filled in this destination.
+
+Figure~\ref{fig:ty-term-sterm} presents the typing rules for terms, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. Figure~\ref{fig:ty-val} presents the typing rules for values of the language.
 In every figure,
 \begin{itemize}
   \item $[[O]]$ denotes an arbitrary typing context, with no particular constraint;
@@ -797,65 +805,13 @@ In every figure,
   \item $[[D]]$ denotes a typing context made only of destination bindings.
 \end{itemize}
 
-Destinations and holes are two faces of the same coin, as seen in Section~\ref{sec:build-up-vocab}, and must always be in 1:1 correspondance. Thus, the core idea of the type system is to add hole bindings $[[{ + h : T n }]]$ (hname in positive polarity) and destination bindings $[[{ - h : m ⌊ T ⌋ n }]]$ (hname in negative polarity), in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts. Hole bindings and destination bindings of the same hname are meant to compensate each other in the typing context, a bit like how matter (positive polarity, hole) and antimatter (negative polarity, destination) annihilate each other. That way, the typing context of a term can stay constant during reduction, even when destination-filling primitives are evaluated to build up data structures, as those linearly consume a destination and write to a hole at the same time which makes both disappear.
-
-\TODO{Evacuer tout de suite le double mode des dests}
-
-However, that annihilation between a destination and a hole binding having the same hname in the typing tree is only allowed to happen around an ampar, as it is the ampar connective that bind the two polarities of a name together (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$). In fact, an ampar can be seen as a sort of lambda-abstraction, whose body (containing holes instead of variables) and sink/input site are split on two sides, and magically interconnected through the ampar connective.
-
-Thus, the sum of typing contexts\unsure{Here, just speak how Ty-val-Prod and Ty-val-Ampar are different. In Coq, a context where both hole/dest for same name is not representable}, used in almost all rules, results in an erroneous context when the input operands contains the same hname but in different polarities: $\{[[{ + h : T n }]]\} + \{[[{ - h : ¹ν ⌊ T ⌋ n }]]\} = \{[[{ + h : ① ☠ }]]\}$ (the fact that the result is a hole binding instead of a destination binding is purely arbitrary ; the only important bit here is to have an ``invalid'' mode on the result binding). An individual context is also not allowed to contain a same hname in two different bindings. Instead, in the only position where the annihilation is allowed to happen, that is to say the \textsc{Ty-val-Ampar} rule, we explicitly identify and remove the parts of input contexts that can interact and annihilate each other, in the form of $[[D]]$ in the right side context and $[[-⁻¹ D]]$ for the left one.
-
-$\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is a point-wise operation on typing bindings of a context where:
-
-\[\left\{\begin{array}{rcl}
-  [[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] &=& [[{ + h : T n }]] \\
-  \ottshname{\destminus^{\scriptscriptstyle\text{-}1} }(\ottnt{n} :\!_{\![[m]]}[[T]]) &=& \ottnt{n} :\!_{\![[☠]]}[[①]] \quad\text{otherwise}
-\end{array}\right.\]
-
-Only an input context $[[D]]$ made only of destination bindings, with leftmost mode being $[[¹ν]]$, results in a valid output context, which is then only composed of hole bindings.
-
-It might be time to discuss what modes mean for hole and destination bindings.
-
-A hole binding $[[{ + h : T n }]]$ has only one mode, $[[n]]$, that indicates the mode a value must have to be written to it (that is to say, the mode of bindings that the value depends on to type correctly). To this day, the only way for a value to have a constraining mode is to capture a destination (otherwise the value has mode $[[ω∞]]$, meaning it can be used in any possible way), as destinations are the only intrinsically linear values in the calculus, but we will see in Section~\ref{sec:implementation} that other forms of intrinsic linearity can be added to the langage for practical reasons. We see the mode of a hole coming into play when a hole is located behind an exponential constructor: we should only write a non-linear value to the hole $[[+h]]$ in $[[ᴇ ων +h]]$. In particular, we should not store a destination into this hole, otherwise it could later be extracted and used in a non-linear fashion.
-
-On the other hand, a destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ has two modes. The left-most\critical{change to inner/outer one} one, $[[m]]$, tells how the destination can be used as a passive value, e.g. if the destination get stored in a destination of destination or passed as a function argument. The right-most one, $[[n]]$, corresponds to the mode of its associated hole, and thus how it behaves as an active entity, when filled with a value. We'll see in an instant how a binding can \emph{grow old}, but let's just remember for now that a destination can only be filled with a value when $\ottsmode{\mathsfbf{age}(}[[m]]\ottsmode{)} = [[ν]]$. As soon at it gets older (only the mode $[[m]]$ is affected, the mode $[[n]]$ of its associated hole never changes), it behaves like a passive normal value and can only be stored, passed around, or returned.
-
-A closed term can never have a destination binding with left-most multiplicity $[[ω]]$ or age $[[∞]]$ somewhere in the typing tree. They can only be linear and have a finite age. Indeed, only \textsc{Ty-val-Ampar} (or more precisely, \textsc{Ty-ectxs-OpenAmpar-Foc}) adds new destination bindings to a typing context, and those initially have mode $[[¹ν]]$, and can only grow old later by increments of $[[↑]]$ (but can never reach age $[[∞]]$). We have formally proved that this property holds during execution. So any typing context of the form $[[{ - h : ωa ⌊ T ⌋ n },O]]$ or $[[{ - h : p∞ ⌊ T ⌋ n },O]]$ is never satisfiable.
-
-\TODO{Parler des termes en premier !}
-\TODO{Remplacer hnames(flèche-1) par hnames()}
-
-\TODO{Dire ensuite : The system is much simpler for the user: no apparent dest or hole, just variables, normal constructors, alloc, etc}
-\TODO{Donc pas grave si le système de typage pour les valeurs est plus difficile /moche}
-
-\paragraph{Typing of values $[[⫦]]$}
-
-Values type in a typing context $[[G]]$ made only of hole and destination bindings. The absence of free variables in values make it easier to prove substitution properties (as we will see in Section~\ref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
-
-Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination must have left-most mode $[[¹ν]]$ in the typing context to be used (except when a destination is stored away, as we will see later)\critical{revisit this if we allow weakening for dests}. Rules for unit, left and right variants, and product are straightforward.
-
-Rule \textsc{Ty-val-Exp} is rather classic too: we multiply the dependencies $[[G]]$ of the value by the mode $[[n]]$ of the exponential. The intuition is that if $[[v]]$ uses a resource $[[v']]$ twice, then $\expcons{\ottsmode{2}}[[v]]$, that corresponds to two uses of $[[v]]$ (in a system with such a mode), will use $[[v']]$ four times. The mode product on context $[[n·G]]$ in the exponential rule has a somewhat different effect on hole and destination bindings:
-
-\[\left\{\begin{array}{rcl}
-  [[n·({ x : m T })]] &=& [[{ x : n · m T }]] \\
-  [[n·({ + h : T n })]] &=& [[{ + h : T n · n' }]] \\
-  [[n·({ - h : m ⌊ T ⌋ n' })]] &=& [[{ - h : n · m ⌊ T ⌋ n' }]]
-\end{array}\right.\]
-
-On hole bindings $[[{ + h : T n' }]]$, it affects the mode $[[n']]$ of the value the hole can receive, as we said earlier. On destination bindings $[[{ - h : m ⌊ T ⌋ n' }]]$, on the other hand, it affects the mode $[[m]]$ of the destination viewed as a value (the left-most one), but not the mode of the value it can be filled with.\unsure{Do we need more details on what are the consequences of that difference?}
-
-Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions can only contain (captured) destinations, they cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curryfied function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$ ? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
-
-The last important rule, \textsc{Ty-val-Ampar}, is probably the most complex one.
-The left side $[[v2]]$ is the data structure under construction, that may contain holes (in $[[-⁻¹ D3]]$), but also stored destinations from other scopes (in $[[D2]]$). The right side $[[v1]]$ is an arbitrary value, that we can manipulate using $\ottkw{map}$, and that must contain all destinations matching the holes of $[[v2]]$ (these destinations are represented by $[[D3]]$). The right side $[[v1]]$ may also contain stored destinations from other scopes, in $[[¹↑·D1]]$ (in which case those cannot be filled in that scope, because they are at least of age $[[↑]]$, and thus can only be stored or moved around)\unsure{Not sure whether we should explain why $[[D1]]$ is offset by $[[¹↑]]$ in the premise but not in conclusion. The reason is "because it is needed" more than having a good intuition narrative behind it.}. The resulting typing context for the ampar is $[[D1,D2]]$; it doesn't mention $[[-⁻¹ D3]]$ and $[[D3]]$ anymore as they annihilate each other, as we explained previously. $[[D1]]$ and $[[D2]]$, by convention, are made only of destination bindings, and thus we know the annihilation (and thus binding) between holes and destinations for this ampar is indeed maximal. 
-
-The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are true given that $[[-⁻¹ D3]]$ is a valid typing context, so are not really a new restriction on $[[D3]]$. They are mostly used to ease the mechanical proof of type safety for the system.
-
 \paragraph{Typing of terms $[[⊢]]$}
 
-Terms type in a context that can only contain hole and destination bindings. Holes are only allowed in a value shelled by an ampar, so that the hole binding disappear from the typing context (using rule \textsc{Ty-val-Ampar} as we saw before).
+A term $[[t]]$ always types in a context $[[P]]$ made only of destination and variable bindings. That being said, typing rules for terms and their syntactic sugar in Figure~\ref{fig:ty-term-sterm} never explicitly mention a destination binding; only variable bindings. Only at runtime such variables will be substituted by destinations having a matching type and mode (that is why terms cannot type in a context made of variable bindings alone). As a result, the type system the user has to deal with is only slightly more complex than a linear type system \emph{à la}~\cite{bernardy_linear_2018}, because of the addition of the age control axis.
 
-The property $\mathtt{DisposableOnly}~[[P]]$ says that $[[P]]$ can only contain variable bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. Only the leaves of the typing tree need to be able to absorb unused disposable variable bindings, that is to say rules \textsc{Ty-term-Val} (it is a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$) and \textsc{Ty-term-Var}.
+Let's focus on a few particularities of that system.
+
+The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \textsc{Ty-term-Val} and \textsc{Ty-term-Var} says that $[[P]]$ can only contain variable bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, that is to say the two aforementioned rules (\textsc{Ty-term-Val} is indeed a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$).\critical{revisit if we allow weakening for dests, as we could replace that by $[[ων·P]]$ as in~\cite{bernardy_linear_2018}}
 
 Rule \textsc{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν <: m]]$ defined as such:
 
@@ -879,7 +835,7 @@ Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is
 
 Rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} are all parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the argument is multiplied. These rules otherwise follows closely from~\cite{bernardy_linear_2018}.
 
-The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies. It opens an ampar, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. The core idea is that $\ottkw{map}$ creates a new scope for $[[x]]$ and $[[t']]$, so anything coming from the current ambiant scope (represented by $[[P2]]$ in the conclusion) appears older (by $[[↑]]$) when we see it from $[[t']]$ point of view. That way we can distinguish $[[x]]$ from anything else that was already bound using age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$  while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
+The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies, and it is there where scope control takes place. It opens an ampar $[[t]]$, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. The core idea is that $\ottkw{map}$ creates a new scope for $[[x]]$ and $[[t']]$, so anything coming from the current ambient scope (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ point of view. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
 
 \begin{figure}[h]
   \includegraphics[width=8cm]{schema_scopes.png}
@@ -887,14 +843,59 @@ The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies. It
   \label{fig:scope-rules}
 \end{figure}
 
-We see that the left of an ampar (the structure being built) ``takes place'' in the ambiant scope. This is important because when using $\ottkw{from}_{\ottstype{\ltimes} }'$, the left of the ampar is extracted to the ambiant scope (as seen at the bottom of the figure with $[[x22]]$).
+We see in the schema that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, inner scope that is opened when mapped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope one $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
 
-The right side however, where destinations are, has its own new, inner scope that is opened when mapped over\unsure{There is a subtle thing here; although we say that the right side of the ampar is in its own inner scope, it doesn't prevent the compensation with holes in the left side in rule \textsc{Ty-val-Ampar}}. When feeding a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope one $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
+The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-term-sterm}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} confirm this intuition. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a new scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of the lambda abstraction in \textsc{Ty-term-FillF}.
 
-The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-val-term}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from Figure~\ref{fig:ty-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambiant context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a new scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of the lambda abstraction in \textsc{Ty-term-FillF}.
+When using $\ottkw{from}_{\ottstype{\ltimes} }'$, the left of an ampar is extracted to the ambient scope (as seen at the bottom of the figure with $[[x22]]$). This is the fundamental reason why the left of an ampar has to share that same scope! When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottstype{\ltimes} }$ however, we extract both sides of the ampar to the ambient scope, even though the right side is not part of that scope! This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive (it cannot contain any scope-controlled resource).
 
-When we enter a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$, as seen in column \emph{Context}.
-When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottstype{\ltimes} }$, the right side has to be of shape $[[! ¹∞ T]]$, which means it is scope-insensitive, and thus it is safe to extract the right side from its shelled inner scope to the ambiant scope too.\unsure{I don't know where to put these sentences}
+\paragraph{Typing of values $[[⫦]]$}
+
+The typing of runtime values is where hole and destination bindings appears.
+
+Hole bindings and destination bindings of the same hname are meant to compensate each other in the typing context, a bit like how matter (positive polarity, hole) and antimatter (negative polarity, destination) annihilate each other. That way, the typing context of a term can stay constant during reduction, even when destination-filling primitives are evaluated to build up data structures, as those linearly consume a destination and write to a hole at the same time which makes both disappear.
+
+However, that annihilation between a destination and a hole binding having the same hname in the typing tree is only allowed to happen around an ampar, as it is the ampar connective that bind the two polarities of a name together (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$). In fact, an ampar can be seen as a sort of lambda-abstraction, whose body (containing holes instead of variables) and sink/input site are split on two sides, and magically interconnected through the ampar connective.
+
+Thus, the sum of typing contexts\unsure{Here, just speak how Ty-val-Prod and Ty-val-Ampar are different. In Coq, a context where both hole/dest for same name is not representable}, used in almost all rules, results in an erroneous context when the input operands contains the same hname but in different polarities: $\{[[{ + h : T n }]]\} + \{[[{ - h : ¹ν ⌊ T ⌋ n }]]\} = \{[[{ + h : ① ☠ }]]\}$ (the fact that the result is a hole binding instead of a destination binding is purely arbitrary ; the only important bit here is to have an ``invalid'' mode on the result binding). An individual context is also not allowed to contain a same hname in two different bindings. Instead, in the only position where the annihilation is allowed to happen, that is to say the \textsc{Ty-val-Ampar} rule, we explicitly identify and remove the parts of input contexts that can interact and annihilate each other, in the form of $[[D]]$ in the right side context and $[[-⁻¹ D]]$ for the left one.
+
+$\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is a point-wise operation on typing bindings of a context where:
+
+\[\left\{\begin{array}{rcl}
+  [[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] &=& [[{ + h : T n }]] \\
+  \ottshname{\destminus^{\scriptscriptstyle\text{-}1} }(\ottnt{n} :\!_{\![[m]]}[[T]]) &=& \ottnt{n} :\!_{\![[☠]]}[[①]] \quad\text{otherwise}
+\end{array}\right.\]
+
+Only an input context $[[D]]$ made only of destination bindings, with leftmost mode being $[[¹ν]]$, results in a valid output context, which is then only composed of hole bindings.
+
+It might be time to discuss what modes mean for hole and destination bindings.
+
+A hole binding $[[{ + h : T n }]]$ has only one mode, $[[n]]$, that indicates the mode a value must have to be written to it (that is to say, the mode of bindings that the value depends on to type correctly). To this day, the only way for a value to have a constraining mode is to capture a destination (otherwise the value has mode $[[ω∞]]$, meaning it can be used in any possible way), as destinations are the only intrinsically linear values in the calculus, but we will see in Section~\ref{sec:implementation} that other forms of intrinsic linearity can be added to the langage for practical reasons. We see the mode of a hole coming into play when a hole is located behind an exponential constructor: we should only write a non-linear value to the hole $[[+h]]$ in $[[ᴇ ων +h]]$. In particular, we should not store a destination into this hole, otherwise it could later be extracted and used in a non-linear fashion.
+
+On the other hand, a destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ has two modes. The left-most\critical{change to inner/outer one} one, $[[m]]$, tells how the destination can be used as a passive value, e.g. if the destination get stored in a destination of destination or passed as a function argument. The right-most one, $[[n]]$, corresponds to the mode of its associated hole, and thus how it behaves as an active entity, when filled with a value. We'll see in an instant how a binding can \emph{grow old}, but let's just remember for now that a destination can only be filled with a value when $\ottsmode{\mathsfbf{age}(}[[m]]\ottsmode{)} = [[ν]]$. As soon at it gets older (only the mode $[[m]]$ is affected, the mode $[[n]]$ of its associated hole never changes), it behaves like a passive normal value and can only be stored, passed around, or returned.
+
+A closed term can never have a destination binding with left-most multiplicity $[[ω]]$ or age $[[∞]]$ somewhere in the typing tree. They can only be linear and have a finite age. Indeed, only \textsc{Ty-val-Ampar} (or more precisely, \textsc{Ty-ectxs-OpenAmpar-Foc}) adds new destination bindings to a typing context, and those initially have mode $[[¹ν]]$, and can only grow old later by increments of $[[↑]]$ (but can never reach age $[[∞]]$). We have formally proved that this property holds during execution. So any typing context of the form $[[{ - h : ωa ⌊ T ⌋ n },O]]$ or $[[{ - h : p∞ ⌊ T ⌋ n },O]]$ is never satisfiable.
+
+Values type in a typing context $[[G]]$ made only of hole and destination bindings. The absence of free variables in values make it easier to prove substitution properties (as we will see in Section~\ref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
+
+Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination must have left-most mode $[[¹ν]]$ in the typing context to be used (except when a destination is stored away, as we will see later)\critical{revisit this if we allow weakening for dests}. Rules for unit, left and right variants, and product are straightforward.
+
+Rule \textsc{Ty-val-Exp} is rather classic too: we multiply the dependencies $[[G]]$ of the value by the mode $[[n]]$ of the exponential. The intuition is that if $[[v]]$ uses a resource $[[v']]$ twice, then $\expcons{\ottsmode{2}}[[v]]$, that corresponds to two uses of $[[v]]$ (in a system with such a mode), will use $[[v']]$ four times. The mode product on context $[[n·G]]$ in the exponential rule has a somewhat different effect on hole and destination bindings:
+
+\[\left\{\begin{array}{rcl}
+  [[n·({ x : m T })]] &=& [[{ x : n · m T }]] \\
+  [[n·({ + h : T n })]] &=& [[{ + h : T n · n' }]] \\
+  [[n·({ - h : m ⌊ T ⌋ n' })]] &=& [[{ - h : n · m ⌊ T ⌋ n' }]]
+\end{array}\right.\]
+
+On hole bindings $[[{ + h : T n' }]]$, it affects the mode $[[n']]$ of the value the hole can receive, as we said earlier. On destination bindings $[[{ - h : m ⌊ T ⌋ n' }]]$, on the other hand, it affects the mode $[[m]]$ of the destination viewed as a value (the left-most one), but not the mode of the value it can be filled with.\unsure{Do we need more details on what are the consequences of that difference?}
+
+Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions can only contain (captured) destinations, they cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curryfied function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$ ? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
+
+The last important rule, \textsc{Ty-val-Ampar}, is probably the most complex one.
+The left side $[[v2]]$ is the data structure under construction, that may contain holes (in $[[-⁻¹ D3]]$), but also stored destinations from other scopes (in $[[D2]]$). The right side $[[v1]]$ is an arbitrary value, that we can manipulate using $\ottkw{map}$, and that must contain all destinations matching the holes of $[[v2]]$ (these destinations are represented by $[[D3]]$). The right side $[[v1]]$ may also contain stored destinations from other scopes, in $[[¹↑·D1]]$ (in which case those cannot be filled in that scope, because they are at least of age $[[↑]]$, and thus can only be stored or moved around)\unsure{Not sure whether we should explain why $[[D1]]$ is offset by $[[¹↑]]$ in the premise but not in conclusion. The reason is "because it is needed" more than having a good intuition narrative behind it.}. The resulting typing context for the ampar is $[[D1,D2]]$; it doesn't mention $[[-⁻¹ D3]]$ and $[[D3]]$ anymore as they annihilate each other, as we explained previously. $[[D1]]$ and $[[D2]]$, by convention, are made only of destination bindings, and thus we know the annihilation (and thus binding) between holes and destinations for this ampar is indeed maximal. 
+
+The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are true given that $[[-⁻¹ D3]]$ is a valid typing context, so are not really a new restriction on $[[D3]]$. They are mostly used to ease the mechanical proof of type safety for the system.
 
 \section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
@@ -931,7 +932,7 @@ Composing an evaluation context of pseudo-type $[[T]]\ottstype{\rightarrowtail}[
 All typing rules for evaluation contexts can be derived from the ones for the corresponding term (except for the rule \textsc{Ty-ectxs-OpenAmpar-Foc} that is the truly new form). Let's take the rule \textsc{Ty-ectxs-PatP-Foc} as an example:
 
 \begin{itemize}
-  \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-val-term};
+  \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-term-sterm};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
   \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} (the term $[[t]]$ is located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
 \end{itemize}
