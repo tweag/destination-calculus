@@ -1132,7 +1132,7 @@ The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations 
 However, unlike \destcalculus, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which features linear types. Our \destcalculus, with the age modes, needs more than what Haskell provides. Our system subsumes theirs, however, ages will appear in the typing rules for that fragment.
 
 \subsection{Semi-axiomatic sequent calculus}
-In\critical{Add citation}, the author develop a system where constructors return to a destination rather than allocating memory. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the par connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualisation connective is involutive.
+In\critical{Add citation}, the author develop a system where constructors return to a destination rather than allocating memory. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the par connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualization connective is involutive.
 
 The cost of this elegance is that computations may try to pattern-match on a hole, in which case they must wait for the hole to be filled. So the semantic of holes is that of a future or a promise. In turns this requires the semantic of their calculus to be fully concurrent. Which is a very different point in the design space.
 \section{Conclusion and future work}
@@ -1155,5 +1155,5 @@ In fact, we plan to use this very strategy to design an API for destination pass
 % ispell-local-dictionary: "en_US"
 % End:
 % LocalWords:  ampar combinators combinator Gentzen sequent semirings
-% LocalWords:  involutive dualisation autocompletion Ott backends Coq
+% LocalWords:  involutive dualization autocompletion Ott backends Coq
 % LocalWords:  extensionality semiring setoid
