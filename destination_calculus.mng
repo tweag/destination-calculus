@@ -229,7 +229,7 @@ But destination-passing style is not limited to imperative settings; it can be u
 
 Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
 
-\section{Working with destinations}
+\section{Working with destinations}\label{sec:working-with-destinations}
 
 \phantom{a}\TODO{Some introductory words}
 
@@ -323,13 +323,13 @@ Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really jus
 
 In the more complex $\ottkw{forget'}$, we fill $[[dd]]$ twice to drop the first value that it receives into oblivion, even though that value is marked as being consumed. So the hole associated to $[[d1]]$ can't be filled ever, and that will eventually lead to reading uninitialized memory.
 
-We will see in section~\ref{ssec:problem-stored-dests} why scope escape of destination is also a concern for memory safety.
+We will see in section~\ref{sec:scope-escape-dest} why scope escape of destination is also a concern for memory safety.
 
 Purity of the system is ensured by the combination of these principles. The main way to break purity would be to reuse a destination to mutate a structure after that structure has already been read once. But a structure cannot be read while it still has holes, and once it has been completed, the destinations that were used to fill it are no longer accessible nor usable (because of the first and third principles). As a result, in that controlled setting, we can think of destinations as write-once memory locations, and the mutations behind the hood are totally invisible as no read can happen before the (only one allowed) writing is made.
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
-If we suppose equirecursive types and a fixed-point operator, then \destcalculus becomes expressive enough to build any usual data structure.
+Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For that section, we suppose that \destcalculus is equipped with equirecursive types and a fixed-point operator, that isn't part of our formally proven fragment.
 
 \paragraph{Linked lists}
 
@@ -358,9 +358,11 @@ Going from a \textopname{fill} operator to the associated constructor is complet
 
 While linked lists are optimized for the prepend operation (\textopname{cons}), they are not efficient for appending or concatenation, as it requires a full copy (or traversal at least) of the first list before the last cons cell can be changed to point to the head of the second list.
 
-Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \holesq$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion.
+Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \holesq$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion than a naive nested list concatenation.
 
-In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. This is exactly what an ampar is designed to allow: thanks to an ampar, we can handle incomplete structures safely, with no need to complete them immediately. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. Creating an empty difference list is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$ : it returns an incomplete list with no items in it, and a destination pointing to that cell so that the list can be built later through destination-filling primitives, together in an ampar: $[[List T ⧔ ⌊List T⌋ ¹ν]]$. Type definition and operators for difference lists in destination calculus are presented in Figure~\ref{fig:impl-dlist-queue}.
+In destination calculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. No read on the unfinished list can happen until the destination on the right has been consumed.
+
+Type and operators definitions for difference lists in \destcalculus are presented on the left of Figure~\ref{fig:impl-dlist-queue}.
 
 \sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive destination calculus}\label{fig:impl-dlist-queue}}{t}{0.51}{
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
@@ -394,13 +396,13 @@ q case ¹ν {⮒
 ‥‥‥‥ˢInr ˢ(x, xs) ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
 ‥‥}⮒
 }]]\end{array}}
-}{t}
+}
 
-The $\ottkw{append}$ simply appends an element at the end of the list. It uses \textopname{fillCons} to link a new hollow \textopname{cons} cell at the end of the list, and then handles the two associated destinations $[[dy]]$ and $[[dt]]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
+An empty difference list can be created without the need for a new operator as it is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$.
 
-The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole left at the end of the first one. This is done using the \textopname{fillComp} primitive $\triangleleft\mybullet \pmb{:} [[⌊ U1 ⌋n ¹ν → U1 ⧔ U2 ¹↑ · n → U2]]$\footnote{In this particular context, $[[U1]] = [[List T]]$ and $[[U2]] = [[⌊ List T ⌋¹ν]]$, so \textopname{fillComp} has signature $\triangleleft\mybullet \pmb{:} [[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$}. It takes a destination on its left-hand side, and an ampar on its right-hand side. The left side of the ampar (type $[[U1]]$) is fed to the destination (so the incomplete structure is written to a larger incomplete structure from which the destination originated from), and the right side of the ampar (type $[[U2]]$) is returned.
+The $\ottkw{append}$ operator uses \textopname{fillCons} to link a new hollow \textopname{cons} cell at the end of the list (represented by $[[dys]]$), and then handles the two associated destinations $[[dy]]$ and $[[dys']]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
 
-Here the left side of the second ampar is the second incomplete list, which is pasted at the end of the first incomplete list, consuming the destination of the first difference list in the process. Then the right side of the second ampar, that is to say the destination to the yet-unspecified tail of the second difference list, is returned, and stored back in the resulting ampar (thus serves as the new destination to the tail of the the resulting difference list).
+The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole at the end of the first one. This is done using the \textopname{fillComp} ($\triangleleft\mybullet$) primitive, that here has type $[[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$. It takes a destination as a first argument and an ampar as its second argument. The left side of the ampar is fed to the destination to be merged with another incomplete structure (the first difference list), while right side of the ampar (the destination for the end of the second difference list) is returned.
 
 Finally, the $\ottkw{to}_{\ottstype{List}}$ operator converts a difference list to a regular list by writing the \textopname{nil} constructor to the hole left in the incomplete list using \textopname{fillNil}.
 
@@ -408,37 +410,36 @@ We can note that although this exemple is typical of destination-style programmi
 
 \paragraph{Efficient queue using previously defined structures}
 
-The usual functional encoding for a queue is to use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reversed order (e.g the latest inserted element will be at the front of the second list).
+The usual functional encoding for a queue is to use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reverse order (e.g the latest inserted element will be at the front of the second list).
 
-With such a queue implementation, dequeueing the front element is efficient (just pattern-match on the first cons cell of the first list, $\mathcal{O}(1)$), and enqueuing a new element is efficient too (just add a new \textopname{cons} cell at the front of the second list, $\mathcal{O}(1)$ too). However, when the first list is depleted, one has to transfer elements from the second list to the first one, and as such, has to reverse the second list, which is a $\mathcal{O}(n)$ operation (although it is amortized).
+With such a queue implementation, dequeueing the front element is efficient until the first list is depleted. In that case, one now has to transfer elements from the second list to the first one, and so has to reverse the second list beforehand, which is a $\mathcal{O}(n)$ operation (although it is amortized).
 
-With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to maintain a quick $\ottkw{enqueue}$ operation (still $\mathcal{O}(1)$), but remove the need for a $\ottkw{reverse}$ operation (as $\ottkw{to}_{\ottstype{List} }$ is $\mathcal{O}(1)$ for difference lists). Nothing needs to change for the first list. The corresponding implementation is presented in Figure~\ref{fig:impl-dlist-queue}.
+With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to remove the need for a reverse operation when the first list get depleted. The corresponding implementation is presented on the left of Figure~\ref{fig:impl-dlist-queue}.
 
-The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).\change{Replace by the empty queue}
+The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).
 
 The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
 
-The $\ottkw{dequeue}$ operator is more complex though. It first checks if there is at least one element available in the front list. If there is, it extracts the element $[[x]]$ by removing the first \textopname{cons} cell of the front list, and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue, made of the tail $[[xs]]$ of the difference list turned into a list, and a fresh difference list given by $[[alloc]]$.
+The $\ottkw{dequeue}$ operator first checks if there is one element available in the front list. If there is, it extracts the element $[[x]]$ and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue (made of the remaining elements $[[xs]]$ paired with a fresh difference list).
 
-\section{Limitations of the previous approach}
+\section{Scope escape of destinations}\label{sec:scope-escape-dest}
 
-Everything described above is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, there is one fundamental limitation in~\cite{bagrel_destination-passing_2024}: the inability to store destinations in destination-based data structures.
+Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself pose a great threat to the memory safety of the system. Let's see why.
 
-Indeed, that first approach of destination-passing style for Haskell can only be used to build non-linear data structures. More precisely, the \textopname{fillLeaf} operator ($\triangleleft$) can only take arguments with multiplicity $[[ω]]$. This is in fact a much stronger restriction than necessary ; the core idea is \emph{just} to prevent any destination (which is always a linear resource) to appear somewhere in the right-hand side of \textopname{fillLeaf}.\improvement{Don't start with the solution, start with the problem. Then we can explain how previous attempts addresses it. In JFLA: fill's right-hand operand wants omega, in Minamide/Tail-modulo-context, we can't store destinations to begin with.}
+One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been written to. However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
 
-\subsection{The problem with stored destinations}\label{ssec:problem-stored-dests}
+We have to mark the value being fed in a destination as linearly consumed, so that it cannot be both stored away (to be used later) and used in the current context. But that means we have to mark the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ as linearly consumed too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
 
-One core assumption of destination-passing style programming is that once a destination has been linearly consumed, the associated hole has been written to.
+As a result, there are in fact two ways to consume a destination: fill it now with a value, or store it away and fill it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been written to \emph{now}, only that it will be written to later. So our initial assumption above doesn't hold in general case.
 
-However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:\unsure{the mode on the right-most arrow should be $[[¹∞]]$, but do we want to show that now?}
 
-We have to mark the value being fed in a destination as linearly consumed, so that it cannot be both stored away (to be used later) and pattern-matched on/used in the current context. But that means we have to mark the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ as linearly consumed too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
+\codehere{\newoperator
+  {\ottkw{alloc'}}{[[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]}
+  {[[alloc' f]]}{[[from⧔' (alloc map d ⟼ f d)]]}
+}
 
-As a result, there are in fact two ways to consume a destination: feed it now with a value, or store it away and feed it later. The latter is a much weaker form of consumption, as it doesn't guarantee that the hole associated to the destination has been written to \emph{now}, only that it will be written to later. So our assumption above doesn't hold in general case.
-
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator with signature $\ottkw{alloc'} \pmb{:} \ottstype{(\lfloor[[T]]\rfloor\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[①]])\,_{\mymul{[[¹]]}}\!\ottstype{\to}\,[[T]]}$. It reads: ``given a way of consuming a destination of type $[[T]]$, I'll return an object of type $[[T]]$''. This is an operator we very much want in our system!
-
-With linear store semantics, that would be:\unsure{I'm [Arnaud] really unsure about introducing this one-off notation that we're never using again. Even though I like the use of the underwave to highlight the problem.}
+With linear store semantics, this is how $\ottkw{alloc'}$ would behave:\unsure{I'm [Arnaud] really unsure about introducing this one-off notation that we're never using again. Even though I like the use of the underwave to highlight the problem.}
 
 \codehere{[[Z | alloc' (ˢλ d ¹ν ⟼ t) ⟶ Z ⨆ { h ≔ ⬜ } | (t[d ≔ -h] ; deref -h) ]]}
 
@@ -466,7 +467,7 @@ The original term $[[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d
 
 Thomas: the second example is too long/complex to show the whole semantics, so I kept the first one in a detailed fashion, and just mentionned the second one.
 }
-One could argue that the issue comes from the primitive $\blacktriangleleft$ returning a value of type $[[①]]$ instead of a dedicated effect type. However, the same issue arise in following program, which is well-typed even when $\blacktriangleleft$ and the function accepted by $\ottkw{alloc'}$ have an arbitrary return type $[[E]]$:
+One could argue that the issue comes from the primitive $\blacktriangleleft$ returning a value of type $[[①]]$ instead of a dedicated effect type. However, the same issue arise in following program, which is well-typed even when $\blacktriangleleft$ and the function accepted by $\ottkw{alloc'}$ have an arbitrary return type $[[E]]$, so we decided not to introduce yet another type in the system:
 
 \codehere{[[
 alloc' (ˢλ dd ¹ν ⟼ (dd ⨞ (,)) case ¹ν (dd1, d2) ⟼⮒
@@ -478,11 +479,11 @@ alloc' (ˢλ dd ¹ν ⟼ (dd ⨞ (,)) case ¹ν (dd1, d2) ⟼⮒
 [[dd1]] \pmb{:} \ottstype{\lfloor \lfloor[[Bool]]\rfloor \rfloor},~
 [[d2]] \pmb{:} \ottstype{\lfloor [[Bool]] \rfloor},~
 [[d]] \pmb{:} \ottstype{\lfloor [[Bool]] \rfloor}
-$}. So we decided not to introduce yet another type in the system as it wouldn't help with type safety at all.
+$}.
 
-We initially thought that the issue of scope escape using destinations of destinations was just a result of a flawed type design in our initial prototype, and that it could be fixed easily. It seems, in fact, to be an irrefutable proof that the assumption "consuming a destination means that the equivalent hole has been written to" is not true in all generality. Thus, we have to add stronger restrictions to our system to ensure that this assumption holds in the desired context. For that, we introduce age-control of bindings in Section~\ref{ssec:age-control}.
+% We initially thought that the issue of scope escape using destinations of destinations was just a result of a flawed type design in our initial prototype, and that it could be fixed easily. It seems, in fact, to be an irrefutable proof that the assumption "consuming a destination means that the equivalent hole has been written to" is not true in all generality. Thus, we have to add stronger restrictions to our system to ensure that this assumption holds in the desired context. For that, we introduce age-control of bindings in Section~\ref{ssec:age-control}.
 
-In the next section, we motivate why being able to store destinations in destinations of destinations is a desirable property of our system that we didn't want to give up.
+In the next section, we motivate why being able to store destinations in destinations of destinations is a desirable property of our system that we don't want to give up. In Section~\ref{sec:type-system}, we present a finer type system that prevents scope escape while still allowing to store destinations in destination-based data structures.
 
 \section{Breadth-first tree traversal}
 \label{sec:bft}
@@ -493,34 +494,38 @@ The core example that showcases the power of destination-passing style programmi
 Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
 \end{quote}
 
-Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree i.e., building the leaves first and going up to the root.
+Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree, that is, building the leaves first and going up to the root.
 
-In the aforementioned paper, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. Their implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\langle\text{\itshape input subtree}\rangle, \langle\text{\itshape dest to output subtree}\rangle)$ of the queue is processed, and its children pairs are added back at the end of the queue to be processed later.
+In the aforementioned paper, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. Their implementation, much like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\textit{input subtree}, \textit{dest to output subtree})$ of the queue is processed, and pairs of the same shape for children nodes are appended at the end of the queue.
 
 \improvement{Rework the next couple of paragraph to flow a little bit better.}
-However, as evoked earlier in Section~\ref{ssec:problem-stored-dests}, The API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. It is thus reliant on regular constructor-based Haskell data structures for destination storage.
+However, as evoked earlier, the API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. So they cannot use the efficient, destination-based queue implementation from Section~\ref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. With \destcalculus, this is now possible. In fact, our system is self-contained, in the sense that every possible structure can be built using destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, as detailed in Section~\ref{ssec:sugar}).
 
-This is quite impractical as we would like to use the efficient, destination-based queue implementation from Section~\ref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. In our present work fortunately, thanks to the finer age-control mechanism, we can store linear resources in destination-based structures without any issue. Our system is in fact self-contained, as any structure, whatever the use for it be, can be built using a small core of destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, see Section~\ref{ssec:sugar}).
+Figure~\ref{fig:impl-bfs} presents the \destcalculus implementation of the breadth-first tree traversal. We assume that we have a binary tree type alias $[[Tree T]]$ and natural number type alias $[[Nat]]$ encoded using standard sum and product types. $[[Tree T]]$ is equipped with operators $\triangleleft\ottsctor{Nil}$ and $\triangleleft\ottsctor{Node}$, that are implemented in terms of our core destination-filling primitives.
 
-Figure~\ref{fig:impl-boilerplate-bfs} introduces a few extra tools needed for implementation of breadth-first tree traversal, while Figure~\ref{fig:impl-bfs} presents the actual implementation of the traversal. This implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.\unsure{There's way too many mode annotations here. If we are to do that we have to dedicate some space above to explaining the modes and what all the constructions around them mean.}
+The implementation is as similar as possible to the one from~\cite{bagrel_destination-passing_2024}, as to make it easier to spot the few differences between the two systems.\unsure{There's way too many mode annotations here. If we are to do that we have to dedicate some space above to explaining the modes and what all the constructions around them mean.}
 
-\sidebysidecodefig{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}{t}{0.7}{
-\newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
-\newoperator
-  {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
-  {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
-\newoperator
-  {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
-  {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
-}{
-\newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
-\newoperator
-  {\ottkw{zero}}{[[Nat]]}
-  {[[zero]]}{[[Inl ()]]}
-\newoperator
-  {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
-  {[[succ x]]}{[[ˢInr x]]}
-}
+% \sidebysidecodefig{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}{t}{0.7}{
+% \newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
+% \newoperator
+%   {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
+%   {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
+% \newoperator
+%   {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
+%   {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
+% }{
+% \newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
+% \newoperator
+%   {\ottkw{zero}}{[[Nat]]}
+%   {[[zero]]}{[[Inl ()]]}
+% \newoperator
+%   {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
+%   {[[succ x]]}{[[ˢInr x]]}
+% }
+
+\TODO{There is an issue here: because go is called after the call to map, then every argument is now older, especially tree is no longer of the same age as dtree (need an exponential probably)}
+
+Thomas: Stopped there in the refactor at 17:30 on 02/07/2024.
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperator[~\mathttbf{rec}]
@@ -730,7 +735,7 @@ Let's now focus on age control, which is a novel feature of this calculus.
 
 \subsection{Keep track of age of bindings to prevent scope escape of destinations}\label{ssec:age-control}
 
-The solution we chose to alleviate the issue detailed in Section~\ref{ssec:problem-stored-dests} is track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-filling primitives.
+The solution we chose to alleviate the issue detailed in Section~\ref{sec:scope-escape-dest} is track the age of destinations (as De-Brujin-like scope indices), and prevent a destination to escape into the parent scope when stored through age-control restriction on the typing rule of destination-filling primitives.
 
 Age is represented by a commutative semiring, where $[[ν]]$ indicates that a destination originates from the current scope, and $[[↑]]$ indicates that it originates from the scope just before. We also extend ages to variables (a variable of age $[[a]]$ stands for a value of age $[[a]]$). Finally, age $[[∞]]$ is introduced for variables standing in place of a non-age-controlled value. In particular, destinations can never have age $[[∞]]$ in practice.
 
@@ -855,7 +860,7 @@ The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies, an
 
 We see in the schema that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, inner scope that is opened when mapped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope one $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
 
-The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-term-sterm}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} confirm this intuition. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\!\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
+The rule \textsc{Ty-term-FillComp} from Figure~\ref{fig:ty-term-sterm}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} confirm this intuition. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
 
 When using $\ottkw{from}_{\ottstype{\ltimes} }'$, the left of an ampar is extracted to the ambient scope (as seen at the bottom of the figure with $[[x22]]$). This is the fundamental reason why the left of an ampar has to ``take place'' in that scope. When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottstype{\ltimes} }$ however, we extract both sides of the ampar to the ambient scope, even though the right side is not part of that scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive (it cannot contain any scope-controlled resource).
 
@@ -950,6 +955,8 @@ In a way, the typing rule for an evaluation context is a ``rotation'' of the typ
 As we see at the bottom of the figure, a command $[[ C [ t ] ]]$ (i.e. a pair of an evaluation context and a term) is well typed when the evaluation context $[[C]]$ provides a typing context $[[D]]$ that is exactly one in which $[[t]]$ is well typed. We can always embed a well-typed, closed term $[[{} ⊢ t : T]]$ as a well-typed command using the identity evaluation context: $[[t]] \simeq [[ ⬜[t] ]]$ and we thus have $[[⊢ ⬜[t] : T]]$ where $[[D]] = [[{ }]]$ (the empty context).
 
 \subsection{Small-step semantics}\label{ssec:sem}
+
+\TODO{Mention why we don't use store semantics as showcased in Section~\ref{sec:scope-escape-dest}}
 
 We equip \destcalculus with small-step semantics. There are three types of semantic rules:
 \begin{itemize}
@@ -1091,7 +1098,7 @@ In \destcalculusinplace, as ampars are managed linearly, we can change the alloc
 \begin{itemize}
   \item the hole name for a new ampar can be chosen fresh right from the start (this corresponds to a new heap allocation );
   \item adding a new hollow constructor still require fresh freshness/renaming for its hole names (this corresponds to a new heap allocation too);
-  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\!\mybullet$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
+  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\mybullet$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
 \end{itemize}
 
 We decided to omit the linearity aspect of ampars in \destcalculus as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.
