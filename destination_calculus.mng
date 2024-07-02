@@ -299,26 +299,33 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 {[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
 
 
-\paragraph{Purity}\unsure{Thomas: I do not really like this paragraph. I would like this paragraph to be the other way around: we want a pure model, in particular a model that doesn't break observable immutability. So write-(exactly)-once memory model, with no way to read before every hole has been written to. Thus we need a linear type system.}
-At this point, the reader may be forgiven for feeling distressed at all the talk of using memory mutations as a semantic for destination-filling primitives. How is it consistent with our claim to be building a pure language\improvement{Ensure that we do claim that}?\unsure{Let's revisit the phrasing of this couple of sentences at some point, it's not utterly elegant.}
+\paragraph{Memory safety and purity}
+At this point, the reader may be forgiven for feeling distressed at all the talk of using memory mutations as a semantic for destination-filling primitives. How is it consistent with our claim to be building a pure and memory-safe language\improvement{Ensure that we do claim that}?
 
-Indeed, unrestricted use of destination can lead to rather catastrophic results. The simplest such issue happens when we forget to fill a destination:
+In fact, we build our system on three core principles:
+\begin{enumerate}
+\item destinations are linear resources: they have to be used exactly once;
+\item a structure that still have holes somewhere in its structure cannot be read;
+\item destinations cannot escape to an older scope than the one they originate from (how we ensure this will be detailed in Section~\ref{sec:type-system}).
+\end{enumerate}
+
+The first principle ensures that such programs are ruled out:
 
 \codehere{\newoperator
 {\ottkw{forget}}{[[T]]}
 {\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
 
-Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory. So any attempt to use $\ottkw{forget}$ will read uninitialized memory.
-
-A 0 situation can happen if we reuse a destination.\critical{This is a terrible example, because what's really happening here is that we're forgetting a destination. Let's find a true problem of writing several times. Maybe some order-dependence issue?}
-
 \codehere{\newoperator
-{\ottkw{overwrite}}{[[T¹ν → T ⨁ U]]}
-{\ottkw{overwrite}~[[x]]}{[[from⧔' (alloc map d ⟼ let d' ≔ d ⨞ Inl in d ⨞ Inr; d' ˢ⨞ x)]]}}\unsure{It took me too much time to understand what was happening there and why it is wrong}
+{\ottkw{forget'}}{[[(T1 ⨂ T2) ⧔ ⌊ T2 ⌋¹ν]]}
+{\ottkw{forget'}}{[[alloc map d ⟼ (d ⨞ (,)) case ¹ν (d1, d2) ⟼ from⧔' (alloc map dd ⟼ dd ˢ⨞ d1 ; dd ˢ⨞ d2)]]}}
 
-These programs are rejected by \destcalculus, using a linear type system, ensuring that \destcalculus is a pure and safe language.\unsure{we should probably discuss the definition of ``pure'' somewhere.} This justifies the claim that we can think of destinations as write-once memory locations\unsure{are we making this claim?}.
+Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory, because $[[d]]$ hasn't been used. So any attempt to use $\ottkw{forget}$ will read uninitialized memory.
 
-Linearity of destination isn't the only measure that we need to take in order to ensure that uninitialized memory is never read. Indeed consider a value of type $[[v]]:[[S⧔T]]$. In memory $[[v]]$ is a value of type $[[S]]$ except that it has some uninitialized memory\critical{This is quite incorrect, $[[v]]$ is rather a pair, and only its left side cannot be read. At least, if we stick to a general $[[T]]$ on the right hand side, it would be too much of a lie to say that there isn't anything else than a $[[S]]$ in memory}. So we have really careful when we read anything in $[[v]]$. In \destcalculus we take the bluntest restriction: we simply do not give any way to read $[[v]]$ at all. \unsure{I wanted to have an example here, but I couldn't find a natural way to write something bad since we truly don't have a tool to write them.}
+In the more complex $\ottkw{forget'}$, we fill $[[dd]]$ twice to drop the first value that it receives into oblivion, even though that value is marked as being consumed. So the hole associated to $[[d1]]$ can't be filled ever, and that will eventually lead to reading uninitialized memory.
+
+We will see in section~\ref{ssec:problem-stored-dests} why scope escape of destination is also a concern for memory safety.
+
+Purity of the system is ensured by the combination of these principles. The main way to break purity would be to reuse a destination to mutate a structure after that structure has already been read once. But a structure cannot be read while it still has holes, and once it has been completed, the destinations that were used to fill it are no longer accessible nor usable (because of the first and third principles). As a result, in that controlled setting, we can think of destinations as write-once memory locations, and the mutations behind the hood are totally invisible as no read can happen before the (only one allowed) writing is made.
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
@@ -642,7 +649,7 @@ $\ottkw{map}$ is the main primitive to operate on an ampar, which represents an 
 
 $\ottkw{to}_{\ottstype{\ltimes}}$ embeds an already completed structure in an ampar whose left side is the structure, and right side is unit. We have an operator \textopname{fillComp} ($\triangleleft\mybullet$) allowing to compose two ampars by writing the root of the second one to a destination of the first one, so by throwing $\ottkw{to}_{\ottstype{\ltimes}}$ to the mix, we can compose an ampar with a normal (completed) structure (see the sugar operator \textopname{fillLeaf} ($\triangleleft$) in Section~\ref{ssec:sugar}).
 
-$\ottkw{from}_{\ottstype{\ltimes}}$ is used to convert an ampar to a pair, when the right side of the ampar is an exponential of the form $[[ᴇ ¹∞ v]]$. Indeed, when the right side has such form, it cannot contains destinations (as destinations always have a finite age), thus it cannot contain holes in its left side either (as holes on the left side are always compensated 1:1 by a destination on the right side). As a result, it is valid to convert an ampar to a pair in these circumstances. $\ottkw{from}_{\ottstype{\ltimes}}$ is in particular used to extract a structure from its ampar building shell when it is complete (see the sugar operator $\ottkw{from'}_{\ottstype{\ltimes}}$ in Section~\ref{ssec:sugar}).
+$\ottkw{from}_{\ottstype{\ltimes}}$ is used to convert an ampar to a pair, when the right side of the ampar is an exponential of the form $[[ᴇ ¹∞ v]]$. Indeed, when the right side has such form, it cannot contains destinations (as destinations always have a finite age), thus it cannot contain holes in its left side either (as holes on the left side are always compensated 1:1 by a destination on the right side). As a result, it is valid to convert an ampar to a pair in these circumstances. $\ottkw{from}_{\ottstype{\ltimes}}$ is in particular used to extract a structure from its ampar building shell when it is complete (see the sugar operator $\ottkw{from}_{\ottstype{\ltimes}'}$ in Section~\ref{ssec:sugar}).
 
 The remaining term operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]], [[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$ are all destination-filling primitives. They write a layer of value/constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
 
@@ -772,7 +779,7 @@ Age commutative semiring is then combined with the multiplicity commutative semi
 
 The whole grammar of types, modes, and typing context for \destcalculus is presented in Figure~\ref{fig:grammar-type-mode-ctx}. As said earlier, the function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ are both parametrized by a mode $[[m]]$; we omit that mode annotation when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
 
-\subsection{Typing of terms and values}
+\subsection{Typing of terms and values}\label{ssec:ty-term-val}
 
 \begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}
 \ottdefnTyXXterm{}
