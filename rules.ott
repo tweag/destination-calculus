@@ -173,7 +173,7 @@ P2 ⊢ t' : U ⧔ T [[:Tytp]]
 P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
 
 defn
-P ˢ⊢ s : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syntactic sugar forms }} by
+P ˢ⊢ t : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syntactic sugar forms }} by
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 -------------------- :: Alloc

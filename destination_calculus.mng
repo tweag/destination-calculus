@@ -638,12 +638,22 @@ Shifting all hnames in a set by a given offset $[[h']]$ is denoted $[[H ⩲ h']]
 
 Destination calculus is based on linear simply-typed $\lambda$-calculus, with built-in support for sums, pairs, and exponentials. The syntax of terms, which is presented in Figure~\ref{fig:grammar-term-val} is quite unusual, as we need to introduce all the tooling required to manipulate destinations, which constitute the primitive way of building a data structures for the user.
 
-\begin{ottfig}{\caption{Grammar for terms and values}\label{fig:grammar-term-val}}
-\ottgrammartabular{
-\ottterm\ottinterrule
-\ottval\ottafterlastrule
-}
-\end{ottfig}
+\newcommand{\grammsep}{\hspace*{2ex}|\hspace*{2ex}}
+\newcommand{\grammdef}{:\hspace*{-0.3ex}:\hspace*{-0.3ex}=}
+
+\begin{codefig}{\caption{Grammar for terms and values}\label{fig:grammar-term-val}}{\setlength{\arraycolsep}{1ex}
+\!\!\!\begin{array}{rrl}
+[[t]], [[u]] &::=& [[v]] \grammsep [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
+             &|\,& [[ t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t case m ( x1 , x2 ) ⟼ u]] \grammsep [[t case m ᴇ n x ⟼ u]] \\
+             &|\,& [[t map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \\
+             &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \\
+&&\\
+       [[v]] &::=& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
+             &|\,& [[- h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[- h]]$}}\quad\quad\textit{(destination)} \\
+             &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
+             &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]]
+\end{array}
+}\end{codefig}
 
 In fact, the grammatical class of values $[[v]]$, presented as a subset of terms $[[t]]$, could almost be removed completely from the user syntax, and just used as a denotation for runtime data structures. We only need to keep the ampar value $[[{ h } ⟨ +h ❟ -h ⟩]]$ as part of the user syntax as a way to spawn a fresh memory cell to be later filled using destination-filling primitives (see $[[alloc]]$ in Section~\ref{ssec:sugar}).
 
@@ -665,19 +675,12 @@ Secondly, values are allowed to have holes inside (represented by $[[+h]]$, $[[+
 
 \subsection{Syntactic sugar for constructors and commonly used operations}\label{ssec:sugar}
 
-As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives in Figure~\ref{fig:grammar-sterm}.
-
-\begin{ottfig}{\caption{Syntactic sugar forms for terms}\label{fig:grammar-sterm}}
-\ottgrammartabular{
-\ottsterm\ottafterlastrule
-}
-\end{ottfig}
+As we said in section~\ref{ssec:core-syntax}, the grammatical class of values is mostly used for runtime only; in particular, data constructors in the value class can only take other values as arguments, not terms (this help us ensure that no free variable can appear in a value). Thus we introduce syntactic for data constructors taking arbitrary terms as parameters (as we often find in functional programming languages) using destination-filling primitives in Figure~\ref{fig:sterm}.
 
 $\ottkw{from}_{\ottstype{\ltimes}'}$ is a simpler variant of $\ottkw{from}_{\ottstype{\ltimes}}$ that allows to extract the right side of an ampar when the right side has been fully consumed. We implement it in terms of $\ottkw{from}_{\ottstype{\ltimes}}$ to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
-All the desugarings are presented in Figure~\ref{fig:desugaring}.
-
-\begin{codefig}{\caption{Desugaring of syntactic sugar forms for terms}\label{fig:desugaring}}
+\begin{codefig}{\caption{Syntactic sugar forms for terms}\label{fig:sterm}}
+\TODO{Change to sidebysidecodefig and fix code errors}
 \begin{minipage}[t]{0.62\textwidth}$
 [[alloc]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 { 1 } ⟨ +1 ❟ -1 ⟩
@@ -771,15 +774,21 @@ Age commutative semiring is then combined with the multiplicity commutative semi
 
 \subsection{Types, modes, and typing contexts}
 
-\begin{ottfig}{\caption{Types, modes, and typing contexts}\label{fig:grammar-type-mode-ctx}}
-\ottgrammartabular{
-\otttype\ottinterrule
-\ottmode\ottinterrule
-\ottmul\ottinterrule
-\ottage\ottinterrule
-\ottctx\ottafterlastrule
-}
-\end{ottfig}
+\begin{codefig}{\caption{Types, modes, and typing contexts}\label{fig:grammar-type-mode-ctx}}{\setlength{\arraycolsep}{1ex}
+\!\!\!\begin{array}{rrl}
+[[T]], [[U]], [[S]] &::=& [[⌊ T ⌋ m]] \quad\quad\textit{(destination)} \\
+                    
+                    &|\,& [[U ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
+                    &|\,& [[①]] \grammsep [[T1 ⨁ T2]] \grammsep [[T1 ⨂ T2]] \grammsep [[! m T]] \grammsep [[T m → U]] \\
+&&\\
+       [[m]], [[n]] &::=& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\
+              [[p]] &::=& [[¹]] \grammsep [[ω]] \\
+              [[a]] &::=& [[ν]] \grammsep [[↑]] \grammsep [[∞]] \\
+&&\\
+[[O]], [[G]], [[P]], [[D]] &::=& [[{ x : m T }]] \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \\
+                           &|\,& [[O1 , O2]] \grammsep [[O1 + O2]] \grammsep [[m · O]] \grammsep [[-⁻¹ D]]
+\end{array}
+}\end{codefig}
 
 The whole grammar of types, modes, and typing context for \destcalculus is presented in Figure~\ref{fig:grammar-type-mode-ctx}. As said earlier, the function arrow $_{\myfuntm{[[m]]} }\!\ottstype{\to}$ and exponential connective $\ottstype{!}_{[[m]]}$ are both parametrized by a mode $[[m]]$; we omit that mode annotation when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
 
@@ -833,10 +842,9 @@ Rule \textsc{Ty-term-Var}, in addition to weakening, allows for dereliction of t
 \newcommand{\aleq}{\stackrel{\pmb{\mathrm{a}}}{\mathtt{<:}}}
 
 {\setlength{\arraycolsep}{\widthof{\,}}
-\[\begin{stretchedarray}[3]{l}\left\{\begin{stretchedarray}[1]{rcl}
+\[\begin{stretchedarray}[3]{l}\begin{stretchedarray}[1]{rcl}
   [[p a]] &\mathtt{<:}& [[p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']] \\
-  [[m]] &\mathtt{<:}& [[☠]]
-\end{stretchedarray}\right.\\\left\{\begin{stretchedarray}[1]{rcl}
+\end{stretchedarray}\\\left\{\begin{stretchedarray}[1]{rcl}
   [[¹]] &\pleq& [[¹]] \\
   [[p]] &\pleq& [[ω]]
 \end{stretchedarray}\right.\\\left\{\begin{stretchedarray}[1]{rcl}
