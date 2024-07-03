@@ -209,7 +209,6 @@ We show how the principles of the \destcalculus can form a theoretical ground
 for destination-passing style programming in functional languages. In particular,
 we detail how the present work can be applied to Linear Haskell to lift the main
 restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
-We illustrate this with a range of pseudo-Haskell examples.
 \end{abstract}
 
 \maketitle
@@ -348,11 +347,11 @@ We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X
 \newcommand{\lstcat}{\mathop{+\!+}}
 Just like any programming language, iterated concatenation of lists
 $$(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$$
-in \destcalculus, is quadratic. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
+in \destcalculus, is quadratic. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each cons cell $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per $\ottsctor{::}$, so iterated composition effectively performs two traversals of the list. We can do better!
 
-In \destcalculus we can represent a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$, concatenation is filling the hole with another difference list. The details are in~\cref{fig:impl-dlist-queue}.\improvement{configure cref to write Figure in full} This encoding makes no superfluous traversal, in fact, concatenation is an $O(1)$ in-place update.
+In \destcalculus we can represent a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$, concatenation is filling the hole with another difference list. The details are on the left of~\cref{fig:impl-dlist-queue}.\improvement{configure cref to write Figure in full} This encoding makes no superfluous traversal; in fact, concatenation is an $O(1)$ in-place update.
 
 \sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive \destcalculus}\label{fig:impl-dlist-queue}}{t}{0.51}{
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
@@ -394,17 +393,15 @@ The usual functional encoding for a queue is to use a pair of lists, one represe
 
 With such a queue implementation, dequeueing the front element is efficient until the first list is depleted. In that case, one now has to transfer elements from the second list to the first one, and so has to reverse the second list beforehand, which is a $\mathcal{O}(n)$ operation (although it is amortized).
 
-With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to remove the need for a reverse operation when the first list get depleted. The corresponding implementation is presented on the left of Figure~\ref{fig:impl-dlist-queue}.
+With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to remove the need for a reverse operation when the first list get depleted. The corresponding implementation is presented on the right of Figure~\ref{fig:impl-dlist-queue}.
 
-The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$).
-
-The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
+The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$). The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
 
 The $\ottkw{dequeue}$ operator first checks if there is one element available in the front list. If there is, it extracts the element $[[x]]$ and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue (made of the remaining elements $[[xs]]$ paired with a fresh difference list).
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dest}
 
-Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself pose a great threat to the memory safety of the system. Let's see why.
+Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself is a great threat to memory safety of the system. Let's see why.
 
 One core assumption of destination-passing style programming is that once a destination has been linearly used, the associated hole has been written to. However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
 
