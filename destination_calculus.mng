@@ -529,12 +529,12 @@ Thomas: Stopped there in the refactor at 17:30 on 02/07/2024.
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperator[~\mathttbf{rec}]
-{\ottkw{go}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞  → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
+{\ottkw{go}}{[[(S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞  → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
 {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
 (dequeue q) case ¹ν {⮒
-‥‥Inl () ⟼ st,⮒
+‥‥Inl () ⟼ ˢᴇ ¹∞ st,⮒
 ‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
-‥‥‥‥Inl () ⟼ dtree ⨞ Nil ; go f (ˢᴇ ¹∞ st) q',⮒
+‥‥‥‥Inl () ⟼ dtree ⨞ Nil ; go f st q',⮒
 ‥‥‥‥ˢInr ˢ(x, ˢ(tl, tr)) ⟼⮒
 ‥‥‥‥‥‥let z ≔ (dtree ⨞ Node) case ¹ν ˢ(dy, ˢ(dtl, dtr)) ⟼ (༼f st༽ x) in⮒
 ‥‥‥‥‥‥‥‥༼z case ¹ν ˢ(ˢᴇ ¹∞ st', y) ⟼⮒
@@ -544,18 +544,17 @@ Thomas: Stopped there in the refactor at 17:30 on 02/07/2024.
 }
 ]]\end{array}}
 \newoperator
-{\ottkw{mapAccumBFS}}{[[((! ¹∞ S) ¹ν → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞ → Tree T1 ¹∞ → Tree T2 ⨂ (! ¹∞ S)]]}
+{\ottkw{mapAccumBFS}}{[[(S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞ → Tree T1 ¹∞ → Tree T2 ⨂ (! ¹∞ S)]]}
 {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
 from⧔ (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperator
-{\ottkw{relabelDPS}}{[[Tree ① ¹ν → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
+{\ottkw{relabelDPS}}{[[Tree ① ¹∞ → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
 {[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
 mapAccumBFS⮒
-‥‥(ˢλ ex ¹ν ⟼ ˢλ un ¹ν ⟼ un ; ex case ¹ν⮒
-‥‥‥‥ᴇ ¹∞ ex' ⟼ ex' case ¹∞⮒
-‥‥‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st))⮒
-‥‥(ˢᴇ ¹∞ (ˢᴇ ων (succ zero)))⮒
+‥‥(ˢλ ex ¹∞ ⟼ ˢλ un ¹ν ⟼ un ; ༼ex case ¹∞⮒
+‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st)༽)⮒
+‥‥(ˢᴇ ων (succ zero))⮒
 ‥‥tree
 ]]\end{array}}
 \end{codefig}
