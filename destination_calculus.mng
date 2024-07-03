@@ -168,7 +168,7 @@
 
 %\acmJournal{PACMPL}
 \acmConference[POPL'25]{Principles of Programming Languages}{January 19 -- 25, 2025}{Denver, Colorado}
-\title{\destcalculus}
+\title{Destination calculus}
 \subtitle{A linear $\lambda-$calculus for pure, functional memory updates}
 
 \author{Arnaud Spiwack}
@@ -588,7 +588,7 @@ Two exponentials are needed here. The first one $\ottstype{!}_{[[¹∞]]}$ is pa
                [[p]] &::=& [[¹]] \grammsep [[ω]] \\
                [[a]] &::=& [[ν]] \grammsep [[↑]] \grammsep [[∞]] \\
 &&\\
-[[O]], [[G]], [[P]], [[D]] &::=& [[{ x : m T }]] \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \\
+[[O]], [[G]], [[P]], [[D]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \\
                            &|\,& [[O1 , O2]] \grammsep [[O1 + O2]] \grammsep [[m · O]] \grammsep [[-⁻¹ D]]
 \end{array}
 }\end{codefig}
@@ -684,7 +684,7 @@ Age commutative semiring is then combined with the multiplicity commutative semi
 
 Minamide's work\cite{minamide_functional_1998} is the earliest record we could find of a functional calculus integrating the idea of incomplete data structures (structures with holes) that exist as first class values and can be interacted with by the user.
 
-In that paper, a structure with a hole is named \emph{hole abstraction}. In the body of a hole abstraction, the bound \emph{hole variable} should be used linearly (exactly once), and must only be used as a parameter of a data constructor (it cannot be read). A hole abstraction is thus a weak form of linear lambda abstraction, which just moves a piece of data into a bigger data structure.
+In that paper, a structure with a hole is named \emph{hole abstraction}. In the body of a hole abstraction, the bound \emph{hole variable} should be used linearly (exactly once), and must only be used as a parameter of a data constructor (it cannot be pattern-matched on). A hole abstraction of type $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear lambda abstraction $\ottstype{[[T]] \multimap [[S]]}$, which just moves a piece of data into a bigger data structure.
 
 % In fact, the type of hole abstraction $\ottstype{([[T1]], [[T2]]) hfun}$ in Minamine's work shares a lot of similarity with the separating implication or \emph{magic wand} $\ottstype{[[T1]] \sepimp [[T2]]}$ from separation logic: given a piece of memory matching description $[[T1]]$, we obtain a (complete) piece of memory matching description $[[T2]]$.
 
@@ -694,7 +694,7 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 \paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
 
-In CLL, thanks to the cut rule, any of the sides $[[S]]$ or $[[T]]$ of a par can be eliminated, by interaction with the opposite type $\ottstype{\smallbullet^{\perp}}$, to free up the other side. But in \destcalculus, we have two types of interaction to consider: interaction between $[[T]]$ and $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and $[[T]]\ottstype{\to\smallbullet}$. The structure that may contain holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into a bigger structure with holes), but not with $[[T]]\ottstype{\to\smallbullet}$, as it would let the user read an incomplete structure! On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[T ¹ν → ①]]$ (in particular, the function can pattern-match on the value of type $[[T]]$ to access the destinations), but it is not always safe to fill it into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of destinations $\lfloor[[T']]\rfloor$.
+In CLL, thanks to the cut rule, any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the opposite type $\ottstype{\smallbullet^{\perp}}$, to free up the other side. But in \destcalculus, we have two types of interaction to consider: interaction between $[[T]]$ and $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and $[[T]]\ottstype{\to\smallbullet}$. The structure that may contain holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into a bigger structure with holes), but not with $[[T]]\ottstype{\to\smallbullet}$, as it would let the user read an incomplete structure! On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[T ¹ν → ①]]$ (in particular, the function can pattern-match on the value of type $[[T]]$ to access the destinations), but it is not always safe to fill it into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of destination $\ottstype{\lfloor[[T']]\rfloor}$.
 
 To recover sensible rules for the connective, we decided to make it asymmetric, hence ampar ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
 \begin{itemize}
@@ -845,12 +845,17 @@ The semantics of \destcalculus are given using small-step reductions on a pair $
 
 \subsection{Evaluation contexts forms}
 
-\begin{ottfig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}
-  \ottgrammartabular{
-  \ottectx\ottinterrule
-  \ottectxs\ottafterlastrule
-  }
-  \end{ottfig}
+\begin{codefig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}{\setlength{\arraycolsep}{1ex}
+\!\!\!\begin{array}{rrl}
+[[c]] &::=& [[t' ⬜]] \grammsep [[⬜ v]] \grammsep [[⬜ ; u]] \\
+      &|\,& [[ ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[⬜ case m ( x1 , x2 ) ⟼ u]] \grammsep [[⬜ case m ᴇ n x ⟼ u]] \\
+      &|\,& [[⬜ map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \\
+      &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \\
+      &|\,& [[ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ ]] \quad\quad\textit{(open ampar focus component)} \\
+&&\\
+[[C]] &::=& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
+\end{array}
+}\end{codefig}
 
 The grammar of evaluation contexts is given in Figure~\ref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c1]], [[c2]]\ldots$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to imagine how to build a stack-based interpreter for such a language.
 
@@ -935,9 +940,9 @@ The reduction rules for function application, pattern-matching, $\ottkw{to}_{\ot
 
 All reduction rules for destination-filling primitives trigger a substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$ that corresponds to a memory update of a hole $[[+h]]$. \textsc{Sem-FillU-Red} and \textsc{Sem-FillF-Red} do not create any new hole; they only write a value to an existing one. On the other hand, rules \textsc{Sem-FillL-Red}, \textsc{Sem-FillR-Red}, \textsc{Sem-FillE-Red} and \textsc{Sem-FillP-Red} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
-Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. The implicit invariant of the system is that we always rename hole names inside an ampar to fresh names when that ampar is $\ottkw{map}$ped on. Names bound by a closed ampar --- represented by the set of hole names $[[H]]$ that it carries --- are only local, and thus can shadow already existing names (that's why $[[alloc]]$ is allowed to reuse the same hole name $[[1]]$ at each invocation: it doesn't matter as it desugars to a closed ampar). Thus we only need to take into account the names of already opened ampars --- all part of the evaluation context --- when we want fresh names (either for new holes, or for ampar renaming).
+Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. One invariant of the system is that an ampar must have fresh names to be opened, so we always rename local hole names bound by an ampar to fresh names just when that ampar is $\ottkw{map}$ped on, as these local names --- represented by the set of hole names $[[H]]$ that the ampar carries --- could otherwise shadow already existing names in evaluation context $[[C]]$. This invariant is materialized by premise $[[hnames(C)]] \#\# [[hnames(D3)]]$ in rule \textsc{Ty-ectxs-OpenAmpar-Foc} for the open ampar focus component that is created during reduction of a $\ottkw{map}$.
 
-For that, we introduce hole name shifting. Shifting all hole names in a set $[[H]]$ by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We extend this notation to define a conditional shift operation $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
+We use hole name shifting as a strategy to obtain fresh names. Shifting all hole names in a set $[[H]]$ by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We extend this notation to define a conditional shift operation $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
 
 In rule \textsc{Sem-FillComp-Red}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of some focus fragment $[[H' ᵒᵖ⟨ v2' ❟ ⬜⟩]]$ in the evaluation context $[[C]]$. That fragment is not mentioned explicitly in the rule, as the destination $[[-h]]$ is enough to target it. This results in the composition of two structures with holes $[[v2']]$ and $[[v2]]$ through filling of $[[-h]]$. Because we split open the ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ (its left-hand side gets written to a hole, while its right hand side is returned), we need to rename any hole name that it contains to a fresh one, as we do when an ampar is opened in the $\ottkw{map}$ rule. The renaming is carried out by the conditional shift $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ on $[[v2]]$ and $[[v1]]$ (only hole names local to the ampar, represented by the set $[[H]]$, gets renamed).
 
