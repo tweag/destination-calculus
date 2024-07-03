@@ -535,11 +535,11 @@ Thomas: Stopped there in the refactor at 17:30 on 02/07/2024.
 ‥‥Inl () ⟼ ˢᴇ ¹∞ st,⮒
 ‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
 ‥‥‥‥Inl () ⟼ dtree ⨞ Nil ; go f st q',⮒
-‥‥‥‥ˢInr ˢ(x, ˢ(tl, tr)) ⟼⮒
-‥‥‥‥‥‥let z ≔ (dtree ⨞ Node) case ¹ν ˢ(dy, ˢ(dtl, dtr)) ⟼ (༼f st༽ x) in⮒
-‥‥‥‥‥‥‥‥༼z case ¹ν ˢ(ˢᴇ ¹∞ st', y) ⟼⮒
+‥‥‥‥ˢInr ˢ(x, ˢ(tl, tr)) ⟼ ༼(dtree ⨞ Node) case ¹ν⮒
+‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ ༼(༼f st༽ x) case ¹ν⮒
+‥‥‥‥‥‥‥‥ˢ(ˢᴇ ¹∞ st', y) ⟼⮒
 ‥‥‥‥‥‥‥‥‥‥dy ˢ⨞ y ;⮒
-‥‥‥‥‥‥‥‥‥‥go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))༽⮒
+‥‥‥‥‥‥‥‥‥‥go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))༽༽⮒
 ‥‥}⮒
 }
 ]]\end{array}}
