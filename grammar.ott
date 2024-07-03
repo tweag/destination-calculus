@@ -65,7 +65,7 @@ hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex
   | { h1 , .. , hk } :: :: FromList {{ coq (hnames_ [[h1..hk]]) }}
   | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\cup}\,[[H2]] }}
   | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hnames_shift [[H]] [[h']]) }}
-  | 'hnames(' G ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[G]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[G]]\ottshname{)} }} {{ coq (hnames_ctx [[G]]) }}
+  | 'hnames(' O ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[O]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[O]]\ottshname{)} }} {{ coq (hnames_ctx [[O]]) }}
   | 'hnames(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[C]]\ottshname{)} }} {{ coq (hnames_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshname{(}[[H]]\ottshname{)} }}
 
@@ -84,8 +84,8 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t case m t' ⟼ u :: S :: SugarPatNested {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,[[t']][[⟼]][[u]] }} % Coq translation is a placeholder
   | t case m { t1 ⟼ u1 , t2 ⟼ u2 } :: S :: SugarPatNestedS {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]]\} }} % Coq translation is a placeholder
   | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex \ottkw{map}~[[t]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +
-  | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
-  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
+  | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
+  | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
   % | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
@@ -111,7 +111,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   % Here we have to redefined all sugar construct in the same way as in sterm
   | alloc :: S :: SugarAlloc {{ coq (sterm_Alloc) }} {{ tex \ottsctor{alloc} }}
   | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\blacktriangleleft\!\,[[t']] }}
-  | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottstype{\ltimes} }' [[t]] }}
+  | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottkw{\ltimes} }' [[t]] }}
   | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
   | ˢInl t :: S :: SugarLeft {{ coq (sterm_Left [[t]]) }} {{ tex \ottsctor{Inl}\,[[t]] }}
   | ˢInr t :: S :: SugarRight {{ coq (sterm_Right [[t]]) }} {{ tex \ottsctor{Inr}\,[[t]] }}
@@ -127,7 +127,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ (::) :: S :: SugarFillCons {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{(::)} }}
   | t append t' :: S :: SugarSnoc {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{append}~[[t']] }}
   | t concat t' :: S :: SugarConcat {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{concat}~[[t']] }}
-  | toList t :: S :: SugarToList {{ coq (term_Val val_Unit) }} {{ tex \ottkw{to}_{\ottstype{List} }~[[t]] }}
+  | toList t :: S :: SugarToList {{ coq (term_Val val_Unit) }} {{ tex \ottkw{to}_{\ottkw{List} }~[[t]] }}
   | singleton t :: S :: SugarSingleton {{ coq (term_Val val_Unit) }} {{ tex \ottkw{singleton}~[[t]] }}
   | t enqueue t' :: S :: SugarEnqueue {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{enqueue}~[[t']] }}
   | dequeue t :: S :: SugarDequeue {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dequeue}~[[t]] }}
@@ -193,8 +193,8 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Foc {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
   | ⬜ map x ⟼ t' :: :: Map_Foc {{ tex \ottkw{map}~[[⬜]]~\ottkw{of}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
 
-  | to⧔ ⬜ :: :: ToA_Foc {{ tex \ottkw{to}_{\ottstype{\ltimes} }\,[[⬜]] }}
-  | from⧔ ⬜ :: :: FromA_Foc {{ tex \ottkw{from}_{\ottstype{\ltimes} }\,[[⬜]] }}
+  | to⧔ ⬜ :: :: ToA_Foc {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[⬜]] }}
+  | from⧔ ⬜ :: :: FromA_Foc {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[⬜]] }}
   | ⬜ ⨞ () :: :: FillU_Foc
   | ⬜ ⨞ Inl :: :: FillL_Foc
   | ⬜ ⨞ Inr :: :: FillR_Foc
