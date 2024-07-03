@@ -326,7 +326,12 @@ Now that we have an intuition of how destinations work, let's see how they can b
 
 \paragraph{Linked lists}
 
-For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$ where $[[T]]$ is the type of list items. Following the recipe that we've outline so far, instead of defining the usual \textopname{nil} $\ottsctor{[]}$ and \textopname{cons} $\ottsctor{(::)}$ constructors, we define the more general \textopname{fillNil}\unsure{Arnaud hasn't used in the previous section small-caps name for constructors and operations. If we are to use them in the next few sections, it would be good to introduce this vocabulary early.} $\triangleleft\ottsctor{[]}$ and \textopname{fillCons} $\triangleleft\ottsctor{(::)}$ operators, as presented in Figure~\ref{fig:impl-list}.
+We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define synthetic filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$ as in Figure~\ref{fig:impl-list}\unsure{inline figure?}. Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover traditional constructors, \emph{e.g.}:
+
+\codehere{\newoperator
+{\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
+{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
+
 
 \sidebysidecodefig{\caption{List implementation in equirecursive \destcalculus}\label{fig:impl-list}}{b}{0.49}{
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
@@ -339,23 +344,15 @@ For starters, we can define lists as the fixpoint of the functor $[[X]] \mapsto 
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 }
 
-Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover the \textopname{cons} constructor:
-
-\codehere{\newoperator
-{\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
-
-Going from a \textopname{fill} operator to the associated constructor is completely generic, and with more metaprogramming tools, we could build this transformation into the language.
-
 \paragraph{Difference lists}
+\newcommand{\lstcat}{\mathop{+\!+}}
+Just like any programming language, iterated concatenation of lists
+$$(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$$
+in \destcalculus, is quadratic. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
 
-While linked lists are optimized for the prepend operation (\textopname{cons}), they are not efficient for appending or concatenation, as it requires a full copy (or traversal at least) of the first list before the last cons cell can be changed to point to the head of the second list.
+However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per $\ottsctor{::}$, so iterated composition effectively performs two traversals of the list. We can do better!
 
-Difference lists are a data structure that allows for efficient concatenation. In functional languages, difference lists are often encoded using a function that take a tail, and returns the previously-unfinished list with the tail appended to it. For example, the difference list $[[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} \holesq$ is represented by the linear function $\lambda [[xs]] \mapsto [[x1]] \ottsctor{:} [[x2]] \ottsctor{:} \ldots \ottsctor{:} [[xk]] \ottsctor{:} [[xs]]$. This encoding shines when list concatenation calls are nested to the left, as the function encoding delays the actual concatenation so that it happens in a more optimal, right-nested fashion than a naive nested list concatenation.
-
-In \destcalculus, we can go even further, and represent difference lists much like we would do in an imperative programming language (although in a safe setting here), as a pair of an incomplete list who is missing its tail, and a destination pointing to the missing tail's location. The incomplete list is represented by the left side of the ampar, and the destination is represented by its right side. No read on the unfinished list can happen until the destination on the right has been consumed.
-
-Type and operators definitions for difference lists in \destcalculus are presented on the left of Figure~\ref{fig:impl-dlist-queue}.
+In \destcalculus we can represent a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$, concatenation is filling the hole with another difference list. The details are in~\cref{fig:impl-dlist-queue}.\improvement{configure cref to write Figure in full} This encoding makes no superfluous traversal, in fact, concatenation is an $O(1)$ in-place update.
 
 \sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive \destcalculus}\label{fig:impl-dlist-queue}}{t}{0.51}{
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
@@ -391,18 +388,8 @@ q case ¹ν {⮒
 }]]\end{array}}
 }
 
-An empty difference list can be created without the need for a new operator as it is exactly what the $[[alloc]]$ primitive already does when specialized to type $[[List T]]$.
-
-The $\ottkw{append}$ operator uses \textopname{fillCons} to link a new hollow \textopname{cons} cell at the end of the list (represented by $[[dys]]$), and then handles the two associated destinations $[[dy]]$ and $[[dys']]$. The former, representing the item slot, is fed with the item to append, while the latter, representing the slot for the tail of the resulting difference list, is returned and so stored back in the right side of the ampar. If that second destination was consumed, and not returned, we would end up with a regular linked list, instead of a difference list.
-
-The $\ottkw{concat}$ operator concatenates two difference lists by writing the head of the second one to the hole at the end of the first one. This is done using the \textopname{fillComp} ($\triangleleft\mybullet$) primitive, that here has type $[[⌊ List T ⌋¹ν ¹ν → DList T ¹↑ → ⌊ List T ⌋¹ν]]$. It takes a destination as a first argument and an ampar as its second argument. The left side of the ampar is fed to the destination to be merged with another incomplete structure (the first difference list), while right side of the ampar (the destination for the end of the second difference list) is returned.
-
-Finally, the $\ottkw{to}_{\ottkw{List}}$ operator converts a difference list to a regular list by writing the \textopname{nil} constructor to the hole left in the incomplete list using \textopname{fillNil}.
-
-We can note that although this exemple is typical of destination-style programming, it doesn't use the first-class nature of destinations that our calculus allows, and thus can be implemented in other destination-passing style frameworks such as~\cite{bour_tmc_2021} and~\cite{leijen_trmc_2023}. We will see in the next sections what kind of programs can be benefit from first-class destinations.
-
 \paragraph{Efficient queue using previously defined structures}
-
+\improvement{cite Okasaki's efficient queues and compare}
 The usual functional encoding for a queue is to use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reverse order (e.g the latest inserted element will be at the front of the second list).
 
 With such a queue implementation, dequeueing the front element is efficient until the first list is depleted. In that case, one now has to transfer elements from the second list to the first one, and so has to reverse the second list beforehand, which is a $\mathcal{O}(n)$ operation (although it is amortized).
