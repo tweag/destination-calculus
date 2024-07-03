@@ -207,7 +207,7 @@ calculus, and prove type safety formally in the Coq proof assistant.
 
 We show how the principles of the \destcalculus can form a theoretical ground
 for destination-passing style programming in functional languages. In particular,
-we detail how the present work can be applied to Linear Haskell to lift the main 
+we detail how the present work can be applied to Linear Haskell to lift the main
 restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
 We illustrate this with a range of pseudo-Haskell examples.
 \end{abstract}
@@ -238,7 +238,7 @@ Why is it important to have destinations as first-class values? Because it allow
 
 \activespaces
 
-In its simplest form, destination passing, much like continuation passing, is the idea of explicitly receiving a location where to return a value to (we say that the destination is filled when the supplied location is written to). Instead of a function with signature $[[T ¹ν → U]]$, in \destcalculus you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination of type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
+In its simplest form, destination passing, much like continuation passing, is using a location, received as an argument, to return a value. Instead of a function with signature $[[T ¹ν → U]]$, in \destcalculus you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination of type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
 
 \codehere{\newoperator
 {\ottkw{dId}}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
@@ -246,16 +246,16 @@ In its simplest form, destination passing, much like continuation passing, is th
 
 We think of a destination as a reference to an uninitialized memory location, and $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) as writing $[[x]]$ to the memory location.
 
-The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a whole value in a single step. Destinations can be filled piecemeal.
+The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a complete value in a single step. Destinations can be filled piecemeal.
 \unsure{Maybe it would be wise to explain the notations for sums and tuples, since the linear-logic notations are less standard than the ccc ones}\unsure{We probably want to give a reading for the fill-with-a-constructor construction.}
 
 \codehere{\newoperator
 {\ottkw{fillWithInl}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
 {\ottkw{fillWithInl}~[[d]]}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\holesq$\unsure{Introduce the terminology “hollow constructor” here?}, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
+In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\holesq$, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
 
-Notice that we are constructing the term from the outermost constructor inward: we've built a value of the form $[[Inl]]~\holesq$ but we have yet to describe the constructor's payload. We call such incomplete values ``hollow constructors'', where $\holesq$ represent the hole(s) they contain. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$\inconsistent{For some reason this $[[v]]$ is grey. $\to$ Thomas : that's the case for non-terminals in the grammar}. This will turn out to be a key ingredient in the expressiveness of destination passing.
+Notice that we are constructing the structure from the outermost constructor inward: we've built a value of the form $[[Inl]]~\holesq$, but we have yet to describe what goes in the hole $\holesq$. We call such incomplete values \emph{hollow constructors}. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
 Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling destination of tuples:
 
@@ -266,13 +266,11 @@ Yet, everything we've shown so far could have been done with continuations. So i
 To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $\ottkw{fillWithAPair}$ doesn't exist on continuations.
 
 \paragraph{Structures with holes}
-Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure\improvement{Make sure that we clarify early on that when we say ``structure'' we mean “linked data structure”}, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete; we then say it has a \emph{hole} of type $[[T]]$. There can be several holes in $[[S]]$, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$.\improvement{Somewhere around this point it would be good to explain the difference between holes and destinations. $\to$ Thomas: see DIFF-HOLE-DEST}
+Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure\improvement{Make sure that we clarify early on that when we say ``structure'' we mean “linked data structure”}, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete; we then say it has a \emph{hole} of type $[[T]]$. There can be several holes in $[[S]]$, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$.
 
-The form $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is read “$[[S]]$ ampar destination of $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus in Section~\ref{ssec:ampar-motivation}. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $\ottstype{S \parr T^\perp}$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That structures with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called $\ottstype{Incomplete}$ in~\cite{bagrel_destination-passing_2024}.
+The general form $[[S ⧔ T ]]$ is read “$[[S]]$ ampar $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus in Section~\ref{ssec:ampar-motivation}\improvement{Probably not the right label to point to. Make sure that we clarify the differences with a par.}. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $\ottstype{S \parr T^\perp}$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That structures with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called $\ottstype{Incomplete}$ in~\cite{bagrel_destination-passing_2024}.
 
-Destinations always exist within the context of a structure with holes. A hole of type $[[T]]$ inside $[[S]]$ represents the fact that $[[S]]$ contains uninitialized memory that will have to hold a $[[T]]$ for $[[S]]$ to be readable without errors; it only denotes the absence of a value and thus cannot be manipulated directly. A destination $[[⌊ T ⌋ ¹ν]]$, on the other hand, is a first-class value that witnesses the presence of a hole of type $[[T]]$ inside $[[S]]$ and can be used to complete the structure\improvement{DIFF-HOLE-DEST}. To access the destinations, \destcalculus provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of an ampar:
-
-\unsure{It may be more readable to have fillWithInl' and fillWithAPair' side by side. Maybe they're too wide though}
+Destinations always exist within the context of a structure with holes: a destination is a pointer to a hole in the structure. Crucially, destinations are otherwise ordinary values. To access the destinations, \destcalculus provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of an ampar:
 
 \medskip
 
@@ -288,7 +286,7 @@ Destinations always exist within the context of a structure with holes. A hole o
 
 To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole of type $[[T]]$ that needs a structure of type $[[T]]$ to be a complete structure of type $[[T]]$. Structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in \cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then a structure with holes is really just a normal, complete structure.
 
-Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, they are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.\unsure{Wording slightly awkward. Revisit at some point. Maybe point out that it makes destinations strictly more expressive than traditional constructor. Maybe discuss as Thomas did at some point that this means that the order in which a structure is built is actually arbitrary, not just outside-in.}
+Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, constructors in \destcalculus are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
@@ -300,32 +298,27 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 
 
 \paragraph{Memory safety and purity}
-At this point, the reader may be forgiven for feeling distressed at all the talk of using memory mutations as a semantic for destination-filling primitives. How is it consistent with our claim to be building a pure and memory-safe language\improvement{Ensure that we do claim that}?
+At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language\improvement{Ensure that we do claim that}? The answer is that it wouldn't be if we'd allow unrestricted use of destination. Instead \destcalculus uses a linear type system to ensure that
 
-In fact, we build our system on three core principles:
-\begin{enumerate}
-\item destinations are linear resources: they have to be used exactly once;
-\item a structure that still have holes somewhere in its structure cannot be read;
-\item destinations cannot escape to an older scope than the one they originate from (how we ensure this will be detailed in Section~\ref{sec:syntax-type-system}).
-\end{enumerate}
+\begin{itemize}
+\item Destination are written at least once, preventing examples like
 
-The first principle ensures that such programs are ruled out:
+  \codehere{\newoperator
+  {\ottkw{forget}}{[[T]]}
+  {\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
 
-\codehere{\newoperator
-{\ottkw{forget}}{[[T]]}
-{\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
+  where reading the result of $\ottkw{forget}$ would result in reading a hole that we never filled, in other words, reading uninitialized memory.
+\item Destination are written at most once, preventing examples like
 
-\codehere{\newoperator
-{\ottkw{forget'}}{[[(T1 ⨂ T2) ⧔ ⌊ T2 ⌋¹ν]]}
-{\ottkw{forget'}}{[[alloc map d ⟼ (d ⨞ (,)) case ¹ν (d1, d2) ⟼ from⧔' (alloc map dd ⟼ dd ˢ⨞ d1 ; dd ˢ⨞ d2)]]}}
+  \codehere{\newoperator
+  {\ottkw{ambiguous1}}{[[Bool]]}
+  {\ottkw{ambiguous1}}{[[from⧔' (alloc map d ⟼ d ˢ⨞ true; d ˢ⨞ false)]]}
+  \newoperator
+  {\ottkw{ambiguous2}}{[[Bool]]}
+  {\ottkw{ambiguous2}}{[[from⧔' (alloc map d ⟼ let x ≔ (d ˢ⨞ false) in d ˢ⨞ true; x)]]}}
 
-Here, $\ottkw{forget}$ claims to be a value of type $[[T]]$, but it's really just a hole, just uninitialized memory, because $[[d]]$ hasn't been used. So any attempt to use $\ottkw{forget}$ will read uninitialized memory.
-
-In the more complex $\ottkw{forget'}$, we fill $[[dd]]$ twice to drop the first value that it receives into oblivion, even though that value is marked as being consumed. So the hole associated to $[[d1]]$ can't be filled ever, and that will eventually lead to reading uninitialized memory.
-
-We will see in section~\ref{sec:scope-escape-dest} why scope escape of destination is also a concern for memory safety.
-
-Purity of the system is ensured by the combination of these principles. The main way to break purity would be to reuse a destination to mutate a structure after that structure has already been read once. But a structure cannot be read while it still has holes, and once it has been completed, the destinations that were used to fill it are no longer accessible nor usable (because of the first and third principles). As a result, in that controlled setting, we can think of destinations as write-once memory locations, and the mutations behind the hood are totally invisible as no read can happen before the (only one allowed) writing is made.
+  where $\ottkw{ambiguous1}$ returns $[[false]]$ and $\ottkw{ambiguous2}$ returns $[[true]]$ due to evaluation order, even though let-expansion should be valid in a pure language.
+\end{itemize}
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
@@ -940,7 +933,7 @@ OpenAmpar-Unfoc}
 
 The reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottkw{\ltimes} }$ and $\ottkw{from}_{\ottkw{\ltimes} }$ are straightforward.
 
-All reduction rules for destination-filling primitives trigger a substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$ that corresponds to a memory update of a hole $[[+h]]$. \textsc{Sem-FillU-Red} and \textsc{Sem-FillF-Red} do not create any new hole; they only write a value to an existing one. On the other hand, rules \textsc{Sem-FillL-Red}, \textsc{Sem-FillR-Red}, \textsc{Sem-FillE-Red} and \textsc{Sem-FillP-Red} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name. 
+All reduction rules for destination-filling primitives trigger a substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$ that corresponds to a memory update of a hole $[[+h]]$. \textsc{Sem-FillU-Red} and \textsc{Sem-FillF-Red} do not create any new hole; they only write a value to an existing one. On the other hand, rules \textsc{Sem-FillL-Red}, \textsc{Sem-FillR-Red}, \textsc{Sem-FillE-Red} and \textsc{Sem-FillP-Red} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
 Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. The implicit invariant of the system is that we always rename hole names inside an ampar to fresh names when that ampar is $\ottkw{map}$ped on. Names bound by a closed ampar --- represented by the set of hole names $[[H]]$ that it carries --- are only local, and thus can shadow already existing names (that's why $[[alloc]]$ is allowed to reuse the same hole name $[[1]]$ at each invocation: it doesn't matter as it desugars to a closed ampar). Thus we only need to take into account the names of already opened ampars --- all part of the evaluation context --- when we want fresh names (either for new holes, or for ampar renaming).
 
