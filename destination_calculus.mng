@@ -388,16 +388,13 @@ q case ¹ν {⮒
 }
 
 \paragraph{Efficient queue using previously defined structures}
-\improvement{cite Okasaki's efficient queues and compare}
-The usual functional encoding for a queue is to use a pair of lists, one representing the front of the queue, and keeping the element in order, while the second list represent the back of the queue, and is kept in reverse order (e.g the latest inserted element will be at the front of the second list).
+A simple way to implement a queue in a purely functional language is as a pair of lists \verb+(front, back)+\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from \verb+front+ and are enqueued in \verb+back+. When we need to pop an element and \verb+front+ is empty, then we set the queue to \verb+(reverse back, [])+, and pop from the new front.
 
-With such a queue implementation, dequeueing the front element is efficient until the first list is depleted. In that case, one now has to transfer elements from the second list to the first one, and so has to reverse the second list beforehand, which is a $\mathcal{O}(n)$ operation (although it is amortized).
+For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly. And even then, there's still one superfluous traversal of the \verb+back+ list, compared to an imperative implementation.
 
-With access to efficient difference lists, as shown in the previous paragraph, we can replace the second list by a difference list, to remove the need for a reverse operation when the first list get depleted. The corresponding implementation is presented on the right of Figure~\ref{fig:impl-dlist-queue}.
+But, taking a step back, this \verb+back+ list which has to be reversed before it is accessed is really merely a representation of lists that can be extended from the back. And we already know an efficient implementation of lists that can be extended from the back but only accessed linearly: difference lists.
 
-The $\ottkw{singleton}$ operator creates a pair of a list with a single element, and a fresh difference list (obtained via $[[alloc]]$). The $\ottkw{enqueue}$ operator appends an element to the difference list, while letting the front list unchanged.
-
-The $\ottkw{dequeue}$ operator first checks if there is one element available in the front list. If there is, it extracts the element $[[x]]$ and returns it alongside the rest of the queue $[[ˢ(xs, ys)]]$. If there isn't, it converts the difference list $[[ys]]$ to a normal list, and pattern-matches on it to look for an available element. If none is found again, it returns $[[Inl ()]]$ to signal that the queue is definitely empty. If an element $[[x]]$ is found, then it returns it alongside the updated queue (made of the remaining elements $[[xs]]$ paired with a fresh difference list).
+So we can give an improved version of the simple functional queue using destination. The implementation is on the right-hand side of~\cref{fig:impl-dlist-queue}\improvement{the implementation could be improved a little by using the cons and nil synthetic constructors}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from accessing the front elements of difference lists. Just like for the simple functional queue, we need a pair of a list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus type system, and nearly as efficient as what an imperative programming language would afford.
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dest}
 
