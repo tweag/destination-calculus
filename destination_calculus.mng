@@ -152,18 +152,20 @@
 \NewEnviron{ottfig}[2][t]{\begin{figure}[#1]\visiblespaces
 \small\BODY\activespaces #2
 \end{figure}}
-\newcommand{\sidebysidecodefig}[6][t]{
-\begin{codefig}[#1]{#2}
-\noindent\begin{minipage}[#3]{#4\textwidth}\codehere[#3]{
-#5
-}\end{minipage}
+\newcommand{\sidebysidecodehere}[4]{\begin{center}\begin{minipage}[#1]{\figureratio\linewidth}
+\noindent\begin{minipage}[#1]{#2\linewidth-0.03\linewidth}{\small$#3$}\end{minipage}
 \hfill
 \vrule width 0.5pt % Vertical rule of 1pt width
 \hfill
-\begin{minipage}[#3]{\textwidth-#4\textwidth-0.02\textwidth}\codehere[#3]{
-#6
-}\end{minipage}
-\end{codefig}
+\begin{minipage}[#1]{\linewidth-#2\linewidth-0.03\linewidth}{\small$#4$}\end{minipage}
+\end{minipage}\end{center}
+}
+
+\newcommand{\sidebysidecodefig}[6][t]{
+\begin{figure}[#1]
+\sidebysidecodehere{#3}{#4}{#5}{#6}
+#2
+\end{figure}
 }
 
 \newenvironment{stretchedarray}[2][1]
@@ -320,11 +322,11 @@ The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't 
 {\ottkw{fillWithInl}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
 {\ottkw{fillWithInl}~[[d]]}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of type $[[T ⨁ U]]$ by setting the outermost constructor to $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\holesq$, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
+In this example, we're building a value of sum type $[[T ⨁ U]]$ by setting the outermost constructor to left variant $[[Inl]]$. We think of $[[d ⨞ Inl]]$ as allocating memory to store a block of the form $[[Inl]]~\holesq$, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
 
 Notice that we are constructing the structure from the outermost constructor inward: we've built a value of the form $[[Inl]]~\holesq$, but we have yet to describe what goes in the hole $\holesq$. We call such incomplete values \emph{hollow constructors}. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
-Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when there are several destinations. Then you can (indeed you must!) fill all the destinations; whereas when you have multiple continuations, you can only return to one of them. Multiple destination arises from filling destination of tuples:
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see \cref{sec:implementation}). But where destinations really differ from continuations is when one has several destinations at hand. Then they have to fill \emph{all} the destinations; whereas when one has multiple continuations, they can only return to one of them. Multiple destination arises when filling a destination of product type (tuple):
 
 \codehere{\newoperator
 {\ottkw{fillWithAPair}}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
@@ -333,25 +335,23 @@ Yet, everything we've shown so far could have been done with continuations. So i
 To fill a destination for a pair, we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $\ottkw{fillWithAPair}$ doesn't exist on continuations.
 
 \paragraph{Structures with holes}
-Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure\improvement{Make sure that we clarify early on that when we say ``structure'' we mean “linked data structure”}, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$, above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete; we then say it has a \emph{hole} of type $[[T]]$. There can be several holes in $[[S]]$, in which case the right-hand side is a tuple of destinations: $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$.
+Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure\improvement{Make sure that we clarify early on that when we say ``structure'' we mean “linked data structure”}, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$ above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete; we then say it has a \emph{hole} of type $[[T]]$. There can be several holes in $[[S]]$, resulting in several destinations on the right hand side: for example, $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$ carries a tuple of destinations.
 
 The general form $[[S ⧔ T ]]$ is read “$[[S]]$ ampar $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; the reasons for this name will become apparent as we get into more details of \destcalculus in Section~\ref{ssec:ampar-motivation}\improvement{Probably not the right label to point to. Make sure that we clarify the differences with a par.}. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a $\ottstype{S \parr T^\perp}$ in linear logic, indeed you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That structures with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in \cref{sec:bft}. A similar connective is called $\ottstype{Incomplete}$ in~\cite{bagrel_destination-passing_2024}.
 
 Destinations always exist within the context of a structure with holes: a destination is a pointer to a hole in the structure. Crucially, destinations are otherwise ordinary values. To access the destinations, \destcalculus provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of an ampar:
 
-\medskip
+\sidebysidecodehere{t}{0.50}{
+  \newoperator
+  {\ottkw{fillWithInl'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
+  {\ottkw{fillWithInl'}~[[x]]}{[[x map d ⟼ d ⨞ Inl]]}
+}{
+  \newoperator
+  {\ottkw{fillWithAPair'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
+  {\ottkw{fillWithAPair'}~[[x]]}{[[x map d ⟼ d ⨞ (,)]]}
+}
 
-\noindent\begin{minipage}[t]{0.5\textwidth}
-\codehere{\newoperator
-{\ottkw{fillWithInl'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
-{\ottkw{fillWithInl'}~[[x]]}{[[x map d ⟼ d ⨞ Inl]]}}
-\end{minipage}\begin{minipage}[t]{0.5\textwidth}
-\codehere{\newoperator
-{\ottkw{fillWithAPair'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
-{\ottkw{fillWithAPair'}~[[x]]}{[[x map d ⟼ d ⨞ (,)]]}}
-\end{minipage}
-
-To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole of type $[[T]]$ that needs a structure of type $[[T]]$ to be a complete structure of type $[[T]]$. Structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in \cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then a structure with holes is really just a normal, complete structure.
+To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in \cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then a structure with holes is really just a normal, complete structure.
 
 Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus doesn't have primitive constructor forms, constructors in \destcalculus are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.
 
@@ -365,17 +365,17 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 
 
 \paragraph{Memory safety and purity}
-At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language\improvement{Ensure that we do claim that}? The answer is that it wouldn't be if we'd allow unrestricted use of destination. Instead \destcalculus uses a linear type system to ensure that
+At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language\improvement{Ensure that we do claim that}? The answer is that it wouldn't be if we'd allow unrestricted use of destination. Instead \destcalculus uses a linear type system to ensure that:
 
 \begin{itemize}
-\item Destination are written at least once, preventing examples like
+\item destination are written at least once, preventing examples like:
 
   \codehere{\newoperator
   {\ottkw{forget}}{[[T]]}
   {\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
 
-  where reading the result of $\ottkw{forget}$ would result in reading a hole that we never filled, in other words, reading uninitialized memory.
-\item Destination are written at most once, preventing examples like
+  where reading the result of $\ottkw{forget}$ would result in reading a hole that we never filled, in other words, reading uninitialized memory;
+\item destination are written at most once, preventing examples like:
 
   \codehere{\newoperator
   {\ottkw{ambiguous1}}{[[Bool]]}
@@ -393,14 +393,9 @@ Now that we have an intuition of how destinations work, let's see how they can b
 
 \paragraph{Linked lists}
 
-We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define synthetic filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$ as in Figure~\ref{fig:impl-list}\unsure{inline figure?}. Just like we did in \cref{sec:build-up-vocab} for the primitive constructors, we can recover traditional constructors, \emph{e.g.}:
+We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define synthetic filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
 
-\codehere{\newoperator
-{\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
-
-
-\sidebysidecodefig{\caption{List implementation in equirecursive \destcalculus}\label{fig:impl-list}}{b}{0.49}{
+\sidebysidecodehere{b}{0.50}{
 \newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
 \newoperator
   {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ ¹ν ¹ν → ①]]}
@@ -411,11 +406,17 @@ We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 }
 
+Just like we did in \cref{sec:build-up-vocab} we can recover traditional constructors from filling operators:
+
+\codehere{\newoperator
+{\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
+{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
+
 \paragraph{Difference lists}
 \newcommand{\lstcat}{\mathop{+\!+}}
-Just like any programming language, iterated concatenation of lists
-$$(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$$
-in \destcalculus, is quadratic. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each cons cell $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
+Just like in any language, iterated concatenation of lists
+$(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$
+is quadratic in \destcalculus. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each cons cell $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per $\ottsctor{::}$, so iterated composition effectively performs two traversals of the list. We can do better!
 
@@ -456,19 +457,19 @@ q case ¹ν {⮒
 }
 
 \paragraph{Efficient queue using previously defined structures}
-A simple way to implement a queue in a purely functional language is as a pair of lists \verb+(front, back)+\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from \verb+front+ and are enqueued in \verb+back+. When we need to pop an element and \verb+front+ is empty, then we set the queue to \verb+(reverse back, [])+, and pop from the new front.
+A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
 
-For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly. And even then, there's still one superfluous traversal of the \verb+back+ list, compared to an imperative implementation.
+For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly. And even then, there's still one superfluous traversal of the $[[back]]$ list, compared to an imperative implementation.
 
-But, taking a step back, this \verb+back+ list which has to be reversed before it is accessed is really merely a representation of lists that can be extended from the back. And we already know an efficient implementation of lists that can be extended from the back but only accessed linearly: difference lists.
+But, taking a step back, this $[[back]]$ list which has to be reversed before it is accessed is really merely a representation of lists that can be extended from the back. And we already know an efficient implementation of lists that can be extended from the back but only accessed linearly: difference lists.
 
-So we can give an improved version of the simple functional queue using destination. The implementation is on the right-hand side of~\cref{fig:impl-dlist-queue}\improvement{the implementation could be improved a little by using the cons and nil synthetic constructors}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from accessing the front elements of difference lists. Just like for the simple functional queue, we need a pair of a list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus type system, and nearly as efficient as what an imperative programming language would afford.
+So we can give an improved version of the simple functional queue using destination. The implementation is on the right-hand side of~\cref{fig:impl-dlist-queue}\improvement{the implementation could be improved a little by using the cons and nil synthetic constructors}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from reading the front elements of difference lists. Just like for the simple functional queue, we need a pair of a list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus type system, and nearly as efficient as what an imperative programming language would afford.
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dest}
 
 Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself is a great threat to memory safety of the system. Let's see why.
 
-One core assumption of destination-passing style programming is that once a destination has been linearly used, the associated hole has been written to. However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
+Initially, we made one core assumption about destination-passing style safety: once a destination has been linearly used, the associated hole has been written to. However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
 
 The value fed in a destination is linearly used, which means it cannot be both stored away to be used later, and used in the current context (as that would result in two uses). But that also means that the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ is linearly used too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
 
@@ -604,7 +605,7 @@ $\ottkw{mapAccumBFS}$ spawns the initial memory slot for the output tree, and pr
 
 $\ottkw{relabelDPS}$ is a special case of $\ottkw{mapAccumBFS}$ that takes the skeleton of a tree (where node values are all unit) and returns a tree of integers, with the same skeleton, but with node values replaced by naturals $1\ldots|T|$ in breadth-first order. The higher-order function passed to $\ottkw{mapAccumBFS}$ is quite verbose: it must consume the value of the input node (unit) using $\fatsemi$, then extract the state (representing the next natural number to attribute to a node) from its exponential wrapper, and finally return a pair, whose left side is the incremented natural wrapped back into its two exponential layers (new label for next node), and whose right side is the original natural acting as a label for the current node The extra exponential $\ottstype{!}_{[[ων]]}$ around $[[Nat]]$ let us use the natural number twice.
 
-You might wonder what all the fuchsia subscripts $[[¹∞]], [[ων]]\ldots$ means. It's now time to cover the type and mode system of \destcalculus.
+You might wonder what all the fuchsia subscripts $[[¹∞]], [[ων]]\ldots$ mean. It's now time to cover the type and mode system of \destcalculus.
 
 % With a more general\unsure{To Thomas: didn't you tell me you had plan of making something more general for this very case? I don't remember clearly. If so, don't forget to improve here} $\ottkw{from}_{\ottkw{\ltimes}}$ operator, we would be able to use just one exponential layer $\ottstype{!}_{[[ω∞]]}$ over the natural number to achieve the same result.
 
@@ -905,7 +906,7 @@ Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions cannot
 
 \section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
-The semantics of \destcalculus are given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$ (represented by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in Section~\ref{sec:scope-escape-dests}.
+The semantics of \destcalculus are given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$ (represented by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in Section~\ref{sec:scope-escape-dest}.
 
 \subsection{Evaluation contexts forms}
 

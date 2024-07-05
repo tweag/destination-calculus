@@ -46,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y, d, dd, un, xs, ys, ex, st, tree, tl, tr, dtree, f, dh, dt, dx, dy, dxs, dys, dv, dtlr, dtl, dtr, q, tok, z ::= {{ com Variable names }}
+metavar var, x, y, d, dd, un, xs, ys, ex, st, tree, tl, tr, dtree, f, dh, dt, dx, dy, dxs, dys, dv, dtlr, dtl, dtr, q, tok, z, front, back ::= {{ com Variable names }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
@@ -131,6 +131,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | singleton t :: S :: SugarSingleton {{ coq (term_Val val_Unit) }} {{ tex \ottkw{singleton}~[[t]] }}
   | t enqueue t' :: S :: SugarEnqueue {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{enqueue}~[[t']] }}
   | dequeue t :: S :: SugarDequeue {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dequeue}~[[t]] }}
+  | reverse t :: S :: SugarReverse {{ coq (term_Val val_Unit) }} {{ tex \ottkw{reverse}~[[t]] }}
   | t ⨞ Nil :: S :: SugarFillNil {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Nil} }}
   | t ⨞ Node :: S :: SugarFillNode {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{Node} }}
   | go t1 t2 t3 :: S :: SugarGo {{ coq (term_Val val_Unit) }} {{ tex \ottkw{go}~[[t1]]~[[t2]]~[[t3]] }}
