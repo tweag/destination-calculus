@@ -166,8 +166,7 @@
 % TITLE SECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\acmJournal{PACMPL}
-\acmConference[POPL'25]{Principles of Programming Languages}{January 19 -- 25, 2025}{Denver, Colorado}
+\acmJournal{PACMPL}
 \title{Destination calculus}
 \subtitle{A linear $\lambda-$calculus for pure, functional memory updates}
 
