@@ -235,33 +235,33 @@
 
 \begin{CCSXML}
 <ccs2012>
- <concept>
-  <concept_id>00000000.0000000.0000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
+<concept>
+<concept_id>10003752.10010124.10010125.10010130</concept_id>
+<concept_desc>Theory of computation~Type structures</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011039</concept_id>
+<concept_desc>Software and its engineering~Formal language definitions</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+<concept_desc>Software and its engineering~Functional languages</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011008.10011024.10011028</concept_id>
+<concept_desc>Software and its engineering~Data types and structures</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
 </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[500]{Theory of computation~Type structures}
+\ccsdesc[500]{Software and its engineering~Formal language definitions}
+\ccsdesc[500]{Software and its engineering~Functional languages}
+\ccsdesc[500]{Software and its engineering~Data types and structures}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
@@ -459,9 +459,9 @@ So we can give an improved version of the simple functional queue using destinat
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dest}
 
-Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in destination-passing style for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself is a great threat to memory safety of the system. Let's see why.
+Everything described in Section~\ref{sec:working-with-destinations} is in fact already possible in DPS for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself is a great threat to memory safety of the system. Let's see why.
 
-Initially, we made one core assumption about destination-passing style safety: once a destination has been linearly used, the associated hole has been written to. However, in a realm where destinations $\ottstype{\lfloor[[T]]\rfloor}$ can be of arbitrary inner type $[[T]]$, they can in particular be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
+Initially, we made one core assumption about destination-passing style safety: once a destination has been linearly used, the associated hole has been written to. However, if destinations $\ottstype{\lfloor[[T]]\rfloor}$ can have arbitrary inner type $[[T]]$, they can be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
 
 The value fed in a destination is linearly used, which means it cannot be both stored away to be used later, and used in the current context (as that would result in two uses). But that also means that the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ is linearly used too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
 
@@ -830,7 +830,7 @@ Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc
 
 The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies, and it is there where scope control takes place. It opens an ampar $[[t]]$, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. This lets the user access destinations of an ampar while temporarily forgetting about the structure with holes (being mutated behind the scenes by the destination-filling primitives). Type safety for $\ottkw{map}$ is based on the idea that a new scope is created for $[[x]]$ and $[[t']]$, so anything already present in the ambient scope (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ point of view. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
 
-\begin{figure}[h]
+\begin{figure}[t]
   \scalebox{1.0}{\tikzfig{mapscopes}}
   \caption{Scope rules for $\ottkw{map}$ in \destcalculus}
   \label{fig:scope-rules}
