@@ -270,15 +270,7 @@
 
 
 \begin{abstract}
-We present the \destcalculus, a linear $\lambda-$calculus for
-pure, functional memory updates. We introduce the
-syntax, type system, and operational semantics of the destination
-calculus, and prove type safety formally in the Coq proof assistant.
-
-We show how the principles of the \destcalculus can form a theoretical ground
-for destination-passing style programming in functional languages. In particular,
-we detail how the present work can be applied to Linear Haskell to lift the main
-restriction of DPS programming in Haskell as developed in \cite{bagrel_destination-passing_2024}.
+  Destination-passing---aka out-parameters---is taking a parameter to fill rather than returning a result from a function. Due to its imperative nature, destination-passing has struggled to find its way to functional programming. In this paper, we present a pure core calculus with destinations. Our calculus subsumes all the existing systems, and can be used to reason about their correctness or extension. In addition our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to represent both linear types and a system of ages to manage scopes. Type safety of our core calculus was largely proved formally with the Coq proof assistant.
 \end{abstract}
 
 \maketitle
