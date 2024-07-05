@@ -45,10 +45,10 @@ $(OTT_COQ): $(OTT_FILES)
 # %.tex: %.lhs
 # 	lhs2TeX -o $@ $<
 
-destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl destination_calculus_ott.tex ottstyling.sty listproc.sty ottalt.sty
+destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl destination_calculus_ott.tex ottstyling.sty listproc.sty ottalt.sty tikzit.sty style.tikzstyles mapscopes.tikz
 	tar -cvzf $@ $^
 
-%.pdf %.bbl : %.tex bibliography.bib ottstyling.sty $(OTT_TEX)
+%.pdf %.bbl : %.tex bibliography.bib ottstyling.sty style.tikzstyles mapscopes.tikz $(OTT_TEX)
 	cd $(dir $<) && latexmk $(notdir $*)
 
 nix::

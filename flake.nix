@@ -136,6 +136,9 @@
 
                 # for aligned let
                 tools
+
+                # for tikzit figures
+                tikz-cd
                 ;
             })
           ];

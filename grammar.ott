@@ -110,7 +110,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
 
   % Here we have to redefined all sugar construct in the same way as in sterm
   | alloc :: S :: SugarAlloc {{ coq (sterm_Alloc) }} {{ tex \ottsctor{alloc} }}
-  | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\blacktriangleleft\!\,[[t']] }}
+  | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\blacktriangleleft[[t']] }}
   | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottkw{\ltimes} }' [[t]] }}
   | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
   | ˢInl t :: S :: SugarLeft {{ coq (sterm_Left [[t]]) }} {{ tex \ottsctor{Inl}\,[[t]] }}

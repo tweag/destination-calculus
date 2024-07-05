@@ -40,6 +40,16 @@
 \quad\quad%
 \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}}{}{}
 
+\usepackage{tikzit}
+\definecolor{sczcolor}{RGB}{0,0,0}
+\definecolor{scicolor}{RGB}{60, 103, 163}
+\definecolor{sciicolor}{RGB}{199, 22, 6}
+\definecolor{sciiicolor}{RGB}{97, 5, 94}
+\newcommand{\scz}[1]{\textcolor{sczcolor}{#1}}
+\newcommand{\sci}[1]{\textcolor{scicolor}{#1}}
+\newcommand{\scii}[1]{\textcolor{sciicolor}{#1}}
+\newcommand{\sciii}[1]{\textcolor{sciiicolor}{#1}}
+\input{style.tikzstyles}
 % \setlength\textfloatsep{\baselineskip}
 % \setlength{\intextsep}{\baselineskip}
 
@@ -828,7 +838,7 @@ Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc
 The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies, and it is there where scope control takes place. It opens an ampar $[[t]]$, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. This lets the user access destinations of an ampar while temporarily forgetting about the structure with holes (being mutated behind the scenes by the destination-filling primitives). Type safety for $\ottkw{map}$ is based on the idea that a new scope is created for $[[x]]$ and $[[t']]$, so anything already present in the ambient scope (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ point of view. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in Figure~\ref{fig:scope-rules}.
 
 \begin{figure}[h]
-  \includegraphics[width=8cm]{schema_scopes.png}
+  \scalebox{1.0}{\tikzfig{mapscopes}}
   \caption{Scope rules for $\ottkw{map}$ in \destcalculus}
   \label{fig:scope-rules}
 \end{figure}
