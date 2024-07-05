@@ -7,7 +7,7 @@
 \usepackage{amssymb}
 \usepackage{subcaption}
 \usepackage{environ}
-\usepackage[capitalize]{cleveref}
+\usepackage[capitalize, noabbrev]{cleveref}
 \citestyle{acmauthoryear}
 
 % For faulty code
@@ -412,7 +412,7 @@ is quadratic in \destcalculus. The usual solution to this is difference lists. T
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per $\ottsctor{::}$, so iterated composition effectively performs two traversals of the list. We can do better!
 
-In \destcalculus we can represent a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$, concatenation is filling the hole with another difference list. The details are on the left of~\cref{fig:impl-dlist-queue}.\improvement{configure cref to write Figure in full} This encoding makes no superfluous traversal; in fact, concatenation is an $O(1)$ in-place update.
+In \destcalculus we can represent a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$, concatenation is filling the hole with another difference list. The details are on the left of~\cref{fig:impl-dlist-queue}. This encoding makes no superfluous traversal; in fact, concatenation is an $O(1)$ in-place update.
 
 \sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive \destcalculus}\label{fig:impl-dlist-queue}}{t}{0.51}{
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
