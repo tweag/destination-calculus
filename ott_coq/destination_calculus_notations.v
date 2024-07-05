@@ -61,24 +61,24 @@ Notation "C '∘' c" := (cons c C) (at level 63, left associativity, c at next l
 Notation "C '©️[' h '≔' H '‗' v ]" := (ectxs_fill C h H v) (at level 61, h at level 19, H at level 24, v at level 59, left associativity).
 
 (* Evaluation contexts : 40-59 *)
-Notation "'⬜' u" := (ectx_App_Foc1 u) (at level 42, no associativity, u at next level).
-Notation "v '⬜'" := (ectx_App_Foc2 v) (at level 42, no associativity).
-Notation "⬜; u" := (ectx_PatU_Foc u) (at level 45, no associativity, u at next level).
-Notation "'⬜caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (ectx_PatS_Foc m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, no associativity).
-Notation "'⬜caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (ectx_PatP_Foc m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, no associativity).
-Notation "'⬜caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (ectx_PatE_Foc m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, no associativity).
-Notation "'⬜map' x ⟼ u" := (ectx_Map_Foc x u) (at level 59, x at level 19, u at level 59, no associativity).
-Notation "'to⧔⬜'" := (ectx_ToA_Foc) (at level 41, no associativity).
-Notation "'from⧔⬜'" := (ectx_FromA_Foc) (at level 41, no associativity).
-Notation "'⬜⨞()'" := (ectx_FillU_Foc) (at level 43, no associativity).
-Notation "'⬜⨞Inl'" := (ectx_FillL_Foc) (at level 43, no associativity).
-Notation "'⬜⨞Inr'" := (ectx_FillR_Foc) (at level 43, no associativity).
-Notation "'⬜⨞(,)'" := (ectx_FillP_Foc) (at level 43, no associativity).
-Notation "'⬜⨞ᴇ' m" := (ectx_FillE_Foc m) (at level 43, no associativity, m at level 29).
-Notation "'⬜⨞(λ' x '⁔' m '⟼' u ')'" := (ectx_FillF_Foc x m u) (at level 43, m at level 29, x at level 19, u at level 59, no associativity).
-Notation "'⬜⨞·' u" := (ectx_FillComp_Foc1 u) (at level 43, no associativity, u at next level).
-Notation "v '⨞·⬜'" := (ectx_FillComp_Foc2 v) (at level 43, no associativity).
-Notation "H 'ᵒᵖ⟨' v1 '❟⬜⟩'" := (ectx_OpenAmpar_Foc H v1) (at level 31, v1 at level 59, no associativity).
+Notation "'⬜' u" := (ectx_App_Focus1 u) (at level 42, no associativity, u at next level).
+Notation "v '⬜'" := (ectx_App_Focus2 v) (at level 42, no associativity).
+Notation "⬜; u" := (ectx_PatU_Focus u) (at level 45, no associativity, u at next level).
+Notation "'⬜caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (ectx_PatS_Focus m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, no associativity).
+Notation "'⬜caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (ectx_PatP_Focus m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, no associativity).
+Notation "'⬜caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (ectx_PatE_Focus m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, no associativity).
+Notation "'⬜map' x ⟼ u" := (ectx_Map_Focus x u) (at level 59, x at level 19, u at level 59, no associativity).
+Notation "'to⧔⬜'" := (ectx_ToA_Focus) (at level 41, no associativity).
+Notation "'from⧔⬜'" := (ectx_FromA_Focus) (at level 41, no associativity).
+Notation "'⬜⨞()'" := (ectx_FillU_Focus) (at level 43, no associativity).
+Notation "'⬜⨞Inl'" := (ectx_FillL_Focus) (at level 43, no associativity).
+Notation "'⬜⨞Inr'" := (ectx_FillR_Focus) (at level 43, no associativity).
+Notation "'⬜⨞(,)'" := (ectx_FillP_Focus) (at level 43, no associativity).
+Notation "'⬜⨞ᴇ' m" := (ectx_FillE_Focus m) (at level 43, no associativity, m at level 29).
+Notation "'⬜⨞(λ' x '⁔' m '⟼' u ')'" := (ectx_FillF_Focus x m u) (at level 43, m at level 29, x at level 19, u at level 59, no associativity).
+Notation "'⬜⨞·' u" := (ectx_FillComp_Focus1 u) (at level 43, no associativity, u at next level).
+Notation "v '⨞·⬜'" := (ectx_FillComp_Focus2 v) (at level 43, no associativity).
+Notation "H 'ᵒᵖ⟨' v1 '❟⬜⟩'" := (ectx_OpenAmpar_Focus H v1) (at level 31, v1 at level 59, no associativity).
 
 (* Types : 30-59 *)
 Notation "①" := (type_Unit).

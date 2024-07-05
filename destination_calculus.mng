@@ -23,7 +23,7 @@
 \usepackage{ottstyling}
 % Hide "Index for ranges" from the metavars displayed tabular
 \patchcmd{\ottmetavars}{$ \ottmv{k} $ & \ottcom{Index for ranges} \\}{}{}{}
-\patchcmd{\ottdruleTyXXectxsXXOpenAmparXXFoc}{%
+\patchcmd{\ottdruleTyXXectxsXXOpenAmparXXFocus}{%
 \ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
 \ottpremise{\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
 }{\ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }\quad\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
@@ -941,12 +941,12 @@ An evaluation context has a pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$,
 
 Composing an evaluation context of pseudo-type $[[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focus component never affects the type $[[U0]]$ of the future command ; only the type $[[T]]$ of what can be put in the box is altered.
 
-All typing rules for evaluation contexts can be derived from the ones for the corresponding term (except for the rule \textsc{Ty-ectxs-OpenAmpar-Foc} that is the truly new form). Let's take the rule \textsc{Ty-ectxs-PatP-Foc} as an example:
+All typing rules for evaluation contexts can be derived from the ones for the corresponding term (except for the rule \textsc{Ty-ectxs-OpenAmpar-Focus} that is the truly new form). Let's take the rule \textsc{Ty-ectxs-PatP-Focus} as an example:
 
 \begin{itemize}
   \item the typing context $[[m·D1 + D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \textsc{Ty-term-PatP} in Figure~\ref{fig:ty-term-sterm};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \textsc{Ty-term-PatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} (the term $[[t]]$ is located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Foc}).
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \textsc{Ty-term-PatP} (the term $[[t]]$ is located where the box $\square$ is in \textsc{Ty-ectxs-OpenAmpar-Focus}).
 \end{itemize}
 
 In a way, the typing rule for an evaluation context is a ``rotation'' of the typing rule for the associated term, where the typing contexts of one premise and the conclusion are swapped, an the typing context of the other potential premise is kept unchanged (with the added difference that free variables cannot appear in typing contexts of evaluation contexts, so any $[[P]]$ becomes a $[[D]]$).
@@ -962,23 +962,29 @@ We equip \destcalculus{} with small-step semantics. There are three types of sem
   \item reduction rules, where the actual computation logic takes place.
 \end{itemize}
 
-Here is the whole set of rules for \textsc{PatP}:
-
-\bgroup\renewcommand\ottaltinferrule[4]{
-  \inferrule*[narrower=0.3,left=#1,#2]
-    {#3}
-    {#4}
+\bgroup\makeatletter
+\renewcommand\ottaltinferrule[4]{
+  % #4 is conclusion
+  % #3 is premise
+  % #1 is rule name
+  \ensuremath{#4} & \textit{when}~\ensuremath{#3} & \text{#1} \\
 }
-\renewcommand\arraystretch{2}
-\[\begin{array}{c}\drule{Sem-PatP-Foc}\\
-\drule{Sem-PatP-Unfoc}\\
+\renewenvironment{drulepar}[3][\relax]
+  {\ifx#1\relax\else\def\ottalt@rulesection@prefix{#1-}\fi
+  \drulesectionhead{#2}{#3}$\!\!\!\array{lll}}
+  {\endarray$}
+\makeatother
+\renewcommand\arraystretch{1.4}
+
+Here is the whole set of rules for \textsc{PatP}:
+\[\begin{array}{lll}\drule{Sem-PatP-Focus}
+\drule{Sem-PatP-Unfocus}
 \drule{Sem-PatP-Red}
 \end{array}\]
-\egroup
 
-Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focus component on the stack), we only present the set of reduction rules for the system in Figure~\ref{fig:sem}.\TODO{Add full rules in annex ?}
+Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focus component on the stack), we only present the set of reduction rules for the system in Figure~\ref{fig:sem}, but the whole system is included in the annex (see Figure~\ref{fig:sem-full}).
 
-\begin{ottfig}[p]{\caption{Small-step semantics}\label{fig:sem}}
+\begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
 \drules[Sem]{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
 App-Red,
 PatU-Red,
@@ -995,23 +1001,24 @@ FillR-Red,
 FillE-Red,
 FillP-Red,
 FillComp-Red,
-Map-Red-OpenAmpar-Foc,
-OpenAmpar-Unfoc}
+Map-Red-OpenAmpar-Focus,
+OpenAmpar-Unfocus}
 \end{ottfig}
+\egroup
 
 Reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottkw{\ltimes} }$ and $\ottkw{from}_{\ottkw{\ltimes} }$ are straightforward.
 
 All reduction rules for destination-filling primitives trigger a substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$ that corresponds to a memory update of a hole $[[+h]]$. \textsc{Sem-FillU-Red} and \textsc{Sem-FillF-Red} do not create any new hole; they only write a value to an existing one. On the other hand, rules \textsc{Sem-FillL-Red}, \textsc{Sem-FillR-Red}, \textsc{Sem-FillE-Red} and \textsc{Sem-FillP-Red} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
-Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. One invariant of the system is that an ampar must have fresh names to be opened, so we always rename local hole names bound by an ampar to fresh names just when that ampar is $\ottkw{map}$ped on, as these local names --- represented by the set of hole names $[[H]]$ that the ampar carries --- could otherwise shadow already existing names in evaluation context $[[C]]$. This invariant is materialized by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \textsc{Ty-ectxs-OpenAmpar-Foc} for the open ampar focus component that is created during reduction of a $\ottkw{map}$.
+Obtaining a fresh name is represented by the statement $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ in the premises of these rules. One invariant of the system is that an ampar must have fresh names to be opened, so we always rename local hole names bound by an ampar to fresh names just when that ampar is $\ottkw{map}$ped on, as these local names --- represented by the set of hole names $[[H]]$ that the ampar carries --- could otherwise shadow already existing names in evaluation context $[[C]]$. This invariant is materialized by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \textsc{Ty-ectxs-OpenAmpar-Focus} for the open ampar focus component that is created during reduction of a $\ottkw{map}$.
 
 We use hole name shifting as a strategy to obtain fresh names. Shifting all hole names in a set $[[H]]$ by a given offset $[[h']]$ is denoted $[[H ⩲ h']]$. We extend this notation to define a conditional shift operation $\ottshname{[}[[H ⩲ h']]\ottshname{]}$ which shifts each hole name appearing in the operand to the left of the brackets by $[[h']]$ if this hole name is also member of $[[H]]$. This conditional shift can be used on a single hole name, a value, or a typing context.
 
 In rule \textsc{Sem-FillComp-Red}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of some focus fragment $[[H' ᵒᵖ⟨ v2' ❟ ⬜⟩]]$ in the evaluation context $[[C]]$. That fragment is not mentioned explicitly in the rule, as the destination $[[-h]]$ is enough to target it. This results in the composition of two structures with holes $[[v2']]$ and $[[v2]]$ through filling of $[[-h]]$. Because we split open the ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ (its left-hand side gets written to a hole, while its right hand side is returned), we need to rename any hole name that it contains to a fresh one, as we do when an ampar is opened in the $\ottkw{map}$ rule. The renaming is carried out by the conditional shift $[[v2[H ⩲ h'] ]]$ and $[[v1[H ⩲ h'] ]]$ (only hole names local to the ampar, represented by the set $[[H]]$, gets renamed).
 
-Last but not least, rules \textsc{Sem-Map-Red-OpenAmpar-Foc} and \textsc{Sem-OpenAmpar-Unfoc} dictates how and when a closed ampar (a term) is converted to an open ampar (a focusing fragment) and vice-versa. With \textsc{Sem-Map-Red-OpenAmpar-Foc}, the local hole names of the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing fragment $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{map}$ statement (which becomes the new term under focus). This effectively allows the right-hand side of an ampar to be a term instead of a value for a limited time.
+Last but not least, rules \textsc{Sem-Map-Red-OpenAmpar-Focus} and \textsc{Sem-OpenAmpar-Unfocus} dictates how and when a closed ampar (a term) is converted to an open ampar (a focusing fragment) and vice-versa. With \textsc{Sem-Map-Red-OpenAmpar-Focus}, the local hole names of the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing fragment $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{map}$ statement (which becomes the new term under focus). This effectively allows the right-hand side of an ampar to be a term instead of a value for a limited time.
 
-The rule \textsc{Sem-OpenAmpar-Unfoc} triggers when the body of a $\ottkw{map}$ statement has reduced to a value. In that case, we can close the ampar, by popping the focus fragment from the stack $[[C]]$ and merging back with $[[v2]]$ to reform a closed ampar.
+The rule \textsc{Sem-OpenAmpar-Unfocus} triggers when the body of a $\ottkw{map}$ statement has reduced to a value. In that case, we can close the ampar, by popping the focus fragment from the stack $[[C]]$ and merging back with $[[v2]]$ to reform a closed ampar.
 
 \paragraph{Type safety} With the semantics now defined, we can state the usual type safety theorems:
 
@@ -1160,6 +1167,15 @@ In fact, we plan to use this very strategy to design an API for destination pass
 \clearpage{}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
+
+\clearpage{}
+\appendix
+
+\section{Full reduction rules for \destcalculus{}}
+
+\begin{ottfig}{\caption{Full reduction rules for \destcalculus{}}\label{fig:sem-full}}
+\ottdefnSem{}
+\end{ottfig}
 
 \end{document}
 

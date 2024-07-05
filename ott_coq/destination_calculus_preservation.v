@@ -22,14 +22,14 @@ Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[
   C ʲ[t] ⟶ C' ʲ[t'] -> ⊢ C' ʲ[t'] : T.
 Proof.
     intros C C' t t' T (Tyj & _Redj). destruct Tyj. destruct _Redj.
-    - (* Sem-App_Foc1 *)
+    - (* Sem-App_Focus1 *)
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := T) (t := t); swap 1 3. constructor 2 with (D2 := D2) (m := m) (t' := t') (U := U).
       all: crush.
-    - (* Sem-App_Unfoc1 *)
+    - (* Sem-App_Unfocus1 *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -39,14 +39,14 @@ Proof.
         { apply (Ty_term_App m D1 D2 t' (ᵥ₎ v) U T); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := t' $ ᵥ₎ v).
       all: crush.
-    - (* Sem-App_Foc2 *)
+    - (* Sem-App_Focus2 *)
       inversion Tyt; subst.
       rename Tyt into TyApp, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
         constructor 1 with (D := D2) (T := T ⁔ m → U) (t := t'); swap 1 3. constructor 3 with (D1 := D1) (m := m) (v := v) (T := T) (U := U).
       all: crush.
-    - (* Sem-App_Unfoc2 *)
+    - (* Sem-App_Unfocus2 *)
       inversion Tyt; subst. rename Tyv into Tyvp, TyC into TyCc, D0 into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
@@ -71,13 +71,13 @@ Proof.
       { apply (term_sub_spec_1 D1 D2 m T U u x v). all: crush. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := u ᵗ[ x ≔ v]).
       all: crush.
-    - (* Sem-PatU_Foc *)
+    - (* Sem-PatU_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into T2.
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C T2 U0); tauto. }
         constructor 1 with (D := D1) (T := ①) (t := t); swap 1 3. constructor 4 with (D2 := D2) (U := T2) (u := u). all: crush.
-    - (* Sem-PatU_Unfoc *)
+    - (* Sem-PatU_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename U into T2.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -92,13 +92,13 @@ Proof.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion Tyv; subst.
       constructor 1 with (D := D2) (T := T2) (t := u). all: crush.
-    - (* Sem-PatS_Foc *)
+    - (* Sem-PatS_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (T1 ⨁ T2)) (t := t) ; swap 1 3. constructor 5 with (D1 := D1) (D2 := D2) (m := m) (u1 := u1) (x1 := x1) (u2 := u2) (x2 := x2) (U := U). all: crush.
-    - (* Sem-PatS_Unfoc *)
+    - (* Sem-PatS_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -135,13 +135,13 @@ Proof.
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ u2 ᵗ[ x2 ≔ v2] : U) as Tyusub.
         { apply (term_sub_spec_1 D1 D2 m T2 U u2 x2 v2); crush. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := u2 ᵗ[ x2 ≔ v2]). all: crush.
-    - (* Sem-PatP_Foc *)
+    - (* Sem-PatP_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (T1 ⨂ T2)) (t := t) ; swap 1 3. constructor 6 with (D1 := D1) (D2 := D2) (u := u) (x1 := x1) (x2 := x2) (U := U). all: crush.
-    - (* Sem-PatP_Unfoc *)
+    - (* Sem-PatP_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -166,13 +166,13 @@ Proof.
       assert (m ᴳ· (D11 ᴳ+ D12) ᴳ+ D2 ⊢ u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2] : U) as Tyusub.
         { apply (term_sub_spec_2 D11 D12 D2 m T1 T2 U u x1 x2 v1 v2); crush. }
       constructor 1 with (D := (m ᴳ· (D11 ᴳ+ D12) ᴳ+ D2)) (T := U) (t := u ᵗ[ x1 ≔ v1] ᵗ[ x2 ≔ v2]). all: crush.
-    - (* Sem-PatE_Foc *)
+    - (* Sem-PatE_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyPat, Tyt0 into Tyt, P1 into D1, P2 into D2, T into U, T0 into T.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       constructor 1 with (D := D1) (T := (! n ⁔ T)) (t := t) ; swap 1 3. constructor 7 with (D1 := D1) (D2 := D2) (u := u) (x := x) (U := U). all: crush.
-    - (* Sem-PatE_Unfoc *)
+    - (* Sem-PatE_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -195,13 +195,13 @@ Proof.
       assert ((m · n) ᴳ· D1 ᴳ+ D2 ⊢ u ᵗ[ x ≔ v'] : U) as Tyusub.
         { apply (term_sub_spec_1 D1 D2 (m · n) T U u x v'). all: crush. }
       constructor 1 with (D := (m ᴳ· (n ᴳ· D1) ᴳ+ D2)) (T := U) (t := u ᵗ[ x ≔ v']). all: crush.
-    - (* Sem-Map_Foc *)
+    - (* Sem-Map_Focus *)
       inversion Tyt; subst. rename T0 into T.
       rename Tyt into TyMap, Tyt0 into Tyt, P1 into D1, P2 into D2.
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C (U ⧔ T') U0); tauto. }
       constructor 1 with (D := D1) (T := U ⧔ T) (t := t); swap 1 3. constructor 8 with (D1 := D1) (D2 := D2) (t' := t') (x := x) (T := T) (T' := T') (U := U). all: crush.
-    - (* Sem-Map_Unfoc *)
+    - (* Sem-Map_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
@@ -210,7 +210,7 @@ Proof.
       assert (D1 ᴳ+ D2 ⊢ ᵥ₎ v map x ⟼ t' : U ⧔ T') as TyMap.
         { apply (Ty_term_Map D1 D2 (ᵥ₎ v) x t' U T' T); crush. }
       constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T') (t := ᵥ₎ v map x ⟼ t'). all: crush.
-    - (* Sem-Map_Red_OpenAmpar_Foc *)
+    - (* Sem-Map_Red_OpenAmpar_Focus *)
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
@@ -342,7 +342,7 @@ Proof.
               apply HDisjoint_to_Disjoint. crush. assumption.
             } } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
           { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto.  } { assumption. }
-    - (* Sem-OpenAmpar_Unfoc *)
+    - (* Sem-OpenAmpar_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, Tyv into Tyv1. clear H2.
       inversion TyCc; subst. rename H6 into hnamesDisjoint, D0 into D.
       rewrite <- (nDisposable_in_DestOnly P D DisposP DestOnlyD) in Tyv1.
@@ -382,13 +382,13 @@ Proof.
           - crush.
         }
       constructor 1 with (D := ᴳ{}) (T := U ⧔ ⌊ U ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩). all: crush. *)
-    - (* Sem-ToA_Foc *)
+    - (* Sem-ToA_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyToA.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (U ⧔ ①) U0). tauto. }
       constructor 1 with (D := D) (t := u) (T := U); swap 1 3. constructor 9. all: crush.
-    - (* Sem-ToA_Unfoc *)
+    - (* Sem-ToA_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
       rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
@@ -409,13 +409,13 @@ Proof.
           all:crush. }
       rewrite <- union_empty_l_eq in H.
       constructor 1 with (D := D2) (T := U ⧔ ①) (t := ᵥ₎ hnames_ nil ⟨ v2 ❟ ᵛ() ⟩). all: crush.
-    - (* Sem-FromA_Foc *)
+    - (* Sem-FromA_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyFromA, T0 into T.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (U ⨂ ! ¹∞ ⁔ T) U0). tauto. }
       constructor 1 with (D := D) (t := t) (T := U ⧔ ! ¹∞ ⁔ T); swap 1 3. constructor 10. all: crush.
-    - (* Sem-FromA_Unfoc *)
+    - (* Sem-FromA_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, T into U, D0 into D. clear H1.
       inversion TyCc; subst. rename U1 into U, v into v2, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
@@ -459,13 +459,13 @@ Proof.
         - assumption.
         - rewrite stimes_empty_eq, <- union_empty_l_eq in Tyv1. assumption. }
       constructor 1 with (D := D2) (T := U ⨂ ! ¹∞ ⁔ T) (t := ᵥ₎ ᵛ( v2, ᴇ ¹∞ ⁔ v1)). all: crush.
-    - (* Sem-FillU_Foc *)
+    - (* Sem-FillU_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyFillU, Tyt0 into Tyt.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C ① U0). tauto. }
       constructor 1 with (D := D) (t := t) (T := ⌊ ① ⌋ n); swap 1 3. constructor 11. all: crush.
-    - (* Sem-FillU_Unfoc *)
+    - (* Sem-FillU_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
       rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
@@ -494,13 +494,13 @@ Proof.
           all: crush. }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
       term_Val_no_dispose (ᴳ{}). apply Ty_val_Unit. all: crush.
-    - (* Sem-FillL_Foc *)
+    - (* Sem-FillL_Focus *)
       inversion Tyt; subst.
       rename Tyt into TyFillL, Tyt0 into Tyt.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T1 ⌋ n) U0). tauto. }
       constructor 1 with (D := D) (t := t) (T := ⌊ T1 ⨁ T2 ⌋ n); swap 1 3. constructor 12. all: crush.
-    - (* Sem-FillL_Unfoc *)
+    - (* Sem-FillL_Unfocus *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
       rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.

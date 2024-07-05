@@ -90,24 +90,24 @@ with term : Type :=  (*r Term *)
  | term_FillComp (t:term) (t':term) (*r Fill destination with root of other ampar *).
 
 Inductive ectx : Type :=  (*r Evaluation context component *)
- | ectx_App_Foc1 (t':term)
- | ectx_App_Foc2 (v:val)
- | ectx_PatU_Foc (u:term)
- | ectx_PatS_Foc (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
- | ectx_PatP_Foc (m:mode) (x1:var) (x2:var) (u:term)
- | ectx_PatE_Foc (m:mode) (n:mode) (x:var) (u:term)
- | ectx_Map_Foc (x:var) (t':term)
- | ectx_ToA_Foc : ectx
- | ectx_FromA_Foc : ectx
- | ectx_FillU_Foc : ectx
- | ectx_FillL_Foc : ectx
- | ectx_FillR_Foc : ectx
- | ectx_FillE_Foc (m:mode)
- | ectx_FillP_Foc : ectx
- | ectx_FillF_Foc (x:var) (m:mode) (u:term)
- | ectx_FillComp_Foc1 (t':term)
- | ectx_FillComp_Foc2 (v:val)
- | ectx_OpenAmpar_Foc (H:hnames) (v2:val) (*r Open ampar, binding hole names in the next components *).
+ | ectx_App_Focus1 (t':term)
+ | ectx_App_Focus2 (v:val)
+ | ectx_PatU_Focus (u:term)
+ | ectx_PatS_Focus (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
+ | ectx_PatP_Focus (m:mode) (x1:var) (x2:var) (u:term)
+ | ectx_PatE_Focus (m:mode) (n:mode) (x:var) (u:term)
+ | ectx_Map_Focus (x:var) (t':term)
+ | ectx_ToA_Focus : ectx
+ | ectx_FromA_Focus : ectx
+ | ectx_FillU_Focus : ectx
+ | ectx_FillL_Focus : ectx
+ | ectx_FillR_Focus : ectx
+ | ectx_FillE_Focus (m:mode)
+ | ectx_FillP_Focus : ectx
+ | ectx_FillF_Focus (x:var) (m:mode) (u:term)
+ | ectx_FillComp_Focus1 (t':term)
+ | ectx_FillComp_Focus2 (v:val)
+ | ectx_OpenAmpar_Focus (H:hnames) (v2:val) (*r Open ampar, binding hole names in the next components *).
 
 Inductive type : Type :=  (*r Type *)
  | type_Unit : type (*r Unit *)
@@ -293,7 +293,7 @@ Definition hnames_ctx (G : ctx) : HNames.t :=
 Fixpoint hnames_ectxs (C : ectxs) : HNames.t := match C with
   | nil => HNames.empty
   | cons c xs => let H := match c with
-    | ectx_OpenAmpar_Foc H' v => H'
+    | ectx_OpenAmpar_Focus H' v => H'
     | _ => HNames.empty
   end in (HNames.union H (hnames_ectxs xs))
 end.
@@ -827,7 +827,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  *****************************************************************************)
 
 Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
+  | ectx_OpenAmpar_Focus H v => ectx_OpenAmpar_Focus (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
@@ -1032,7 +1032,7 @@ with Ty_sterm : ctx -> term -> type -> Prop :=    (* defn Ty_sterm *)
 with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
  | Ty_ectxs_Id : forall (U0:type),
      Ty_ectxs  ctx_empty   nil  U0 U0
- | Ty_ectxs_App_Foc1 : forall (D1:ctx) (C:ectxs) (t':term) (T U0:type) (D2:ctx) (m:mode) (U:type)
+ | Ty_ectxs_App_Focus1 : forall (D1:ctx) (C:ectxs) (t':term) (T U0:type) (D2:ctx) (m:mode) (U:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1040,8 +1040,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD2: ValidOnly D2 )
      (TyC: Ty_ectxs  (union   (stimes  m   D1 )    D2 )  C U U0)
      (Tytp: Ty_term D2 t' (type_Fun T m U)),
-     Ty_ectxs D1  (cons   (ectx_App_Foc1 t')    C )  T U0
- | Ty_ectxs_App_Foc2 : forall (D2:ctx) (C:ectxs) (v:val) (T:type) (m:mode) (U U0:type) (D1:ctx)
+     Ty_ectxs D1  (cons   (ectx_App_Focus1 t')    C )  T U0
+ | Ty_ectxs_App_Focus2 : forall (D2:ctx) (C:ectxs) (v:val) (T:type) (m:mode) (U U0:type) (D1:ctx)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1049,16 +1049,16 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD1: ValidOnly D1 )
      (TyC: Ty_ectxs  (union   (stimes  m   D1 )    D2 )  C U U0)
      (Tyv: Ty_term D1 (term_Val v) T),
-     Ty_ectxs D2  (cons   (ectx_App_Foc2 v)    C )   (type_Fun T m U)  U0
- | Ty_ectxs_PatU_Foc : forall (D1:ctx) (C:ectxs) (u:term) (U0:type) (D2:ctx) (U:type)
+     Ty_ectxs D2  (cons   (ectx_App_Focus2 v)    C )   (type_Fun T m U)  U0
+ | Ty_ectxs_PatU_Focus : forall (D1:ctx) (C:ectxs) (u:term) (U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
      (ValidOnlyD2: ValidOnly D2 )
      (TyC: Ty_ectxs  (union  D1   D2 )  C U U0)
      (Tyu: Ty_term D2 u U),
-     Ty_ectxs D1  (cons   (ectx_PatU_Foc u)    C )  type_Unit U0
- | Ty_ectxs_PatS_Foc : forall (D1:ctx) (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (T1 T2 U0:type) (D2:ctx) (U:type)
+     Ty_ectxs D1  (cons   (ectx_PatU_Focus u)    C )  type_Unit U0
+ | Ty_ectxs_PatS_Focus : forall (D1:ctx) (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (T1 T2 U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1067,8 +1067,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs  (union   (stimes  m   D1 )    D2 )  C U U0)
      (Tyu1: Ty_term  (union  D2    (ctx_singleton (name_Var  x1 ) (binding_Var  m   T1 ))  )  u1 U)
      (Tyu2: Ty_term  (union  D2    (ctx_singleton (name_Var  x2 ) (binding_Var  m   T2 ))  )  u2 U),
-     Ty_ectxs D1  (cons   (ectx_PatS_Foc m x1 u1 x2 u2)    C )   (type_Sum T1 T2)  U0
- | Ty_ectxs_PatP_Foc : forall (D1:ctx) (C:ectxs) (m:mode) (x1 x2:var) (u:term) (T1 T2 U0:type) (D2:ctx) (U:type)
+     Ty_ectxs D1  (cons   (ectx_PatS_Focus m x1 u1 x2 u2)    C )   (type_Sum T1 T2)  U0
+ | Ty_ectxs_PatP_Focus : forall (D1:ctx) (C:ectxs) (m:mode) (x1 x2:var) (u:term) (T1 T2 U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1077,8 +1077,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD2: ValidOnly D2 )
      (TyC: Ty_ectxs  (union   (stimes  m   D1 )    D2 )  C U U0)
      (Tyu: Ty_term  (union   (union  D2    (ctx_singleton (name_Var  x1 ) (binding_Var  m   T1 ))  )     (ctx_singleton (name_Var  x2 ) (binding_Var  m   T2 ))  )  u U),
-     Ty_ectxs D1  (cons   (ectx_PatP_Foc m x1 x2 u)    C )   (type_Prod T1 T2)  U0
- | Ty_ectxs_PatE_Foc : forall (D1:ctx) (C:ectxs) (m m':mode) (x:var) (u:term) (T U0:type) (D2:ctx) (U:type)
+     Ty_ectxs D1  (cons   (ectx_PatP_Focus m x1 x2 u)    C )   (type_Prod T1 T2)  U0
+ | Ty_ectxs_PatE_Focus : forall (D1:ctx) (C:ectxs) (m m':mode) (x:var) (u:term) (T U0:type) (D2:ctx) (U:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1087,38 +1087,38 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (ValidOnlyD2: ValidOnly D2 )
      (TyC: Ty_ectxs  (union   (stimes  m   D1 )    D2 )  C U U0)
      (Tyu: Ty_term  (union  D2    (ctx_singleton (name_Var  x ) (binding_Var   (mode_times'  ((app (cons m nil) (app (cons m' nil) nil))) )    T ))  )  u U),
-     Ty_ectxs D1  (cons   (ectx_PatE_Foc m m' x u)    C )  (type_Exp m' T) U0
- | Ty_ectxs_Map_Foc : forall (D1:ctx) (C:ectxs) (x:var) (t':term) (U T U0:type) (D2:ctx) (T':type)
+     Ty_ectxs D1  (cons   (ectx_PatE_Focus m m' x u)    C )  (type_Exp m' T) U0
+ | Ty_ectxs_Map_Focus : forall (D1:ctx) (C:ectxs) (x:var) (t':term) (U T U0:type) (D2:ctx) (T':type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
      (ValidOnlyD2: ValidOnly D2 )
      (TyC: Ty_ectxs  (union  D1   D2 )  C (type_Ampar U T') U0)
      (Tytp: Ty_term  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )     (ctx_singleton (name_Var  x ) (binding_Var   (Some (pair   Lin     (Fin 0)  ))    T ))  )  t' T'),
-     Ty_ectxs D1  (cons   (ectx_Map_Foc x t')    C )   (type_Ampar U T)  U0
- | Ty_ectxs_ToA_Foc : forall (D:ctx) (C:ectxs) (U U0:type)
+     Ty_ectxs D1  (cons   (ectx_Map_Focus x t')    C )   (type_Ampar U T)  U0
+ | Ty_ectxs_ToA_Focus : forall (D:ctx) (C:ectxs) (U U0:type)
      (TyC: Ty_ectxs D C  (type_Ampar U type_Unit)  U0),
-     Ty_ectxs D  (cons   ectx_ToA_Foc    C )  U U0
- | Ty_ectxs_FromA_Foc : forall (D:ctx) (C:ectxs) (U T U0:type)
+     Ty_ectxs D  (cons   ectx_ToA_Focus    C )  U U0
+ | Ty_ectxs_FromA_Focus : forall (D:ctx) (C:ectxs) (U T U0:type)
      (TyC: Ty_ectxs D C  (type_Prod U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )  U0),
-     Ty_ectxs D  (cons   ectx_FromA_Foc    C )   (type_Ampar U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )  U0
- | Ty_ectxs_FillU_Foc : forall (D:ctx) (C:ectxs) (n:mode) (U0:type)
+     Ty_ectxs D  (cons   ectx_FromA_Focus    C )   (type_Ampar U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )  U0
+ | Ty_ectxs_FillU_Focus : forall (D:ctx) (C:ectxs) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C type_Unit U0),
-     Ty_ectxs D  (cons   ectx_FillU_Foc    C )  (type_Dest type_Unit n) U0
- | Ty_ectxs_FillL_Foc : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     Ty_ectxs D  (cons   ectx_FillU_Focus    C )  (type_Dest type_Unit n) U0
+ | Ty_ectxs_FillL_Focus : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C (type_Dest T1 n) U0),
-     Ty_ectxs D  (cons   ectx_FillL_Foc    C )  (type_Dest (type_Sum T1 T2) n) U0
- | Ty_ectxs_FillR_Foc : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     Ty_ectxs D  (cons   ectx_FillL_Focus    C )  (type_Dest (type_Sum T1 T2) n) U0
+ | Ty_ectxs_FillR_Focus : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C (type_Dest T2 n) U0),
-     Ty_ectxs D  (cons   ectx_FillR_Foc    C )  (type_Dest (type_Sum T1 T2) n) U0
- | Ty_ectxs_FillP_Foc : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     Ty_ectxs D  (cons   ectx_FillR_Focus    C )  (type_Dest (type_Sum T1 T2) n) U0
+ | Ty_ectxs_FillP_Focus : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
      (TyC: Ty_ectxs D C  (type_Prod (type_Dest T1 n) (type_Dest T2 n))  U0),
-     Ty_ectxs D  (cons   ectx_FillP_Foc    C )  (type_Dest (type_Prod T1 T2) n) U0
- | Ty_ectxs_FillE_Foc : forall (D:ctx) (C:ectxs) (m:mode) (T:type) (n:mode) (U0:type)
+     Ty_ectxs D  (cons   ectx_FillP_Focus    C )  (type_Dest (type_Prod T1 T2) n) U0
+ | Ty_ectxs_FillE_Focus : forall (D:ctx) (C:ectxs) (m:mode) (T:type) (n:mode) (U0:type)
      (Validm: IsValid m )
      (TyC: Ty_ectxs D C (type_Dest T  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) ) ) U0),
-     Ty_ectxs D  (cons   (ectx_FillE_Foc m)    C )  (type_Dest (type_Exp m T) n) U0
- | Ty_ectxs_FillF_Foc : forall (D1:ctx) (C:ectxs) (x:var) (m:mode) (u:term) (T U:type) (n:mode) (U0:type) (D2:ctx)
+     Ty_ectxs D  (cons   (ectx_FillE_Focus m)    C )  (type_Dest (type_Exp m T) n) U0
+ | Ty_ectxs_FillF_Focus : forall (D1:ctx) (C:ectxs) (x:var) (m:mode) (u:term) (T U:type) (n:mode) (U0:type) (D2:ctx)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1127,8 +1127,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (Validn: IsValid n )
      (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_Unit U0)
      (Tyu: Ty_term  (union  D2    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  u U),
-     Ty_ectxs D1  (cons   (ectx_FillF_Foc x m u)    C )  (type_Dest (type_Fun T m U) n) U0
- | Ty_ectxs_FillComp_Foc1 : forall (D1:ctx) (C:ectxs) (t':term) (U:type) (n:mode) (U0:type) (D2:ctx) (T:type)
+     Ty_ectxs D1  (cons   (ectx_FillF_Focus x m u)    C )  (type_Dest (type_Fun T m U) n) U0
+ | Ty_ectxs_FillComp_Focus1 : forall (D1:ctx) (C:ectxs) (t':term) (U:type) (n:mode) (U0:type) (D2:ctx) (T:type)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1136,8 +1136,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (Validn: IsValid n )
      (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
      (Tytp: Ty_term D2 t' (type_Ampar U T)),
-     Ty_ectxs D1  (cons   (ectx_FillComp_Foc1 t')    C )  (type_Dest U n) U0
- | Ty_ectxs_FillComp_Foc2 : forall (D2:ctx) (C:ectxs) (v:val) (U T U0:type) (D1:ctx) (n:mode)
+     Ty_ectxs D1  (cons   (ectx_FillComp_Focus1 t')    C )  (type_Dest U n) U0
+ | Ty_ectxs_FillComp_Focus2 : forall (D2:ctx) (C:ectxs) (v:val) (U T U0:type) (D1:ctx) (n:mode)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
@@ -1145,8 +1145,8 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (Validn: IsValid n )
      (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
      (Tyt: Ty_term D1 (term_Val v) (type_Dest U n)),
-     Ty_ectxs D2  (cons   (ectx_FillComp_Foc2 v)    C )  (type_Ampar U T) U0
- | Ty_ectxs_OpenAmpar_Foc : forall (D1 D3:ctx) (C:ectxs) (v2:val) (T' U0:type) (D2:ctx) (U:type)
+     Ty_ectxs D2  (cons   (ectx_FillComp_Focus2 v)    C )  (type_Ampar U T) U0
+ | Ty_ectxs_OpenAmpar_Focus : forall (D1 D3:ctx) (C:ectxs) (v2:val) (T' U0:type) (D2:ctx) (U:type)
      (Disjoint1D2: D1 # D2 )
      (Disjoint1D3: D1 # D3 )
      (Disjoint2D3: D2 # D3 )
@@ -1159,7 +1159,7 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs  (union  D1   D2 )  C  (type_Ampar U T')  U0)
      (Tyv2: Ty_val  (union  D2    (hminus_inv  D3 )  )  v2 U),
       (hnames_ectxs  C )  ##  (hnames_ctx  D3 )   ->
-     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Foc  (hnames_ctx  D3 )  v2)    C )  T' U0
+     Ty_ectxs  (union   (stimes   (Some (pair   Lin     (Fin 1)  ))    D1 )    D3 )   (cons   (ectx_OpenAmpar_Focus  (hnames_ctx  D3 )  v2)    C )  T' U0
 with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
  | Ty_cmd : forall (C:ectxs) (t:term) (U0:type) (D:ctx) (T:type)
      (ValidOnlyD: ValidOnly D )
@@ -1171,128 +1171,128 @@ with Ty : ectxs -> term -> type -> Prop :=    (* defn Ty *)
 
 (* defns Sem *)
 Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
- | Sem_App_Foc1 : forall (C:ectxs) (t' t:term)
+ | Sem_App_Focus1 : forall (C:ectxs) (t' t:term)
      (NotValt: NotVal t ),
-     Sem C (term_App t' t)   (cons   (ectx_App_Foc1 t')    C )   t
- | Sem_App_Unfoc1 : forall (C:ectxs) (t':term) (v:val),
-     Sem   (cons   (ectx_App_Foc1 t')    C )   (term_Val v) C (term_App t' (term_Val v))
- | Sem_App_Foc2 : forall (C:ectxs) (t':term) (v:val)
+     Sem C (term_App t' t)   (cons   (ectx_App_Focus1 t')    C )   t
+ | Sem_App_Unfocus1 : forall (C:ectxs) (t':term) (v:val),
+     Sem   (cons   (ectx_App_Focus1 t')    C )   (term_Val v) C (term_App t' (term_Val v))
+ | Sem_App_Focus2 : forall (C:ectxs) (t':term) (v:val)
      (NotValtp: NotVal t' ),
-     Sem C (term_App t' (term_Val v))   (cons   (ectx_App_Foc2 v)    C )   t'
- | Sem_App_Unfoc2 : forall (C:ectxs) (v v':val),
-     Sem   (cons   (ectx_App_Foc2 v)    C )   (term_Val v') C (term_App (term_Val v') (term_Val v))
+     Sem C (term_App t' (term_Val v))   (cons   (ectx_App_Focus2 v)    C )   t'
+ | Sem_App_Unfocus2 : forall (C:ectxs) (v v':val),
+     Sem   (cons   (ectx_App_Focus2 v)    C )   (term_Val v') C (term_App (term_Val v') (term_Val v))
  | Sem_App_Red : forall (C:ectxs) (x:var) (m:mode) (u:term) (v:val),
      Sem C (term_App (term_Val  (val_Fun x m u) ) (term_Val v)) C  (term_sub  u   x   v ) 
- | Sem_PatU_Foc : forall (C:ectxs) (t u:term)
+ | Sem_PatU_Focus : forall (C:ectxs) (t u:term)
      (NotValt: NotVal t ),
-     Sem C (term_PatU t u)   (cons   (ectx_PatU_Foc u)    C )   t
- | Sem_PatU_Unfoc : forall (C:ectxs) (u:term) (v:val),
-     Sem   (cons   (ectx_PatU_Foc u)    C )   (term_Val v) C (term_PatU (term_Val v) u)
+     Sem C (term_PatU t u)   (cons   (ectx_PatU_Focus u)    C )   t
+ | Sem_PatU_Unfocus : forall (C:ectxs) (u:term) (v:val),
+     Sem   (cons   (ectx_PatU_Focus u)    C )   (term_Val v) C (term_PatU (term_Val v) u)
  | Sem_PatU_Red : forall (C:ectxs) (u:term),
      Sem C (term_PatU (term_Val val_Unit) u) C u
- | Sem_PatS_Foc : forall (C:ectxs) (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
+ | Sem_PatS_Focus : forall (C:ectxs) (t:term) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term)
      (NotValt: NotVal t ),
-     Sem C (term_PatS t m x1 u1 x2 u2)   (cons   (ectx_PatS_Foc m x1 u1 x2 u2)    C )   t
- | Sem_PatS_Unfoc : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
-     Sem   (cons   (ectx_PatS_Foc m x1 u1 x2 u2)    C )   (term_Val v) C (term_PatS (term_Val v) m x1 u1 x2 u2)
+     Sem C (term_PatS t m x1 u1 x2 u2)   (cons   (ectx_PatS_Focus m x1 u1 x2 u2)    C )   t
+ | Sem_PatS_Unfocus : forall (C:ectxs) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term) (v:val),
+     Sem   (cons   (ectx_PatS_Focus m x1 u1 x2 u2)    C )   (term_Val v) C (term_PatS (term_Val v) m x1 u1 x2 u2)
  | Sem_PatL_Red : forall (C:ectxs) (v1:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
      Sem C (term_PatS (term_Val  (val_Left v1) ) m x1 u1 x2 u2) C  (term_sub  u1   x1   v1 ) 
  | Sem_PatR_Red : forall (C:ectxs) (v2:val) (m:mode) (x1:var) (u1:term) (x2:var) (u2:term),
      Sem C (term_PatS (term_Val  (val_Right v2) ) m x1 u1 x2 u2) C  (term_sub  u2   x2   v2 ) 
- | Sem_PatP_Foc : forall (C:ectxs) (t:term) (m:mode) (x1 x2:var) (u:term)
+ | Sem_PatP_Focus : forall (C:ectxs) (t:term) (m:mode) (x1 x2:var) (u:term)
      (NotValt: NotVal t ),
-     Sem C (term_PatP t m x1 x2 u)   (cons   (ectx_PatP_Foc m x1 x2 u)    C )   t
- | Sem_PatP_Unfoc : forall (C:ectxs) (m:mode) (x1 x2:var) (u:term) (v:val),
-     Sem   (cons   (ectx_PatP_Foc m x1 x2 u)    C )   (term_Val v) C (term_PatP (term_Val v) m x1 x2 u)
+     Sem C (term_PatP t m x1 x2 u)   (cons   (ectx_PatP_Focus m x1 x2 u)    C )   t
+ | Sem_PatP_Unfocus : forall (C:ectxs) (m:mode) (x1 x2:var) (u:term) (v:val),
+     Sem   (cons   (ectx_PatP_Focus m x1 x2 u)    C )   (term_Val v) C (term_PatP (term_Val v) m x1 x2 u)
  | Sem_PatP_Red : forall (C:ectxs) (v1 v2:val) (m:mode) (x1 x2:var) (u:term),
      Sem C (term_PatP (term_Val (val_Prod v1 v2)) m x1 x2 u) C  (term_sub   (term_sub  u   x1   v1 )    x2   v2 ) 
- | Sem_PatE_Foc : forall (C:ectxs) (t:term) (m n:mode) (x:var) (u:term)
+ | Sem_PatE_Focus : forall (C:ectxs) (t:term) (m n:mode) (x:var) (u:term)
      (NotValt: NotVal t ),
-     Sem C (term_PatE t m n x u)   (cons   (ectx_PatE_Foc m n x u)    C )   t
- | Sem_PatE_Unfoc : forall (C:ectxs) (m n:mode) (x:var) (u:term) (v:val),
-     Sem   (cons   (ectx_PatE_Foc m n x u)    C )   (term_Val v) C (term_PatE (term_Val v) m n x u)
+     Sem C (term_PatE t m n x u)   (cons   (ectx_PatE_Focus m n x u)    C )   t
+ | Sem_PatE_Unfocus : forall (C:ectxs) (m n:mode) (x:var) (u:term) (v:val),
+     Sem   (cons   (ectx_PatE_Focus m n x u)    C )   (term_Val v) C (term_PatE (term_Val v) m n x u)
  | Sem_PatE_Red : forall (C:ectxs) (n:mode) (v':val) (m:mode) (x:var) (u:term),
      Sem C (term_PatE (term_Val (val_Exp n v')) m n x u) C  (term_sub  u   x   v' ) 
- | Sem_Map_Foc : forall (C:ectxs) (t:term) (x:var) (t':term)
+ | Sem_Map_Focus : forall (C:ectxs) (t:term) (x:var) (t':term)
      (NotValt: NotVal t ),
-     Sem C (term_Map t x t')   (cons   (ectx_Map_Foc x t')    C )   t
- | Sem_Map_Unfoc : forall (C:ectxs) (x:var) (t':term) (v:val),
-     Sem   (cons   (ectx_Map_Foc x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
- | Sem_Map_Red_OpenAmpar_Foc : forall (C:ectxs) (H:hnames) (v2 v1:val) (x:var) (t':term) (h':hname)
+     Sem C (term_Map t x t')   (cons   (ectx_Map_Focus x t')    C )   t
+ | Sem_Map_Unfocus : forall (C:ectxs) (x:var) (t':term) (v:val),
+     Sem   (cons   (ectx_Map_Focus x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
+ | Sem_Map_Red_OpenAmpar_Focus : forall (C:ectxs) (H:hnames) (v2 v1:val) (x:var) (t':term) (h':hname)
      (hpMaxC: h' =  (  (hname_max   (hnames_ectxs  C )  )   +   1  )  ),
-     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar_Foc  (hnames_shift  H   h' )   (val_cshift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h' )  ) 
- | Sem_OpenAmpar_Unfoc : forall (C:ectxs) (H:hnames) (v2 v1:val),
-     Sem   (cons  (ectx_OpenAmpar_Foc H v2)   C )   (term_Val v1) C (term_Val (val_Ampar H v2 v1))
- | Sem_ToA_Foc : forall (C:ectxs) (u:term)
+     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar_Focus  (hnames_shift  H   h' )   (val_cshift  v2   H   h' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h' )  ) 
+ | Sem_OpenAmpar_Unfocus : forall (C:ectxs) (H:hnames) (v2 v1:val),
+     Sem   (cons  (ectx_OpenAmpar_Focus H v2)   C )   (term_Val v1) C (term_Val (val_Ampar H v2 v1))
+ | Sem_ToA_Focus : forall (C:ectxs) (u:term)
      (NotValu: NotVal u ),
-     Sem C (term_ToA u)   (cons   ectx_ToA_Foc    C )   u
- | Sem_ToA_Unfoc : forall (C:ectxs) (v2:val),
-     Sem   (cons   ectx_ToA_Foc    C )   (term_Val v2) C (term_ToA (term_Val v2))
+     Sem C (term_ToA u)   (cons   ectx_ToA_Focus    C )   u
+ | Sem_ToA_Unfocus : forall (C:ectxs) (v2:val),
+     Sem   (cons   ectx_ToA_Focus    C )   (term_Val v2) C (term_ToA (term_Val v2))
  | Sem_ToA_Red : forall (C:ectxs) (v2:val),
      Sem C (term_ToA (term_Val v2)) C (term_Val (val_Ampar  (hnames_  nil )  v2 val_Unit))
- | Sem_FromA_Foc : forall (C:ectxs) (t:term)
+ | Sem_FromA_Focus : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
-     Sem C (term_FromA t)   (cons   ectx_FromA_Foc    C )   t
- | Sem_FromA_Unfoc : forall (C:ectxs) (v:val),
-     Sem   (cons   ectx_FromA_Foc    C )   (term_Val v) C (term_FromA (term_Val v))
+     Sem C (term_FromA t)   (cons   ectx_FromA_Focus    C )   t
+ | Sem_FromA_Unfocus : forall (C:ectxs) (v:val),
+     Sem   (cons   ectx_FromA_Focus    C )   (term_Val v) C (term_FromA (term_Val v))
  | Sem_FromA_Red : forall (C:ectxs) (v2 v1:val),
      Sem C (term_FromA (term_Val (val_Ampar  (hnames_  nil )  v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))) C (term_Val (val_Prod v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))
- | Sem_FillU_Foc : forall (C:ectxs) (t:term)
+ | Sem_FillU_Focus : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
-     Sem C (term_FillU t)   (cons   ectx_FillU_Foc    C )   t
- | Sem_FillU_Unfoc : forall (C:ectxs) (v:val),
-     Sem   (cons   ectx_FillU_Foc    C )   (term_Val v) C (term_FillU (term_Val v))
+     Sem C (term_FillU t)   (cons   ectx_FillU_Focus    C )   t
+ | Sem_FillU_Unfocus : forall (C:ectxs) (v:val),
+     Sem   (cons   ectx_FillU_Focus    C )   (term_Val v) C (term_FillU (term_Val v))
  | Sem_FillU_Red : forall (C:ectxs) (h:hname),
      Sem C (term_FillU (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  nil )    val_Unit )  (term_Val val_Unit)
- | Sem_FillL_Foc : forall (C:ectxs) (t:term)
+ | Sem_FillL_Focus : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
-     Sem C (term_FillL t)   (cons   ectx_FillL_Foc    C )   t
- | Sem_FillL_Unfoc : forall (C:ectxs) (v:val),
-     Sem   (cons   ectx_FillL_Foc    C )   (term_Val v) C (term_FillL (term_Val v))
+     Sem C (term_FillL t)   (cons   ectx_FillL_Focus    C )   t
+ | Sem_FillL_Unfocus : forall (C:ectxs) (v:val),
+     Sem   (cons   ectx_FillL_Focus    C )   (term_Val v) C (term_FillL (term_Val v))
  | Sem_FillL_Red : forall (C:ectxs) (h h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
      Sem C (term_FillL (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Left (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
- | Sem_FillR_Foc : forall (C:ectxs) (t:term)
+ | Sem_FillR_Focus : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
-     Sem C (term_FillR t)   (cons   ectx_FillR_Foc    C )   t
- | Sem_FillR_Unfoc : forall (C:ectxs) (v:val),
-     Sem   (cons   ectx_FillR_Foc    C )   (term_Val v) C (term_FillR (term_Val v))
+     Sem C (term_FillR t)   (cons   ectx_FillR_Focus    C )   t
+ | Sem_FillR_Unfocus : forall (C:ectxs) (v:val),
+     Sem   (cons   ectx_FillR_Focus    C )   (term_Val v) C (term_FillR (term_Val v))
  | Sem_FillR_Red : forall (C:ectxs) (h h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
      Sem C (term_FillR (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Right (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
- | Sem_FillE_Foc : forall (C:ectxs) (t:term) (m:mode)
+ | Sem_FillE_Focus : forall (C:ectxs) (t:term) (m:mode)
      (NotValt: NotVal t ),
-     Sem C (term_FillE t m)   (cons   (ectx_FillE_Foc m)    C )   t
- | Sem_FillE_Unfoc : forall (C:ectxs) (m:mode) (v:val),
-     Sem   (cons   (ectx_FillE_Foc m)    C )   (term_Val v) C (term_FillE (term_Val v) m)
+     Sem C (term_FillE t m)   (cons   (ectx_FillE_Focus m)    C )   t
+ | Sem_FillE_Unfocus : forall (C:ectxs) (m:mode) (v:val),
+     Sem   (cons   (ectx_FillE_Focus m)    C )   (term_Val v) C (term_FillE (term_Val v) m)
  | Sem_FillE_Red : forall (C:ectxs) (h:hname) (m:mode) (h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
      Sem C (term_FillE (term_Val (val_Dest h)) m)  (ectxs_fill  C   h    (hnames_  (cons  ( h'  +   1  )  nil) )    (val_Exp m (val_Hole   ( h'  +   1  )  )) )  (term_Val (val_Dest   ( h'  +   1  )  ))
- | Sem_FillP_Foc : forall (C:ectxs) (t:term)
+ | Sem_FillP_Focus : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
-     Sem C (term_FillP t)   (cons   ectx_FillP_Foc    C )   t
- | Sem_FillP_Unfoc : forall (C:ectxs) (v:val),
-     Sem   (cons   ectx_FillP_Foc    C )   (term_Val v) C (term_FillP (term_Val v))
+     Sem C (term_FillP t)   (cons   ectx_FillP_Focus    C )   t
+ | Sem_FillP_Unfocus : forall (C:ectxs) (v:val),
+     Sem   (cons   ectx_FillP_Focus    C )   (term_Val v) C (term_FillP (term_Val v))
  | Sem_FillP_Red : forall (C:ectxs) (h h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
      Sem C (term_FillP (term_Val (val_Dest h)))  (ectxs_fill  C   h    (hnames_  ((app (cons  ( h'  +   1  )  nil) (app (cons  ( h'  +   2  )  nil) nil))) )    (val_Prod (val_Hole   ( h'  +   1  )  ) (val_Hole   ( h'  +   2  )  )) )  (term_Val (val_Prod (val_Dest   ( h'  +   1  )  ) (val_Dest   ( h'  +   2  )  )))
- | Sem_FillF_Foc : forall (C:ectxs) (t:term) (x:var) (m:mode) (u:term)
+ | Sem_FillF_Focus : forall (C:ectxs) (t:term) (x:var) (m:mode) (u:term)
      (NotValt: NotVal t ),
-     Sem C (term_FillF t x m u)   (cons   (ectx_FillF_Foc x m u)    C )   t
- | Sem_FillF_Unfoc : forall (C:ectxs) (x:var) (m:mode) (u:term) (v:val),
-     Sem   (cons   (ectx_FillF_Foc x m u)    C )   (term_Val v) C (term_FillF (term_Val v) x m u)
+     Sem C (term_FillF t x m u)   (cons   (ectx_FillF_Focus x m u)    C )   t
+ | Sem_FillF_Unfocus : forall (C:ectxs) (x:var) (m:mode) (u:term) (v:val),
+     Sem   (cons   (ectx_FillF_Focus x m u)    C )   (term_Val v) C (term_FillF (term_Val v) x m u)
  | Sem_FillF_Red : forall (C:ectxs) (h:hname) (x:var) (m:mode) (u:term),
      Sem C (term_FillF (term_Val (val_Dest h)) x m u)  (ectxs_fill  C   h    (hnames_  nil )    (val_Fun x m u) )  (term_Val val_Unit)
- | Sem_FillComp_Foc1 : forall (C:ectxs) (t t':term)
+ | Sem_FillComp_Focus1 : forall (C:ectxs) (t t':term)
      (NotValt: NotVal t ),
-     Sem C (term_FillComp t t')   (cons   (ectx_FillComp_Foc1 t')    C )   t
- | Sem_FillComp_Unfoc1 : forall (C:ectxs) (t':term) (v:val),
-     Sem   (cons   (ectx_FillComp_Foc1 t')    C )   (term_Val v) C (term_FillComp (term_Val v) t')
- | Sem_FillComp_Foc2 : forall (C:ectxs) (v:val) (t':term)
+     Sem C (term_FillComp t t')   (cons   (ectx_FillComp_Focus1 t')    C )   t
+ | Sem_FillComp_Unfocus1 : forall (C:ectxs) (t':term) (v:val),
+     Sem   (cons   (ectx_FillComp_Focus1 t')    C )   (term_Val v) C (term_FillComp (term_Val v) t')
+ | Sem_FillComp_Focus2 : forall (C:ectxs) (v:val) (t':term)
      (NotValtp: NotVal t' ),
-     Sem C (term_FillComp (term_Val v) t')   (cons   (ectx_FillComp_Foc2 v)    C )   t'
- | Sem_FillComp_Unfoc2 : forall (C:ectxs) (v v':val),
-     Sem   (cons   (ectx_FillComp_Foc2 v)    C )   (term_Val v') C (term_FillComp (term_Val v) (term_Val v'))
+     Sem C (term_FillComp (term_Val v) t')   (cons   (ectx_FillComp_Focus2 v)    C )   t'
+ | Sem_FillComp_Unfocus2 : forall (C:ectxs) (v v':val),
+     Sem   (cons   (ectx_FillComp_Focus2 v)    C )   (term_Val v') C (term_FillComp (term_Val v) (term_Val v'))
  | Sem_FillComp_Red : forall (C:ectxs) (h:hname) (H:hnames) (v2 v1:val) (h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
      Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) ).

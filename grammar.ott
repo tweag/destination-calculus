@@ -186,25 +186,25 @@ ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }
   | ( C ) :: S :: Paren {{ coq [[C]] }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
-  | t' ⬜ :: :: App_Foc1 {{ tex [[t']]~[[⬜]] }}
-  | ⬜ v :: :: App_Foc2  {{ tex [[⬜]]~[[v]] }}
-  | ⬜ ; u :: :: PatU_Foc {{ tex [[⬜]]\patu[[u]] }}
-  | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Foc {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Foc {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
-  | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Foc {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ map x ⟼ t' :: :: Map_Foc {{ tex \ottkw{map}~[[⬜]]~\ottkw{of}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
+  | t' ⬜ :: :: App_Focus1 {{ tex [[t']]~[[⬜]] }}
+  | ⬜ v :: :: App_Focus2  {{ tex [[⬜]]~[[v]] }}
+  | ⬜ ; u :: :: PatU_Focus {{ tex [[⬜]]\patu[[u]] }}
+  | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS_Focus {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP_Focus {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
+  | ⬜ case m ᴇ n x ⟼ u :: :: PatE_Focus {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | ⬜ map x ⟼ t' :: :: Map_Focus {{ tex \ottkw{map}~[[⬜]]~\ottkw{of}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
 
-  | to⧔ ⬜ :: :: ToA_Foc {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[⬜]] }}
-  | from⧔ ⬜ :: :: FromA_Foc {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[⬜]] }}
-  | ⬜ ⨞ () :: :: FillU_Foc
-  | ⬜ ⨞ Inl :: :: FillL_Foc
-  | ⬜ ⨞ Inr :: :: FillR_Foc
-  | ⬜ ⨞ ᴇ m :: :: FillE_Foc {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
-  | ⬜ ⨞ (,) :: :: FillP_Foc
-  | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillF_Foc {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | ⬜ ⨞· t' :: :: FillComp_Foc1 {{ tex [[⬜]]\triangleleft\mybullet\,[[t']] }}
-  | v ⨞· ⬜ :: :: FillComp_Foc2 {{ tex [[v]]\triangleleft\mybullet\,[[⬜]] }}
-  | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar_Foc {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
+  | to⧔ ⬜ :: :: ToA_Focus {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[⬜]] }}
+  | from⧔ ⬜ :: :: FromA_Focus {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[⬜]] }}
+  | ⬜ ⨞ () :: :: FillU_Focus
+  | ⬜ ⨞ Inl :: :: FillL_Focus
+  | ⬜ ⨞ Inr :: :: FillR_Focus
+  | ⬜ ⨞ ᴇ m :: :: FillE_Focus {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
+  | ⬜ ⨞ (,) :: :: FillP_Focus
+  | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillF_Focus {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
+  | ⬜ ⨞· t' :: :: FillComp_Focus1 {{ tex [[⬜]]\triangleleft\mybullet\,[[t']] }}
+  | v ⨞· ⬜ :: :: FillComp_Focus2 {{ tex [[v]]\triangleleft\mybullet\,[[⬜]] }}
+  | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar_Focus {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
   | ( c ) :: S :: Paren {{ coq [[c]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -352,7 +352,7 @@ Definition hnames_ctx (G : ctx) : HNames.t :=
 Fixpoint hnames_ectxs (C : ectxs) : HNames.t := match C with
   | nil => HNames.empty
   | cons c xs => let H := match c with
-    | ectx_OpenAmpar_Foc H' v => H'
+    | ectx_OpenAmpar_Focus H' v => H'
     | _ => HNames.empty
   end in (HNames.union H (hnames_ectxs xs))
 end.
@@ -886,7 +886,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  *****************************************************************************)
 
 Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
-  | ectx_OpenAmpar_Foc H v => ectx_OpenAmpar_Foc (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
+  | ectx_OpenAmpar_Focus H v => ectx_OpenAmpar_Focus (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c
 end) C.
 
