@@ -290,6 +290,14 @@ But destination-passing style is not limited to imperative settings; it can be u
 
 Why is it important to have destinations as first-class values? Because it allows the user to store them in arbitrary control or data structures, and thus to build complex data structures in arbitrary order/direction. This is a key feature of first-class DPS APIs, compared to ones in which destinations are inseparable from the structure they point to. In the latter case, the user is still forced to build the structure in its canonical order (e.g. from the leaves up to the root of the structure when using data constructors).
 
+Our contributions are as follows:
+\begin{itemize}
+\item \destcalculus, a linear and modal simply typed $\lambda$-calculus with destinations (\cref{sec:syntax-type-system,sec:ectxs-sem}). \destcalculus is expressive enough so that previous calculi for destinations can be encoded in \destcalculus (see \cref{sec:related-work}).
+\item A demonstration that \destcalculus is more expressive than previous calculi with destinations (\cref{sec:scope-escape-dest,sec:bft}), namely that destination can be stored in structures with holes. We show how we can improve, in particular, on the breadth-first traversal example of~\cite{bagrel_destination-passing_2024}.
+\item An implementation strategy for \destcalculus which uses mutation without compromising the purity of \destcalculus (\cref{sec:implementation}).
+\item Formally-verified proofs, with the Coq proof assistant, of the main safety lemmas (\cref{sec:formal-proof-type}).
+\end{itemize}
+
 \section{Working with destinations}\label{sec:working-with-destinations}
 
 \phantom{a}\TODO{Some introductory words}
@@ -1018,6 +1026,7 @@ The rule \textsc{Sem-OpenAmpar-Unfoc} triggers when the body of a $\ottkw{map}$ 
 A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only contains a fully determined value, and no pending computation. This it is the expected stopping point of the reduction, and any well-typed command is supposed to reach such a form at some point.
 
 \section{Formal proof of type safety}
+\label{sec:formal-proof-type}
 
 We've proved type preservation and progress theorems with the Coq proof assistant.\unsure{We probably want to make sure that the statement of these two lemmas is stated in the type system section} At time of writing, we have assumed, rather than proved, the substitution lemmas. The choice of turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus that we've proved is written in Ott\unsure{a citation maybe}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; some visual simplification is applied by a script to produce the version in the article.
 
@@ -1093,6 +1102,7 @@ In such an extension, as ampars are managed linearly, we can change the allocati
 We decided to omit the linearity aspect of ampars in \destcalculus as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.
 
 \section{Related work}
+\label{sec:related-work}
 
 \unsure{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
 \subsection{Destination-passing style for efficient memory management}
