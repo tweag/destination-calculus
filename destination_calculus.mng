@@ -424,7 +424,7 @@ Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constr
 \newcommand{\lstcat}{\mathop{+\!+}}
 Just like in any language, iterated concatenation of lists
 $(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$
-is quadratic in \destcalculus{}. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function\improvement{I'm drastically cutting on the tutorial, but this needs a citation}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each cons cell $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
+is quadratic in \destcalculus{}. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function~\cite{hughes_dlist_1986}. A singleton difference list is $\lambda [[ys]]. [[x]]\ottsctor{::}[[ys]]$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many composition we have, each cons cell $\ottsctor{::}$ will be allocated a single time, making the iterated concatenation linear indeed.
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per $\ottsctor{::}$, so iterated composition effectively performs two traversals of the list. We can do better!
 
@@ -465,7 +465,7 @@ q case ¹ν {⮒
 }
 
 \paragraph{Efficient queue using previously defined structures}
-A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
+A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$~\cite{hood_queue_1981}\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
 
 For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly. And even then, there's still one superfluous traversal of the $[[back]]$ list, compared to an imperative implementation.
 
@@ -514,10 +514,6 @@ However this falls short when calls to $\ottkw{alloc'}$ are nested in the follow
 
 The original term $[[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]]$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and uses $[[d]]$ linearly. However, the variable $[[d]]$ that stands for destination $[[-h]]$ isn't filled with a value but instead escapes its scope by being fed to a destination of destination $[[dd]]$ coming from the outer scope (this still counts as a linear usage). Hence the associated hole $[[h]]$ doesn't receive a value and the reduction get stuck when trying to dereference $[[-h]]$.
 
-\improvement{I remember that we did wonder about that at some point, so it's worth preempting the question. Though I'd rather we found a slightly different example that doesn't exploit the return type of fill than a paragraph recounting our life story.
-
-Thomas: the second example is too long/complex to show the whole semantics, so I kept the first one in a detailed fashion, and just mentionned the second one.
-}
 One could argue that the issue comes from the primitive $\blacktriangleleft$ returning a value of type $[[①]]$ instead of a dedicated effect type. However, the same issue arise in following program, which is well-typed even when $\blacktriangleleft$ and the function accepted by $\ottkw{alloc'}$ have an arbitrary return type $[[E]]$, so we decided not to introduce yet another type in the system:
 
 \codehere{[[
@@ -548,7 +544,6 @@ Indeed, breadth-first traversal implies that the order in which the structure mu
 
 In the aforementioned paper, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. Their implementation, exactly like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\textit{input subtree}, \textit{dest to output subtree})$ of the queue is processed, and pairs of the same shape for children nodes are appended at the end of the queue.
 
-\improvement{Rework the next couple of paragraph to flow a little bit better.}
 However, as evoked earlier, the API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. So they cannot use the efficient, destination-based queue implementation from~\cref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. With \destcalculus{}, this is now possible. In fact, our system is self-contained, in the sense that every possible structure can be built using destination-based primitives (and regular data constructors can be retrieved from destination-based primitives, as detailed in~\cref{fig:sterm}).
 
 \cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. We assume that we have a binary tree type alias $[[Tree T]]$ and natural number type alias $[[Nat]]$ encoded using standard sum and product types. $[[Tree T]]$ is equipped with operators $\triangleleft\ottsctor{Nil}$ and $\triangleleft\ottsctor{Node}$, that are implemented in terms of our core destination-filling primitives.
@@ -1144,7 +1139,7 @@ We decided to omit the linearity aspect of ampars in \destcalculus{} as it clear
 
 \section{Related work}\label{sec:related-work}
 
-\info{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
+\unsure{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
 
 \subsection{Destination-passing style for efficient memory management}\label{ssec:shaikhha-dps}
 
