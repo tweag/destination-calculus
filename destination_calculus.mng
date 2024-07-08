@@ -418,7 +418,7 @@ Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constr
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{\ottsctor{(::)}~[[x]]~[[xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
+{[[x ˢ:: xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
 
 \paragraph{Difference lists}
 \newcommand{\lstcat}{\mathop{+\!+}}
@@ -755,7 +755,7 @@ In CLL, thanks to the cut rule, any of the sides $[[S]]$ or $[[T]]$ of a par $\o
 
 To recover sensible rules for the connective, we decided to make it asymmetric, hence ampar ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
 \begin{itemize}
-\item the left side $[[S]]$ can contain holes, and can be only be eliminated by interaction with $\ottstype{\lfloor[[S]]\rfloor}$ using \textopname{fillComp} ($\triangleleft\mybullet$) to free up the right side $[[T]]$;
+\item the left side $[[S]]$ can contain holes, and can be only be eliminated by interaction with $\ottstype{\lfloor[[S]]\rfloor}$ using \textopname{fillComp} ($\triangleleft\mycirc$) to free up the right side $[[T]]$;
 \item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. At term level, this is done using $\ottkw{from}_{\ottkw{\ltimes}}'$ and $\ottkw{map}$.
 \end{itemize}
 
@@ -840,7 +840,7 @@ The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies, an
 
 We see in the schema that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, inner scope that is opened when $\ottkw{map}$ped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).
 
-The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mybullet$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
+The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} confirm this intuition. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mycirc$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
 
 In \textsc{Ty-term-ToA}, the operator $\ottkw{to}_{\ottkw{\ltimes}}$ embeds an already completed structure in an ampar whose left side is the structure, and right side is unit.
 
@@ -1131,7 +1131,7 @@ In such an extension, as ampars are managed linearly, we can change the allocati
 \begin{itemize}
   \item the hole name for a new ampar can be chosen fresh right from the start (this corresponds to a new heap allocation);
   \item adding a new hollow constructor still require freshness for its hole names (this corresponds to a new heap allocation too);
-  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\mybullet$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
+  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\mycirc$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
 \end{itemize}
 
 We decided to omit the linearity aspect of ampars in \destcalculus{} as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.

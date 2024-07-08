@@ -93,7 +93,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\,\expcons{[[m]]} }}
   | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\mathop{\triangleleft\mybullet}\,[[t']] }}
+  | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\mathop{\triangleleft\mycirc}\,[[t']] }}
 
   | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
   | ( t ) :: S :: Paren {{ coq [[t]] }} {{ com Variable subsitution in term }}
@@ -206,8 +206,8 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ ⨞ ᴇ m :: :: FillE {{ tex [[⬜]][[⨞]]\,\expcons{[[m]]} }}
   | ⬜ ⨞ (,) :: :: FillP
   | ⬜ ⨞ ( λ x m ⟼ u ) :: :: FillF {{ tex [[⬜]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | ⬜ ⨞· t' :: :: FillComp1 {{ tex [[⬜]]\triangleleft\mybullet\,[[t']] }}
-  | v ⨞· ⬜ :: :: FillComp2 {{ tex [[v]]\triangleleft\mybullet\,[[⬜]] }}
+  | ⬜ ⨞· t' :: :: FillComp1 {{ tex [[⬜]]\triangleleft\mycirc\,[[t']] }}
+  | v ⨞· ⬜ :: :: FillComp2 {{ tex [[v]]\triangleleft\mycirc\,[[⬜]] }}
   | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
   | ( c ) :: S :: Paren {{ coq [[c]] }}
 

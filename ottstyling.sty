@@ -125,9 +125,9 @@
 
 % Raised and scaled bullet for fillCompomp
 \newlength{\mylen}
-\setbox1=\hbox{$\bullet$}\setbox2=\hbox{$\scriptscriptstyle\bullet$}
-\setlength{\mylen}{\dimexpr0.5\ht1-0.5\ht2}
-\def\mybullet{\raisebox{\mylen}{$\scriptscriptstyle\bullet$} }
+\setbox1=\hbox{$\circ$}\setbox2=\hbox{$\scriptstyle\pmb{\circ}$}
+\setlength{\mylen}{\dimexpr0.5\ht1-0.56\ht2}
+\def\mycirc{\raisebox{\mylen}{$\scriptstyle\pmb{\circ}$} }
 
 % Raised cdot for negative context product
 % https://tex.stackexchange.com/questions/597955/a-math-font-size-knowledgeable-raisebox
