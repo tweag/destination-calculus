@@ -323,22 +323,67 @@
 }
 
 @article{bernardy_modality_2020,
-author = {Abel, Andreas and Bernardy, Jean-Philippe},
-title = {A unified view of modalities in type systems},
-year = {2020},
-issue_date = {August 2020},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {4},
-number = {ICFP},
-url = {https://doi.org/10.1145/3408972},
-doi = {10.1145/3408972},
-abstract = {We propose to unify the treatment of a broad range of modalities in typed lambda calculi. We do so by defining a generic structure of modalities, and show that this structure arises naturally from the structure of intuitionistic logic, and as such finds instances in a wide range of type systems previously described in literature. Despite this generality, this structure has a rich metatheory, which we expose.},
-journal = {Proc. ACM Program. Lang.},
-month = {aug},
-articleno = {90},
-numpages = {28},
-keywords = {linear types, modal logic, subtyping}
+  author     = {Abel, Andreas and Bernardy, Jean-Philippe},
+  title      = {A unified view of modalities in type systems},
+  year       = {2020},
+  issue_date = {August 2020},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {4},
+  number     = {ICFP},
+  url        = {https://doi.org/10.1145/3408972},
+  doi        = {10.1145/3408972},
+  abstract   = {We propose to unify the treatment of a broad range of modalities in typed lambda calculi. We do so by defining a generic structure of modalities, and show that this structure arises naturally from the structure of intuitionistic logic, and as such finds instances in a wide range of type systems previously described in literature. Despite this generality, this structure has a rich metatheory, which we expose.},
+  journal    = {Proc. ACM Program. Lang.},
+  month      = {aug},
+  articleno  = {90},
+  numpages   = {28},
+  keywords   = {linear types, modal logic, subtyping}
 }
 
-  
+@inproceedings{sewell_ott_2007,
+  author    = {Sewell, Peter and Nardelli, Francesco Zappa and Owens, Scott and Peskine, Gilles and Ridge, Thomas and Sarkar, Susmit and Strni\v{s}a, Rok},
+  title     = {Ott: effective tool support for the working semanticist},
+  year      = {2007},
+  isbn      = {9781595938152},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/1291151.1291155},
+  doi       = {10.1145/1291151.1291155},
+  abstract  = {It is rare to give a semantic definition of a full-scale programming language, despite the many potential benefits. Partly this is because the available metalanguages for expressing semantics - usually either L<scp>a</scp>TEX for informal mathematics, or the formal mathematics of a proof assistant - make it much harder than necessary to work with large definitions.We present a metalanguage specifically designed for this problem, and a tool, ott, that sanity-checks such definitions and compiles them into proof assistant code for Coq, HOL, Isabelle, and (in progress) Twelf, together with L<scp>a</scp>TEX code for production-quality typesetting, and OCaml boilerplate. The main innovations are:(1) metalanguage design to make definitions concise, and easy to read and edit;(2) an expressive but intuitive metalanguage for specifying binding structures; and (3) compilation to proof assistant code.This has been tested in substantial case studies, including modular specifications of calculi from the TAPL text, a Lightweight Java with Java JSR 277/294 module system proposals, and a large fragment of OCaml (around 306 rules), with machine proofs of various soundness results. Our aim with this work is to enable a phase change: making it feasible to work routinely, without heroic effort, with rigorous semantic definitions of realistic languages.},
+  booktitle = {Proceedings of the 12th ACM SIGPLAN International Conference on Functional Programming},
+  pages     = {1–12},
+  numpages  = {12},
+  location  = {Freiburg, Germany},
+  series    = {ICFP '07}
+}
+
+
+@misc{nardelli_nameless_2009,
+  type    = {Blog post},
+  title   = {Locally nameless backend for {Ott}},
+  url     = {https://fzn.fr/projects/ln_ott/},
+  urldate = {2024-07-08},
+  author  = {Nardelli, Francesco Zappa},
+  month   = mar,
+  year    = {2009}
+}
+
+@inproceedings{deyoung_sax_2020,
+  author    = {DeYoung, Henry and Pfenning, Frank and Pruiksma, Klaas},
+  title     = {{Semi-Axiomatic Sequent Calculus}},
+  booktitle = {5th International Conference on Formal Structures for Computation and Deduction (FSCD 2020)},
+  pages     = {29:1--29:22},
+  series    = {Leibniz International Proceedings in Informatics (LIPIcs)},
+  isbn      = {978-3-95977-155-9},
+  issn      = {1868-8969},
+  year      = {2020},
+  volume    = {167},
+  editor    = {Ariola, Zena M.},
+  publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address   = {Dagstuhl, Germany},
+  url       = {https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.FSCD.2020.29},
+  urn       = {urn:nbn:de:0030-drops-123515},
+  doi       = {10.4230/LIPIcs.FSCD.2020.29},
+  annote    = {Keywords: Sequent calculus, Curry-Howard isomorphism, shared memory concurrency}
+}
