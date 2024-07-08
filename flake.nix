@@ -139,6 +139,11 @@
 
                 # for tikzit figures
                 tikz-cd
+                
+                # conditional rendering for sem figure
+                xifthen
+                l3kernel
+                l3packages
                 ;
             })
           ];
