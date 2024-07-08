@@ -93,7 +93,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ ᴇ m :: :: FillE {{ com Fill destination with exponential constructor }} {{ tex [[t]][[⨞]]\,\expcons{[[m]]} }}
   | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
-  | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\triangleleft\mybullet\,[[t']] }}
+  | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\mathop{\triangleleft\mybullet}\,[[t']] }}
 
   | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
   | ( t ) :: S :: Paren {{ coq [[t]] }} {{ com Variable subsitution in term }}
