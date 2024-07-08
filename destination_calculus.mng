@@ -448,7 +448,7 @@ ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
 \newtype{[[Queue T]]}{[[(List T) ⨂ (DList T)]]}
 \newoperator
   {\ottkw{singleton}}{[[T ¹ν → Queue T]]}
-  {[[singleton x]]}{[[ˢ(ˢInr ˢ(x, Inl ()), alloc)]]}
+  {[[singleton x]]}{[[ˢ(ˢInr (x ˢ:: ˢ[]), alloc)]]}
 \newoperatorb
   {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
   {[[q enqueue y]]}{[[q case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
@@ -456,10 +456,10 @@ ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
   {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ (Queue T))]]}
   {[[dequeue q]]}{\!\!\!\begin{array}[t]{l}[[
 q case ¹ν {⮒
-‥‥ˢ(ˢInr ˢ(x, xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
-‥‥ˢ(Inl (), ys) ⟼ (toList ys) case ¹ν {⮒
-‥‥‥‥Inl () ⟼ Inl (),⮒
-‥‥‥‥ˢInr ˢ(x, xs) ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
+‥‥ˢ((x ˢ:: xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
+‥‥ˢ(ˢ[], ys) ⟼ (toList ys) case ¹ν {⮒
+‥‥‥‥ˢ[] ⟼ Inl (),⮒
+‥‥‥‥x ˢ:: xs ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
 ‥‥}⮒
 }]]\end{array}}
 }
@@ -471,7 +471,7 @@ For such a simple implementation, this is surprisingly efficient: the cost of th
 
 But, taking a step back, this $[[back]]$ list which has to be reversed before it is accessed is really merely a representation of lists that can be extended from the back. And we already know an efficient implementation of lists that can be extended from the back but only accessed linearly: difference lists.
 
-So we can give an improved version of the simple functional queue using destination. The implementation is on the right-hand side of~\cref{fig:impl-dlist-queue}\improvement{the implementation could be improved a little by using the cons and nil synthetic constructors}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from reading the front elements of difference lists. Just like for the simple functional queue, we need a pair of a list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus{} type system, and nearly as efficient as what an imperative programming language would afford.
+So we can give an improved version of the simple functional queue using destination. The implementation is on the right-hand side of~\cref{fig:impl-dlist-queue}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from reading the front elements of difference lists. Just like for the simple functional queue, we need a pair of a list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus{} type system, and nearly as efficient as what an imperative programming language would afford.
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dests}
 
@@ -483,8 +483,9 @@ The value fed in a destination is linearly used, which means it cannot be both s
 
 As a result, there are in fact two ways to use a destination linearly: fill it now with a value, or store it away and fill it later. The latter is a much weaker form of linear use, as it doesn't guarantee that the hole associated to the destination has been written to \emph{now}, only that it will be written to later. So our initial assumption above doesn't hold in general case.
 
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:\info{the mode on the right-most arrow should be $[[¹∞]]$, but we mask it for now}
+The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:
 
+% the mode on the right-most arrow should be $[[¹∞]]$, but we mask it for now: it doesn't matter as we are exposing this particular problem of the system
 \codehere{\newoperator
   {\ottkw{alloc'}}{[[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]}
   {[[alloc' f]]}{[[from⧔' (alloc map d ⟼ f d)]]}
@@ -559,8 +560,8 @@ However, as evoked earlier, the API presented in~\cite{bagrel_destination-passin
 % }{
 % \newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
 % \newoperator
-%   {\ottkw{zero}}{[[Nat]]}
-%   {[[zero]]}{[[Inl ()]]}
+%   {[[ˢ0]]}{[[Nat]]}
+%   {[[ˢ0]]}{[[Inl ()]]}
 % \newoperator
 %   {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
 %   {[[succ x]]}{[[ˢInr x]]}
@@ -573,8 +574,8 @@ However, as evoked earlier, the API presented in~\cite{bagrel_destination-passin
 (dequeue q) case ¹ν {⮒
 ‥‥Inl () ⟼ ˢᴇ ¹∞ st,⮒
 ‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
-‥‥‥‥Inl () ⟼ dtree ⨞ Nil ; go f st q',⮒
-‥‥‥‥ˢInr ˢ(x, ˢ(tl, tr)) ⟼ ༼(dtree ⨞ Node) case ¹ν⮒
+‥‥‥‥ˢNil ⟼ dtree ⨞ Nil ; go f st q',⮒
+‥‥‥‥ˢNode x tl tr ⟼ ༼(dtree ⨞ Node) case ¹ν⮒
 ‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ ༼(༼f st༽ x) case ¹ν⮒
 ‥‥‥‥‥‥‥‥ˢ(ˢᴇ ¹∞ st', y) ⟼⮒
 ‥‥‥‥‥‥‥‥‥‥dy ˢ⨞ y ;⮒
@@ -593,7 +594,7 @@ from⧔ (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 mapAccumBFS⮒
 ‥‥(ˢλ ex ¹∞ ⟼ ˢλ un ¹ν ⟼ un ; ༼ex case ¹∞⮒
 ‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st)༽)⮒
-‥‥(ˢᴇ ων (succ zero))⮒
+‥‥(ˢᴇ ων ˢ1)⮒
 ‥‥tree
 ]]\end{array}}
 \end{codefig}
@@ -750,9 +751,7 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 \paragraph{From memory par $\ottstype{\widehat{\parr}}$ to ampar $\ottstype{\ltimes}$}
 
-\TODO{Should I mention that dests is a non-involutive negation?}
-
-In CLL, thanks to the cut rule, any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the opposite type $\ottstype{\smallbullet^{\perp}}$, to free up the other side. But in \destcalculus{}, we have two types of interaction to consider: interaction between $[[T]]$ and $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and $[[T]]\ottstype{\to\smallbullet}$. The structure that may contain holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into a bigger structure with holes), but not with $[[T]]\ottstype{\to\smallbullet}$, as it would let the user read an incomplete structure! On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[T ¹ν → ①]]$ (in particular, the function can pattern-match on the value of type $[[T]]$ to access the destinations), but it is not always safe to fill it into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of destination $\ottstype{\lfloor[[T']]\rfloor}$ as we've just seen in~\cref{sec:scope-escape-dests}.
+In CLL, thanks to the cut rule, any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the opposite type $\ottstype{\smallbullet^{\perp}}$, to free up the other side. But in \destcalculus{}\unsure{Should I mention that dests is a non-involutive negation?}, we have two types of interaction to consider: interaction between $[[T]]$ and $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and $[[T]]\ottstype{\to\smallbullet}$. The structure that may contain holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into a bigger structure with holes), but not with $[[T]]\ottstype{\to\smallbullet}$, as it would let the user read an incomplete structure! On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[T ¹ν → ①]]$ (in particular, the function can pattern-match on the value of type $[[T]]$ to access the destinations), but it is not always safe to fill it into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of destination $\ottstype{\lfloor[[T']]\rfloor}$ as we've just seen in~\cref{sec:scope-escape-dests}.
 
 To recover sensible rules for the connective, we decided to make it asymmetric, hence ampar ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
 \begin{itemize}
@@ -1103,13 +1102,13 @@ The formal language presented in~\cref{sec:syntax-type-system,sec:ectxs-sem} is 
 
 First, \destcalculus{} misses a form of recursion, but we believe that adding equirecursive types and a fix-point operator wouldn't compromise the safety of the system.
 
-Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ᴇ ων {h} ⟨ Inr (Inl (), +h) ❟ -h ⟩]]$ (representing a non-linear difference list $\expcons{[[ων]]} (0 :: \holesq)$), and then used twice, each time in a different way:
+Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a non-linear difference list $0 \ottsctor{::} \holesq$), and then used twice, each time in a different way:
 \codehere{[[
-ᴇ ων {h} ⟨ Inr (Inl (), +h) ❟ -h ⟩ case ¹ν ᴇ ων x ⟼⮒
-‥‥let x1 ≔ x append (succ zero) in⮒
-‥‥let x2 ≔ x append (succ (succ zero)) in⮒
+༼ˢᴇ ων {h} ˢ⟨ ˢ0 ˢ:: +h ❟ -h ⟩༽ case ¹ν ᴇ ων x ⟼⮒
+‥‥let x1 ≔ x append ˢ1 in⮒
+‥‥let x2 ≔ x append ˢ2 in⮒
 ‥‥‥‥toList (x1 concat x2)
-]]\\[\interdefskip][[⟶]]^*~0 :: 1 :: 0 :: 2 :: []}
+]]\\[\interdefskip][[⟶*]][[༼ˢ0 ˢ:: ༼ˢ1 ˢ:: ༼ˢ0 ˢ:: ༼ˢ2 ˢ:: ˢ[]༽༽༽༽ ]]}
 
 It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus{}. Thanks to the renaming discipline we detailed in~\cref{ssec:sem}, every time an ampar is $\ottkw{map}$ped over, its hole names are renamed to fresh ones. So when we call $\ottkw{append}$ to build $[[x1]]$ (which is implemented in terms of $\ottkw{map}$), we sort of allocate a new copy of the ampar before mutating it, effectively achieving a copy-on-write memory scheme. Thus it is safe to operate on $[[x]]$ again to build $[[x2]]$.
 

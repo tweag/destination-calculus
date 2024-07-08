@@ -115,13 +115,19 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
   | ˢInl t :: S :: SugarLeft {{ coq (sterm_Left [[t]]) }} {{ tex \ottsctor{Inl}\,[[t]] }}
   | ˢInr t :: S :: SugarRight {{ coq (sterm_Right [[t]]) }} {{ tex \ottsctor{Inr}\,[[t]] }}
-  | ˢᴇ m t :: S :: SugarExp {{ coq (sterm_Exp [[m]] [[t]]) }} {{ tex \expcons{[[m]]}\,[[t]] }}
+  | ˢᴇ m t :: S :: SugarExp {{ coq (sterm_Exp [[m]] [[t]]) }} {{ tex \expcons{[[m]]}[[t]] }}
   | ˢ( t1 , t2 ) :: S :: SugarProd {{ coq (sterm_Prod [[t1]] [[t2]]) }} {{ tex \ottsctor{(}[[t1]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
-  | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
+  | ˢ[] :: S :: SugarPNil {{ tex \ottsctor{[]} }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
+  | t1 'ˢ::' t2 :: S :: SugarPCons {{ tex [[t1]]\,\ottsctor{::}\,[[t2]] }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
+  | ˢ0 :: S :: SugarZero {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{0} }} % Coq translation is a placeholder 
+  | ˢ1 :: S :: SugarOne {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{1} }} % Coq translation is a placeholder
+  | ˢ2 :: S :: SugarTwo {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{2} }} % Coq translation is a placeholder
+  | H ˢ⟨ t2 ❟ t1 ⟩ :: :: SugarAmpar {{ tex _{[[H]]\!}\ottsctor{\langle}[[t2]]\,\ottsctor{\bbcomma}~[[t1]]\ottsctor{\rangle} }}
+  | ˢNil :: S :: SugarNil {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{Nil} }}
+  | ˢNode t1 t2 t3 :: S :: SugarNode {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{Node}~[[t1]]~[[t2]]~[[t3]] }}
   | true :: S :: SugarTrue {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{true} }}
   | false :: S :: SugarFalse {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{false} }}
-  | zero :: S :: SugarZero {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{zero} }}
   | succ t :: S :: SugarSucc {{ coq (term_Succ [[t]]) }} {{ tex \ottkw{succ}~[[t]] }}
   | t ⨞ [] :: S :: SugarFillEmpty {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{[]} }}
   | t ⨞ (::) :: S :: SugarFillCons {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{(::)} }}
@@ -158,7 +164,6 @@ sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for
   | ˢInr t :: M :: SugarRight {{ com Allocate right variant }} {{ coq (sterm_Right [[t]]) }}
   | ˢᴇ m t :: M :: SugarExp {{ com Allocate exponential }} {{ coq (sterm_Exp [[m]] [[t]]) }}
   | ˢ( t1 , t2 ) :: M :: SugarProd {{ com Allocate product }} {{ coq (sterm_Prod [[t1]] [[t2]]) }}
-  | ˢ [ t1 , .. , tk ] :: S :: SugarPList {{ com Allocate pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
 
 val, v :: 'val_' ::= {{ com Value }}
   | + h :: :: Hole {{ com Hole }} {{ tex \ottshname{\hboxed{[[h]]} } }}
@@ -169,7 +174,6 @@ val, v :: 'val_' ::= {{ com Value }}
   | Inr v :: :: Right {{ com Right variant for sum }}
   | ᴇ m v :: :: Exp {{ tex \expcons{[[m]]}[[v]] }} {{ com Exponential }}
   | ( v1 , v2 ) :: :: Prod {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
-  | ˢ [ v1 , .. , vk ] :: S :: SugarPList {{ com Pseudo-list }} {{ coq (term_Val val_Unit) }} % Coq translation is a placeholder
   | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
   | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }}
@@ -930,13 +934,13 @@ terminals :: 'terminals_' ::=
   | ⨞ :: :: fill {{ tex \triangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
   | ⩲ :: :: rename {{ tex \pluseq }}
-  | ˢ :: :: sugar {{ tex }}
 
 % === Contexts ===
   | + :: :: union {{ tex + }}
 
 % === Typing & Semantics ===
   | ⟶ :: :: red {{ tex ~\longrightarrow~ }}
+  | '⟶*' :: :: reds {{ tex ~\longrightarrow^*~ }}
   | '|' :: :: store {{ tex \hspace*{1ex}|\hspace*{1ex} }}
   | ⊢ :: :: vdash {{ tex \,\pmb{\vdash}\, }}
   | ˢ⊢ :: :: svdash {{ tex \,\pmb{\vdash}\, }}
