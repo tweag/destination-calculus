@@ -465,7 +465,7 @@ q case ¹ν {⮒
 }
 
 \paragraph{Efficient queue using previously defined structures}
-A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$~\cite{hood_queue_1981}\improvement{cite Okasaki's efficient queues and compare}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
+A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$~\cite{hood_queue_1981}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
 
 For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly. And even then, there's still one superfluous traversal of the $[[back]]$ list, compared to an imperative implementation.
 
@@ -475,15 +475,13 @@ So we can give an improved version of the simple functional queue using destinat
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dests}
 
-Everything described in~\cref{sec:working-with-dests} is in fact already possible in DPS for Haskell as presented in~\cite{bagrel_destination-passing_2024}. However, in the aforementioned paper, destinations cannot be stored in destination-based data structures. This restriction is a rather blunt approach to prevent scope escape of destinations that itself is a great threat to memory safety of the system. Let's see why.
+In \cref{sec:working-with-dests}, we've silently been making an assumption: once a destination has been consumed, according to \destcalculus{}'s linear type system, it has been (partially) filled. This turns out to be a more subtle assumption than it may first appear.
 
-Initially, we made one core assumption about destination-passing style safety: once a destination has been linearly used, the associated hole has been written to. However, if destinations $\ottstype{\lfloor[[T]]\rfloor}$ can have arbitrary inner type $[[T]]$, they can be used to store a destination itself when $[[T]] = \ottstype{\lfloor[[T']]\rfloor}$!
+To see why, let's consider the type  $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Destination are ordinary value: they can be stored in data structures, there can be holes where destinations are expected. In particular if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$, we can form $[[dd ˢ⨞ d]]$.
 
-The value fed in a destination is linearly used, which means it cannot be both stored away to be used later, and used in the current context (as that would result in two uses). But that also means that the destination $[[d]] \pmb{:} \ottstype{\lfloor[[T']]\rfloor}$ is linearly used too when it is fed to $[[dd]] \pmb{:} \ottstype{\lfloor\lfloor[[T']]\rfloor\rfloor}$ in $[[dd ˢ⨞ d]]$.
+This, by itself, is fine: we're building a linear data structure containing destinations, the destinations will eventually be consumed and written to. Except that, as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the context of a structure with holes. However, a malicious use of $[[dd ˢ⨞ d]]$ can allow a destination to escape the scope of their context.
 
-As a result, there are in fact two ways to use a destination linearly: fill it now with a value, or store it away and fill it later. The latter is a much weaker form of linear use, as it doesn't guarantee that the hole associated to the destination has been written to \emph{now}, only that it will be written to later. So our initial assumption above doesn't hold in general case.
-
-The issue is particularly visible when trying to give semantics to the $\ottkw{alloc'}$ operator:
+To visualize the problem, let's consider a simple store semantics. We'll need the $\ottkw{alloc'}$ operator\footnote{The actual semantics that we'll develop in \cref{sec:ectxs-sem} is more refined and can give a semantics to $[[from⧔' t]]$ and $[[alloc]]$ directly, but for now, this simpler semantic which can only make sense of $\ottkw{alloc'}$ as a whole will suffice.}
 
 % the mode on the right-most arrow should be $[[¹∞]]$, but we mask it for now: it doesn't matter as we are exposing this particular problem of the system
 \codehere{\newoperator
@@ -491,11 +489,10 @@ The issue is particularly visible when trying to give semantics to the $\ottkw{a
   {[[alloc' f]]}{[[from⧔' (alloc map d ⟼ f d)]]}
 }
 
-With linear store semantics, this is how $\ottkw{alloc'}$ would behave:
+The semantics of $\ottkw{alloc'}$ is: allocate a hole in the store, call the function with the corresponding destination, when the function has returned, dereference the destination to obtain a $[[T]]$. Which we can visualize as
 
 \codehere{[[Z | alloc' (ˢλ d ¹ν ⟼ t) ⟶ Z ⨆ { h ≔ ⬜ } | (t[d ≔ -h] ; deref -h) ]]}
-
-It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed use the destination to store a value:
+For instance:
 
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|&\!\! [[alloc' (ˢλ d ¹ν ⟼ d ⨞ Inl ⨞ () ) ]] \\
@@ -504,7 +501,9 @@ It works as expected when the function supplied to $\ottkw{alloc'}$ will indeed 
 [[⟶]] & $\{ \}$ &|&\!\! [[Inl () ]]
 \end{array}}
 
-However this falls short when calls to $\ottkw{alloc'}$ are nested in the following way (where $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$):
+Now, we are ready to see a counterexample and how it goes wrong:
+\codehere{[[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]]}
+Here $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$. The problem with this example stems from the fact that $[[dd]]$, not $[[d]]$ gets filled in the scope of $[[d]]$. Let's look a the problem in action:
 
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|&\!\! [[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]] \\
@@ -512,26 +511,23 @@ However this falls short when calls to $\ottkw{alloc'}$ are nested in the follow
 [[⟶]] & [[ { hd ≔ ⬜ , h ≔ ⬜ } ]] &|&\!\! [[ -hd ˢ⨞ -h ; deref -h ; deref -hd]] \\
 [[⟶]] & [[ { hd ≔ -h , ul< h ≔ ⬜ > } ]] &|&\!\! [[ ul< deref -h > ; deref -hd]]
 \end{array}}
+Because of $[[d]]$ escaping its scope, we end up reading uninitialized memory.
 
-The original term $[[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]]$ is well typed, as the inner call to $\ottkw{alloc'}$ returns a value of type $[[①]]$ (as $[[d]]$ is of type $\ottstype{\lfloor[[①]]\rfloor}$) and uses $[[d]]$ linearly. However, the variable $[[d]]$ that stands for destination $[[-h]]$ isn't filled with a value but instead escapes its scope by being fed to a destination of destination $[[dd]]$ coming from the outer scope (this still counts as a linear usage). Hence the associated hole $[[h]]$ doesn't receive a value and the reduction get stuck when trying to dereference $[[-h]]$.
+This example must be rejected by our type system. As demonstrated by~\cite{bagrel_destination-passing_2024}, it's possible to reject this example using purely a linear type system: they make it so that, in $[[d ˢ⨞ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. This is rather blunt restriction! Indeed, it makes the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ practically useless: we can form destinations with type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ but they can never be filled. More concretely, this means that destination can never be stored in data structures with holes, such as the difference list or queues of \cref{ssec:efficient-queue}.
 
-One could argue that the issue comes from the primitive $\blacktriangleleft$ returning a value of type $[[①]]$ instead of a dedicated effect type. However, the same issue arise in following program, which is well-typed even when $\blacktriangleleft$ and the function accepted by $\ottkw{alloc'}$ have an arbitrary return type $[[E]]$, so we decided not to introduce yet another type in the system:
+But we really want to be able to store destinations in data structures with holes, in fact, we'll use this capability to our advantage in \cref{fig:impl-bfs}. So we want $[[t]]$ in $[[d ˢ⨞ t]]$ to be allowed to be linear. Without further restriction, the counterexample would be well-typed. To address this \destcalculus{} uses a system of ages to represent scope. Ages are described in \cref{sec:syntax-type-system}.
 
+Our counterexample uses destinations to type $[[①]]$ because it's the type of $[[d ˢ⨞ t]]$. This allows for a very compact and easy to analyze example, but it isn't hard to come up with examples which don't rely on this property, \emph{e.g.}:
 \codehere{[[
 alloc' (ˢλ dd ¹ν ⟼ (dd ⨞ (,)) case ¹ν (dd1, d2) ⟼⮒
 ‥‥‥‥‥‥‥‥‥‥༼(alloc' (ˢλ d ¹ν ⟼ dd1 ˢ⨞ d)) case ¹ν { true ⟼ d2 ˢ⨞ true , false ⟼ d2 ˢ⨞ false }༽)
 ]]}
-
-\noindent where {$
+Here {$
 [[dd]] \pmb{:} \ottstype{\lfloor \lfloor[[Bool]]\rfloor \otimes [[Bool]] \rfloor},~
 [[dd1]] \pmb{:} \ottstype{\lfloor \lfloor[[Bool]]\rfloor \rfloor},~
 [[d2]] \pmb{:} \ottstype{\lfloor [[Bool]] \rfloor},~
 [[d]] \pmb{:} \ottstype{\lfloor [[Bool]] \rfloor}
 $}.
-
-% We initially thought that the issue of scope escape using destinations of destinations was just a result of a flawed type design in our initial prototype, and that it could be fixed easily. It seems, in fact, to be an irrefutable proof that the assumption "consuming a destination means that the equivalent hole has been written to" is not true in all generality. Thus, we have to add stronger restrictions to our system to ensure that this assumption holds in the desired context. For that, we introduce age-control of bindings in~\cref{ssec:age-control}.
-
-In the next section, we motivate why being able to store destinations in destinations of destinations is a desirable property of our system that we don't want to give up. In~\cref{sec:syntax-type-system}, we present a finer type system that prevents scope escape while still allowing to store destinations in destination-based data structures.
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
