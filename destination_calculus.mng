@@ -310,7 +310,7 @@ Our contributions are as follows:
 
 \section{Working with destinations}\label{sec:working-with-dests}
 
-Let's introduce and get familiar with \destcalculus, our simply typed $\lambda$-calculus with destination. The syntax is standard, except that we use linear logic's $[[T⨁U]]$ and $[[T⨂U]]$ for sums and products, since \destcalculus is linearly typed, even though it isn't a focus in this section.
+Let's introduce and get familiar with \destcalculus{}, our simply typed $\lambda$-calculus with destination. The syntax is standard, except that we use linear logic's $[[T⨁U]]$ and $[[T⨂U]]$ for sums and products, since \destcalculus{} is linearly typed, even though it isn't a focus in this section.
 
 \subsection{Building up a vocabulary}\label{ssec:build-up-vocab}
 
