@@ -145,7 +145,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | relabelDPS t :: S :: SugarRelabelDPS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{relabelDPS}~[[t]] }}
   | dup t :: S :: Dup {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dup}~[[t]] }}
   | drop t :: S :: Drop {{ coq (term_Val val_Unit) }} {{ tex \ottkw{drop}~[[t]] }}
-  | allocIP :: S :: SugarAllocIP {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{alloc}_{\ottsctor{ip} } }}
+  | allocIP :: S :: SugarAllocIP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc}_{\ottkw{ip} } }}
   | allocCoW :: S :: SugarAllocCoW {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{alloc}_{\ottsctor{cow} } }}
   | alloc' t :: S :: SugarAllocP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc'}~[[t]] }}
   | deref t :: S :: SugarDeref {{ coq (term_Val val_Unit) }} {{ tex \ottkw{deref}~[[t]] }}
