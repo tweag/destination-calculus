@@ -927,7 +927,7 @@ line_break, b :: 'b_' ::= {{ tex \ottssp{[[line_break]]} }}
 terminals :: 'terminals_' ::=
 
 % === Term syntax ===
-  | ⬜ :: :: idectx {{ tex \square }}
+  | ⬜ :: :: idectx {{ tex [] }}
   | ⟼ :: :: mapsto {{ tex \mapsto }}
   | () :: :: unit {{ tex \ottsctor{()} }}
   | Inl :: :: inl {{ tex \ottsctor{Inl} }}
