@@ -327,36 +327,37 @@ We think of a destination as a reference to an uninitialized memory location, an
 The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a complete value in a single step. Destinations can be filled piecemeal.
 
 \codehere{\newoperator
-{\ottkw{fillWithInl}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
-{\ottkw{fillWithInl}~[[d]]}{[[d ⨞ Inl]]}}
+{\ottkw{fillWithInlCtor}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
+{\ottkw{fillWithInlCtor}~[[d]]}{[[d ⨞ Inl]]}}
 
-In this example, we're building a value of sum type $[[T ⨁ U]]$ by setting the outermost constructor to left variant $[[Inl]]$. We think of $[[d ⨞ Inl]]$ (read “fill $[[d]]$ with $[[Inl]]$”) as allocating memory to store a block of the form $[[Inl]]~\holesq$, write the address of that block to the location that $[[d]]$ points to, and return a destination pointing to the uninitialized argument of $[[Inl]]$.
+In this example, we're filling a destination for type $[[T ⨁ U]]$ by setting the outermost constructor to left variant $[[Inl]]$. We think of $[[d ⨞ Inl]]$ (read “fill $[[d]]$ with $[[Inl]]$”) as allocating memory to store a block of the form $[[Inl]]~\holesq$, write the address of that block to the location that $[[d]]$ points to, and return a new destination of type $[[⌊ T ⌋ ¹ν]]$ pointing to the uninitialized argument of $[[Inl]]$. Uninitialized memory, when part of a structure like $\holesq$ in $[[Inl]]~\holesq$, is called a \emph{hole}.
 
-Notice that we are constructing the structure from the outermost constructor inward: we've built a value of the form $[[Inl]]~\holesq$, but we have yet to describe what goes in the hole $\holesq$. We call such incomplete values \emph{hollow constructors}. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$. This will turn out to be a key ingredient in the expressiveness of destination passing.
+Notice that we are constructing the structure from the outermost constructor inward: we've written a value of the form $[[Inl]]~\holesq$ into a hole, but we have yet to describe what goes in the new hole $\holesq$. Such constructors with uninitialized arguments are called \emph{hollow constructors}. This is opposite to how functional programming usually works, where values are built from the innermost constructors outward: first we make a value $[[v]]$ and only then can we use $[[Inl]]$ to make an $[[Inl v]]$. This will turn out to be a key ingredient in the expressiveness of destination passing.
 
-Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see~\cref{sec:implementation}). But where destinations really differ from continuations is when one has several destinations at hand. Then they have to fill \emph{all} the destinations; whereas when one has multiple continuations, they can only return to one of them. Multiple destination arises when filling a destination of product type (tuple):
+Yet, everything we've shown so far could have been done with continuations. So it's worth asking: how are destination different from continuations? Part of the answer lies in our intention to represent destinations as pointers to uninitialized memory (see~\cref{sec:implementation}). But where destinations really differ from continuations is when one has several destinations at hand. Then they have to fill \emph{all} the destinations; whereas when one has multiple continuations, they can only return to one of them. Multiple destination arises when a destination of pair gets filled with a hollow pair constructor:
 
 \codehere{\newoperator
-{\ottkw{fillWithAPair}}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
-{\ottkw{fillWithAPair}~[[d]]}{[[d ⨞ (,)]]}}
+{\ottkw{fillWithPairCtor}}{[[⌊ T ⨂ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν]]}
+{\ottkw{fillWithPairCtor}~[[d]]}{[[d ⨞ (,)]]}}
 
-To fill a destination for a pair (product type $[[T ⨂ U]]$), we must fill both the first field and the second field. In plain English, it sounds obvious, but the key remark is that $\ottkw{fillWithAPair}$ doesn't exist on continuations.
+After using $\ottkw{fillWithPairCtor}$, the user must fill both the first field \emph{and} the second field, using the destinations of type $[[⌊ T ⌋ ¹ν]]$ and $[[⌊ U ⌋ ¹ν]]$ respectively. In plain English, it sounds obvious, but the key remark is that $\ottkw{fillWithPairCtor}$ doesn't exist on continuations.
 
 \paragraph{Structures with holes}
-Let's now turn to how we can use the result made by filling destinations. Observe, as a preliminary remark, that while a destination is used to build a structure, the type of the structure being built might be different from the type of the destination. For instance, $\ottkw{fillWithInl}$ above, returns a destination $[[⌊ T ⌋ ¹ν]]$ while it is used to build a structure of type $[[T ⨁ U]]$. To represents this, \destcalculus{} uses a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete; we then say it has a \emph{hole} of type $[[T]]$. There can be several holes in $[[S]]$, resulting in several destinations on the right hand side: for example, $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$ carries a tuple of destinations.
+It is crucial to note that while a destination is used to build a structure, the type of the structure being built might be different from the type of the destination that is being filled. A destination of type $[[⌊ T ⌋ ¹ν]]$ is a pointer to a yet-undefined part of a bigger structure. We say that such a structure has a hole of type $[[T]]$; but the type of the structure itself isn't specified (and never appears in the signature of destination-filling functions). For instance, using $\ottkw{fillWithPairCtor}$ only indicates that the structure being operated on has a hole of type $[[T ⨂ U]]$ that is being written to.
+
+We still need a type to tie the structure under construction --- left implicit by destination-filling primitives --- with the destinations representing its holes. To represent this, \destcalculus{} introduces a type $[[S ⧔ ⌊ T ⌋ ¹ν]]$ for a structure of type $[[S]]$ missing a value of type $[[T]]$ to be complete. There can be several holes in $[[S]]$, resulting in several destinations on the right hand side: for example, $[[S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]$ carries a tuple of destinations.
 
 The general form $[[S ⧔ T ]]$ is read “$[[S]]$ ampar $[[T]]$”. The name “ampar” stands for “asymmetric memory par”; we will explain why it is asymmetric in~\cref{ssec:ampar-motivation}. For now, it's sufficient to observe that $[[S ⧔ ⌊ T ⌋ ¹ν]]$ is akin to a “par” type $\ottstype{S \parr T^\perp}$ in linear logic; you can think of $[[S ⧔ ⌊ T ⌋ ¹ν]]$ as a (linear) function from $[[T]]$ to $[[S]]$. That structures with holes could be seen a linear functions was first observed in~\cite{minamide_functional_1998}, we elaborate on the value of having a par type rather than a function type in~\cref{sec:bft}. A similar connective is called $\ottstype{Incomplete}$ in~\cite{bagrel_destination-passing_2024}.
 
-Destinations always exist within the context of a structure with holes: a destination is a pointer to a hole in the structure. Crucially, destinations are otherwise ordinary values. To access the destinations, \destcalculus{} provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of an ampar:
+Destinations always exist within the context of a structure with holes. A destination is both a witness of a hole present in the structure, and a handle to write to it. Crucially, destinations are otherwise ordinary values. To access the destinations of an ampar, \destcalculus{} provides a $\ottkw{map}$ construction, which lets us apply a function to the right-hand side of the ampar. It is in the body of the $\ottkw{map}$ construction that functions operating on destinations can be called:
 
-\sidebysidecodehere{t}{0.50}{
+\codehere{
   \newoperator
-  {\ottkw{fillWithInl'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
-  {\ottkw{fillWithInl'}~[[x]]}{[[x map d ⟼ d ⨞ Inl]]}
-}{
+  {\ottkw{fillWithInlCtor'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
+  {\ottkw{fillWithInlCtor'}~[[x]]}{[[x map d ⟼ fillWithInlCtor d]]}
   \newoperator
-  {\ottkw{fillWithAPair'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
-  {\ottkw{fillWithAPair'}~[[x]]}{[[x map d ⟼ d ⨞ (,)]]}
+  {\ottkw{fillWithPairCtor'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
+  {\ottkw{fillWithPairCtor'}~[[x]]}{[[x map d ⟼ fillWithPairCtor d]]}
 }
 
 To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in~\cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then a structure with holes is really just a normal, complete structure.
@@ -404,7 +405,7 @@ Now that we have an intuition of how destinations work, let's see how they can b
 We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define synthetic filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
 
 \sidebysidecodehere{b}{0.50}{
-\newtype[~\mathttbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
+\newtype[~\mathsfbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
 \newoperator
   {\triangleleft\ottsctor{[]}}{[[⌊ List T ⌋ ¹ν ¹ν → ①]]}
   {[[d ⨞ [] ]]}{[[d ⨞Inl ⨞()]]}
@@ -475,13 +476,15 @@ So we can give an improved version of the simple functional queue using destinat
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dests}
 
-In \cref{sec:working-with-dests}, we've silently been making an assumption: once a destination has been consumed, according to \destcalculus{}'s linear type system, it has been (partially) filled. This turns out to be a more subtle assumption than it may first appear.
+In \cref{sec:working-with-dests}, we've silently been making an assumption: establishing a linear discipline on destinations ensures that all destinations will eventually find their way to the left of a fill operator $\blacktriangleleft$ or $\triangleleft$, so that the associated holes get written to. This turns out to be more subtle than it may first appear.
 
-To see why, let's consider the type  $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Destination are ordinary value: they can be stored in data structures, there can be holes where destinations are expected. In particular if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$, we can form $[[dd ˢ⨞ d]]$.
+To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Destinations are ordinary values: they can be stored in data structures, and before they get effectively stored, holes stands in their places in the structure. In particular if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$, we can form $[[dd ˢ⨞ d]]$.
 
-This, by itself, is fine: we're building a linear data structure containing destinations, the destinations will eventually be consumed and written to. Except that, as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the context of a structure with holes. However, a malicious use of $[[dd ˢ⨞ d]]$ can allow a destination to escape the scope of their context.
+This, by itself, is fine: we're building a linear data structure containing a destination; the destination $[[d]]$ is used linearly as it will eventually be consumed when that structure is consumed. However, as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and they witness how incomplete the structure is. As a result, to make a structure readable, it is not enough to know that all its remaining destinations will end up on the left of a fill operator \emph{eventually}; they must do so \emph{now}, before the scope they belong to ends. Otherwise some holes might not have been written to \emph{yet} when the structure is made readable.
 
-To visualize the problem, let's consider a simple store semantics. We'll need the $\ottkw{alloc'}$ operator\footnote{The actual semantics that we'll develop in \cref{sec:ectxs-sem} is more refined and can give a semantics to $[[from⧔' t]]$ and $[[alloc]]$ directly, but for now, this simpler semantic which can only make sense of $\ottkw{alloc'}$ as a whole will suffice.}
+The problem is, with a malicious use of $[[dd ˢ⨞ d]]$, we can store away $[[d]]$ in a parent scope, so $[[d]]$ might not end up on the left of a fill operator before the scope it originates from is complete. And still, that would be accepted by the linear type system.
+
+To visualize the problem, let's consider simple linear store semantics. We'll need the $\ottkw{alloc'}$ operator\footnote{The actual semantics that we'll develop in \cref{sec:ectxs-sem} is more refined and can give a semantics to the more flexible $[[from⧔' t]]$ and $[[alloc]]$ operators directly, but for now, this simpler semantic will suffice for $\ottkw{alloc'}$.}
 
 % the mode on the right-most arrow should be $[[¹∞]]$, but we mask it for now: it doesn't matter as we are exposing this particular problem of the system
 \codehere{\newoperator
@@ -503,7 +506,7 @@ For instance:
 
 Now, we are ready to see a counterexample and how it goes wrong:
 \codehere{[[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]]}
-Here $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$. The problem with this example stems from the fact that $[[dd]]$, not $[[d]]$ gets filled in the scope of $[[d]]$. Let's look a the problem in action:
+Here $[[dd]]$ \pmb{:} $\ottstype{\lfloor\lfloor[[①]]\rfloor\rfloor}$ and $[[d]]$ \pmb{:} $\ottstype{\lfloor[[①]]\rfloor}$. The problem with this example stems from the fact that $[[d]]$ is fed to $[[dd]]$, instead of being filled, in the scope of $[[d]]$. Let's look a the problem in action:
 
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|&\!\! [[alloc' (ˢλ dd ¹ν ⟼ alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) ]] \\
@@ -554,7 +557,7 @@ However, as evoked earlier, the API presented in~\cite{bagrel_destination-passin
 %   {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
 %   {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
 % }{
-% \newtype[~\mathttbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
+% \newtype[~\mathsfbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
 % \newoperator
 %   {[[ˢ0]]}{[[Nat]]}
 %   {[[ˢ0]]}{[[Inl ()]]}
@@ -564,7 +567,7 @@ However, as evoked earlier, the API presented in~\cite{bagrel_destination-passin
 % }
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
-\newoperator[~\mathttbf{rec}]
+\newoperator[~\mathsfbf{rec}]
 {\ottkw{go}}{[[(S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞  → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
 {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
 (dequeue q) case ¹ν {⮒
@@ -595,7 +598,7 @@ mapAccumBFS⮒
 ]]\end{array}}
 \end{codefig}
 
-The stateful transformer $[[f]]$ that is applied to each input node has type $[[S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2]]$. It takes the current state and node value and returns the next state and value for output node. The state has to be wrapped in an exponential $\ottstype{!_{[[¹∞]]}}$ in the return type to witness that it cannot capture destinations. That way, the state can be extracted using $\ottkw{from}_{\ottkw{\ltimes} }$ at the end of the processing.
+The stateful transformer $[[f]]$ that is applied to each input node has type $[[S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2]]$. It takes the current state and node value and returns the next state and value for output node. The state has to be wrapped in an exponential $\ottstype{!_{[[¹∞]]}}$ in the return type to witness that it cannot capture destinations. That way, the state can be extracted using $\ottkw{from}_{\ottkw{\ltimes} }$\critical{we say in a footnote that $\ottkw{from}_{\ottkw{\ltimes} }$ will be introduced only in section 5, while we use it here without any explanations} at the end of the processing.
 % We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
 
 The $\ottkw{go}$ function is in charge of consuming the queue containing the pairs of input subtrees and destinations to the corresponding output subtrees. It dequeues the first pair, and processes it. If the input subtree is $\ottsctor{Nil}$, it fills $\ottsctor{Nil}$ into the destination for the output tree and continues the processing of next elements with unchanged state. If the input subtree is a node, it writes a hollow $\ottsctor{Node}$ constructor to the hole pointed to by the destination $[[dtree]]$, processes the value $[[x]]$ of the input node with the stateful transformer $[[f]]$, and continues the processing of the updated queue where children subtrees and their associated destinations have been enqueued.
@@ -623,8 +626,8 @@ You might wonder what all the fuchsia subscripts $[[¹∞]], [[ων]]\ldots$ mea
              &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
              &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
 &&\\
-[[T]], [[U]], [[S]] &::=& [[⌊ T ⌋ m]] \quad\quad\textit{(destination)} \\
-                    &|\,& [[U ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
+[[T]], [[U]], [[S]] &::=& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
+                    &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
                     &|\,& [[①]] \grammsep [[T1 ⨁ T2]] \grammsep [[T1 ⨂ T2]] \grammsep [[! m T]] \grammsep [[T m → U]] \\
 &&\\
         [[m]], [[n]] &::=& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\

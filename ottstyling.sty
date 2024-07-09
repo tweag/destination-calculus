@@ -23,7 +23,7 @@
 
 % \DeclareMathAlphabet{\mathsfbf}{T1}{\sfdefault}{sb}{n}
 \newcommand{\mathsfbf}[1]{\mathsf{\textBF{#1}}}
-\DeclareMathAlphabet{\mathttbf}{T1}{\ttdefault}{b}{n}
+\DeclareMathAlphabet{\mathsfit}{T1}{\sfdefault}{m}{it}
 % If slanted TT is ever needed: (tried, works decently well)
 % https://tex.stackexchange.com/questions/183204/inconsolata-italics
 
@@ -37,12 +37,12 @@
 \definecolor{mvcolor}{HTML}{000000} % 00AAA0 pink, sf
 \definecolor{hnamecolor}{HTML}{F14B2D} % red, itshape
 
-\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathrm{#1}}}
+\renewcommand{\ottnt}[1]{\textcolor{ntcolor}{\mathsf{#1}}}
 \renewcommand{\ottmv}[1]{\textcolor{mvcolor}{\mathit{#1}}}
 \renewcommand{\ottkw}[1]{\textcolor{kwcolor}{\mathsfbf{#1}}}
 
 \newcommand{\ottstype}[1]{\textcolor{typcolor}{\mathsf{#1}}}
-\newcommand{\ottsxval}[1]{\textcolor{ntcolor}{\mathit{\replacewv{\overline{#1}}}}}
+\newcommand{\ottsxval}[1]{\textcolor{ntcolor}{\mathsf{\replacewv{\overline{#1}}}}}
 \newcommand{\ottsctor}[1]{\textcolor{ctorcolor}{\mathsf{#1}}}
 \newcommand{\ottssp}[1]{\textcolor{spcolor}{\mathit{#1}}}
 \newcommand{\ottseff}[1]{#1} % no special rendering for effects at the moment
