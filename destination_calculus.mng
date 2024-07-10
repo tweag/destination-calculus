@@ -466,9 +466,9 @@ q case ¹ν {⮒
 }
 
 \paragraph{Efficient queue using previously defined structures}
-A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$~\cite{hood_queue_1981}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front.
+A simple way to implement a queue in a purely functional language is as a pair of lists $[[ˢ(front, back)]]$~\cite{hood_queue_1981}. Elements are popped from $[[front]]$ and are enqueued in $[[back]]$. When we need to pop an element and $[[front]]$ is empty, then we set the queue to $[[ˢ(reverse back, ˢ[])]]$, and pop from the new front. Such queues are called \emph{Hood-Melville queues}.
 
-For such a simple implementation, this is surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. Except that the cost is only amortized if the queue is used linearly\info{(Yann) What does it mean exactly to be used linearly here?}. And even then, there's still one superfluous traversal of the $[[back]]$ list, compared to an imperative implementation.
+For such a simple implementation, Hood-Melville queues are surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized. With the \emph{caveat} that the cost is only amortized if the queue is used linearly\info{(Yann) What does it mean exactly to be used linearly here?}. And even then, there's still one superfluous traversal of the $[[back]]$ list, compared to an imperative implementation.
 
 But, taking a step back, this $[[back]]$ list which has to be reversed before it is accessed is really merely a representation of lists that can be extended from the back. And we already know an efficient implementation of lists that can be extended from the back but only accessed linearly: difference lists.
 
@@ -534,37 +534,23 @@ $}.
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
-The core example that showcases the power of destination-passing style programming with first-class destination --- that we borrow from \cite{bagrel_destination-passing_2024} --- is breadth-first tree traversal:\improvement{(Yann) Note for Thomas: mention explicitly here that this example is not possible in Minamide, and makes use of your first-class destinations}
+As a more full-fledged example, which uses the full expressive power of \destcalculus{}, we borrow and improve on an example from~\cite{bagrel_destination-passing_2024}: breadth-first tree relabeling.\improvement{(Yann) Note for Thomas: mention explicitly here that this example is not possible in Minamide, and makes use of your first-class destinations}
 
 \begin{quote}
 Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
 \end{quote}
 
-Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree, that is, building the leaves first and going up to the root.
+Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree, that is, building the leaves first and going up to the root. This isn't very natural in functional programming, which is why a lot has been written on purely functional breadth-first traversals~\cite{okasaki_bfs_2000,jones_gibbons_linearbfs_93,gibbons_phases_2023}.
 
-In the aforementioned paper, the author presents a breadth-first traversal implementation that relies on first-class destinations so as to build the final tree in a single pass over the input tree. Their implementation, exactly like ours, uses a queue to store pairs of an input subtree and a destination to the corresponding output subtree. This queue is what materialize the breadth-first processing order: the leading pair $(\textit{input subtree}, \textit{dest to output subtree})$ of the queue is processed, and pairs of the same shape for children nodes are appended at the end of the queue.
+On the other hand, as demonstrated in~\cite{bagrel_destination-passing_2024}, destination-passing lets us use the familiar algorithm with queues that is taught in classroom. Specifically, the algorithm keeps a queue of pairs $(\textit{input subtree}, \textit{destination to output subtree})$.
 
-However, as evoked earlier, the API presented in~\cite{bagrel_destination-passing_2024} is not able to store linear data, and in particular destinations, in destination-based data structures. So they cannot use the efficient, destination-based queue implementation from~\cref{ssec:efficient-queue} to power up the breadth-first tree traversal implementation\footnote{This efficient queue implementation can be, and is in fact, implemented in~\cite{bagrel_destination-passing_2024}: see \url{archive.softwareheritage.org/swh:1:cnt:29e9d1fd48d94fa8503023bee0d607d281f512f8}. But it cannot store linear data}. With \destcalculus{}, this is now possible. In fact, our system is self-contained, in the sense that every possible structure can be built using destination-based primitives \unsure{(Yann) While I think I get intuitively what you mean, I'm not sure I fully get what it means \textit{formally}: what does "every possible structure" means here?} (and regular data constructors can be retrieved from destination-based primitives, as detailed in~\cref{fig:sterm}).
+\Cref{fig:impl-bfs}\critical{There's an error left in the implementation: the state is specified to be linear, but the natural number state is used non-linearly. Fix discrepancy.} presents the \destcalculus{} implementation of the breadth-first tree traversal. There $[[Tree T]]$ is defined, unsurprisingly, as $[[Tree T]]\triangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$, we refer to the (synthetic)\unsure{I used the phrase “synthetic” constructor a couple of times, not a lot, so maybe delete. Otherwise define the phrase more loudly.} constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$. We also assume some encoding of the type $[[Nat]]$ of natural number. Queues are the efficient queues from \cref{ssec:efficient-queue}.
 
-\cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. We assume that we have a binary tree type alias $[[Tree T]]$ and natural number type alias $[[Nat]]$ encoded using standard sum and product types. $[[Tree T]]$ is equipped with operators $\triangleleft\ottsctor{Nil}$ and $\triangleleft\ottsctor{Node}$, that are implemented in terms of our core destination-filling primitives.
+New in \cref{fig:impl-bfs} are the \textcolor{modecolor}{fuchsia} annotations: these are \emph{modes}. We'll describe modes in detail in \cref{sec:syntax-type-system}. In the meantime, $[[¹]]$ and $[[ω]]$ control linearity: we use $[[ω]]$ to mean that the function $[[f]]$ is used many times; $[[ν]]$ and $[[∞]]$ control age, we use $[[∞]]$ to mean that neither the state nor the function $[[f]]$ contain destination, therefore they aren't restricted to a particular scope. Arguments with no modes are assumed to have mode $[[¹ν]]$: they're linear and can't escape the current scope\unsure{I'm not sure “current scope” is super clear, to be honest}. We also have the modality $[[! m T]]$, which reifies mode $[[m]]$ in a type, like exponential connectives in linear logic, $[[! m T]]$ is, by definition, such that $[[(! m T) ¹ν → U]]\simeq[[T m → U]]$.
 
-% \sidebysidecodefig{\caption{Boilerplate for breadth-first tree traversal}\label{fig:impl-boilerplate-bfs}}{t}{0.7}{
-% \newtype{[[Tree T]]}{[[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]}
-% \newoperator
-%   {\triangleleft\ottsctor{Nil}}{[[⌊ Tree T ⌋ n ¹ν → ①]]}
-%   {[[d ⨞ Nil]]}{[[d ⨞Inl ⨞()]]}
-% \newoperator
-%   {\triangleleft\ottsctor{Node}}{[[⌊ Tree T ⌋ n ¹ν → ⌊T⌋ n ⨂ (⌊ Tree T⌋ n ⨂ ⌊ Tree T⌋ n)]]}
-%   {[[d ⨞ Node]]}{[[(d ⨞Inr ⨞(,)) case ¹ν (dv, dtlr) ⟼ ˢ(dv, dtlr ⨞(,))]]}
-% }{
-% \newtype[~\mathsfbf{rec}]{[[Nat]]}{[[① ⨁ Nat]]}
-% \newoperator
-%   {[[ˢ0]]}{[[Nat]]}
-%   {[[ˢ0]]}{[[Inl ()]]}
-% \newoperator
-%   {\ottkw{succ}}{[[Nat ¹ν → Nat]]}
-%   {[[succ x]]}{[[ˢInr x]]}
-% }
+\Cref{fig:impl-bfs} implements breadth-first relabeling $\ottkw{relabelDPS}$ as an instance of a more general breadth-first traversal function $\ottkw{mapAccumBFS}$, which applies any state-passing style transformation of labels in breadth-first order.\critical{we say in a footnote that $\ottkw{from}_{\ottkw{\ltimes} }$ will be introduced only in section 5, while we use it here without any explanations. --~Arnaud: maybe let's use from' and drop the returned state from mapAccumBFS and relabelDPS? This removes the linearity of state, but maybe it's more legible?} at the end of the processing.
+
+In $\ottkw{mapAccumBFS}$, we create a new destination $[[dtree]]$ into which we will write the result of the traversal, then call the main loop $\ottkw{go}$. The $\ottkw{go}$ function is in destination-passing style, but what's remarkable is that $\ottkw{go}$ takes an unbounded number of destinations as arguments, since there are as many destinations as items in the queue. This is where we actually use the fact that destinations are ordinary values.
 
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperator[~\mathsfbf{rec}]
@@ -598,16 +584,7 @@ mapAccumBFS⮒
 ]]\end{array}}
 \end{codefig}
 
-The stateful transformer $[[f]]$ that is applied to each input node has type $[[S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2]]$. It takes the current state and node value and returns the next state and value for output node. The state has to be wrapped in an exponential $\ottstype{!_{[[¹∞]]}}$ in the return type to witness that it cannot capture destinations. That way, the state can be extracted using $\ottkw{from}_{\ottkw{\ltimes} }$\critical{we say in a footnote that $\ottkw{from}_{\ottkw{\ltimes} }$ will be introduced only in section 5, while we use it here without any explanations} at the end of the processing.
-% We could imagine a more general version of the traversal, having no constraint on the state type, but necessitating a finalization function $[[S ¹ν → ! ¹∞ S']]$ so that the final state can be returned.
-
-The $\ottkw{go}$ function is in charge of consuming the queue containing the pairs of input subtrees and destinations to the corresponding output subtrees. It dequeues the first pair, and processes it. If the input subtree is $\ottsctor{Nil}$, it fills $\ottsctor{Nil}$ into the destination for the output tree and continues the processing of next elements with unchanged state. If the input subtree is a node, it writes a hollow $\ottsctor{Node}$ constructor to the hole pointed to by the destination $[[dtree]]$, processes the value $[[x]]$ of the input node with the stateful transformer $[[f]]$, and continues the processing of the updated queue where children subtrees and their associated destinations have been enqueued.
-
-$\ottkw{mapAccumBFS}$ spawns the initial memory slot for the output tree, and prepares the initial queue containing a single pair, made of the whole input tree and a destination to the aforementioned memory slot.
-
-$\ottkw{relabelDPS}$ is a special case of $\ottkw{mapAccumBFS}$ that takes the skeleton of a tree (where node values are all unit) and returns a tree of integers, with the same skeleton, but with node values replaced by naturals $1\ldots|T|$ in breadth-first order. The higher-order function passed to $\ottkw{mapAccumBFS}$ is quite verbose: it must consume the value of the input node (unit) using $\fatsemi$, then extract the state (representing the next natural number to attribute to a node) from its exponential wrapper, and finally return a pair, whose left side is the incremented natural wrapped back into its two exponential layers (new label for next node), and whose right side is the original natural acting as a label for the current node The extra exponential $\ottstype{!}_{[[ων]]}$ around $[[Nat]]$ let us use the natural number twice.
-
-You might wonder what all the fuchsia subscripts $[[¹∞]], [[ων]]\ldots$ mean. It's now time to cover the type and mode system of \destcalculus{} \improvement{(Yann) Nitpick: it sounds a bit more like a blogpost tone than a paper tone}.
+A similar breadth-first traversal function can be found in~\cite{bagrel_destination-passing_2024}. The difference is that, because they can't store destinations in structures with holes (see the discussion in \cref{sec:scope-escape-dests}), their implementation can't use the efficient $[[Queue T]]$ type from \cref{ssec:efficient-queue}. So they have to revert to using a Hood-Melville queue for breadth-first traversal.
 
 \section{Language syntax and type system}\label{sec:syntax-type-system}
 
@@ -1124,7 +1101,7 @@ In the introduction of the article, we announced a safe framework for in-place m
 
 We now have two possible versions of $\ottkw{alloc}$: the new one with an in-place mutation memory model ($\ottkw{ip}$), that has to be managed linearly, and the old one that doesn't have to used linearly, and features a copy-on-write ($\ottsctor{cow}$) memory model.
 
-We use the $[[Token]]$ type as an intrinsic source of linearity that infects the ampar returned by $[[allocIP]]$. Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. In the system featuring the $[[Token]]$ type and $[[allocIP]]$, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ containing a token variable that the user can $\ottkw{dup}$licate and $\ottkw{drop}$ freely to give birth to an arbitrary number of ampars, that will then have to be managed linearly.\improvement{(Yann) This part wasn't entirely clear to me initially. I think what get me to understand are the following simple facts, that you might or might not want to stress more explicitly: 1. we can't create tokens in the language, anywhere 2. Which means that you always need to have the token in the context, and in particular in the context of any subterm that contains an call to `allocip` 3. Which means that any application of allocip creating an ampar will be contaminated with the (linear) token in the context and can't be duplicated} 
+We use the $[[Token]]$ type as an intrinsic source of linearity that infects the ampar returned by $[[allocIP]]$. Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. In the system featuring the $[[Token]]$ type and $[[allocIP]]$, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ containing a token variable that the user can $\ottkw{dup}$licate and $\ottkw{drop}$ freely to give birth to an arbitrary number of ampars, that will then have to be managed linearly.\improvement{(Yann) This part wasn't entirely clear to me initially. I think what get me to understand are the following simple facts, that you might or might not want to stress more explicitly: 1. we can't create tokens in the language, anywhere 2. Which means that you always need to have the token in the context, and in particular in the context of any subterm that contains an call to `allocip` 3. Which means that any application of allocip creating an ampar will be contaminated with the (linear) token in the context and can't be duplicated}
 
 Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ is very similar to having a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
 
@@ -1181,7 +1158,7 @@ In~\cite{bagrel_destination-passing_2024}, the author proposes a system much lik
 
 In their system, $[[d ˢ⨞ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes. In order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do, they have to use regular functional queues.
 
-However, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which just features linear types. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.
+However, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which just features linear types. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.\improvement{Missing here: in \destcalculus{}, destination-filling is complete as illustrate in \cref{fig:sterm}, whereas in Bagrel 2024, we need constructors (since those are linear and destination-filling isn't).}
 
 \subsection{Semi-axiomatic sequent calculus}\label{ssec:sax}
 
