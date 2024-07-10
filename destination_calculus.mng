@@ -840,7 +840,7 @@ The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies\imp
 
 We see in the figure that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, inner scope that is opened when $\ottkw{map}$ped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).\improvement{I didn't understand this paragraph}
 
-The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} confirm this intuition\improvement{The rules are used in the Figure, you can't say they “confirm” an “intuition”.}. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mycirc$)/\textopname{fillLeaf}($\blacktriangleleft$) opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
+The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} confirm this intuition\improvement{The rules are used in the Figure, you can't say they “confirm” an “intuition”.}. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mycirc$)/\textopname{fillLeaf}($\blacktriangleleft$)\improvement{Neither “fillLeaf” nor “fillComp” are words, they shouldn't masquerade as words. Besides, they are only used in this sentence, so they won't mean anything to the reader.} opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
 
 In \textsc{Ty-term-ToA}, the operator $\ottkw{to}_{\ottkw{\ltimes}}$ embeds an already completed structure in an ampar whose left side is the structure, and right side is unit.
 
@@ -848,7 +848,7 @@ When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \textsc{Ty-sterm-FromA'}), t
 
 When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \textsc{Ty-term-FromA} however, we extract both sides of the ampar to the ambient scope, even though the right side is normally in a different scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive (it cannot contain any scope-controlled resource). This also ensures that the right side cannot contain destinations, meaning that the structure on the left is complete and ready to be read.
 
-The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).\improvement{I think I've missed it, but somewhere we must comment on the fact that functions are built in destination-passing fashion.}
 
 \subsubsection{Typing of values $[[⫦]]$}
 
@@ -858,10 +858,10 @@ Values $[[v]]$, presented as a subset of terms $[[t]]$, could be removed complet
 
 The typing of runtime values, given in~\cref{fig:ty-val} is where hole and destination bindings appears. Values can have holes and destinations inside, but a value used as a term must not have any hole\footnote{see \textsc{Ty-term-Val}: the value must type in a context $[[D]]$ which means ``destination only'' by convention}. Also, variables cannot mention free variables; that makes it easier to prove substitution properties (as we will see in~\cref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
 
-Hole bindings and destination bindings of the same hole name $[[h]]$ are meant to annihilate each other in the typing context given they have a matching base type and mode. That way, the typing context of a term can stay constant during reduction:
+Hole bindings and destination bindings of the same hole name $[[h]]$ are meant to annihilate\improvement{``Annihilate'' isn't an example of a definition that is underused. It's used only quite locally, but it's actually relied on. That being said, I still think it has to go because it's underdefined and will probably raise more question that it will answer.} each other in the typing context given they have a matching base type and mode. That way, the typing context of a term can stay constant during reduction:
 
 \begin{itemize}
-  \item when destination-filling primitives are evaluated to build up data structures, they linearly consume a destination and write to a hole at the same time which makes both disappear, thus the typing context stays balanced;
+  \item when destination-filling primitives are evaluated to build up data structures, they linearly consume\improvement{Can we kill all the occurrences of the word “consume”? I'd like this word, or some such word, to become standard, because it's a key element of linear types' semantics. But I don't think we have room for giving it a proper definition, so we should try working around it. Also “linearly consume” doesn't really make very precise sense.} a destination and write to a hole at the same time which makes both disappear, thus the typing context stays balanced;
   \item when a new hole is created, a matching destination is returned too, so the typing context stays balanced too.
 \end{itemize}
 
@@ -871,7 +871,7 @@ In most rules, we use a sum $[[G1 + G2]]$ for typing contexts (or the disjoint v
 
 \paragraph{Typing of ampars}
 
-As stated above, the core idea of \textsc{Ty-val-Ampar} is to act as a binding connective for hole and destinations.
+As stated above, the core idea of \textsc{Ty-val-Ampar} is to act as a binding connective\improvement{I don't know what a “binding connective” is} for holes and destinations.
 
 We define a new operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ to represent the matching hole bindings for a set of destination bindings. It is a partial, point-wise operation on typing bindings of a context where:
 
@@ -890,17 +890,17 @@ The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are tr
 
 \paragraph{Other notable typing rules for values}
 
-Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination must have mode $[[¹ν]]$ in the typing context to be used (except when a destination is stored away, as we have seen)\critical{revisit this if we allow weakening for dests}.
+Rules \textsc{Ty-val-Hole} and \textsc{Ty-val-Dest} indicates that a hole or destination must have mode $[[¹ν]]$ in the typing context to be used (except when a destination is stored away, as we have seen)\unsure{revisit this if we allow weakening for dests}.
 
 Rules for unit, left and right variants, and product are straightforward.
 
 Rule \textsc{Ty-val-Exp} is rather classic too: we multiply the dependencies $[[G]]$ of the value by the mode $[[n]]$ of the exponential. The intuition is that if $[[v]]$ uses a resource $[[v']]$ twice, then $\expcons{\ottsmode{2}}[[v]]$, that corresponds to two uses of $[[v]]$ (in a system with such a mode), will use $[[v']]$ four times.
 
-Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curryfied function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$ ? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
+Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
 
 \section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
 
-The semantics of \destcalculus{} are given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$ (represented by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in~\cref{sec:scope-escape-dests}.
+The semantics of \destcalculus{} are given using small-step reductions on a pair $[[ C[t] ]]$\improvement{We need to explain that despite borrowing the notation, this ought to be thought of not as a term, but as a proper par of a context and a term} of an evaluation context $[[C]]$ (represented\improvement{I don't think “represented” is the right word here} by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in~\cref{sec:scope-escape-dests}.\improvement{We need to explain why. This has something to do with the scopedness of the state or something or other.}
 
 \subsection{Evaluation contexts forms}\label{ssec:ectxs}
 
