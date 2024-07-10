@@ -123,7 +123,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | ˢ0 :: S :: SugarZero {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{0} }} % Coq translation is a placeholder 
   | ˢ1 :: S :: SugarOne {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{1} }} % Coq translation is a placeholder
   | ˢ2 :: S :: SugarTwo {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{2} }} % Coq translation is a placeholder
-  | H ˢ⟨ t2 ❟ t1 ⟩ :: :: SugarAmpar {{ tex _{[[H]]\!}\ottsctor{\langle}[[t2]]\,\ottsctor{\bbcomma}~[[t1]]\ottsctor{\rangle} }}
+  | H ˢ⟨ t2 ❟ t1 ⟩ :: S :: SugarAmpar {{ coq (term_Val val_Unit) }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[t2]]\,\ottsctor{\bbcomma}~[[t1]]\ottsctor{\rangle} }} % Coq translation is a placeholder
   | ˢNil :: S :: SugarNil {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{Nil} }}
   | ˢNode t1 t2 t3 :: S :: SugarNode {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{Node}~[[t1]]~[[t2]]~[[t3]] }}
   | true :: S :: SugarTrue {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{true} }}

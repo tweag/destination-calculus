@@ -135,76 +135,6 @@ Proof.
 decide equality. apply mode_eq_dec. apply mode_eq_dec. apply mode_eq_dec.
 Defined.
 Hint Resolve eq_type : ott_coq_equality.
-(** induction principles *)
-Section val_term_rect.
-
-Variables
-  (P_val : val -> Prop)
-  (P_term : term -> Prop).
-
-Hypothesis
-  (H_val_Hole : forall (h:hname), P_val (val_Hole h))
-  (H_val_Dest : forall (h:hname), P_val (val_Dest h))
-  (H_val_Unit : P_val val_Unit)
-  (H_val_Fun : forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_val (val_Fun x m u))
-  (H_val_Left : forall (v:val), P_val v -> P_val (val_Left v))
-  (H_val_Right : forall (v:val), P_val v -> P_val (val_Right v))
-  (H_val_Exp : forall (m:mode), forall (v:val), P_val v -> P_val (val_Exp m v))
-  (H_val_Prod : forall (v1:val), P_val v1 -> forall (v2:val), P_val v2 -> P_val (val_Prod v1 v2))
-  (H_val_Ampar : forall (H:hnames), forall (v2:val), P_val v2 -> forall (v1:val), P_val v1 -> P_val (val_Ampar H v2 v1))
-  (H_term_Val : forall (v:val), P_val v -> P_term (term_Val v))
-  (H_term_Var : forall (x:var), P_term (term_Var x))
-  (H_term_App : forall (t':term), P_term t' -> forall (t:term), P_term t -> P_term (term_App t' t))
-  (H_term_PatU : forall (t:term), P_term t -> forall (u:term), P_term u -> P_term (term_PatU t u))
-  (H_term_PatS : forall (t:term), P_term t -> forall (m:mode), forall (x1:var), forall (u1:term), P_term u1 -> forall (x2:var), forall (u2:term), P_term u2 -> P_term (term_PatS t m x1 u1 x2 u2))
-  (H_term_PatP : forall (t:term), P_term t -> forall (m:mode), forall (x1:var), forall (x2:var), forall (u:term), P_term u -> P_term (term_PatP t m x1 x2 u))
-  (H_term_PatE : forall (t:term), P_term t -> forall (m:mode), forall (n:mode), forall (x:var), forall (u:term), P_term u -> P_term (term_PatE t m n x u))
-  (H_term_Map : forall (t:term), P_term t -> forall (x:var), forall (t':term), P_term t' -> P_term (term_Map t x t'))
-  (H_term_ToA : forall (u:term), P_term u -> P_term (term_ToA u))
-  (H_term_FromA : forall (t:term), P_term t -> P_term (term_FromA t))
-  (H_term_FillU : forall (t:term), P_term t -> P_term (term_FillU t))
-  (H_term_FillL : forall (t:term), P_term t -> P_term (term_FillL t))
-  (H_term_FillR : forall (t:term), P_term t -> P_term (term_FillR t))
-  (H_term_FillE : forall (t:term), P_term t -> forall (m:mode), P_term (term_FillE t m))
-  (H_term_FillP : forall (t:term), P_term t -> P_term (term_FillP t))
-  (H_term_FillF : forall (t:term), P_term t -> forall (x:var), forall (m:mode), forall (u:term), P_term u -> P_term (term_FillF t x m u))
-  (H_term_FillComp : forall (t:term), P_term t -> forall (t':term), P_term t' -> P_term (term_FillComp t t'))
-.
-
-Fixpoint term_ott_ind (n:term) : P_term n :=
-  match n as x return P_term x with
-  | (term_Val v) => H_term_Val v (val_ott_ind v)
-  | (term_Var x) => H_term_Var x
-  | (term_App t' t) => H_term_App t' (term_ott_ind t') t (term_ott_ind t)
-  | (term_PatU t u) => H_term_PatU t (term_ott_ind t) u (term_ott_ind u)
-  | (term_PatS t m x1 u1 x2 u2) => H_term_PatS t (term_ott_ind t) m x1 u1 (term_ott_ind u1) x2 u2 (term_ott_ind u2)
-  | (term_PatP t m x1 x2 u) => H_term_PatP t (term_ott_ind t) m x1 x2 u (term_ott_ind u)
-  | (term_PatE t m n x u) => H_term_PatE t (term_ott_ind t) m n x u (term_ott_ind u)
-  | (term_Map t x t') => H_term_Map t (term_ott_ind t) x t' (term_ott_ind t')
-  | (term_ToA u) => H_term_ToA u (term_ott_ind u)
-  | (term_FromA t) => H_term_FromA t (term_ott_ind t)
-  | (term_FillU t) => H_term_FillU t (term_ott_ind t)
-  | (term_FillL t) => H_term_FillL t (term_ott_ind t)
-  | (term_FillR t) => H_term_FillR t (term_ott_ind t)
-  | (term_FillE t m) => H_term_FillE t (term_ott_ind t) m
-  | (term_FillP t) => H_term_FillP t (term_ott_ind t)
-  | (term_FillF t x m u) => H_term_FillF t (term_ott_ind t) x m u (term_ott_ind u)
-  | (term_FillComp t t') => H_term_FillComp t (term_ott_ind t) t' (term_ott_ind t')
-end
-with val_ott_ind (n:val) : P_val n :=
-  match n as x return P_val x with
-  | (val_Hole h) => H_val_Hole h
-  | (val_Dest h) => H_val_Dest h
-  | val_Unit => H_val_Unit 
-  | (val_Fun x m u) => H_val_Fun x m u (term_ott_ind u)
-  | (val_Left v) => H_val_Left v (val_ott_ind v)
-  | (val_Right v) => H_val_Right v (val_ott_ind v)
-  | (val_Exp m v) => H_val_Exp m v (val_ott_ind v)
-  | (val_Prod v1 v2) => H_val_Prod v1 (val_ott_ind v1) v2 (val_ott_ind v2)
-  | (val_Ampar H v2 v1) => H_val_Ampar H v2 (val_ott_ind v2) v1 (val_ott_ind v1)
-end.
-
-End val_term_rect.
 
 (** subrules *)
 Definition is_sterm_of_term (t_5:term) : bool :=
@@ -987,7 +917,7 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P t (type_Dest (type_Prod T1 T2) n)),
      Ty_term P (term_FillP t) (type_Prod (type_Dest T1 n) (type_Dest T2 n))
  | Ty_term_FillE : forall (P:ctx) (t:term) (n':mode) (T:type) (n:mode)
-     (Validn: IsValid n )
+     (Validnp: IsValid n' )
      (Tyt: Ty_term P t (type_Dest (type_Exp n' T) n)),
      Ty_term P (term_FillE t n') (type_Dest T  (mode_times'  ((app (cons n' nil) (app (cons n nil) nil))) ) )
  | Ty_term_FillF : forall (P1:ctx) (n:mode) (P2:ctx) (t:term) (x:var) (m:mode) (u:term) (T U:type)

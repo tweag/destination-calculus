@@ -1197,6 +1197,13 @@ Proof.
       * rewrite nIn_iff_nMapsTo in H. exists x. apply merge_with_None_Some_eq. split; assumption.
 Qed.
 
+Lemma hnames_distrib_on_union : forall (G1 G2 : ctx), hnamesᴳ(G1 ᴳ+ G2) = hnamesᴳ(G1) ∪ hnamesᴳ(G2).
+Proof.
+  intros *.
+  apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros *.
+  rewrite HNamesFacts.union_iff. apply HIn_union_iff.
+Qed.
+
 Lemma HIn_stimes_iff : forall (m : mode) (G : ctx) (h: hname), HNames.In h hnamesᴳ(m ᴳ· G) <-> HNames.In h hnamesᴳ(G).
 Proof.
   sauto lq: on use: hnames_spec, map_MapsTo_iff.

@@ -147,7 +147,7 @@ Proof.
   apply Ty_term_sterm_FillLeaf with (P2 := P2) (T := T); trivial.
   replace (⌊ T ⌋ m) with (⌊ T ⌋ mode_times' ((m :: nil) ++ (¹ν :: nil) ++ nil)). 2: { f_equal. cbn. apply mode_times_linnu_r_eq. }
   apply Ty_term_FillE.
-  constructor.
+  assumption.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ ! m ⁔ T ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
 
