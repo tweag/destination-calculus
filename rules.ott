@@ -134,8 +134,9 @@ P ⊢ t : U ⧔ (! ¹∞ T) [[:Tyt]]
 ------------------------------- :: FromA
 P ⊢ from⧔ t : U ⨂ (! ¹∞ T)
 
-% -------------------------------- :: Alloc
-% {} ⊢ alloc : U ⧔ ⌊U⌋¹ν
+{{ DisposableOnly [[P]] }} [[:DisposP]]
+-------------------- :: Alloc
+P ⊢ alloc : T ⧔ ⌊ T ⌋ ¹ν
 
 P ⊢ t : ⌊①⌋n [[:Tyt]]
 ------------------------------ :: FillU
@@ -174,10 +175,6 @@ P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
 
 defn
 P ˢ⊢ t : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syntactic sugar forms }} by
-
-{{ DisposableOnly [[P]] }} [[:DisposP]]
--------------------- :: Alloc
-P ˢ⊢ alloc : T ⧔ ⌊ T ⌋ ¹ν
 
 P ⊢ t : T ⧔ ① [[:Tyt]]
 ---------------- :: FromA'
@@ -501,6 +498,9 @@ C[from⧔ t] ⟶ (C ∘ (from⧔ ⬜))[t]
 
 -------------------------------------- :: Red_FromA
 C[from⧔ {} ⟨ v2 ❟ ᴇ ¹∞ v1 ⟩] ⟶ C[(v2, ᴇ ¹∞ v1)]
+
+-------------------------------------- :: Red_Alloc
+C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 -------------------------- :: Focus_FillU

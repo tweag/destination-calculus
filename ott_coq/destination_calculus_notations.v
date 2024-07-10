@@ -25,6 +25,7 @@ Notation "t 'caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (term_PatE t m n x u) (at lev
 Notation "t 'map' x ⟼ u" := (term_Map t x u) (at level 59, x at level 19, u at level 59, right associativity).
 Notation "'to⧔' t" := (term_ToA t) (at level 41, right associativity, t at level 41).
 Notation "'from⧔' t" := (term_FromA t) (at level 41, right associativity, t at level 41).
+Notation "'alloc'" := (term_Alloc).
 Notation "t '⨞()'" := (term_FillU t) (at level 43, left associativity).
 Notation "t '⨞Inl'" := (term_FillL t) (at level 43, left associativity).
 Notation "t '⨞Inr'" := (term_FillR t) (at level 43, left associativity).
@@ -34,7 +35,6 @@ Notation "t '⨞(λ' x '⁔' m '⟼' u ')'" := (term_FillF t x m u) (at level 43
 Notation "t '⨞·' u" := (term_FillComp t u) (at level 43, left associativity, u at next level).
 Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19, v at level 59, left associativity).
 
-Notation "'alloc'" := (sterm_Alloc).
 Notation "'from⧔'' t" := (sterm_FromA' t) (at level 41, right associativity, t at level 41).
 Notation "t 'ˢ⨞' u" := (sterm_FillLeaf t u) (at level 43, left associativity, u at next level).
 Notation "'ˢλ' x '⁔' m '⟼' u" := (sterm_Fun x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).

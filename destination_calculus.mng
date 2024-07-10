@@ -591,11 +591,13 @@ A similar breadth-first traversal function can be found in~\cite{bagrel_destinat
 \newcommand{\grammsep}{\hspace*{2ex}|\hspace*{2ex}}
 \newcommand{\grammdef}{:\hspace*{-0.3ex}:\hspace*{-0.3ex}=}
 
+\TODO{Move val grammar away?}
+
 \begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{1ex}
 \!\!\!\begin{array}{rrl}
-[[t]], [[u]] &::=& [[v]] \grammsep [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
+[[t]], [[u]] &::=& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
              &|\,& [[ t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t case m ( x1 , x2 ) ⟼ u]] \grammsep [[t case m ᴇ n x ⟼ u]] \\
-             &|\,& [[t map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \\
+             &|\,& [[t map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
              &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \\
 &&\\
        [[v]] &::=& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
@@ -616,10 +618,9 @@ A similar breadth-first traversal function can be found in~\cite{bagrel_destinat
 \end{array}
 }\end{codefig}
 
+\TODO{We are missing syntactic sugar for some forms like unit () (needs DisposableOnly, do not forget)}
+
 \sidebysidecodefig{\caption{Syntactic sugar forms for terms}\label{fig:sterm}}{t}{0.425}{
-[[alloc]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-{ 1 } ⟨ +1 ❟ -1 ⟩
-]]\end{array}\\[\interdefskip]
 [[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
 t ⨞· (to⧔ t')
 ]]\end{array}\\[\interdefskip]
@@ -737,14 +738,14 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 
 \subsection{Typing of terms and values}\label{ssec:ty-term-val}
 
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement\unsure{Thomas: why did you add hfill here (between the two parts of the figure)?}
 
-\begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}
+\begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 \ottdefnTyXXterm{}
 
 \hfill
 
-\bgroup\renewcommand\ottaltinferrule[4]{
+\renewcommand\ottaltinferrule[4]{
   \inferrule*[fraction={===},narrower=0.3,lab=#1,#2]
     {#3}
     {#4}
@@ -830,9 +831,11 @@ The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\
 
 \subsubsection{Typing of values $[[⫦]]$}
 
+\TODO{Re-introduce Ty-term-val}
+
 \begin{ottfig}{\caption{Typing rules for values}\label{fig:ty-val}}\ottdefnTyXXval{}\end{ottfig}
 
-Values $[[v]]$, presented as a subset of terms $[[t]]$, could be removed completely from the user syntax (given we promote $[[alloc]]$ to a first-class keyword), and just used as a denotation for runtime data structures.
+The class of values $[[v]]$ is purely a denotation for runtime data structures.
 
 The typing of runtime values, given in~\cref{fig:ty-val} is where hole and destination bindings appears. Values can have holes and destinations inside, but a value used as a term must not have any hole\footnote{see \textsc{Ty-term-Val}: the value must type in a context $[[D]]$ which means ``destination only'' by convention}. Also, variables cannot mention free variables; that makes it easier to prove substitution properties (as we will see in~\cref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
 

@@ -18,31 +18,6 @@ Require Import Arith.
 Require Import Dest.destination_calculus_proofs.
 Require Import Lia.
 
-Theorem Ty_term_sterm_Alloc : forall (P : ctx) (T : type), DisposableOnly P -> P ⊢ alloc : T ⧔ (⌊ T ⌋ ¹ν).
-Proof.
-  intros P T DisposP.
-  unfold sterm_Alloc.
-  rewrite union_empty_r_eq with (G := P).
-  apply Ty_term_Val.
-  - assumption.
-  - rewrite union_empty_r_eq with (G := ᴳ{}).
-    assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
-      { unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
-    rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 10; swap 2 11.
-    + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest.
-    + rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Hole.
-    + apply DestOnly_singleton_dest.
-    + apply LinOnly_singleton_iff. cbn. constructor.
-    + apply FinAgeOnly_singleton_iff. cbn. constructor.
-    + apply ValidOnly_singleton_iff. cbn. constructor.
-    + apply Disjoint_empty_l.
-    + apply Disjoint_empty_l.
-    + apply Disjoint_empty_l.
-    + apply DestOnly_empty.
-    + apply DestOnly_empty.
-  - + apply DestOnly_empty.
-Qed.
-
 Theorem Ty_term_sterm_FromA' : forall (P : ctx) (t : term) (T : type), P ⊢ t : T ⧔ ① -> P ⊢ from⧔' t : T.
 Proof.
   intros * Tyt.
@@ -89,7 +64,7 @@ Proof.
   rewrite union_empty_l_eq with (G := P2).
   apply Ty_term_Map with (T := ⌊T ⁔ m → U⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_sterm_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillF with (T := T) (U := U); trivial.
@@ -105,7 +80,7 @@ Proof.
   rewrite union_empty_l_eq with (G := P2).
   apply Ty_term_Map with (T := ⌊T1 ⨁ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_sterm_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (¹↑ · ¹ν). 2:{ cbn. reflexivity. }
   apply Ty_term_sterm_FillLeaf with (T := T1); trivial.
@@ -122,7 +97,7 @@ Proof.
   rewrite union_empty_l_eq with (G := P2).
   apply Ty_term_Map with (T := ⌊T1 ⨁ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_sterm_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (¹↑ · ¹ν). 2:{ cbn. reflexivity. }
   apply Ty_term_sterm_FillLeaf with (T := T2); trivial.
@@ -141,7 +116,7 @@ Proof.
   { apply UserDefined_Disjoint; trivial.
     unfold UserDefined in *. intros x. specialize (UserDefinedP2 x). unfold stimes. rewrite In_map_iff. assumption.
     lia. }
-  apply Ty_term_sterm_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   rewrite stimes_is_action.
   apply Ty_term_sterm_FillLeaf with (P2 := P2) (T := T); trivial.
@@ -161,7 +136,7 @@ Proof.
   rewrite union_empty_l_eq with (G := P21 ᴳ+ P22).
   apply Ty_term_Map with (T := ⌊T1 ⨂ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_sterm_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}) with (¹ν ᴳ· ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}). 2:{ rewrite stimes_linnu_eq. reflexivity. }
   apply Ty_term_PatP with (T1 := ⌊ T1 ⌋ ¹ν) (T2 := ⌊ T2 ⌋ ¹ν).
@@ -187,13 +162,12 @@ Qed.
 
 Theorem Ty_sterm_coherency : forall (P : ctx) (t : term) (T : type), P ˢ⊢ t : T -> P ⊢ t : T.
 Proof.
-  intros * Tyst. inversion Tyst; subst. inversion Tyst; subst.
-  - apply Ty_term_sterm_Alloc; trivial.
-  - apply Ty_term_sterm_FromA'; trivial.
-  - replace (mode_times' ((¹↑ :: nil) ++ (n :: nil) ++ nil)) with (¹↑ · n). 2:{ cbn. destruct n; try destruct p; try destruct p2, a2; cbn; try destruct m, a; cbn; try rewrite Nat.add_0_r; trivial. } apply Ty_term_sterm_FillLeaf with (T := T0); trivial.
-  - apply Ty_term_sterm_Fun; trivial.
-  - apply Ty_term_sterm_Left; trivial.
-  - apply Ty_term_sterm_Right; trivial.
-  - apply Ty_term_sterm_Exp; trivial.
-  - apply Ty_term_sterm_Prod; trivial.
+  intros * Tyst. inversion Tyst; subst.
+  { apply Ty_term_sterm_FromA'; trivial. }
+  { replace (mode_times' ((¹↑ :: nil) ++ (n :: nil) ++ nil)) with (¹↑ · n). 2:{ cbn. destruct n; try destruct p; try destruct p2, a2; cbn; try destruct m, a; cbn; try rewrite Nat.add_0_r; trivial. } apply Ty_term_sterm_FillLeaf with (T := T0); trivial. }
+  { apply Ty_term_sterm_Fun; trivial. }
+  { apply Ty_term_sterm_Left; trivial. }
+  { apply Ty_term_sterm_Right; trivial. }
+  { apply Ty_term_sterm_Exp; trivial. }
+  { apply Ty_term_sterm_Prod; trivial. }
 Qed.

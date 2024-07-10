@@ -2271,6 +2271,7 @@ Proof.
     * rewrite IHTyte2. reflexivity. intros inP2x. apply In_union_iff in inP2x. destruct inP2x. { apply nIn_union_iff in NotInP. destruct NotInP. apply In_stimes_iff in H. congruence. } { apply In_singleton_iff in H. inversion H. congruence. }
   - rewrite IHTyte. reflexivity. assumption.
   - rewrite IHTyte. reflexivity. assumption.
+  - reflexivity.
   - rewrite IHTyte. reflexivity. assumption.
   - rewrite IHTyte. reflexivity. assumption.
   - rewrite IHTyte. reflexivity. assumption.

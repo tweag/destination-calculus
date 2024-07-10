@@ -99,6 +99,7 @@ Proof.
       subst. rewrite hnames_empty_is_hempty.
       exists C, (ᵥ₎ ᵛ( v2 , ᴇ ¹∞ ⁔ v' )). constructor.
     * exists (C ∘ from⧔⬜), t. constructor; tauto.
+  - exists C, (ᵥ₎ ᴴ{ 1 } ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩). constructor.
   - rename Tyt into TyFillU, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ ① ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ ① ⌋ n); tauto. }
       exists (C ©️[ h ≔ HNames.empty ‗ ᵛ()]), (ᵥ₎ ᵛ()). constructor.

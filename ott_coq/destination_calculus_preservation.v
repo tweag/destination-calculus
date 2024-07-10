@@ -358,33 +358,6 @@ Proof.
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C (U ⧔ T) U0). tauto. }
       constructor 1 with (D := (D1 ᴳ+ D2)) (T := U ⧔ T) (t := ᵥ₎ hnamesᴳ( D3) ⟨ v2 ❟ v1 ⟩). all: crush.
-(*     - (* Red-Alloc *)
-      inversion Tyt; subst.
-      assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ U ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
-        { cbn. reflexivity. }
-      assert (ᴳ{} ⊢ ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩ : U ⧔ ⌊ U ⌋ ¹ν) as Tytp.
-        { rewrite <- hnamesD3Eq. apply Ty_term_Val. rewrite (union_empty_l_eq ᴳ{}). apply Ty_val_Ampar.
-          - crush.
-          - crush.
-          - intros n b. unfold ctx_singleton. rewrite singleton_MapsTo_iff. rewrite eq_sigT_iff_eq_dep.
-            intros []. cbv. tauto.
-          - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
-            constructor.
-          - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
-            constructor.
-          - intros n binding. unfold ctx_singleton. rewrite singleton_MapsTo_iff. intros H. remember H as H'; clear HeqH'. apply eq_sigT_fst in H; subst.
-          assert (binding = ₋ ¹ν ⌊ U ⌋ ¹ν); subst. { apply inj_pair2_eq_dec. exact name_eq_dec. apply eq_sym; tauto. }
-            constructor.
-          - crush.
-          - crush.
-          - crush.
-          - rewrite stimes_empty_eq. rewrite <- union_empty_l_eq. constructor. crush.
-          - rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. constructor.
-          - crush.
-        }
-      constructor 1 with (D := ᴳ{}) (T := U ⧔ ⌊ U ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩). all: crush. *)
     - (* Focus-ToA *)
       inversion Tyt; subst.
       rename Tyt into TyToA.
@@ -462,6 +435,32 @@ Proof.
         - assumption.
         - rewrite stimes_empty_eq, <- union_empty_l_eq in Tyv1. assumption. }
       constructor 1 with (D := D2) (T := U ⨂ ! ¹∞ ⁔ T) (t := ᵥ₎ ᵛ( v2, ᴇ ¹∞ ⁔ v1)). all: crush.
+    - (* Red-Alloc *)
+      inversion Tyt; subst.
+      rename T0 into T.
+      rewrite (union_empty_r_eq D) in *.
+      rewrite <- union_empty_r_eq in DisposP.
+      rewrite (nDisposable_in_DestOnly D ᴳ{} DisposP DestOnlyD) in *.
+      constructor 1 with (D := ᴳ{}) (T := T ⧔ ⌊ T ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩); swap 1 4.
+      term_Val_no_dispose ᴳ{}. rewrite union_empty_r_eq with (G := ᴳ{}).
+    assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
+      { unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
+      rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 10; swap 2 11.
+      + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest.
+      + rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Hole.
+      + apply DestOnly_singleton_dest.
+      + apply LinOnly_singleton_iff. cbn. constructor.
+      + apply FinAgeOnly_singleton_iff. cbn. constructor.
+      + apply ValidOnly_singleton_iff. cbn. constructor.
+      + apply Disjoint_empty_l.
+      + apply Disjoint_empty_l.
+      + apply Disjoint_empty_l.
+      + apply DestOnly_empty.
+      + apply DestOnly_empty.
+      + apply DestOnly_empty.
+      + apply DestOnly_empty.
+      + assumption.
+      + unfold ValidOnly. intros n b H. cbn in H. congruence.
     - (* Focus-FillU *)
       inversion Tyt; subst.
       rename Tyt into TyFillU, Tyt0 into Tyt.

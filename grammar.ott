@@ -86,7 +86,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex \ottkw{map}~[[t]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
-  % | alloc :: :: Alloc {{ com Return a fresh "identity" ampar object }} {{ tex \ottkw{alloc} }}
+  | alloc :: :: Alloc {{ tex \ottsctor{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
   | t ⨞ Inr :: :: FillR {{ com Fill destination with right variant }}
@@ -109,7 +109,6 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t case m { t1 ⟼ u1 , t2 ⟼ u2 b } :: S :: SugarPatNestedSsp1 {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]][[b]]\} }} % Coq translation is a placeholder
 
   % Here we have to redefined all sugar construct in the same way as in sterm
-  | alloc :: S :: SugarAlloc {{ coq (sterm_Alloc) }} {{ tex \ottsctor{alloc} }}
   | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\blacktriangleleft[[t']] }}
   | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottkw{\ltimes} }' [[t]] }}
   | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
@@ -158,7 +157,6 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | ul< t > :: S :: Underline {{ coq [[t]] }} {{ tex \uwave{[[t]]} }}
 
 sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
-  | alloc :: M :: SugarAlloc {{ com Evaluate to a fresh new ampar }} {{ coq (sterm_Alloc) }}
   | t ˢ⨞ t' :: M :: SugarFillLeaf {{ com Fill destination with supplied term }} {{ coq (sterm_FillLeaf [[t]] [[t']]) }} 
   | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (sterm_FromA' [[t]]) }}
   | ˢλ x m ⟼ u :: M :: SugarFun {{ com Allocate function }} {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
@@ -393,6 +391,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
     term_Map (term_sub t x' v') x t''
   | term_ToA u => term_ToA (term_sub u x' v')
   | term_FromA t => term_FromA (term_sub t x' v')
+  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_sub t x' v')
   | term_FillL t => term_FillL (term_sub t x' v')
   | term_FillR t => term_FillR (term_sub t x' v')
@@ -411,15 +410,6 @@ Proof.
   { left. exists v; tauto. }
   all: right; congruence.
 Qed.
-
-Definition sterm_Alloc :=
-  (term_Val
-    (val_Ampar
-      (hnames_ (1 :: nil))
-      (val_Hole 1)
-      (val_Dest 1)
-    )
-  ).
 
 Definition sterm_FromA' (t : term) :=
   (term_PatP
@@ -448,7 +438,7 @@ Definition sterm_FillLeaf (t t' : term) :=
 Definition sterm_Fun (x : var) (m : mode) (u : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (term_FillF
         (term_Var 0)
@@ -460,7 +450,7 @@ Definition sterm_Fun (x : var) (m : mode) (u : term) :=
 Definition sterm_Left (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillL
@@ -474,7 +464,7 @@ Definition sterm_Left (t : term) :=
 Definition sterm_Right (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillR
@@ -488,7 +478,7 @@ Definition sterm_Right (t : term) :=
 Definition sterm_Exp (m : mode) (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillE
@@ -503,7 +493,7 @@ Definition sterm_Exp (m : mode) (t : term) :=
 Definition sterm_Prod (t1 t2 : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (term_PatP
         (term_FillP
@@ -564,6 +554,7 @@ with term_cshift (te : term) (H : hnames) (h' : hname) : term :=
   | term_Map t x t' => term_Map (term_cshift t H h') x (term_cshift t' H h')
   | term_ToA u => term_ToA (term_cshift u H h')
   | term_FromA t => term_FromA (term_cshift t H h')
+  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_cshift t H h')
   | term_FillL t => term_FillL (term_cshift t H h')
   | term_FillR t => term_FillR (term_cshift t H h')

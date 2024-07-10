@@ -71,6 +71,7 @@ Inductive term : Type :=  (*r Term *)
  | term_Map (t:term) (x:var) (t':term) (*r Map over the right side of ampar *)
  | term_ToA (u:term) (*r Wrap into a trivial ampar *)
  | term_FromA (t:term) (*r Convert ampar to a pair *)
+ | term_Alloc : term
  | term_FillU (t:term) (*r Fill destination with unit *)
  | term_FillL (t:term) (*r Fill destination with left variant *)
  | term_FillR (t:term) (*r Fill destination with right variant *)
@@ -149,6 +150,7 @@ Definition is_sterm_of_term (t_5:term) : bool :=
   | (term_Map t x t') => false
   | (term_ToA u) => false
   | (term_FromA t) => false
+  | term_Alloc => false
   | (term_FillU t) => false
   | (term_FillL t) => false
   | (term_FillR t) => false
@@ -258,6 +260,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
     term_Map (term_sub t x' v') x t''
   | term_ToA u => term_ToA (term_sub u x' v')
   | term_FromA t => term_FromA (term_sub t x' v')
+  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_sub t x' v')
   | term_FillL t => term_FillL (term_sub t x' v')
   | term_FillR t => term_FillR (term_sub t x' v')
@@ -276,15 +279,6 @@ Proof.
   { left. exists v; tauto. }
   all: right; congruence.
 Qed.
-
-Definition sterm_Alloc :=
-  (term_Val
-    (val_Ampar
-      (hnames_ (1 :: nil))
-      (val_Hole 1)
-      (val_Dest 1)
-    )
-  ).
 
 Definition sterm_FromA' (t : term) :=
   (term_PatP
@@ -313,7 +307,7 @@ Definition sterm_FillLeaf (t t' : term) :=
 Definition sterm_Fun (x : var) (m : mode) (u : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (term_FillF
         (term_Var 0)
@@ -325,7 +319,7 @@ Definition sterm_Fun (x : var) (m : mode) (u : term) :=
 Definition sterm_Left (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillL
@@ -339,7 +333,7 @@ Definition sterm_Left (t : term) :=
 Definition sterm_Right (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillR
@@ -353,7 +347,7 @@ Definition sterm_Right (t : term) :=
 Definition sterm_Exp (m : mode) (t : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (sterm_FillLeaf
         (term_FillE
@@ -368,7 +362,7 @@ Definition sterm_Exp (m : mode) (t : term) :=
 Definition sterm_Prod (t1 t2 : term) :=
   (sterm_FromA'
     (term_Map
-      sterm_Alloc
+      term_Alloc
       0
       (term_PatP
         (term_FillP
@@ -429,6 +423,7 @@ with term_cshift (te : term) (H : hnames) (h' : hname) : term :=
   | term_Map t x t' => term_Map (term_cshift t H h') x (term_cshift t' H h')
   | term_ToA u => term_ToA (term_cshift u H h')
   | term_FromA t => term_FromA (term_cshift t H h')
+  | term_Alloc => term_Alloc
   | term_FillU t => term_FillU (term_cshift t H h')
   | term_FillL t => term_FillL (term_cshift t H h')
   | term_FillR t => term_FillR (term_cshift t H h')
@@ -904,6 +899,9 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_FromA : forall (P:ctx) (t:term) (U T:type)
      (Tyt: Ty_term P t (type_Ampar U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )),
      Ty_term P (term_FromA t) (type_Prod U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )
+ | Ty_term_Alloc : forall (P:ctx) (T:type)
+     (DisposP: DisposableOnly P ),
+     Ty_term P term_Alloc (type_Ampar T (type_Dest T  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
      (Tyt: Ty_term P t (type_Dest type_Unit n)),
      Ty_term P (term_FillU t) type_Unit
@@ -933,9 +931,6 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tytp: Ty_term P2 t' (type_Ampar U T)),
      Ty_term  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillComp t t') T
 with Ty_sterm : ctx -> term -> type -> Prop :=    (* defn Ty_sterm *)
- | Ty_sterm_Alloc : forall (P:ctx) (T:type)
-     (DisposP: DisposableOnly P ),
-     Ty_sterm P  (sterm_Alloc)  (type_Ampar T (type_Dest T  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_sterm_FromA' : forall (P:ctx) (t:term) (T:type)
      (Tyt: Ty_term P t (type_Ampar T type_Unit)),
      Ty_sterm P  (sterm_FromA'  t )  T
@@ -1177,6 +1172,8 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem   (cons   ectx_FromA    C )   (term_Val v) C (term_FromA (term_Val v))
  | Red_FromA : forall (C:ectxs) (v2 v1:val),
      Sem C (term_FromA (term_Val (val_Ampar  (hnames_  nil )  v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))) C (term_Val (val_Prod v2 (val_Exp  (Some (pair   Lin     Inf  ))  v1)))
+ | Red_Alloc : forall (C:ectxs),
+     Sem C term_Alloc C (term_Val (val_Ampar  (hnames_  (cons  1  nil) )  (val_Hole  1 ) (val_Dest  1 )))
  | Focus_FillU : forall (C:ectxs) (t:term)
      (NotValt: NotVal t ),
      Sem C (term_FillU t)   (cons   ectx_FillU    C )   t
