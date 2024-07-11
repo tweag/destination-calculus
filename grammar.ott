@@ -198,7 +198,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | ⬜ case m ( x1 , x2 ) ⟼ u :: :: PatP {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
   | ⬜ case m ᴇ n x ⟼ u :: :: PatE {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ map x ⟼ t' :: :: Map {{ tex \ottkw{map}~[[⬜]]~\ottkw{of}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
+  | ⬜ map x ⟼ t' :: :: Map {{ tex \ottkw{map}~[[⬜]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
 
   | to⧔ ⬜ :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[⬜]] }}
   | from⧔ ⬜ :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[⬜]] }}
