@@ -578,12 +578,10 @@ mapAccumBFS⮒
 
 A similar breadth-first traversal function can be found in~\cite{bagrel_destination-passing_2024}. The difference is that, because they can't store destinations in structures with holes (see the discussion in \cref{sec:scope-escape-dests}), their implementation can't use the efficient $[[Queue T]]$ type from \cref{ssec:efficient-queue}. So they have to revert to using a Hood-Melville queue for breadth-first traversal.
 
-\section{Language syntax and type system}\label{sec:syntax-type-system}
+\section{Type system}\label{sec:syntax-type-system}
 
 \newcommand{\grammsep}{\hspace*{2ex}|\hspace*{2ex}}
 \newcommand{\grammdef}{:\hspace*{-0.3ex}:\hspace*{-0.3ex}=}
-
-\TODO{Move val grammar away?}
 
 \begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{1ex}
 \!\!\!\begin{array}{rrl}
@@ -605,10 +603,11 @@ A similar breadth-first traversal function can be found in~\cite{bagrel_destinat
                [[p]] &::=& [[¹]] \grammsep [[ω]] \\
                [[a]] &::=& [[ν]] \grammsep [[↑]] \grammsep [[∞]] \\
 &&\\
-[[O]], [[G]], [[P]], [[D]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \\
-                           &|\,& [[O1 , O2]] \grammsep [[O1 + O2]] \grammsep [[m · O]] \grammsep [[-⁻¹ D]]
+[[P]], [[D]], [[O]], [[G]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
 \end{array}
 }\end{codefig}
+\improvement{Context scaling and addition should be defined outside of the grammar.}
+
 
 \TODO{We are missing syntactic sugar for some forms like unit () (needs DisposableOnly, do not forget)}
 
@@ -651,13 +650,11 @@ from⧔' (alloc map d ⟼⮒
 ]]\end{array}
 }
 
-\destcalculus{} is based on simply typed lambda calculus, with a first-order type system, featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. It is also equipped with the destination type $[[⌊ T ⌋ m]]$ and ampar type $[[S ⧔ T]]$ that have been previewed in~\cref{sec:working-with-dests} to represent DPS structure building. The core grammar of the language is presented in~\cref{fig:grammar}. We also provide commonly used syntactic sugar forms for terms in~\cref{fig:sterm}.
+\destcalculus{} is based on simply typed lambda calculus featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. It is also equipped with the destination type $[[⌊ T ⌋ m]]$ and ampar type $[[S ⧔ T]]$ that have been previewed in~\cref{sec:working-with-dests} to represent DPS structure building. The core grammar of the language is presented in~\cref{fig:grammar}. We also provide commonly used syntactic sugar forms for terms in~\cref{fig:sterm}.\improvement{Go over this paragraph, it needs clean-up.}
 
 Modes in \destcalculus{} have two axes\improvement{Remove the terminology “axes” for the modes. This terminology is specific to the Oxidizing Ocaml work and, while reasonably intuitive, isn't worth introducing for a single use.} --- multiplicity (i.e.\unsure{traditionally \emph{i.e.} and \emph{e.g.}, as any Latin phrase, are emphasised. I notice you don't emphasise them, and I presumably did at some point, so let's make sure it's uniform} linear/non-linear), and age control\improvement{Here and everywhere: “age” not “age control”. “Age control” is funny, but it doesn't make much sense in this context} --- and they take place on variable bindings in typing contexts $[[O]]$, and on function arrows, but are not part of the type itself.
 
 We omit the mode annotation $[[m]]$ on function arrows and destinations when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
-
-Let's now introduce the age mode axis, which is a novel feature of this calculus.
 
 \subsection{Age-control for bindings to prevent scope escape of destinations}\label{ssec:age-control}
 
@@ -728,9 +725,9 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 
 \end{itemize}
 
-\subsection{Typing of terms and values}\label{ssec:ty-term-val}
+\subsection{Typing rules}\label{ssec:ty-term-val}
 
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement\unsure{Thomas: why did you add hfill here (between the two parts of the figure)?}
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement\unsure{Thomas: why did you add hfill here (between the two parts of the figure)? --~Arnaud: they stuck to each other, it was jarring. A empty paragraph with hfill adds a little bit of welcome vertical space.}
 
 \begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 \ottdefnTyXXterm{}
@@ -746,14 +743,6 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 \egroup
 \end{ottfig}
 
-Destinations and holes are two faces of the same coin, as seen in~\cref{ssec:build-up-vocab}, and must always be in 1:1 correspondence\improvement{I only know what you mean by “must always be in 1:1 correspondence” because I already know what it's supposed to mean. Rephrase. Also, maybe it isn't the best place for it.}. Thus, the new idea of our type system is to feature \emph{hole bindings} $[[{ + h : T n }]]$ and \emph{destination bindings} $[[{ - h : m ⌊ T ⌋ n }]]$ in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts.
-
-Such bindings mention two distinct classes of names: regular variable names $[[x]], [[y]]$, and \emph{hole names} $[[h]], [[h1]], [[h2]]$ which are identifiers for a memory cell that hasn't been written to yet. Hole names are represented by natural numbers under the hood\improvement{There's no hood for them to be under. Something like “For simplicity we'll assume that hole names are natural number”. But must explain why it simplifies anything.}, so they are equipped with addition $[[h+h']]$ and can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hole name encountered so far in the program (denoted $[[max(hnames(C))]]$) ; this corresponds to finding the next unused memory cell in which to write new data.
-
-The mode $[[n]]$ of a hole binding $[[{ + h : T n }]]$ (also present in the corresponding destination type $[[⌊ T ⌋ n]]$) indicates the mode a value must have to be written to it (that is to say, the mode of bindings that the value depends on to type correctly). We see the mode of a hole coming into play when a hole is located behind an exponential constructor: we should only write a non-linear value to the hole $[[+h]]$ in $[[ᴇ ων +h]]$. In particular, we should not store a destination into this hole, otherwise it could later be extracted and used in a non-linear fashion.
-
-A destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ mentions two modes, $[[m]]$ and $[[n]]$; $[[m]]$ is the mode of the binding (in particular, it informs on the age of the destination itself\improvement{This parenthetic remark doesn't read very well, I think that part of the problem is that the explanation of what ages mean is a little handwavy and it's difficult to refer to it}). Whereas $[[n]]$ is part of the destination's type $[[⌊ T ⌋ n]]$\improvement{(Yann) I know it's just a phrasing, but as it is it sounds to naively contradict the intro of the section which says explicitly that modes aren't part of types, which got me a bit surprised in the first read} and corresponds to the mode a value has to have to be written to the corresponding hole. In a well-typed closed program the mode $[[m]]$ of a destination binding can never be of multiplicity $[[ω]]$ or age $[[∞]]$ in the typing tree; it is always linear and of finite age.
-
 We also extend mode product to a pointwise action on typing contexts:
 
 \[\left\{\begin{array}{rcl}
@@ -763,20 +752,9 @@ We also extend mode product to a pointwise action on typing contexts:
 \end{array}\right.\]
 
 \cref{fig:ty-term-sterm} presents the typing rules for terms\improvement{We have to be clear, before we invite people to read the figure, that we're going to explain most of it below, and it's too early to actually read it.}, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. \cref{fig:ty-val} presents the typing rules for values of the language.
-In every figure,\improvement{There's something jarring about this list. Not completely sure what yet. Probably explain why we need these conventions in the first place.}
-\begin{itemize}
-  \item $[[O]]$ denotes an arbitrary typing context, with no particular constraint;
-  \item $[[G]]$ denotes a typing context made only of hole and destination bindings;
-  \item $[[P]]$ denotes a typing context made only of destination and variable bindings;
-  \item $[[D]]$ denotes a typing context made only of destination bindings.
-\end{itemize}
-
-\subsubsection{Typing of terms $[[⊢]]$}
-
-A term $[[t]]$ always types in a context $[[P]]$ made only of destination and variable bindings. That being said, typing rules for terms and their syntactic sugar in~\cref{fig:ty-term-sterm} never explicitly mention a destination binding; only variable bindings. Only at runtime some variables will be substituted by destinations having a matching type and mode (that is why terms cannot type in a context made of variable bindings alone). As a result, the user has to deal with is only slightly more complex than a linear type system\improvement{(Yann) This sentence is incorrect, maybe it's missing a "what"? But I'm not sure, so I let you fix it}  \emph{à la}~\cite{bernardy_linear_2018}.
 
 Let's focus on a few peculiarities of the type system for terms.
-The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \textsc{Ty-term-Val} and \textsc{Ty-term-Var} says that $[[P]]$ can only contain variable bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, that is to say the two aforementioned rules (\textsc{Ty-term-Val} is indeed a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$).\unsure{revisit if we allow weakening for dests, as we could replace that by $[[ων·P]]$ as in~\cite{bernardy_linear_2018}}
+The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \textsc{Ty-term-Val} and \textsc{Ty-term-Var} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, that is to say the two aforementioned rules (\textsc{Ty-term-Val} is indeed a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$).\unsure{revisit if we allow weakening for dests, as we could replace that by $[[ων·P]]$ as in~\cite{bernardy_linear_2018}}
 
 \newcommand{\pleq}{\stackrel{\pmb{\mathrm{p}}}{\mathtt{<:}}}
 \newcommand{\aleq}{\stackrel{\pmb{\mathrm{a}}}{\mathtt{<:}}}
@@ -821,11 +799,34 @@ When an ampar is complete and disposed of with the more general $\ottkw{from}_{\
 
 The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).\improvement{I think I've missed it, but somewhere we must comment on the fact that functions are built in destination-passing fashion.}
 
-\subsubsection{Typing of values $[[⫦]]$}
+\section{Operational semantics}\label{sec:ectxs-sem}
 
-\TODO{Re-introduce Ty-term-val}
+The semantics of \destcalculus{} is given using small-step reductions on a pair $[[ C[t] ]]$\improvement{We need to explain that despite borrowing the notation, this ought to be thought of not as a term, but as a proper par of a context and a term} of an evaluation context $[[C]]$ (represented\improvement{I don't think “represented” is the right word here} by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in~\cref{sec:scope-escape-dests}.\improvement{We need to explain why. This has something to do with the scopedness of the state or something or other.}
 
-\begin{ottfig}{\caption{Typing rules for values}\label{fig:ty-val}}\ottdefnTyXXval{}\end{ottfig}
+\subsection{Runtime values and extended terms}
+
+\TODO{Re-introduce Ty-term-val (left to do: link to the new figure)}
+
+\begin{codefig}{\caption{Extended terms and runtime values}\label{fig:grammar}}{\setlength{\arraycolsep}{1ex}
+\!\!\!\begin{array}{rrl}
+[[t]], [[u]] &::=& \ldots \grammsep [[v]] \\
+&&\\
+       [[v]] &::=& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
+             &|\,& [[- h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[- h]]$}}\quad\quad\textit{(destination)} \\
+             &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
+             &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
+&&\\
+[[P]], [[D]], [[O]], [[G]] &::=& \ldots \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[-⁻¹ D]]
+\end{array}
+}\end{codefig}
+
+\begin{ottfig}{\caption{Typing rules for extended terms and runtime values}\label{fig:ty-val}}
+  \drules[Ty-term]{$[[P ⊢ t : T]]$}{Extended terms}{Val}
+
+  \hfill
+
+  \ottdefnTyXXval{}
+\end{ottfig}
 
 The class of values $[[v]]$ is purely a denotation for runtime data structures.
 
@@ -841,6 +842,27 @@ Hole bindings and destination bindings of the same hole name $[[h]]$ are meant t
 However, the annihilation between a destination and a hole binding having the same name in the typing tree is only allowed to happen around an ampar, as it is the ampar connective that bind the name across the two sides (the names bound are actually stored in a set $[[H]]$ on the ampar value $[[H ⟨ v2 ❟ v1 ⟩]]$). In fact, an ampar can be seen as a sort of lambda-abstraction, whose body (containing holes instead of variables) and input sink (destinations) are split across two sides, and magically interconnected through the ampar connective.
 
 In most rules, we use a sum $[[G1 + G2]]$ for typing contexts (or the disjoint variant $[[G1,G2]]$). This sum doesn't not allow for annihilation of bindings with the same name; the operation is partial, and in particular it isn't defined if a same hole name is present in the operands in the two different forms (hole binding and destination binding). In particular, a pair $[[(+h, -h)]]$ is not well-typed. A single typing context $[[G]]$ is not allowed either to contain both a hole binding and a destination binding for the same hole name.
+
+\critical{Do not forget this}
+\subsubsection{To reintegrate}
+
+In every figure,\improvement{There's something jarring about this list. Not completely sure what yet. Probably explain why we need these conventions in the first place.}
+\begin{itemize}
+  \item $[[O]]$ denotes an arbitrary typing context, with no particular constraint;
+  \item $[[G]]$ denotes a typing context made only of hole and destination bindings;
+  \item $[[P]]$ denotes a typing context made only of destination and variable bindings;
+  \item $[[D]]$ denotes a typing context made only of destination bindings.
+\end{itemize}
+
+
+Destinations and holes are two faces of the same coin, as seen in~\cref{ssec:build-up-vocab}, and must always be in 1:1 correspondence\improvement{I only know what you mean by “must always be in 1:1 correspondence” because I already know what it's supposed to mean. Rephrase. Also, maybe it isn't the best place for it.}. Thus, the new idea of our type system is to feature \emph{hole bindings} $[[{ + h : T n }]]$ and \emph{destination bindings} $[[{ - h : m ⌊ T ⌋ n }]]$ in addition to the variable bindings $[[{ x : m T}]]$ that usually populates typing contexts.
+
+Such bindings mention two distinct classes of names: regular variable names $[[x]], [[y]]$, and \emph{hole names} $[[h]], [[h1]], [[h2]]$ which are identifiers for a memory cell that hasn't been written to yet. Hole names are represented by natural numbers under the hood\improvement{There's no hood for them to be under. Something like “For simplicity we'll assume that hole names are natural number”. But must explain why it simplifies anything.}, so they are equipped with addition $[[h+h']]$ and can act both as relative offsets or absolute positions in memory. Typically, when a structure is effectively allocated, its hole (and destination) names are shifted by the maximum hole name encountered so far in the program (denoted $[[max(hnames(C))]]$) ; this corresponds to finding the next unused memory cell in which to write new data.
+
+The mode $[[n]]$ of a hole binding $[[{ + h : T n }]]$ (also present in the corresponding destination type $[[⌊ T ⌋ n]]$) indicates the mode a value must have to be written to it (that is to say, the mode of bindings that the value depends on to type correctly). We see the mode of a hole coming into play when a hole is located behind an exponential constructor: we should only write a non-linear value to the hole $[[+h]]$ in $[[ᴇ ων +h]]$. In particular, we should not store a destination into this hole, otherwise it could later be extracted and used in a non-linear fashion.
+
+A destination binding $[[{ - h : m ⌊ T ⌋ n }]]$ mentions two modes, $[[m]]$ and $[[n]]$; $[[m]]$ is the mode of the binding (in particular, it informs on the age of the destination itself\improvement{This parenthetic remark doesn't read very well, I think that part of the problem is that the explanation of what ages mean is a little handwavy and it's difficult to refer to it}). Whereas $[[n]]$ is part of the destination's type $[[⌊ T ⌋ n]]$\improvement{(Yann) I know it's just a phrasing, but as it is it sounds to naively contradict the intro of the section which says explicitly that modes aren't part of types, which got me a bit surprised in the first read} and corresponds to the mode a value has to have to be written to the corresponding hole. In a well-typed closed program the mode $[[m]]$ of a destination binding can never be of multiplicity $[[ω]]$ or age $[[∞]]$ in the typing tree; it is always linear and of finite age.
+
 
 \paragraph{Typing of ampars}
 
@@ -870,10 +892,6 @@ Rules for unit, left and right variants, and product are straightforward.
 Rule \textsc{Ty-val-Exp} is rather classic too: we multiply the dependencies $[[G]]$ of the value by the mode $[[n]]$ of the exponential. The intuition is that if $[[v]]$ uses a resource $[[v']]$ twice, then $\expcons{\ottsmode{2}}[[v]]$, that corresponds to two uses of $[[v]]$ (in a system with such a mode), will use $[[v']]$ four times.
 
 Rule \textsc{Ty-val-Fun} indicates that (value level) lambda abstractions cannot have holes inside. In other terms, a function value cannot be built piecemeal like other data structures, its whole body must be a complete term right from the beginning. It cannot contain free variables either, as the body of the function must type in context $[[D,{x:m T}]]$ where $[[D]]$ is made only of destination bindings. One might wonder, how can we represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$? The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form, but pending to be built into a value. As the form $[[d ⨞ ( λ y ¹ν ⟼ t)]]$ is part of term syntax, and not value syntax, we allow free variable captures in it.
-
-\section{Evaluation contexts and semantics}\label{sec:ectxs-sem}
-
-The semantics of \destcalculus{} is given using small-step reductions on a pair $[[ C[t] ]]$\improvement{We need to explain that despite borrowing the notation, this ought to be thought of not as a term, but as a proper par of a context and a term} of an evaluation context $[[C]]$ (represented\improvement{I don't think “represented” is the right word here} by a stack) determining a focusing path, and a term $[[t]]$ under focus. Such a pair $[[ C[t] ]]$ is called a \emph{command}, and represents a running program. We think that our semantics makes it easier to reason about types and linearity of a running program with holes than a store-based approach such as the one previewed in~\cref{sec:scope-escape-dests}.\improvement{We need to explain why. This has something to do with the scopedness of the state or something or other.}
 
 \subsection{Evaluation contexts forms}\label{ssec:ectxs}
 
