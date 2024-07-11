@@ -273,7 +273,7 @@
 
 
 \begin{abstract}
-  Destination-passing---aka out-parameters---is taking a parameter to fill rather than returning a result from a function. Due to its apparent imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure core calculus with destinations. Our calculus subsumes all the existing systems, and can be used to reason about their correctness or extension. In addition our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to represent both linear types and a system of ages to manage scopes. Type safety of our core calculus was largely proved formally with the Coq proof assistant.
+  Destination-passing---aka out-parameters---is taking a parameter to fill rather than returning a result from a function. Due to its apparent imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure core calculus with destinations. Our calculus subsumes all the existing systems, and can be used to reason about their correctness or extension. In addition, our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to represent both linear types and a system of ages to manage scopes. Type safety of our core calculus was largely proved formally with the Coq proof assistant.
 \end{abstract}
 
 \maketitle
@@ -1098,7 +1098,7 @@ In the introduction of the article, we announced a safe framework for in-place m
 \codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
 \ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
 \ottkw{drop} ~\pmb{:}~ [[Token ¹ν → ①]]\\[\interdefskip]
-[[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]\\[\interdefskip]
+[[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]\\[2\interdefskip]
 [[allocCoW]] ~\pmb{:}~ [[T ⧔ ⌊ T ⌋ ¹ν]]
 \end{array}}
 
