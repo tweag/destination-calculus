@@ -187,7 +187,7 @@ val, v :: 'val_' ::= {{ com Value }}
 ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }}
   | ⬜ :: :: Nil {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
 %  | c :: S :: S {{ coq (cons [[c]] nil) }}
-  | C ∘ c :: :: Comp {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\hspace*{0.5em}\circ\hspace*{0.5em}[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
+  | C ∘ c :: :: Comp {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\hspace*{0.4em}\circ\hspace*{0.4em}[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
   | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]]\hspace*{0.11em}\llparenthesis [[h]]\assigneq_{[[H]]}\,[[v]]\hspace*{0.11em}\rrparenthesis }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }} {{ tex \biggerparenl[[C]]\biggerparenr }}
 

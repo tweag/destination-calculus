@@ -1104,17 +1104,22 @@ In the introduction of the article, we announced a safe framework for in-place m
 [[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]
 \end{array}}
 
-We now have two possible versions of $\ottkw{alloc}$: the new one with an in-place mutation memory model ($\ottkw{ip}$), that has to be managed linearly, and the old one that doesn't have to used linearly, and features a copy-on-write ($\ottsctor{cow}$) memory model.
+We now have two possible allocation primitives: the new one with an in-place mutation memory model ($\ottkw{ip}$), that has to be managed linearly, and the old one that doesn't have to used linearly, and features a copy-on-write ($\ottsctor{cow}$) memory model.
 
-We use the $[[Token]]$ type as an intrinsic source of linearity that infects the ampar returned by $[[allocIP]]$. Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. In the system featuring the $[[Token]]$ type and $[[allocIP]]$, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ containing a token variable that the user can $\ottkw{dup}$licate and $\ottkw{drop}$ freely to give birth to an arbitrary number of ampars, that will then have to be managed linearly.\improvement{(Yann) This part wasn't entirely clear to me initially. I think what get me to understand are the following simple facts, that you might or might not want to stress more explicitly: 1. we can't create tokens in the language, anywhere 2. Which means that you always need to have the token in the context, and in particular in the context of any subterm that contains an call to `allocip` 3. Which means that any application of allocip creating an ampar will be contaminated with the (linear) token in the context and can't be duplicated}
+% Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. Indeed, if the ampar were used twice, 
+% that infects the ampar returned by $[[allocIP]]$
 
-Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ is very similar to having a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
+In the system featuring tokens and $[[allocIP]]$, we use the $[[Token]]$ type as an intrinsic source of linearity that infects ampars. Tokens are not forgeable by the user, but instead, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$, featuring a single initial, linear token. The user is free to $\ottkw{dup}$licate (or $\ottkw{drop}$) the variable $[[tok0]]$ to give birth to an arbitrary number of tokens $[[tokk]]$, and then to an arbitrary number of ampars through $[[allocIP tokk]]$.
 
-In such an extension, as ampars are managed linearly, we can change the allocation and renaming mechanisms:
+However, each ampar produced like so will have a linear dependency on a $[[tokk]]$ variable, that itself will have a chain of linear dependencies up to $[[tok0]]$, because all the function arrows in the code excerpt above are linear. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
+
+Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]$ is a slightly more ergonomic solution than adding a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
+
+In \destcalculus{} with $[[Token]]$s and $[[allocIP]]$, as ampars are managed linearly, we can change the allocation and renaming mechanisms:
 \begin{itemize}
-  \item the hole name for a new ampar can be chosen fresh right from the start (this corresponds to a new heap allocation);
+  \item the hole name for a new ampar is chosen fresh right from the start (this corresponds to a new heap allocation);
   \item adding a new hollow constructor still require freshness for its hole names (this corresponds to a new heap allocation too);
-  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\mycirc$) no longer require any renaming: we have the guarantee that the names are globally fresh, and thus we can do in-place memory updates.
+  \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using \textopname{fillComp} ($\triangleleft\mycirc$) no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
 \end{itemize}
 
 We decided to omit the linearity aspect of ampars in \destcalculus{} as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.
