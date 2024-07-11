@@ -593,7 +593,7 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
                [[p]] &::=& [[¹]] \grammsep [[ω]] \\
                [[a]] &::=& [[ν]] \grammsep [[↑]] \grammsep [[∞]] \\
 &&\\
-[[P]], [[D]], [[O]], [[G]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
+[[P]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
 \end{array}
 }\end{codefig}
 \improvement{Context scaling and addition should be defined outside of the grammar.}
@@ -645,7 +645,7 @@ from⧔' (alloc map d ⟼⮒
 
 \destcalculus{} is based on simply typed lambda calculus featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. It is also equipped with the destination type $[[⌊ T ⌋ m]]$ and ampar type $[[S ⧔ T]]$ that have been previewed in~\cref{sec:working-with-dests} to represent DPS structure building. The core grammar of the language is presented in~\cref{fig:grammar}. We also provide commonly used syntactic sugar forms for terms in~\cref{fig:sterm}.\improvement{Go over this paragraph, it needs clean-up.}
 
-Modes in \destcalculus{} have two axes\improvement{Remove the terminology “axes” for the modes. This terminology is specific to the Oxidizing Ocaml work and, while reasonably intuitive, isn't worth introducing for a single use.} --- multiplicity (i.e.\unsure{traditionally \emph{i.e.} and \emph{e.g.}, as any Latin phrase, are emphasised. I notice you don't emphasise them, and I presumably did at some point, so let's make sure it's uniform} linear/non-linear), and age control\improvement{Here and everywhere: “age” not “age control”. “Age control” is funny, but it doesn't make much sense in this context} --- and they take place on variable bindings in typing contexts $[[O]]$, and on function arrows, but are not part of the type itself.
+Modes in \destcalculus{} have two axes\improvement{Remove the terminology “axes” for the modes. This terminology is specific to the Oxidizing Ocaml work and, while reasonably intuitive, isn't worth introducing for a single use.} --- multiplicity (i.e.\unsure{traditionally \emph{i.e.} and \emph{e.g.}, as any Latin phrase, are emphasised. I notice you don't emphasise them, and I presumably did at some point, so let's make sure it's uniform} linear/non-linear), and age control\improvement{Here and everywhere: “age” not “age control”. “Age control” is funny, but it doesn't make much sense in this context} --- and they take place on variable bindings in typing contexts $[[P]]$, and on function arrows, but are not part of the type itself.
 
 We omit the mode annotation $[[m]]$ on function arrows and destinations when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
 
@@ -808,8 +808,11 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
              &|\,& [[- h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[- h]]$}}\quad\quad\textit{(destination)} \\
              &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
              &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
-&&\\
-[[P]], [[D]], [[O]], [[G]] &::=& \ldots \grammsep [[{ + h : T n }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[-⁻¹ D]]
+             &&\\
+\end{array}\\[\interdefskip]\!\!\!\begin{array}{rrlcccccc}
+[[D]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] &|& [[D1 + D2]] &|& [[m · D]] \\
+[[P]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] &|& [[P1 + P2]] &|& [[m · P]] \\
+\hspace*{\widthof{$[[t]], [[u]]$}-\widthof{$[[G]]$}}[[G]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] &|& [[G1 + G2]] &|& [[m · G]]
 \end{array}
 }\end{codefig}
 
@@ -841,7 +844,6 @@ In most rules, we use a sum $[[G1 + G2]]$ for typing contexts (or the disjoint v
 
 In every figure,\improvement{There's something jarring about this list. Not completely sure what yet. Probably explain why we need these conventions in the first place.}
 \begin{itemize}
-  \item $[[O]]$ denotes an arbitrary typing context, with no particular constraint;
   \item $[[G]]$ denotes a typing context made only of hole and destination bindings;
   \item $[[P]]$ denotes a typing context made only of destination and variable bindings;
   \item $[[D]]$ denotes a typing context made only of destination bindings.
@@ -1002,6 +1004,7 @@ Red-PatP,
 Red-PatE,
 Red-ToA,
 Red-FromA,
+Red-Alloc,
 Red-FillU,
 Red-FillF,
 Red-FillL,
@@ -1250,6 +1253,8 @@ Red-ToA,
 Focus-FromA,
 Unfocus-FromA,
 Red-FromA,
+%
+Red-Alloc,
 %
 Focus-FillU,
 Unfocus-FillU,
