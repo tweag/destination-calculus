@@ -714,7 +714,7 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement\unsure{Thomas: why did you add hfill here (between the two parts of the figure)? --~Arnaud: they stuck to each other, it was jarring. A empty paragraph with hfill adds a little bit of welcome vertical space.}
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. We also lift mode multiplication to typing contexts as a pointwise operation on bindings; we pose $[[n'·({ x : m T })]] \btriangleq [[{ x : n' · m T }]]$.
 
 \begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 \ottdefnTyXXterm{}
@@ -729,14 +729,6 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 \ottdefnTyXXsterm{}
 \egroup
 \end{ottfig}
-
-We also extend mode product to a pointwise action on typing contexts:
-
-\[\left\{\begin{array}{rcl}
-  [[n'·({ x : m T })]] &=& [[{ x : n' · m T }]] \\
-  [[n'·({ + h : T n })]] &=& [[{ + h : T n' · n }]] \\
-  [[n'·({ - h : m ⌊ T ⌋ n })]] &=& [[{ - h : n' · m ⌊ T ⌋ n }]]
-\end{array}\right.\]
 
 \cref{fig:ty-term-sterm} presents the typing rules for terms\improvement{We have to be clear, before we invite people to read the figure, that we're going to explain most of it below, and it's too early to actually read it.}, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. \cref{fig:ty-val} presents the typing rules for values of the language.
 
@@ -792,8 +784,6 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
 
 \subsection{Runtime values and extended terms}
 
-\TODO{Re-introduce Ty-term-val (left to do: link to the new figure)}
-
 \begin{codefig}{\caption{Extended terms and runtime values}\label{fig:grammar-val}}{\setlength{\arraycolsep}{1ex}
 \!\!\!\begin{array}{rrl}
 [[t]], [[u]] &::=& \ldots \grammsep [[v]] \\
@@ -821,6 +811,14 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
 The class of values $[[v]]$ is purely a denotation for runtime data structures.
 
 The typing of runtime values, given in~\cref{fig:ty-val} is where hole and destination bindings appears. Values can have holes and destinations inside, but a value used as a term must not have any hole\footnote{see \textsc{Ty-term-Val}: the value must type in a context $[[D]]$ which means ``destination only'' by convention}. Also, variables cannot mention free variables; that makes it easier to prove substitution properties (as we will see in~\cref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
+
+We extend mode action on typing contexts to work with the new bindings forms:
+
+\[\left\{\begin{array}{rcl}
+  [[n'·({ x : m T })]] &=& [[{ x : n' · m T }]] \\
+  [[n'·({ + h : T n })]] &=& [[{ + h : T n' · n }]] \\
+  [[n'·({ - h : m ⌊ T ⌋ n })]] &=& [[{ - h : n' · m ⌊ T ⌋ n }]]
+\end{array}\right.\]
 
 Hole bindings and destination bindings of the same hole name $[[h]]$ are meant to annihilate\improvement{``Annihilate'' isn't an example of a definition that is underused. It's used only quite locally, but it's actually relied on. That being said, I still think it has to go because it's underdefined and will probably raise more question that it will answer.} each other in the typing context given they have a matching base type and mode. That way, the typing context of a term can stay constant during reduction:
 
