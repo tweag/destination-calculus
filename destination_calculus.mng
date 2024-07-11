@@ -598,10 +598,7 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 }\end{codefig}
 \improvement{Context scaling and addition should be defined outside of the grammar.}
 
-
-\TODO{We are missing syntactic sugar for some forms like unit () (needs DisposableOnly, do not forget)}
-
-\sidebysidecodefig{\caption{Syntactic sugar forms for terms}\label{fig:sterm}}{t}{0.46}{
+\sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
 [[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
 t ⨞· (to⧔ t')
 ]]\end{array}\\[\interdefskip]
@@ -643,11 +640,11 @@ from⧔' (alloc map d ⟼⮒
 ]]\end{array}
 }
 
-\destcalculus{} is based on simply typed lambda calculus featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. It is also equipped with the destination type $[[⌊ T ⌋ m]]$ and ampar type $[[S ⧔ T]]$ that have been previewed in~\cref{sec:working-with-dests} to represent DPS structure building. The core grammar of the language is presented in~\cref{fig:grammar}. We also provide commonly used syntactic sugar forms for terms in~\cref{fig:sterm}.\improvement{Go over this paragraph, it needs clean-up.}
+\destcalculus{} is based on simply typed lambda calculus featuring modal function types and modal boxing, in addition to unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. It is also equipped with the destination type $[[⌊ T ⌋ m]]$ and ampar type $[[S ⧔ T]]$ that have been previewed in~\cref{sec:working-with-dests} to represent destination-passing-style structure building. The core grammar of the language is presented in~\cref{fig:grammar}. We also provide commonly used syntactic sugar for terms in~\cref{fig:sterm}.\improvement{Go over this paragraph, it needs clean-up.}
 
 Modes in \destcalculus{} have two axes\improvement{Remove the terminology “axes” for the modes. This terminology is specific to the Oxidizing Ocaml work and, while reasonably intuitive, isn't worth introducing for a single use.} --- multiplicity (i.e.\unsure{traditionally \emph{i.e.} and \emph{e.g.}, as any Latin phrase, are emphasised. I notice you don't emphasise them, and I presumably did at some point, so let's make sure it's uniform} linear/non-linear), and age control\improvement{Here and everywhere: “age” not “age control”. “Age control” is funny, but it doesn't make much sense in this context} --- and they take place on variable bindings in typing contexts $[[P]]$, and on function arrows, but are not part of the type itself.
 
-We omit the mode annotation $[[m]]$ on function arrows and destinations when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring (in particular, a function arrow without annotation is linear by default). A function arrow with multiplicity $[[¹]]$ is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
+We omit the mode annotation $[[m]]$ on functions, destinations, and $\ottkw{case}$ statements when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring. In particular, a function arrow without annotation, or with multiplicity annotation $[[¹]]$, is linear; it is equivalent to the linear arrow $\ottstype{\multimap}$ from~\cite{girard_linear_1995}.
 
 \subsection{Age-control for bindings to prevent scope escape of destinations}\label{ssec:age-control}
 
@@ -770,7 +767,7 @@ $\left\{\begin{array}{rcl}
 
 Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is also used to chain destination-filling operations.
 
-Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize\improvement{”Crystalize”?} the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}. We omit the mode annotation on $\ottkw{case}$ statements and lambda abstractions when the mode in question is the multiplicative neutral element $[[¹ν]]$ of the mode semiring.
+Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize\improvement{”Crystalize”?} the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
 
 The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies\improvement{“Most of the safety“ seems to imply that safety can be split into pieces. What you mean is that its the most interesting rule for destinations. Which also means that it should probably be explained much earlier.}, and it is there where scope control takes place. It opens\improvement{You have never defined “open an ampar”} an ampar $[[t]]$, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. This lets the user access destinations of an ampar while temporarily forgetting about the structure with holes (being mutated behind the scenes by the destination-filling primitives). Type safety for $\ottkw{map}$ is based on the idea that a new scope is created for $[[x]]$ and $[[t']]$, so anything already present in the ambient scope (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ point of view\improvement{I'm not sure terms have a point of view}. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in~\cref{fig:scope-rules}.
 
