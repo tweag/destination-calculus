@@ -59,7 +59,7 @@ hname, h, hd :: 'hname_' ::= {{ com Hole (or destination) name, represented by a
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\hspace*{-.2ex}\ottshname{+}\hspace*{-.2ex}[[h']] }}
   | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hname_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
   | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hname_max [[H]]) }} {{ tex \ottshname{\mathsfbf{max}(}[[H]]\ottshname{)} }}
-  | ( h ) :: S :: Paren {{ coq [[h]] }} {{ tex [[h]] }}
+  | ( h ) :: S :: InvisibleParen {{ coq [[h]] }} {{ tex [[h]] }}
 
 hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex \ottshname{[[hnames]]} }}
   | { h1 , .. , hk } :: :: FromList {{ coq (hnames_ [[h1..hk]]) }}
@@ -95,8 +95,8 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\mathop{\triangleleft\mycirc}[[t']] }}
 
-  | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }}
-  | ( t ) :: S :: Paren {{ coq [[t]] }} {{ com Variable subsitution in term }}
+  | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }} {{ com Variable subsitution in term }}
+  | ( t ) :: S :: Paren {{ coq [[t]] }} {{ tex ([[t]]) }}
   | b1 sp1 t b2 sp2 :: S :: BreakSpacing1 {{ coq [[t]] }} {{ tex [[b1]][[sp1]][[t]][[b2]][[sp2]] }}
   | b1 sp1 t b2 :: S :: BreakSpacing2 {{ coq [[t]] }} {{ tex [[b1]][[sp1]][[t]][[b2]] }}
   | b sp t :: S :: BreakSpaacing3 {{ coq [[t]] }} {{ tex [[b]][[sp]][[t]] }}
@@ -178,7 +178,7 @@ val, v :: 'val_' ::= {{ com Value }}
   | ( v1 , v2 ) :: :: Prod {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[v2]]\ottsctor{)} }} {{ com Product }}
   | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
   | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
-  | ( v ) :: S :: Paren {{ coq [[v]] }}
+  | ( v ) :: S :: Paren {{ coq [[v]] }} {{ tex ([[v]]) }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DYNAMIC SYNTAX
@@ -187,9 +187,9 @@ val, v :: 'val_' ::= {{ com Value }}
 ectxs, C :: 'ectxs_' ::= {{ com Evaluation context stack }} {{ coq (list ectx) }}
   | ⬜ :: :: Nil {{ coq nil }} {{ com Represent the empty stack / "identity" evaluation context }}
 %  | c :: S :: S {{ coq (cons [[c]] nil) }}
-  | C ∘ c :: :: Comp {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\circ[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
-  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]][ [[h]]\assigneq_{[[H]]}\,[[v]] ] }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
-  | ( C ) :: S :: Paren {{ coq [[C]] }}
+  | C ∘ c :: :: Comp {{ coq (cons [[c]] [[C]]) }} {{ tex [[C]]\hspace*{0.5em}\circ\hspace*{0.5em}[[c]] }} {{ com Push $[[c]]$ on top of $[[C]]$ }}
+  | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]]\hspace*{0.11em}\llparenthesis [[h]]\assigneq_{[[H]]}\,[[v]]\hspace*{0.11em}\rrparenthesis }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
+  | ( C ) :: S :: Paren {{ coq [[C]] }} {{ tex \biggerparenl[[C]]\biggerparenr }}
 
 ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | t' ⬜ :: :: App1 {{ tex [[t']]~[[⬜]] }}
@@ -211,7 +211,7 @@ ectx, c :: 'ectx_' ::= {{ com Evaluation context component }}
   | ⬜ ⨞· t' :: :: FillComp1 {{ tex [[⬜]]\mathop{\triangleleft\mycirc}[[t']] }}
   | v ⨞· ⬜ :: :: FillComp2 {{ tex [[v]]\mathop{\triangleleft\mycirc}[[⬜]] }}
   | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
-  | ( c ) :: S :: Paren {{ coq [[c]] }}
+  | ( c ) :: S :: Paren {{ coq [[c]] }} {{ tex [[c]] }} % {{ tex \biggerparenl[[c]]\biggerparenr }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TYPING SYNTAX
@@ -309,7 +309,7 @@ ctx, O {{ tex \Omega }}, G {{ tex \Theta }}, D {{ tex \Delta }}, P {{ tex \Gamma
   | -⁻¹ D :: M :: HminusInv {{ coq (hminus_inv [[D]]) }} {{ tex \ottshname{\destminus^{\scriptscriptstyle\text{-}1} }[[D]] }} {{ com Transforms dest bindings into a hole bindings }}
   | - G :: S :: Hminus {{ coq (hminus [[G]]) }} {{ com Transforms hole bindings into dest bindings }} {{ tex \ottshname{\destminus}[[G]] }}
   | O [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[O]] [[H]] [[h']]) }} {{ tex [[O]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
-  | ( O ) :: S :: Paren {{ coq [[O]] }}
+  | ( O ) :: S :: Paren {{ coq [[O]] }} {{ tex ([[O]]) }}
 
 embed
 {{ coq
@@ -982,9 +982,9 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | P ⊢ t : T :: :: Ty_term
   | P ˢ⊢ t : T :: :: Ty_sterm
   | D ⊣ C : T1 ↣ T2 :: :: Ty_ectxs {{ com Typing of evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T1]]\ottstype{\rightarrowtail}[[T2]] }}
-  | ⊢ C [ t ] : T :: :: Ty
-  | C [ t ] ⟶ C' [ t' ] :: :: Sem
-  | C [ t ] :: :: Cmd
+  | ⊢ C [ t ] : T :: :: Ty {{ tex [[⊢]][[C]]\biggerbrackl [[t]] \biggerbrackr[[:]][[T]] }}
+  | C [ t ] ⟶ C' [ t' ] :: :: Sem {{ tex [[C]]\biggerbrackl [[t]] \biggerbrackr[[⟶]][[C']]\biggerbrackl [[t']] \biggerbrackr }}
+  | C [ t ] :: :: Cmd {{ tex [[C]]\biggerbrackl [[t]] \biggerbrackr }}
   | Z | t ⟶ Z' | t' :: :: HeapSem
   | Z | t :: :: HeapCmd
 

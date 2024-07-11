@@ -386,7 +386,7 @@ D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ¹↑·D1 + D3 ⊣ C ∘ (hnames(D3) ᵒᵖ⟨v2 ❟ ⬜⟩) : T' ↣ U0
 
 defn
-⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} by
+⊢ C [ t ] : T :: :: Ty :: Ty_ {{ com Typing judgment for commands }} {{ tex [[⊢]][[C]]\biggerbrackl [[t]] \biggerbrackr[[:]][[T]] }} by
 
 {{ ValidOnly [[D]] }} [[:ValidOnlyD]]
 {{ DestOnly [[D]] }} [[:DestOnlyD]]
@@ -404,7 +404,7 @@ Sem :: '' ::=
 % We want theorem that C[t] -->* C[v] where englobing context doesn't change?
 
 defn
-C [ t ] ⟶ C' [ t' ] :: :: Sem :: '' {{ com Small-step evaluation of commands }} by
+C [ t ] ⟶ C' [ t' ] :: :: Sem :: '' {{ com Small-step evaluation of commands }} {{ tex [[C]]\biggerbrackl [[t]] \biggerbrackr[[⟶]][[C']]\biggerbrackl [[t']] \biggerbrackr }} by
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------------- :: Focus_App1
