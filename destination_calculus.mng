@@ -780,7 +780,7 @@ The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\
 
 \section{Operational semantics}\label{sec:ectxs-sem}
 
-Before we define the operational semantics of \destcalculus{} we need to introduce a few more concepts. We'll need commands $[[ C[t] ]]$, they're described in \cref{ssec:ty-ectxs-cmd}, rather than directly on terms; and we'll need values, described in \ref{fig:grammar}. Indeed, the terms \destcalculus{} lack any way to represent destinations or holes, or really any kind of value (for instance $[[true]]$ isn't a value, it's a computation). It's a peculiarity of \destcalculus{} that values only exist during the reduction, in this aspect our operational semantics resembles a denotational semantics. We sometimes call values \emph{runtime values} to emphasize this aspect. In order to express type safety with respect to our operational semantics, we'll need to extend the type system to cover commands and values, but these new typing rules are better thought of as technical device for the proofs than as part of the type system proper.
+Before we define the operational semantics of \destcalculus{} we need to introduce a few more concepts. We'll need commands $[[ C[t] ]]$, they're described in \cref{ssec:ty-ectxs-cmd}; and we'll need values, described in \ref{fig:grammar}. Indeed, the terms of \destcalculus{} lack any way to represent destinations or holes, or really any kind of value (for instance $[[true]]$ isn't a value, it's a computation). It's a peculiarity of \destcalculus{} that values only exist during the reduction, in this aspect our operational semantics resembles a denotational semantics. We sometimes call values \emph{runtime values} to emphasize this aspect. In order to express type safety with respect to our operational semantics, we'll need to extend the type system to cover commands and values, but these new typing rules are better thought of as technical device for the proofs than as part of the type system proper.
 
 \subsection{Runtime values and extended terms}
 
@@ -828,13 +828,11 @@ On the other hand, both sides of the ampar may also contain stored destinations 
 
 The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are true given that $[[-⁻¹ D3]]$ is a valid typing context, so are not really a new restriction on $[[D3]]$. They are mostly used to ease the mechanized proof of type safety for the system.\improvement{We haven't defined what LinOnly and FinAgeOnly mean. This is intuitive, but still.}
 
-\subsubsection{being rewritten}
-
-Values can have holes and destinations inside, but a value used as a term must not have any hole\footnote{see \textsc{Ty-term-Val}: the value must type in a context $[[D]]$ which means ``destination only'' by convention}. Also, variables cannot mention free variables; that makes it easier to prove substitution properties (as we will see in~\cref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
-
 \critical{Do not forget this}
 \subsubsection{To reintegrate}
 
+
+Values can have holes and destinations inside, but a value used as a term must not have any hole\footnote{see \textsc{Ty-term-Val}: the value must type in a context $[[D]]$ which means ``destination only'' by convention}. Also, variables cannot mention free variables; that makes it easier to prove substitution properties (as we will see in~\cref{ssec:sem}, we perform substitutions not only in terms, but also in evaluation contexts sometimes).
 
 We extend mode action on typing contexts to work with the new bindings forms:
 
