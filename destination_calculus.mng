@@ -707,15 +707,17 @@ As a result, we cannot adopt rules from CLL blindly. We must be even more cautio
 To recover sensible rules for the connective, we decided to make it asymmetric, hence ampar ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
 \begin{itemize}
 \item the left side $[[S]]$ can contain holes, and can be only be eliminated by interaction with $\ottstype{\lfloor[[S]]\rfloor}$ using \textopname{fillComp} ($\triangleleft\mycirc$) to free up the right side $[[T]]$;
-\item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. At term level, this is done using $\ottkw{from}_{\ottkw{\ltimes}}'$ and $\ottkw{map}$.
+\item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. This is done using $\ottkw{from}_{\ottkw{\ltimes}}'$ and $\ottkw{map}$.
 
 \end{itemize}
 
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. We also lift mode multiplication to typing contexts as a pointwise operation on bindings; we pose $[[n'·({ x : m T })]] \btriangleq [[{ x : n' · m T }]]$.
-
-\TODO{Introduce context addition}
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. For that we need two operations:
+\begin{itemize}
+  \item We lift mode multiplication to typing contexts as a pointwise operation on bindings;\\ we pose $[[n'·({ x : m T })]] \btriangleq [[{ x : n' · m T }]]$.
+  \item We define context addition as a partial operation where $[[({ x : m T }) + P]] = [[{ x : m T },P]]$\hspace*{0.6em}if $[[x]] \notin [[P]]$ and $[[({ x : m T }) + ({ x : m' T })]] = [[x]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[T]]$.
+\end{itemize}
 
 \begin{ottfig}[b]{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 \ottdefnTyXXterm{}
@@ -752,7 +754,7 @@ $\left\{\begin{array}{rcl}
 \end{minipage}
 }
 
-Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is also used to chain destination-filling operations.
+Rule \textsc{Ty-term-PatU} is elimination for unit, and is also used to chain fill operations.
 
 Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice enforces the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
 
@@ -815,6 +817,7 @@ We extend mode action on typing contexts to work with the new bindings forms:
   [[n'·({ + h : T n })]] &=& [[{ + h : T n' · n }]] \\
   [[n'·({ - h : m ⌊ T ⌋ n })]] &=& [[{ - h : n' · m ⌊ T ⌋ n }]]
 \end{array}\right.\]
+\noindent{}We also extend context addition similarly.\critical{Even more partial than the non-extended one: same hname cannot coexist in both polarities}
 
 Hole bindings and destination bindings of the same hole name $[[h]]$ are meant to annihilate\improvement{``Annihilate'' isn't an example of a definition that is underused. It's used only quite locally, but it's actually relied on. That being said, I still think it has to go because it's underdefined and will probably raise more question that it will answer.} each other in the typing context given they have a matching base type and mode. That way, the typing context of a term can stay constant during reduction:
 
