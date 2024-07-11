@@ -809,7 +809,7 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
              &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
              &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
              &&\\
-\end{array}\\[\interdefskip]\!\!\!\begin{array}{rrlcccccc}
+\end{array}\\\hspace*{-0.5em}\begin{array}{rrlcccccc}
 [[D]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] &|& [[D1 + D2]] &|& [[m · D]] \\
 [[P]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] &|& [[P1 + P2]] &|& [[m · P]] \\
 \hspace*{\widthof{$[[t]], [[u]]$}-\widthof{$[[G]]$}}[[G]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] &|& [[G1 + G2]] &|& [[m · G]]
