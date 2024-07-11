@@ -55,7 +55,7 @@ destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl d
 submission:
 	$(MAKE) clean
 	touch no-editing-marks
-	$(MAKE) destination_calculus-submission.pdf destination_calculus-supplementary.pdf
+	$(MAKE) destination_calculus-supplementary.pdf destination_calculus-submission.pdf
 
 destination_calculus-submission.pdf: destination_calculus.pdf
 	pdftk $< cat 1-26 output temp.pdf
