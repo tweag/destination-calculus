@@ -37,11 +37,11 @@
 \quad\quad%
 \texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}}}{}{}
 \patchcmd{\ottdruleTyXXtermXXPatS}{%
-\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}}%
-\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}%
-}{\ottpremise{ \Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}%
+\ottpremise{ \Gamma_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}}%
+\ottpremise{ \Gamma_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}%
+}{\ottpremise{ \Gamma_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{1}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{1}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{1}}}}  \pmb{:}  \ottstype{U}%
 \quad\quad%
-\Theta_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}}{}{}
+\Gamma_{{\mathrm{2}}} ,~  \ottmv{x_{{\mathrm{2}}}} :\!_{\! \ottsmode{m} } \ottstype{T_{{\mathrm{2}}}}    \,\pmb{\vdash}\,  \ottnt{u_{{\mathrm{2}}}}  \pmb{:}  \ottstype{U}}}{}{}
 
 \usepackage{tikzit}
 \definecolor{sczcolor}{RGB}{0,0,0}
@@ -591,7 +591,6 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 [[P]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
 \end{array}
 }\end{codefig}
-\improvement{Context scaling and addition should be defined outside of the grammar.}
 
 \sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
 [[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
@@ -716,10 +715,10 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 
 The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. We also lift mode multiplication to typing contexts as a pointwise operation on bindings; we pose $[[n'·({ x : m T })]] \btriangleq [[{ x : n' · m T }]]$.
 
-\begin{ottfig}{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
-\ottdefnTyXXterm{}
+\TODO{Introduce context addition}
 
-\hfill
+\begin{ottfig}[b]{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
+\ottdefnTyXXterm{}
 
 \renewcommand\ottaltinferrule[4]{
   \inferrule*[fraction={===},narrower=0.3,lab=#1,#2]
@@ -730,15 +729,14 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 \egroup
 \end{ottfig}
 
-\cref{fig:ty-term-sterm} presents the typing rules for terms\improvement{We have to be clear, before we invite people to read the figure, that we're going to explain most of it below, and it's too early to actually read it.}, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. \cref{fig:ty-val} presents the typing rules for values of the language.
+\cref{fig:ty-term-sterm} presents the typing rules for terms, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. \cref{fig:ty-val} presents the typing rules for values of the language. We'll now walk through the few peculiarities of the type system for terms.
 
-Let's focus on a few peculiarities of the type system for terms.
-The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \textsc{Ty-term-Val} and \textsc{Ty-term-Var} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, that is to say the two aforementioned rules (\textsc{Ty-term-Val} is indeed a leaf for judgments $[[⊢]]$, that holds a subtree of judgments $[[⫦]]$).\unsure{revisit if we allow weakening for dests, as we could replace that by $[[ων·P]]$ as in~\cite{bernardy_linear_2018}}
+The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \textsc{Ty-term-Var}, \textsc{Ty-term-Alloc} and \textsc{Ty-sterm-Unit} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, \emph{i.e.} in the three aforementioned rules.
 
-\newcommand{\pleq}{\stackrel{\pmb{\mathrm{p}}}{\mathtt{<:}}}
-\newcommand{\aleq}{\stackrel{\pmb{\mathrm{a}}}{\mathtt{<:}}}
+\newcommand{\pleq}{\mathop{\mathtt{<:}^{\scriptscriptstyle{\pmb{\mathsf{p}}}}}}
+\newcommand{\aleq}{\mathop{\mathtt{<:}^{\scriptscriptstyle{\pmb{\mathsf{a}}}}}}
 
-Rule \textsc{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν <: m]]$ defined as~~$[[p a]] \mathtt{<:} [[p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}
+Rule \textsc{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν <: m]]$ defined as~~$[[p a <: p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}
 
 {\setlength{\arraycolsep}{\widthof{\,}}
 \begin{minipage}{0.2\linewidth}
@@ -756,9 +754,9 @@ $\left\{\begin{array}{rcl}
 
 Rule \textsc{Ty-term-PatU} is elimination (or pattern-matching) for unit, and is also used to chain destination-filling operations.
 
-Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice crystalize\improvement{”Crystalize”?} the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
+Pattern-matching with rules \textsc{Ty-term-App}, \textsc{Ty-term-PatS}, \textsc{Ty-term-PatP} and \textsc{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice enforces the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
 
-The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies\improvement{“Most of the safety“ seems to imply that safety can be split into pieces. What you mean is that its the most interesting rule for destinations. Which also means that it should probably be explained much earlier.}, and it is there where scope control takes place. It opens\improvement{You have never defined “open an ampar”} an ampar $[[t]]$, and binds its right side (containing destinations for holes on the other side, among other things) to variable $[[x]]$ and then execute body $[[t']]$. This lets the user access destinations of an ampar while temporarily forgetting about the structure with holes (being mutated behind the scenes by the destination-filling primitives). Type safety for $\ottkw{map}$ is based on the idea that a new scope is created for $[[x]]$ and $[[t']]$, so anything already present in the ambient scope (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ point of view\improvement{I'm not sure terms have a point of view}. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in~\cref{fig:scope-rules}.
+The Rule \textsc{Ty-term-Map} is the key to the safety of \destcalculus{}\improvement{explain it earlier?}, and it introduces the idea of scopes. The $\ottkw{map}$ operator let us access the insides of an ampar $[[t]]$: it binds its right side --- containing destinations, among potentially other things --- to variable $[[x]]$ and then execute body $[[t']]$. We say the ampar is temporarily \emph{open}. While the ampar is open, the structure with holes is being mutated behind the scenes when destination-filling operations inside $[[t']]$ are evaluated. Type safety for $\ottkw{map}$ is based on the idea that a new scope is created for $[[x]]$ and $[[t']]$, so anything already present in the scope where $\ottkw{map}$ takes place (represented by $[[P2]]$ in the conclusion) appears older when we see it from $[[t']]$ scope. Indeed, when entering a new scope, the age of every remaining binding from the previous scopes is incremented by $[[↑]]$. That way we can distinguish $[[x]]$ from anything else that was already bound using the age of bindings alone. That's why $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ types in $[[P1,P2]]$ (notice the absence of shift on $[[P2]]$). A schematic explanation of the scope rules is given in~\cref{fig:scope-rules}.
 
 \begin{figure}[t]
   \scalebox{1.0}{\tikzfig{mapscopes}}
@@ -766,17 +764,17 @@ The Rule \textsc{Ty-term-Map} is where most of the safety of the system lies\imp
   \label{fig:scope-rules}
 \end{figure}
 
-We see in the figure that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, inner scope that is opened when $\ottkw{map}$ped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the right operand must be from a scope $[[↑]]$ older than the destination on the left of the operator, as this value will end up on the left of the ampar (which is thus in a scope $[[↑]]$ older than the destination originating from the right side).\improvement{I didn't understand this paragraph}
+We see in the figure that the left of an ampar (the structure being built) ``takes place'' in the ambient scope. The right side however, where destinations are, has its own new, scope that is only expanded when $\ottkw{map}$ped over. When filling a destination (e.g. $[[x1 ˢ⨞ x0]]$ in the figure), the value on the right must be from a scope $[[↑]]$ older than the destination on the left. Indeed, this value will eventually be written to a hole on the left of the ampar, which is in a scope $[[↑]]$ older than the destination.\improvement{Arnaud didn't understand this paragraph?}
 
-The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} confirm this intuition\improvement{The rules are used in the Figure, you can't say they “confirm” an “intuition”.}. The left operand of these operators must be a destination that types in the ambient context (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a child scope for its body, \textopname{fillComp} ($\triangleleft\mycirc$)/\textopname{fillLeaf}($\blacktriangleleft$)\improvement{Neither “fillLeaf” nor “fillComp” are words, they shouldn't masquerade as words. Besides, they are only used in this sentence, so they won't mean anything to the reader.} opens a portal to the parent scope for their right operand, as seen in the schema. The same phenomenon happens for the resources captured by the body of a lambda abstraction in \textsc{Ty-term-FillF}.
+The rule \textsc{Ty-term-FillComp}, or its simpler variant, \textsc{Ty-sterm-FillLeaf} from~\cref{fig:ty-term-sterm} enforces the age restriction we just mentioned. The left operand of these operators must be a destination that types in the ambient scope (both $[[P1]]$ unchanged in the premise and conclusion of the rules). The right operand, however, is a value that types in a context $[[P2]]$ in the premise, but requires $[[¹↑·P2]]$ in the conclusion. This is the opposite of the shift that $\ottkw{map}$ does: while $\ottkw{map}$ opens a newer scope for its body, operators \textopname{fillComp} ($\triangleleft\mycirc$) and \textopname{fillLeaf}($\blacktriangleleft$) transfers their right operand to the parent scope, as seen in the schema. In \textsc{Ty-term-FillF}, we observe the same age restriction on captured resources $[[P2]]$. We chose a destination-filling form for function creation because of that similarity, and so that any data can be built through piecemeal destination filling.
 
 In \textsc{Ty-term-ToA}, the operator $\ottkw{to}_{\ottkw{\ltimes}}$ embeds an already completed structure in an ampar whose left side is the structure, and right side is unit.
 
 When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \textsc{Ty-sterm-FromA'}), the left of an ampar is extracted to the ambient scope (as seen at the bottom of~\cref{fig:scope-rules} with $[[x22]]$): this is the fundamental reason why the left of an ampar has to ``take place'' in the ambient scope. We know the structure is complete and can be extracted because the right side is of type unit ($[[①]]$), and thus no destination on the right side means no hole can remain on the left. $\ottkw{from}_{\ottkw{\ltimes}}'$ is implemented in terms of $\ottkw{from}_{\ottkw{\ltimes}}$ in~\cref{fig:sterm} to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
-When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \textsc{Ty-term-FromA} however, we extract both sides of the ampar to the ambient scope, even though the right side is normally in a different scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive (it cannot contain any scope-controlled resource). This also ensures that the right side cannot contain destinations, meaning that the structure on the left is complete and ready to be read.
+When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \textsc{Ty-term-FromA} however, we extract both sides of the ampar to the ambient scope, even though the right side is normally in a different scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive: it cannot contain any scope-controlled resource. In particular this ensures that the right side cannot contain destinations, meaning that the structure on the left is complete and ready to be read.
 
-The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).\improvement{I think I've missed it, but somewhere we must comment on the fact that functions are built in destination-passing fashion.}
+The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
 
 \section{Operational semantics}\label{sec:ectxs-sem}
 
