@@ -53,8 +53,8 @@ destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl d
 	cd $(dir $<) && latexmk $(notdir $*)
 
 submission:
-	touch no-editing-marks
 	$(MAKE) clean
+	touch no-editing-marks
 	$(MAKE) destination_calculus-submission.pdf destination_calculus-supplementary.pdf
 
 destination_calculus-submission.pdf: destination_calculus.pdf
