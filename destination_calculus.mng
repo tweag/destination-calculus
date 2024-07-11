@@ -1068,14 +1068,13 @@ Record T A B := {
   }.
 \end{verbatim}
 
-where \verb+Support l f+ means that \verb+l+ contains the domain of \verb+f+. To make the equality of finite function be strict equality \verb+eq+, we assumed functional extensionality and proof irrelevance. In some circumstances, we've also needed to list the finite functions' domains. But in the definition, the domain is sealed behind a proposition, so we also assumed classical logic as well as indefinite description
+where \verb+Support l f+ means that \verb+l+ contains the domain of \verb+f+. To make the equality of finite function be strict equality \verb+eq+, we assumed functional extensionality and proof irrelevance. In some circumstances, we've also needed to list the finite functions' domains. But in the definition, the domain is sealed behind a proposition, so we also assumed classical logic as well as indefinite description:
 
 \begin{verbatim}
 Axiom constructive_indefinite_description :
     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
 \end{verbatim}
-
-together, they let us extract the domain from the proposition. Again this isn't particularly elegant, we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
+Together, they let us extract the domain from the proposition. Again this isn't particularly elegant, we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
 
 % I don't think we need to write this: methodology: assume a lot of lemmas, prove main theorem, prove assumptions, some wrong, fix. A number of wrong lemma initially assumed, but replacing them by correct variant was always easy to fix in proofs.
 
@@ -1164,7 +1163,7 @@ This ability to store destination does come at a cost though: the system needs t
 
 In~\cite{bagrel_destination-passing_2024}, the author proposes a system much like ours: it has a destination type, and a par-like construct (that they call $\ottstype{Incomplete}$), where only the right-hand side can be modified; together these two elements give extra expressiveness to the language compared to~\cite{minamide_functional_1998}.
 
-In their system, $[[d ˢ⨞ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. One consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do. The other consequence is that their system require both primitive constructors and destination-filling primitives; it cannot be bootstrapped with the later alone, as we do in this current paper.
+In their system, $[[d ˢ⨞ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. One consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do. The other consequence is that their system require both primitive constructors and destination-filling primitives; it cannot be bootstrapped with the later alone, as we do in the current article.
 
 However, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which just features linear types. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.
 
