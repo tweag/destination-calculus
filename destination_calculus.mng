@@ -1046,36 +1046,42 @@ A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only conta
 
 \section{Formal proof of type safety}\label{sec:formal-proof}
 
-We've proved type preservation and progress theorems with the Coq proof assistant. At time of writing, we have assumed, rather than proved, the substitution lemmas. The choice of turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; some visual simplification is applied by a script to produce the version in the article.
+We've proved type preservation and progress theorems with the Coq proof assistant. At time of writing, we have assumed, rather than proved, the substitution lemmas. Turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
 
 Most of the proof was done by an author with little prior experience with Coq. This goes to show that Coq is reasonably approachable even for non-trivial development. The proof is about 6000 lines long, and contains nearly 350 lemmas. Many of the cases of the type preservation and progress lemmas are similar. To handle such repetitive cases, the use of a large-language-model based autocompletion system has proven quite effective.
 
-Binders are the biggest problem. We've largely manage to make the proof to be only about closed terms, to avoid any complication with binders. This worked up until the substitution lemmas, which is the reason why we haven't proved them in Coq yet (that and the fact that it's much easier to be confident in our pen-and-paper proofs for those). There are backends to generate locally nameless representations from Ott definitions~\cite{nardelli_nameless_2009}; we haven't tried them yet, but the unusual binding nature of ampars may be too much for them to handle.
+Binders are the biggest problem. We've largely managed to make the proof to be only about closed terms, to avoid any complication with binders. This worked up until the substitution lemmas, which is the reason why we haven't proved them in Coq yet (that and the fact that it's much easier to be confident in our pen-and-paper proofs for those).
 
-The proofs aren't very elegant. For instance, we don't have any abstract formalization of semirings: since our semirings are finite it was more expedient to brute-force the properties we needed by hand. We've observed up to 232 simultaneous goals, but a computer makes short work of this: it was solved by a single call to the \verb|congruence| tactic. Nevertheless there are a few points of interest:
+The proofs aren't particularly elegant. For instance, we don't have any abstract formalization of semirings: it was more expedient to brute-force the properties we needed by hand. We've observed up to 232 simultaneous goals, but a computer makes short work of this: it was solved by a single call to the \verb|congruence| tactic. Nevertheless there are a few points of interest:
 \begin{itemize}
-\item we represent context as finite-domain functions, rather than as syntactic lists. This works much better when defining sums of context. There are a bunch of finite-function libraries in the ecosystem, but we needed finite dependent functions (because the type of binders depend on whether we're binding a variable name or a hole name). This didn't exist, but for our limited purpose, it ended up not being too costly rolling our own. About 1000 lines of proofs. The underlying data type is actual functions, this was simpler to develop, but equality is more complex than with a bespoke data type;
-\item addition of context is partial since we can only add two binding of the same name if they also have the same type. Instead of representing addition as a binary function to an optional context, we represent addition as a total function to contexts, but we change contexts to have faulty bindings on some names. This simplifies reasoning about properties like commutativity and associativity, at the cost of having well-formedness preconditions in the premises of typing rules as well as some lemmas.
+\item We represent context as finite-domain functions, rather than as syntactic lists. This works much better when defining sums of context. There are a handful of finite-function libraries in the ecosystem, but we needed finite dependent functions (because the type of binders depend on whether we're binding a variable name or a hole name). This didn't exist, but for our limited purpose, it ended up not being too costly rolling our own. About 1000 lines of proofs. The underlying data type is actual functions, this was simpler to develop, but equality is more complex than with a bespoke data type.
+\item Addition of context is partial since we can only add two binding of the same name if they also have the same type. Instead of representing addition as a binary function to an optional context, we represent addition as a total function to contexts, but we change contexts to have faulty bindings on some names. This simplifies reasoning about properties like commutativity and associativity, at the cost of having well-formedness preconditions in the premises of typing rules as well as some lemmas.
 \end{itemize}
 
-The inference rules produced by Ott aren't conducive to using setoid equality. This turned out to be a problem with our type for finite function:
-
-\begin{verbatim}
-Record T A B := {
-    underlying :> forall x:A, option (B x);
-    supported : exists l : list A, Support l underlying;
-  }.
-\end{verbatim}
-
-where \verb+Support l f+ means that \verb+l+ contains the domain of \verb+f+. To make the equality of finite function be strict equality \verb+eq+, we assumed functional extensionality and proof irrelevance. In some circumstances, we've also needed to list the finite functions' domains. But in the definition, the domain is sealed behind a proposition, so we also assumed classical logic as well as indefinite description:
+Mostly to simplify equalities, we assumed a few axioms: functional extensionality, classical logic, and indefinite description:
 
 \begin{verbatim}
 Axiom constructive_indefinite_description :
     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
 \end{verbatim}
-Together, they let us extract the domain from the proposition. Again this isn't particularly elegant, we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
+Again this isn't particularly elegant, we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
 
-% I don't think we need to write this: methodology: assume a lot of lemmas, prove main theorem, prove assumptions, some wrong, fix. A number of wrong lemma initially assumed, but replacing them by correct variant was always easy to fix in proofs.
+% The inference rules produced by Ott aren't conducive to using setoid equality. This turned out to be a problem with our type for finite function:
+
+% \begin{verbatim}
+% Record T A B := {
+%     underlying :> forall x:A, option (B x);
+%     supported : exists l : list A, Support l underlying;
+%   }.
+% \end{verbatim}
+% where \verb+Support l f+ means that \verb+l+ contains the domain of \verb+f+. To make the equality of finite function be strict equality \verb+eq+, we assumed functional extensionality and proof irrelevance. In some circumstances, we've also needed to list the finite functions' domains. But in the definition, the domain is sealed behind a proposition, so we also assumed classical logic as well as indefinite description:
+
+% \begin{verbatim}
+% Axiom constructive_indefinite_description :
+%     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
+% \end{verbatim}
+% Together, they let us extract the domain from the proposition. Again this isn't particularly elegant, we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
+
 
 \section{Implementation of \destcalculus{} using in-place memory mutations}\label{sec:implementation}
 
