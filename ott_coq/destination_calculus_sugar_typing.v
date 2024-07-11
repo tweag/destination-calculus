@@ -56,6 +56,21 @@ Proof.
   apply Ty_term_ToA. assumption.
 Qed.
 
+Lemma Ty_term_sterm_Unit : forall (P : ctx), UserDefined P -> DisposableOnly P -> P ⊢ ˢ() : ①.
+Proof.
+  intros * UserDefinedP DisposP.
+  unfold sterm_Unit.
+  apply Ty_term_sterm_FromA'.
+  rewrite union_empty_l_eq with (G := P).
+  apply Ty_term_Map with (T := ⌊①⌋ ¹ν).
+  { apply UserDefined_Disjoint; trivial. lia. }
+  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_FillU with (n := ¹ν); trivial.
+  apply Ty_term_Var with (P := mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil) ᴳ· P).
+  apply DisposableOnly_stimes. cbn. constructor. assumption.
+  apply UserDefined_Disjoint. apply UserDefined_stimes. assumption. lia. repeat constructor.
+Qed.
+
 Lemma Ty_term_sterm_Fun : forall (P2 : ctx) (x: var) (m: mode) (u : term) (T U : type), UserDefined P2 -> IsValid m -> P2 # ᴳ{ x : m ‗ T} -> P2 ᴳ+ ᴳ{ x : m ‗ T} ⊢ u : U -> P2 ⊢ ˢλ x ⁔ m ⟼ u : T ⁔ m → U.
 Proof.
   intros * UserDefinedP2 Validm DisjointP2x Tyu.
@@ -165,6 +180,7 @@ Proof.
   intros * Tyst. inversion Tyst; subst.
   { apply Ty_term_sterm_FromA'; trivial. }
   { replace (mode_times' ((¹↑ :: nil) ++ (n :: nil) ++ nil)) with (¹↑ · n). 2:{ cbn. destruct n; try destruct p; try destruct p2, a2; cbn; try destruct m, a; cbn; try rewrite Nat.add_0_r; trivial. } apply Ty_term_sterm_FillLeaf with (T := T0); trivial. }
+  { apply Ty_term_sterm_Unit; trivial. }
   { apply Ty_term_sterm_Fun; trivial. }
   { apply Ty_term_sterm_Left; trivial. }
   { apply Ty_term_sterm_Right; trivial. }

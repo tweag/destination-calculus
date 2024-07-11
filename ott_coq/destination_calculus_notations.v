@@ -37,6 +37,7 @@ Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19,
 
 Notation "'from⧔'' t" := (sterm_FromA' t) (at level 41, right associativity, t at level 41).
 Notation "t 'ˢ⨞' u" := (sterm_FillLeaf t u) (at level 43, left associativity, u at next level).
+Notation "ˢ()" := (sterm_Unit).
 Notation "'ˢλ' x '⁔' m '⟼' u" := (sterm_Fun x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
 Notation "'ˢInl' t" := (sterm_Left t) (at level 31, right associativity, t at level 31).
 Notation "'ˢInr' t" := (sterm_Right t) (at level 31, right associativity, t at level 31).

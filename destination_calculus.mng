@@ -532,51 +532,41 @@ This example cannot be implemented using \cite{minamide_functional_1998} system 
 
 On the other hand, as demonstrated in~\cite{bagrel_destination-passing_2024}, first-class destination passing lets us use the familiar algorithm with queues that is taught in classroom. Specifically, the algorithm keeps a queue of pairs $(\textit{input subtree}, \textit{destination to output subtree})$.
 
-\Cref{fig:impl-bfs}\critical{There's an error left in the implementation: the state is specified to be linear, but the natural number state is used non-linearly. Fix discrepancy. -> Thomas: the natural number is wrapped in an extra exponential layer !w to allow that, I'm not sure to spot where the issue would be} presents the \destcalculus{} implementation of the breadth-first tree traversal. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the synthetic\unsure{I used the phrase “synthetic” constructor a couple of times, not a lot, so maybe delete. Otherwise define the phrase more loudly.} constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$. We also assume some encoding of the type $[[Nat]]$ of natural number. Queues are the efficient queues from \cref{ssec:efficient-queue}.
+\Cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the synthetic\unsure{I used the phrase “synthetic” constructor a couple of times, not a lot, so maybe delete. Otherwise define the phrase more loudly.} constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$. We also assume some encoding of the type $[[Nat]]$ of natural number. Queues are the efficient queues from \cref{ssec:efficient-queue}.
 
-New in \cref{fig:impl-bfs} are the \textcolor{modecolor}{fuchsia} annotations: these are \emph{modes}. We'll describe modes in detail in \cref{sec:syntax-type-system}. In the meantime, $[[¹]]$ and $[[ω]]$ control linearity: we use $[[ω]]$ to mean that the function $[[f]]$ is used many times.
-
-\TODO{Revisit starting from there, make state unrestricted and drop it at the end}
-
-; $[[ν]]$ and $[[∞]]$ control age, we use $[[∞]]$ to mean that neither the state nor the function $[[f]]$ contain destinations, therefore they aren't restricted to a particular scope. Arguments with no modes are assumed to have mode $[[¹ν]]$: they're linear and can't escape the current scope\unsure{I'm not sure “current scope” is super clear, to be honest}. We also have the modality $[[! m T]]$, which reifies mode $[[m]]$ in a type, like exponential connectives in linear logic, $[[! m T]]$ is, by definition, such that $[[(! m T) ¹ν → U]]\simeq[[T m → U]]$.
-
-\Cref{fig:impl-bfs} implements breadth-first relabeling $\ottkw{relabelDPS}$ as an instance of a more general breadth-first traversal function $\ottkw{mapAccumBFS}$, which applies any state-passing style transformation of labels in breadth-first order.\critical{we say in a footnote that $\ottkw{from}_{\ottkw{\ltimes} }$ will be introduced only in section 5, while we use it here without any explanations. --~Arnaud: maybe let's use from' and drop the returned state from mapAccumBFS and relabelDPS? This removes the linearity of state, but maybe it's more legible?} at the end of the processing.
+We implement the actual breadth-first relabeling $\ottkw{relabelDPS}$ as an instance of a more general breadth-first traversal function $\ottkw{mapAccumBFS}$, which applies any state-passing style transformation of labels in breadth-first order. A similar traversal function can be found in~\cite{bagrel_destination-passing_2024}. The difference is that, because they can't store destinations in structures with holes (see the discussion in \cref{sec:scope-escape-dests}), their implementation can't use the efficient $[[Queue T]]$ type from \cref{ssec:efficient-queue}. So they have to revert to using a Hood-Melville queue for breadth-first traversal.
 
 In $\ottkw{mapAccumBFS}$, we create a new destination $[[dtree]]$ into which we will write the result of the traversal, then call the main loop $\ottkw{go}$. The $\ottkw{go}$ function is in destination-passing style, but what's remarkable is that $\ottkw{go}$ takes an unbounded number of destinations as arguments, since there are as many destinations as items in the queue. This is where we actually use the fact that destinations are ordinary values.
 
+New in \cref{fig:impl-bfs} are the \textcolor{modecolor}{fuchsia} annotations: these are \emph{modes}. We'll describe modes in detail in \cref{sec:syntax-type-system}. In the meantime, $[[¹]]$ and $[[ω]]$ control linearity: we use $[[ω]]$ to mean that the state and function $[[f]]$ can be used many times. On the other hand, $[[∞]]$ is an \emph{age} annotation; in particular, the associated argument cannot carry destinations. Without these modes, our type system presented in~\cref{ssec:ty-term-val} would reject the example. Arguments with no modes are otherwise linear and can capture destinations. We introduce the exponential modality $[[! m T]]$ to reify mode $[[m]]$ in a type; this is useful to return several values having different modes from a function, like in $[[f]]$. An exponential is rarely needed in an argument position, as we have $[[(! m T) ¹ν → U]]\simeq[[T m → U]]$.
+
 \begin{codefig}{\caption{Breadth-first tree traversal in destination-passing style}\label{fig:impl-bfs}}
 \newoperator[~\mathsfbf{rec}]
-{\ottkw{go}}{[[(S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞  → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → (! ¹∞ S)]]}
+{\ottkw{go}}{[[(S ω∞ → T1 ¹ν → (! ω∞ S) ⨂ T2) ω∞→ S ω∞ → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → ①]]}
 {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
 (dequeue q) case ¹ν {⮒
-‥‥Inl () ⟼ ˢᴇ ¹∞ st,⮒
+‥‥Inl () ⟼ (),⮒
 ‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
 ‥‥‥‥ˢNil ⟼ dtree ⨞ Nil ; go f st q',⮒
 ‥‥‥‥ˢNode x tl tr ⟼ ༼(dtree ⨞ Node) case ¹ν⮒
 ‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ ༼(༼f st༽ x) case ¹ν⮒
-‥‥‥‥‥‥‥‥ˢ(ˢᴇ ¹∞ st', y) ⟼⮒
+‥‥‥‥‥‥‥‥ˢ(ˢᴇ ω∞ st', y) ⟼⮒
 ‥‥‥‥‥‥‥‥‥‥dy ˢ⨞ y ;⮒
 ‥‥‥‥‥‥‥‥‥‥go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))༽༽⮒
 ‥‥}⮒
 }
 ]]\end{array}}
 \newoperator
-{\ottkw{mapAccumBFS}}{[[(S ¹∞ → T1 ¹ν → (! ¹∞ S) ⨂ T2) ω∞→ S ¹∞ → Tree T1 ¹∞ → Tree T2 ⨂ (! ¹∞ S)]]}
+{\ottkw{mapAccumBFS}}{[[(S ω∞ → T1 ¹ν → (! ω∞ S) ⨂ T2) ω∞→ S ω∞ → Tree T1 ¹∞ → Tree T2]]}
 {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
-from⧔ (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
+from⧔' (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperator
-{\ottkw{relabelDPS}}{[[Tree ① ¹∞ → (Tree Nat) ⨂ (! ¹∞ (! ων Nat))]]}
+{\ottkw{relabelDPS}}{[[Tree ① ¹∞ → Tree Nat]]}
 {[[relabelDPS tree]]}{\!\!\!\begin{array}[t]{l}[[
-mapAccumBFS⮒
-‥‥(ˢλ ex ¹∞ ⟼ ˢλ un ¹ν ⟼ un ; ༼ex case ¹∞⮒
-‥‥‥‥ᴇ ων st ⟼ ˢ(ˢᴇ ¹∞ (ˢᴇ ων (succ st)), st)༽)⮒
-‥‥(ˢᴇ ων ˢ1)⮒
-‥‥tree
+mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), st)) ˢ1 tree
 ]]\end{array}}
 \end{codefig}
-
-A similar breadth-first traversal function can be found in~\cite{bagrel_destination-passing_2024}. The difference is that, because they can't store destinations in structures with holes (see the discussion in \cref{sec:scope-escape-dests}), their implementation can't use the efficient $[[Queue T]]$ type from \cref{ssec:efficient-queue}. So they have to revert to using a Hood-Melville queue for breadth-first traversal.
 
 \section{Type system}\label{sec:syntax-type-system}
 
@@ -611,9 +601,12 @@ A similar breadth-first traversal function can be found in~\cite{bagrel_destinat
 
 \TODO{We are missing syntactic sugar for some forms like unit () (needs DisposableOnly, do not forget)}
 
-\sidebysidecodefig{\caption{Syntactic sugar forms for terms}\label{fig:sterm}}{t}{0.425}{
+\sidebysidecodefig{\caption{Syntactic sugar forms for terms}\label{fig:sterm}}{t}{0.46}{
 [[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
 t ⨞· (to⧔ t')
+]]\end{array}\\[\interdefskip]
+[[ˢ()]] \btriangleq \!\!\!\begin{array}[t]{l}[[
+from⧔' (alloc map d ⟼ d ⨞ () )
 ]]\end{array}\\[\interdefskip]
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (alloc map d ⟼⮒

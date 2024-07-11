@@ -304,6 +304,17 @@ Definition sterm_FromA' (t : term) :=
 Definition sterm_FillLeaf (t t' : term) :=
   (term_FillComp t (term_ToA t')).
 
+Definition sterm_Unit :=
+  (sterm_FromA'
+    (term_Map
+      term_Alloc
+      0
+      (term_FillU
+        (term_Var 0)
+      )
+    )
+  ).
+
 Definition sterm_Fun (x : var) (m : mode) (u : term) :=
   (sterm_FromA'
     (term_Map
@@ -939,6 +950,10 @@ with Ty_sterm : ctx -> term -> type -> Prop :=    (* defn Ty_sterm *)
      (Tyt: Ty_term P1 t (type_Dest T n))
      (Tytp: Ty_term P2 t' T),
      Ty_sterm  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )   (sterm_FillLeaf  t   t' )  type_Unit
+ | Ty_sterm_Unit : forall (P:ctx)
+     (UserDefinedP: UserDefined P )
+     (DisposP: DisposableOnly P ),
+     Ty_sterm P  (sterm_Unit)  type_Unit
  | Ty_sterm_Fun : forall (P2:ctx) (x:var) (m:mode) (u:term) (T U:type)
      (UserDefinedP2: UserDefined P2 )
      (Validm: IsValid m )

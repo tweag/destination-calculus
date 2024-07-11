@@ -186,6 +186,11 @@ P2 ⊢ t' : T [[:Tytp]]
 ----------------------------- :: FillLeaf
 P1 + (¹↑·n)·P2 ˢ⊢ t ˢ⨞ t' : ①
 
+{{ UserDefined [[P]] }} [[:UserDefinedP]]
+{{ DisposableOnly [[P]] }} [[:DisposP]]
+---------------- :: Unit
+P ˢ⊢ ˢ() : ①
+
 {{ UserDefined [[P2]] }} [[:UserDefinedP2]]
 {{ IsValid [[m]] }} [[:Validm]]
 {{ [[P2]] # [[{ x : m T }]] }} [[:DisjointP2x]]

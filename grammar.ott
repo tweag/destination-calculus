@@ -111,6 +111,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   % Here we have to redefined all sugar construct in the same way as in sterm
   | t ˢ⨞ t' :: S :: SugarFillLeaf {{ coq (sterm_FillLeaf [[t]] [[t']]) }} {{ tex [[t]]\blacktriangleleft[[t']] }}
   | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottkw{\ltimes} }' [[t]] }}
+  | ˢ() :: S :: SugarUnit {{ coq (sterm_Unit) }} {{ tex \ottsctor{()} }}
   | ˢλ x m ⟼ u :: S :: SugarFun {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} {{ tex \lamnt{[[x]]}{[[m]]}{[[u]]} }} % (+ bind x in u +)
   | ˢInl t :: S :: SugarLeft {{ coq (sterm_Left [[t]]) }} {{ tex \ottsctor{Inl}\,[[t]] }}
   | ˢInr t :: S :: SugarRight {{ coq (sterm_Right [[t]]) }} {{ tex \ottsctor{Inr}\,[[t]] }}
@@ -159,6 +160,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
 sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | t ˢ⨞ t' :: M :: SugarFillLeaf {{ com Fill destination with supplied term }} {{ coq (sterm_FillLeaf [[t]] [[t']]) }} 
   | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (sterm_FromA' [[t]]) }}
+  | ˢ() :: M :: SugarUnit {{ com Unit }} {{ coq (sterm_Unit) }}
   | ˢλ x m ⟼ u :: M :: SugarFun {{ com Allocate function }} {{ coq (sterm_Fun [[x]] [[m]] [[u]]) }} % (+ bind x in u +)
   | ˢInl t :: M :: SugarLeft {{ com Allocate left variant }} {{ coq (sterm_Left [[t]]) }}
   | ˢInr t :: M :: SugarRight {{ com Allocate right variant }} {{ coq (sterm_Right [[t]]) }}
@@ -434,6 +436,17 @@ Definition sterm_FromA' (t : term) :=
 
 Definition sterm_FillLeaf (t t' : term) :=
   (term_FillComp t (term_ToA t')).
+
+Definition sterm_Unit :=
+  (sterm_FromA'
+    (term_Map
+      term_Alloc
+      0
+      (term_FillU
+        (term_Var 0)
+      )
+    )
+  ).
 
 Definition sterm_Fun (x : var) (m : mode) (u : term) :=
   (sterm_FromA'

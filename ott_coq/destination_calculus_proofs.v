@@ -814,6 +814,18 @@ Proof.
   sauto q: on unfold: DisposableOnly.
 Qed.
 
+Lemma DisposableOnly_stimes : forall (P : ctx) (m : mode), IsValid m -> DisposableOnly P -> DisposableOnly (m ᴳ· P).
+Proof.
+  intros * validm dispoP.
+  unfold DisposableOnly in *.
+  intros n b h.
+  unfold stimes in h.
+  rewrite map_MapsTo_iff in h. destruct h. destruct H.
+  specialize (dispoP n x H). destruct n.
+  - unfold stimes_var in H0. destruct x. subst. unfold mode_of in *. destruct m, m0; try destruct p; try destruct p0; try destruct m; try destruct m0; unfold mode_times, mul_times in *; cbn; try constructor; try inversion dispoP; try inversion validm.
+  - unfold stimes_dh in H0. destruct x; subst; unfold mode_of in *; try rename n into m0; destruct m, m0; try destruct p; try destruct p0; try destruct m; try destruct m0; unfold mode_times, mul_times in *; cbn; try constructor; try inversion dispoP; try inversion validm.
+Qed.
+
 Lemma stimes_empty_eq : forall (m : mode), m ᴳ· ᴳ{} = ᴳ{}.
 Proof.
   intros *. unfold ctx_empty, empty, stimes, map. cbn.
@@ -1741,6 +1753,16 @@ Proof.
     destruct Hin as [Hin1 | Hin2].
     + apply UserDefinedG1. assumption.
     + apply UserDefinedG2. assumption.
+Qed.
+
+Lemma UserDefined_stimes : forall (G : ctx) (m : mode), UserDefined G -> UserDefined (m ᴳ· G).
+Proof.
+  intros * UserDefinedG.
+  unfold UserDefined in *.
+  intros x Hin.
+  apply In_stimes_iff in Hin.
+  specialize (UserDefinedG x Hin).
+  assumption.
 Qed.
 
 Lemma UserDefined_Disjoint : forall (G : ctx) (x : var) (m : mode) (T : type), UserDefined G -> x <= max_runtime_var -> G # ᴳ{ x : m ‗ T}.
