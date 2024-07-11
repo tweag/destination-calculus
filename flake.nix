@@ -54,6 +54,7 @@
             }))
             # dev utilities
             pkgs.entr
+            pkgs.pdftk
             # Latex stuff
             pkgs.ott
             pkgs.biber

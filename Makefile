@@ -23,6 +23,7 @@ clean: Makefile.coq
 	rm -f ott_coq/destination_calculus_ott.v
 	rm -f *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
 	rm -f *.log *.bcf *.fdb_latexmk *.fls *.blg
+	rm -f no-editing-marks
 	rm -f destination_calculus.pdf
 	rm -f destination_calculus.lhs
 	rm -f destination_calculus.tex
@@ -50,6 +51,19 @@ destination_calculus.tar.gz: destination_calculus.tex destination_calculus.bbl d
 
 %.pdf %.bbl : %.tex bibliography.bib ottstyling.sty style.tikzstyles mapscopes.tikz $(OTT_TEX)
 	cd $(dir $<) && latexmk $(notdir $*)
+
+submission:
+	touch no-editing-marks
+	$(MAKE) clean
+	$(MAKE) destination_calculus-submission.pdf destination_calculus-supplementary.pdf
+
+destination_calculus-submission.pdf: destination_calculus.pdf
+	pdftk $< cat 1-26 output temp.pdf
+	pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
+	rm -f temp.pdf
+
+destination_calculus-supplementary.pdf: destination_calculus.pdf
+	pdftk $< cat 27-end output $@
 
 nix::
 	nix-shell --pure --run make
