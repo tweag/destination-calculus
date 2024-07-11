@@ -1099,8 +1099,8 @@ In the introduction of the article, we announced a safe framework for in-place m
 \codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
 \ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
 \ottkw{drop} ~\pmb{:}~ [[Token ¹ν → ①]]\\[\interdefskip]
-[[allocCoW]] ~\pmb{:}~ [[T ⧔ ⌊ T ⌋ ¹ν]]\\[\interdefskip]
-[[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]
+[[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]\\[\interdefskip]
+[[allocCoW]] ~\pmb{:}~ [[T ⧔ ⌊ T ⌋ ¹ν]]
 \end{array}}
 
 We now have two possible allocation primitives: the new one with an in-place mutation memory model ($\ottkw{ip}$), that has to be managed linearly, and the old one that doesn't have to used linearly, and features a copy-on-write ($\ottsctor{cow}$) memory model.
