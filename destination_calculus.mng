@@ -102,7 +102,7 @@
 
 %%%%%%%%%%%%%%%%% /Editing marks %%%%%%%%%%%%%%%%%
 
-\newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
+% \newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
 \newcommand{\textopname}[1]{``#1''}
 \newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
