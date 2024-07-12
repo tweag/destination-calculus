@@ -1077,7 +1077,7 @@ Again this isn't particularly elegant, we could have avoided some of these axiom
 
 The formal language presented in~\cref{sec:syntax-type-system,sec:ectxs-sem} is not meant to be implemented as-is.
 
-First, \destcalculus{} misses a form of recursion, but we believe that adding equirecursive types and a fix-point operator wouldn't compromise the safety of the system.
+First, \destcalculus{} doesn't have recursion, this would have obscured the presentation of the system. However, adding a standard form of recursion doesn't create any complication.
 
 Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a non-linear difference list $0 \ottsctor{::} \holesq$), and then used twice, each time in a different way:
 \codehere{[[
@@ -1087,9 +1087,11 @@ Secondly, ampars are not managed linearly in \destcalculus{}; only destinations 
 ‥‥‥‥toList (x1 concat x2)
 ]]\\[\interdefskip][[⟶*]][[༼ˢ0 ˢ:: ༼ˢ1 ˢ:: ༼ˢ0 ˢ:: ༼ˢ2 ˢ:: ˢ[]༽༽༽༽ ]]}
 
-It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus{}. Thanks to the renaming discipline we detailed in~\cref{ssec:sem}, every time an ampar is $\ottkw{map}$ped over, its hole names are renamed to fresh ones. So when we call $\ottkw{append}$ to build $[[x1]]$ (which is implemented in terms of $\ottkw{map}$), we sort of allocate a new copy of the ampar before mutating it, effectively achieving a copy-on-write memory scheme. Thus it is safe to operate on $[[x]]$ again to build $[[x2]]$.
+It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus{}. Thanks to the renaming discipline we detailed in~\cref{ssec:sem}, every time an ampar is $\ottkw{map}$ped over, its hole names are renamed to fresh ones. One way we can support this is to allocate a fresh copy of $[[x]]$ every time we call $\ottkw{append}$ (which is implemented in terms of $\ottkw{map}$), in a copy-on-write fashion. This way filling destinations is still implemented as mutation.
 
-In the introduction of the article, we announced a safe framework for in-place memory mutation, so we will uphold this promise now. The key to go from a copy-on-write scheme to an in-place mutation scheme is to force ampars to be linearly managed too. For that we introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$ (remember that unqualified arrows have mode $[[¹ν]]$, so are linear):
+However, this is a long way from the efficient implementation promised in \cref{sec:working-with-dests}. Copy-on-write can be optimized using fully-in-place functional programming in the style of~\cite{lorenzen_fp_2023}, where, using reference counting, we don't need to perform a copy when the difference list isn't aliased.
+
+An alternative is to refine the linear type system further in order to guarantee that ampars are unique and avoid copy-on-write altogether. For that we follow a recipe proposed by~\cite{spiwack_linearly_2022} and introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$ (remember that unqualified arrows have mode $[[¹ν]]$, so are linear):
 
 \codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
 \ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
@@ -1103,9 +1105,7 @@ We now have two possible allocation primitives: the new one with an in-place mut
 % Such a token can be duplicated using $\ottkw{dup}$, but as soon as it is used to create an ampar, that ampar cannot be duplicated itself. Indeed, if the ampar were used twice, 
 % that infects the ampar returned by $[[allocIP]]$
 
-In the system featuring tokens and $[[allocIP]]$, we use the $[[Token]]$ type as an intrinsic source of linearity that infects ampars. Tokens are not forgeable by the user, but instead, ``closed'' programs now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$, featuring a single initial, linear token. The user is free to $\ottkw{dup}$licate (or $\ottkw{drop}$) the variable $[[tok0]]$ to give birth to an arbitrary number of tokens $[[tokk]]$, and then to an arbitrary number of ampars through $[[allocIP tokk]]$.
-
-However, each ampar produced like so will have a linear dependency on a $[[tokk]]$ variable, that itself will have a chain of linear dependencies up to $[[tok0]]$, because all the function arrows in the code excerpt above are linear. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
+Ampar produced by $[[allocIP]]$ have a linear dependency on a linear $[[tokk]]$ variable. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
 
 Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]$ is a slightly more ergonomic solution than adding a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
 
@@ -1116,7 +1116,7 @@ In \destcalculus{} with $[[Token]]$s and $[[allocIP]]$, as ampars are managed li
   \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using $\triangleleft\mycirc$ no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
 \end{itemize}
 
-We decided to omit the linearity aspect of ampars in \destcalculus{} as it clearly obfuscate the presentation of the system without adding much to the understanding of the latter. We believe that the system is still sound with this linearity aspect, and articles such as~\cite{spiwack_linearly_2022} gives a pretty clear view on how to implement the linearity requirement for ampars in practice without too much noise for the user.
+We decided to omit the linearity aspect of ampars in \destcalculus{} as it obfuscates the presentation of the system without adding much to the understanding of the latter.
 
 \section{Related work}\label{sec:related-work}
 
