@@ -201,7 +201,7 @@
 
 \acmJournal{PACMPL}
 \title{Destination calculus}
-\subtitle{A linear $\lambda-$calculus for pure, functional memory updates}
+\subtitle{A linear $\lambda-$calculus for purely functional memory writes}
 
 \author{Arnaud Spiwack}
 \orcid{0000-0002-5985-2086}
