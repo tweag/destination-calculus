@@ -64,6 +64,8 @@ hname, h, hd :: 'hname_' ::= {{ com Hole (or destination) name, represented by a
 hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex \ottshname{[[hnames]]} }}
   | { h1 , .. , hk } :: :: FromList {{ coq (hnames_ [[h1..hk]]) }}
   | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\cup}\,[[H2]] }}
+  | H1 ⨆ H2 :: M :: DisjointUnion {{ com Disjoint union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\sqcup}\,[[H2]] }}
+  | H1 \ H2 :: M :: Subtract {{ com Disjoint union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\textbackslash}\,[[H2]] }} % TODO: fix coq translation
   | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hnames_shift [[H]] [[h']]) }}
   | 'hnames(' O ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[O]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[O]]\ottshname{)} }} {{ coq (hnames_ctx [[O]]) }}
   | 'hnames(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[C]]\ottshname{)} }} {{ coq (hnames_ectxs [[C]]) }}
@@ -179,6 +181,7 @@ val, v :: 'val_' ::= {{ com Value }}
   | H ⟨ v2 ❟ v1 ⟩ :: :: Ampar {{ com Ampar }} {{ tex _{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[v1]]\ottsctor{\rangle} }}
   | v [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole names inside $[[v]]$ by $[[h']]$ if they belong to $[[H]]$. }} {{ coq (val_cshift [[v]] [[H]] [[h']]) }} {{ tex [[v]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
   | ( v ) :: S :: Paren {{ coq [[v]] }} {{ tex ([[v]]) }}
+  | v [ h ≔ H' v' ] :: M :: Fill {{ tex [[v]]\hspace*{0.11em}\llparenthesis [[h]]\assigneq_{[[H']]}\,[[v']]\hspace*{0.11em}\rrparenthesis }} {{ coq (val_fill [[v]] [[h]] [[H']] [[v']]) }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DYNAMIC SYNTAX
@@ -895,6 +898,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
+(* TODO This is false, we should test if h' in H *)
 Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
   | ectx_OpenAmpar H v => ectx_OpenAmpar (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c
