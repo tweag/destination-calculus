@@ -402,7 +402,7 @@ Now that we have an intuition of how destinations work, let's see how they can b
 
 \paragraph{Linked lists}
 
-We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define synthetic filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
+We define lists as the fixpoint of the functor $[[X]] \mapsto [[① ⨁ (T ⨂ X)]]$. For convenience, we also define filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
 
 \sidebysidecodehere{b}{0.50}{
 \newtype[~\mathsfbf{rec}]{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
@@ -532,7 +532,7 @@ This example cannot be implemented using \cite{minamide_functional_1998} system 
 
 On the other hand, as demonstrated in~\cite{bagrel_destination-passing_2024}, first-class destination passing lets us use the familiar algorithm with queues that is taught in classroom. Specifically, the algorithm keeps a queue of pairs $(\textit{input subtree}, \textit{destination to output subtree})$.
 
-\Cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the synthetic\unsure{I used the phrase “synthetic” constructor a couple of times, not a lot, so maybe delete. Otherwise define the phrase more loudly.} constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$. We also assume some encoding of the type $[[Nat]]$ of natural number. $[[Queue T]]$ is the efficient queue type from \cref{ssec:efficient-queue}.
+\Cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$, defined in the obvious way. We also assume some encoding of the type $[[Nat]]$ of natural number. $[[Queue T]]$ is the efficient queue type from \cref{ssec:efficient-queue}.
 
 We implement the actual breadth-first relabeling $\ottkw{relabelDPS}$ as an instance of a more general breadth-first traversal function $\ottkw{mapAccumBFS}$, which applies any state-passing style transformation of labels in breadth-first order. A similar traversal function can be found in~\cite{bagrel_destination-passing_2024}. The difference is that, because they can't store destinations in structures with holes (see the discussion in \cref{sec:scope-escape-dests}), their implementation can't use the efficient queue implementation from \cref{ssec:efficient-queue}. So they have to revert to using a Hood-Melville queue for breadth-first traversal.
 
