@@ -643,9 +643,9 @@ We usually omit mode annotations when the mode is the unit element $[[¹ν]]$. I
 
 \subsection{The age semiring}\label{ssec:age-control}
 
-In order to prevent destination from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \ref{ssec:ty-term-val} that scopes are introduced by $[[t map x ⟼ t']]$. If we have a term $[[t1 map x1 ⟼ t2 map x2 ⟼ t3 map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^2$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
+In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \ref{ssec:ty-term-val} that scopes are introduced by $[[t map x ⟼ t']]$. If we have a term $[[t1 map x1 ⟼ t2 map x2 ⟼ t3 map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^2$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
 
-We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations.\info{I removed the bit about extending ages to variables because we, in fact, have no age (or multiplicity, or mod) variables.} Finally, we will write $[[ν]] \btriangleq [[↑]]^0$ for the age of destination that originate from the current scope.
+We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations.\info{I removed the bit about extending ages to variables because we, in fact, have no age (or multiplicity, or mod) variables.} Finally, we will write $[[ν]] \btriangleq [[↑]]^0$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^1$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by $1$.
 
 This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be read as giving the variable the same age on both sides.
 Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
@@ -678,7 +678,7 @@ $[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
 \end{tabular}
 
 \bigskip
-$[[ν]] \btriangleq [[↑]]^0$
+\qquad$[[ν]] \btriangleq [[↑]]^0$\qquad\qquad$[[↑]] \btriangleq [[↑]]^1$\hfill\hfill
 
 
 \caption{Operation tables for age and multiplicity semirings}\label{fig:mul-age-tables}
