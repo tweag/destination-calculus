@@ -762,6 +762,7 @@ Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
  * EVALUATION CONTEXTS
  *****************************************************************************)
 
+(* TODO This is false, we should test if h' in H *)
 Definition ectxs_fill (C: ectxs) (h':hname) (H' : hnames) (v':val) : ectxs := List.map (fun c => match c with
   | ectx_OpenAmpar H v => ectx_OpenAmpar (HNames.union (HNames.remove h' H) H') (val_fill v h' H' v')
   | _ => c

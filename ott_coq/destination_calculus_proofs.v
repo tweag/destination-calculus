@@ -2530,7 +2530,7 @@ Lemma term_sub_spec_2 :
   (m' ᴳ· (D11 ᴳ+ D12) ᴳ+ D2 ⊢ te ᵗ[ x1' ≔ v1' ] ᵗ[ x2' ≔ v2' ] : U').
 Proof. Admitted.
 
-Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (m n : mode) (T U U0 : type) (v : val),
+Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T U U0 : type) (v : val),
   D1 # D2 ->
   D1 # D3 ->
   hnames©(C) ## hnamesᴳ( D3) ->
@@ -2540,10 +2540,10 @@ Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (m n : mo
   LinOnly D3 ->
   FinAgeOnly D3 ->
   ValidOnly D3 ->
-  D1 # ᴳ{- h : m ⌊ U ⌋ n } ->
-  D2 # ᴳ{- h : m ⌊ U ⌋ n } ->
-  D3 # ᴳ{- h : m ⌊ U ⌋ n } ->
- D1 ᴳ+ (m · n) ᴳ· D2 ᴳ+ ᴳ{- h : m ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
+  D1 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
+  D2 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
+  D3 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
+ D1 ᴳ+ (¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
  D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
- D1 ᴳ+ m ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
+ D1 ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ D3)) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.

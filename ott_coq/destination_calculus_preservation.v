@@ -671,5 +671,40 @@ Proof.
           { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ(ᵛ- (h' + 1), ᵛ- (h' + 2))); swap 1 4. term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Prod. apply Ty_val_Dest. apply Ty_val_Dest. { apply DestOnly_union_iff. crush. } { apply DestOnly_union_iff. crush. } { assert (hnames_ ((©️⬜ ∘ h' + 1) ++ (©️⬜ ∘ h' + 2) ++ ©️⬜) = ᴴ{ h' + 1, h' + 2}). cbn. reflexivity. assumption. } { apply ValidOnly_union_forward. crush. crush. apply Disjoint_singletons_iff. injection. lia. }
+    - (* Focus-FillF *)
+      inversion Tyt; subst.
+      rename Tyt into TyFillF, Tyt0 into Tyt, T0 into T.
+      assert (LinOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C ① U0). tauto. }
+      constructor 1 with (D := P1) (t := t) (T := ⌊ T ⁔ m → U ⌋ n); swap 1 3. constructor 16 with (D2 := P2). apply LinOnly_union_iff. all: crush.
+    - (* Unfocus-FillF *)
+      inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
+      inversion TyCc; subst. rename D0 into D1, U1 into U.
+      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD) in *.
+      assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C ① U0). tauto. }
+      assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ⨞(λ x ⁔ m ⟼ u) : ①) as TyFillF.
+        { apply (Ty_term_FillF D1 n D2 (ᵥ₎ v) x m u T U). all:trivial. apply DestOnly_Disjoint_singleton_var; trivial. }
+      constructor 1 with (D := D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) (T := ①) (t := ᵥ₎ v ⨞(λ x ⁔ m ⟼ u)). replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *.
+      apply ValidOnly_union_forward. assumption. apply ValidOnly_stimes_forward; split. assumption. apply IsValid_times_iff; split. constructor. all:trivial. apply Disjoint_stimes_r_iff. assumption. unfold mode_times'. simpl. rewrite mode_times_linnu_r_eq. reflexivity. apply DestOnly_union_iff; split. assumption. crush.
+    - (* Red-FillF *)
+      inversion Tyt; subst.
+      rename Tyt into TyFillF, Tyt0 into Tytp, T0 into T.
+      assert (LinOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C ① U0). tauto. }
+      inversion Tytp; subst. clear H1. rename D into D1, P2 into D2.
+      rewrite <- union_associative in *.
+      rewrite (nDisposable_in_DestOnly P (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) DisposP DestOnlyD) in *.
+      inversion Tyv; subst.
+      assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ ᵛλ x ⁔ m ⟼ u] : ① ↣ U0).
+        { assert (ᴳ{} ᴳ+ ¹ν ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{}))) = ᴳ{}) as e1. { crush. }
+          rewrite <- e1.
+          assert (hnamesᴳ( ᴳ{}) = hnames_ ©️⬜) as e2. { crush. }
+          rewrite <- e2.
+          assert (ᴳ{} ᴳ+ (¹ν · n) ᴳ· ᴳ{} ᴳ+ ᴳ{- h : ¹ν ⌊ T ⁔ m → U ⌋ n} = ᴳ{- h : ¹ν ⌊ T ⁔ m → U ⌋ n}) as e3. { crush. }
+          rewrite <- e3 in TyC.
+          apply ectxs_fill_spec with (D2 := D2) (U := T ⁔ m → U); swap 1 14.
+          { rewrite hminus_inv_empty_eq. rewrite <- union_empty_r_eq. apply Ty_val_Fun. assumption. assumption. crush. }
+          crush. rewrite hnames_empty_is_hempty. apply HDisjoint_hempty_r. crush. crush. crush. crush. crush. crush. crush. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlySingl & LinOnlyD2 & DisjointSinglD2). apply Disjoint_commutative. rewrite Disjoint_stimes_r_iff in DisjointSinglD2. assumption. crush.  }
     - give_up.
 Admitted.

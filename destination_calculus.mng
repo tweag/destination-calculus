@@ -1107,7 +1107,7 @@ We now have two possible allocation primitives: the new one with an in-place mut
 
 Ampar produced by $[[allocIP]]$ have a linear dependency on a linear $[[tokk]]$ variable. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
 
-Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]$ is a slightly more ergonomic solution than adding a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
+Having closed programs to typecheck in non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$ is a slightly more ergonomic solution than adding a primitive function $\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ as it is done in~\cite{bagrel_destination-passing_2024}.
 
 In \destcalculus{} with $[[Token]]$s and $[[allocIP]]$, as ampars are managed linearly, we can change the allocation and renaming mechanisms:
 \begin{itemize}
