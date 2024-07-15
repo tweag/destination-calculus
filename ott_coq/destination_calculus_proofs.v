@@ -788,31 +788,37 @@ Lemma LinOnly_empty : LinOnly ᴳ{}.
 Proof.
   scongruence unfold: LinOnly.
 Qed.
+Hint Resolve LinOnly_empty : autolemmas.
 
 Lemma FinAgeOnly_empty : FinAgeOnly ᴳ{}.
 Proof.
   scongruence unfold: FinAgeOnly.
 Qed.
+Hint Resolve FinAgeOnly_empty : autolemmas.
 
 Lemma DestOnly_empty : DestOnly ᴳ{}.
 Proof.
   sauto q: on unfold: DestOnly.
 Qed.
+Hint Resolve DestOnly_empty : autolemmas.
 
 Lemma Disjoint_empty_l : forall (G : ctx), ᴳ{} # G.
 Proof.
   sauto q: on unfold: Disjoint.
 Qed.
+Hint Resolve Disjoint_empty_l : autolemmas.
 
 Lemma Disjoint_empty_r : forall (G : ctx), Disjoint G ᴳ{}.
 Proof.
   sauto q: on unfold: Disjoint.
 Qed.
+Hint Resolve Disjoint_empty_r : autolemmas.
 
 Lemma DisposableOnly_empty : DisposableOnly ᴳ{}.
 Proof.
   sauto q: on unfold: DisposableOnly.
 Qed.
+Hint Resolve DisposableOnly_empty : autolemmas.
 
 Lemma DisposableOnly_stimes : forall (P : ctx) (m : mode), IsValid m -> DisposableOnly P -> DisposableOnly (m ᴳ· P).
 Proof.
@@ -1979,7 +1985,7 @@ Ltac crush :=
   let finisher := solve [ hauto lq: on | rewrite_db suffices; hauto lq:on ] in
   let workhorse :=
     solve
-      [ trivial
+      [ trivial with autolemmas
       (* Saturate is slowish. So it's worth trying without it first. *)
       | autorewrite with propagate_down in *; finisher
       (* Saturate a second time because it isn't unlikely to uncover
