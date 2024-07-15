@@ -19,10 +19,10 @@ Notation "'ᵥ₎' v" := (term_Val v) (at level 40, no associativity).
 Notation "'ₓ₎' x" := (term_Var x) (at level 40, no associativity).
 Notation "t $ u" := (term_App t u) (at level 42, left associativity, u at next level).
 Notation "t 'ᵗ;' u" := (term_PatU t u) (at level 45, right associativity, u at next level).
-Notation "t 'caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (term_PatS t m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, right associativity).
-Notation "t 'caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (term_PatP t m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, right associativity).
-Notation "t 'caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (term_PatE t m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, right associativity).
-Notation "t 'map' x ⟼ u" := (term_Map t x u) (at level 59, x at level 19, u at level 59, right associativity).
+Notation "t '►caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (term_PatS t m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, right associativity).
+Notation "t '►caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (term_PatP t m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, right associativity).
+Notation "t '►caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (term_PatE t m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, right associativity).
+Notation "t '►map' x ⟼ u" := (term_Map t x u) (at level 59, x at level 19, u at level 59, right associativity).
 Notation "'to⧔' t" := (term_ToA t) (at level 41, right associativity, t at level 41).
 Notation "'from⧔' t" := (term_FromA t) (at level 41, right associativity, t at level 41).
 Notation "'alloc'" := (term_Alloc).
@@ -33,10 +33,10 @@ Notation "t '⨞(,)'" := (term_FillP t) (at level 43, left associativity).
 Notation "t '⨞ᴇ' m" := (term_FillE t m) (at level 43, left associativity, m at level 29).
 Notation "t '⨞(λ' x '⁔' m '⟼' u ')'" := (term_FillF t x m u) (at level 43, m at level 29, x at level 19, u at level 59, left associativity).
 Notation "t '⨞·' u" := (term_FillComp t u) (at level 43, left associativity, u at next level).
+Notation "t '◀' u" := (term_FillLeaf t u) (at level 43, left associativity, u at next level).
 Notation "t 'ᵗ[' x '≔' v ]" := (term_sub t x v) (at level 40, x at level 19, v at level 59, left associativity).
 
 Notation "'from⧔'' t" := (sterm_FromA' t) (at level 41, right associativity, t at level 41).
-Notation "t 'ˢ⨞' u" := (sterm_FillLeaf t u) (at level 43, left associativity, u at next level).
 Notation "ˢ()" := (sterm_Unit).
 Notation "'ˢλ' x '⁔' m '⟼' u" := (sterm_Fun x m u) (at level 59, m at level 29, x at level 19, u at level 59, right associativity).
 Notation "'ˢInl' t" := (sterm_Left t) (at level 31, right associativity, t at level 31).
@@ -62,13 +62,13 @@ Notation "C '∘' c" := (cons c C) (at level 63, left associativity, c at next l
 Notation "C '©️[' h '≔' H '‗' v ]" := (ectxs_fill C h H v) (at level 61, h at level 19, H at level 24, v at level 59, left associativity).
 
 (* Evaluation contexts : 40-59 *)
-Notation "'⬜' u" := (ectx_App1 u) (at level 42, no associativity, u at next level).
-Notation "v '⬜'" := (ectx_App2 v) (at level 42, no associativity).
+Notation "'⬜►' u" := (ectx_App1 u) (at level 42, no associativity, u at next level).
+Notation "v '►⬜'" := (ectx_App2 v) (at level 42, no associativity).
 Notation "⬜; u" := (ectx_PatU u) (at level 45, no associativity, u at next level).
-Notation "'⬜caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (ectx_PatS m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, no associativity).
-Notation "'⬜caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (ectx_PatP m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, no associativity).
-Notation "'⬜caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (ectx_PatE m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, no associativity).
-Notation "'⬜map' x ⟼ u" := (ectx_Map x u) (at level 59, x at level 19, u at level 59, no associativity).
+Notation "'⬜►caseˢ' m '{Inl' x1 ⟼ u1 , 'Inr' x2 ⟼ u2 '}'" := (ectx_PatS m x1 u1 x2 u2) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u1 at level 59, u2 at level 59, no associativity).
+Notation "'⬜►caseᵖ' m 'ᵗ(' x1 ',' x2 ')' ⟼ u" := (ectx_PatP m x1 x2 u) (at level 59, m at level 29, x1 at level 19, x2 at level 19, u at level 59, no associativity).
+Notation "'⬜►caseᵉ' m 'ᴇ' n '⁔' x ⟼ u" := (ectx_PatE m n x u) (at level 59,  m at level 29, n at level 29, x at level 19, u at level 59, no associativity).
+Notation "'⬜►map' x ⟼ u" := (ectx_Map x u) (at level 59, x at level 19, u at level 59, no associativity).
 Notation "'to⧔⬜'" := (ectx_ToA) (at level 41, no associativity).
 Notation "'from⧔⬜'" := (ectx_FromA) (at level 41, no associativity).
 Notation "'⬜⨞()'" := (ectx_FillU) (at level 43, no associativity).
@@ -79,6 +79,8 @@ Notation "'⬜⨞ᴇ' m" := (ectx_FillE m) (at level 43, no associativity, m at 
 Notation "'⬜⨞(λ' x '⁔' m '⟼' u ')'" := (ectx_FillF x m u) (at level 43, m at level 29, x at level 19, u at level 59, no associativity).
 Notation "'⬜⨞·' u" := (ectx_FillComp1 u) (at level 43, no associativity, u at next level).
 Notation "v '⨞·⬜'" := (ectx_FillComp2 v) (at level 43, no associativity).
+Notation "'⬜◀' u" := (ectx_FillLeaf1 u) (at level 43, no associativity, u at next level).
+Notation "v '◀⬜'" := (ectx_FillLeaf2 v) (at level 43, no associativity).
 Notation "H 'ᵒᵖ⟨' v1 '❟⬜⟩'" := (ectx_OpenAmpar H v1) (at level 31, v1 at level 59, no associativity).
 
 (* Types : 30-59 *)

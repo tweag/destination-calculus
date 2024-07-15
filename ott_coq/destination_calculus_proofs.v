@@ -2066,11 +2066,12 @@ Proof.
       { hauto use: LinOnly_union_iff, LinOnly_stimes_forward, (IsLinProof (Fin 1)). }
     assert (FinAgeOnly (¹↑ ᴳ· D1)).
       { hauto use: FinAgeOnly_union_backward, FinAgeOnly_stimes_forward, (IsFinAgeProof Lin 1). }
-    assert ((D1 ᴳ+ D2) # D3).
-      { apply (Ty_ectxs_HDisjoint_to_Disjoint C (D1 ᴳ+ D2) D3 (U ⧔ T') U0); tauto. }
-    assert ((¹↑ ᴳ· D1) # D3).
-      { sblast use: Disjoint_union_l_iff, Disjoint_hminus_inv_r_iff, Disjoint_stimes_l_iff. }
-    rewrite LinOnly_union_iff. repeat split. tauto. tauto. tauto. apply FinAgeOnly_union_forward. repeat split. all:tauto.
+    hauto lq: on use: LinOnly_union_iff, LinOnly_stimes_backward, FinAgeOnly_union_backward, FinAgeOnly_stimes_backward, LinOnly_wk_ValidOnly.
+  - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD).
+    hauto lq: on use: LinOnly_union_iff, LinOnly_stimes_backward, FinAgeOnly_union_backward, FinAgeOnly_stimes_backward, LinOnly_wk_ValidOnly.
+  - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD). apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD2 & DisjointD1D2). apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD2). split.
+    * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
+    * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
 Qed.
 
 Lemma Empty_dec : forall (G : ctx), { G = ᴳ{}} + { exists n binding, G n = Some binding }.
@@ -2312,6 +2313,9 @@ Proof.
   - rewrite IHTyte1. 2: { apply nIn_union_iff in NotInP. destruct NotInP. assumption. }
     rewrite IHTyte2. 2: { apply nIn_union_iff in NotInP. destruct NotInP. intros inP2. contradiction H0. apply In_stimes_iff. assumption. }
     reflexivity.
+  - rewrite IHTyte1. 2: { apply nIn_union_iff in NotInP. destruct NotInP. assumption. }
+    rewrite IHTyte2. 2: { apply nIn_union_iff in NotInP. destruct NotInP. intros inP2. contradiction H0. apply In_stimes_iff. assumption. }
+    reflexivity.
 Qed.
 
 Lemma remove_singletons_in_union_eq : forall (D1 D2 D : ctx) (x : var) (m1 m2 m : mode) (T1 T2 T : type), DestOnly D1 -> DestOnly D2 -> DestOnly D -> (D1 ᴳ+ ᴳ{ x : m1 ‗ T1}) ᴳ+ (D2 ᴳ+ ᴳ{ x : m2 ‗ T2}) = (D ᴳ+ ᴳ{ x : m ‗ T}) -> D1 ᴳ+ D2 = D.
@@ -2530,20 +2534,47 @@ Lemma term_sub_spec_2 :
   (m' ᴳ· (D11 ᴳ+ D12) ᴳ+ D2 ⊢ te ᵗ[ x1' ≔ v1' ] ᵗ[ x2' ≔ v2' ] : U').
 Proof. Admitted.
 
-Lemma ectxs_fill_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T U U0 : type) (v : val),
-  D1 # D2 ->
-  D1 # D3 ->
-  hnames©(C) ## hnamesᴳ( D3) ->
+Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mode) (T U0 : type) (v : val),
   DestOnly D1 ->
   DestOnly D2 ->
+  D1 # D2 ->
+  D1 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
+  D2 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
+  D1 ᴳ+ (¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n } ⊣ C : ① ↣ U0 ->
+  D2 ⫦ v : T ->
+  D1 ⊣ C ©️[ h ≔ HNames.empty ‗ v ] : ① ↣ U0.
+Proof. Admitted.
+
+Lemma ectxs_fillCtor_spec : forall (D1 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T T' U0 : type) (v : val),
+  DestOnly D1 ->
   DestOnly D3 ->
+  D1 # D3 ->
+  D1 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
+  D3 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
+  hnames©(C) ## hnamesᴳ( D3) ->
   LinOnly D3 ->
   FinAgeOnly D3 ->
   ValidOnly D3 ->
-  D1 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
-  D2 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
-  D3 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
- D1 ᴳ+ (¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ U ⌋ n } ⊣ C : T ↣ U0 ->
- D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
- D1 ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ D3)) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
+  D1 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n } ⊣ C : T' ↣ U0 ->
+  (ᴳ-⁻¹ D3) ⫦ v : T ->
+  D1 ᴳ+ (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T' ↣ U0.
+Proof. Admitted.
+
+Lemma ectxs_fillComp_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (T U U0 : type) (v : val),
+  DestOnly D1 ->
+  DestOnly D2 ->
+  DestOnly D3 ->
+  D1 # D2 ->
+  D1 # D3 ->
+  D2 # D3 ->
+  D1 # ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν } ->
+  D2 # ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν } ->
+  D3 # ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν } ->
+  hnames©(C) ## hnamesᴳ( D3) ->
+  LinOnly D3 ->
+  FinAgeOnly D3 ->
+  ValidOnly D3 ->
+  D1 ᴳ+ ¹↑ ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν } ⊣ C : T ↣ U0 ->
+  D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
+  D1 ᴳ+ (ᴳ-⁻¹ D3) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.

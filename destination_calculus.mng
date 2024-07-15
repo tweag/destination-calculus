@@ -102,7 +102,7 @@
 
 %%%%%%%%%%%%%%%%% /Editing marks %%%%%%%%%%%%%%%%%
 
-%\newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
+\newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
 \newcommand{\textopname}[1]{``#1''}
 \newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
@@ -320,11 +320,11 @@ In its simplest form, destination passing, much like continuation passing, is us
 
 \codehere{\newoperator
 {\ottkw{dId}}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
-{\ottkw{dId}~[[x]]~[[d]]}{[[d ˢ⨞ x]]}}
+{\ottkw{dId}~[[x]]~[[d]]}{[[d ◀ x]]}}
 
-We think of a destination as a reference to an uninitialized memory location, and $[[d ˢ⨞ x]]$ (read “fill $[[d]]$ with $[[x]]$”) as writing $[[x]]$ to the memory location.
+We think of a destination as a reference to an uninitialized memory location, and $[[d ◀ x]]$ (read “fill $[[d]]$ with $[[x]]$”) as writing $[[x]]$ to the memory location.
 
-The form $[[d ˢ⨞ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a complete value in a single step. Destinations can be filled piecemeal.
+The form $[[d ◀ x]]$ is the simplest way to use a destination. But we don't have to fill a destination with a complete value in a single step. Destinations can be filled piecemeal.
 
 \codehere{\newoperator
 {\ottkw{fillWithInlCtor}}{[[⌊ T ⨁ U ⌋ ¹ν ¹ν → ⌊ T ⌋ ¹ν]]}
@@ -354,10 +354,10 @@ Destinations always exist within the context of a structure with holes. A destin
 \codehere{
   \newoperator
   {\ottkw{fillWithInlCtor'}}{[[S ⧔ ⌊ T ⨁ U ⌋ ¹ν ¹ν → S ⧔ ⌊ T ⌋ ¹ν]]}
-  {\ottkw{fillWithInlCtor'}~[[x]]}{[[x map d ⟼ fillWithInlCtor d]]}
+  {\ottkw{fillWithInlCtor'}~[[x]]}{[[x ►map d ⟼ fillWithInlCtor d]]}
   \newoperator
   {\ottkw{fillWithPairCtor'}}{[[S ⧔ ⌊ T ⨂ U ⌋ ¹ν ¹ν → S ⧔ (⌊ T ⌋ ¹ν ⨂ ⌊ U ⌋ ¹ν)]]}
-  {\ottkw{fillWithPairCtor'}~[[x]]}{[[x map d ⟼ fillWithPairCtor d]]}
+  {\ottkw{fillWithPairCtor'}~[[x]]}{[[x ►map d ⟼ fillWithPairCtor d]]}
 }
 
 To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Memory-wise, it is an uninitialized block large enough to host a value of type $[[T]]$, and a destination pointing to it. Conversely, structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in~\cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then $[[S]]$ no longer has holes and thus is just a normal, complete structure.
@@ -366,11 +366,11 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
-{[[ˢInl x]]}{[[from⧔' (alloc map d ⟼ d ⨞ Inl ˢ⨞ x)]]}}
+{[[ˢInl x]]}{[[from⧔' (alloc ►map d ⟼ d ⨞ Inl ◀ x)]]}}
 
 \codehere{\newoperator
 {[[(,)]]}{[[T ¹ν → U ¹ν → T ⨂ U]]}
-{[[ˢ(x, y)]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (,)) case ¹ν  (d1, d2) ⟼ d1 ˢ⨞ x; d2 ˢ⨞ y)]]}}
+{[[ˢ(x, y)]]}{[[from⧔' (alloc ►map d ⟼ (d ⨞ (,)) ►case ¹ν  (d1, d2) ⟼ d1 ◀ x; d2 ◀ y)]]}}
 
 
 \paragraph{Memory safety and purity}
@@ -381,17 +381,17 @@ At this point, the reader may be forgiven for feeling distressed at all the talk
 
   \codehere{\newoperator
   {\ottkw{forget}}{[[T]]}
-  {\ottkw{forget}}{[[from⧔' (alloc map d ⟼ ())]]}}
+  {\ottkw{forget}}{[[from⧔' (alloc ►map d ⟼ ())]]}}
 
   where reading the result of $\ottkw{forget}$ would result in reading the location pointed to by a destination that we never used, in other words, reading uninitialized memory;
 \item destination are written at most once, preventing examples like:
 
   \codehere{\newoperator
   {\ottkw{ambiguous1}}{[[Bool]]}
-  {\ottkw{ambiguous1}}{[[from⧔' (alloc map d ⟼ d ˢ⨞ true; d ˢ⨞ false)]]}
+  {\ottkw{ambiguous1}}{[[from⧔' (alloc ►map d ⟼ d ◀ true; d ◀ false)]]}
   \newoperator
   {\ottkw{ambiguous2}}{[[Bool]]}
-  {\ottkw{ambiguous2}}{[[from⧔' (alloc map d ⟼ let x ≔ (d ˢ⨞ false) in d ˢ⨞ true; x)]]}}
+  {\ottkw{ambiguous2}}{[[from⧔' (alloc ►map d ⟼ let x ≔ (d ◀ false) in d ◀ true; x)]]}}
 
   where $\ottkw{ambiguous1}$ returns $[[false]]$ and $\ottkw{ambiguous2}$ returns $[[true]]$ due to evaluation order, even though let-expansion should be valid in a pure language.
 \end{itemize}
@@ -419,7 +419,7 @@ Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constr
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{[[x ˢ:: xs]]}{[[from⧔' (alloc map d ⟼ (d ⨞ (::)) case ¹ν (dx, dxs) ⟼ dx ˢ⨞ x ; dxs ˢ⨞ xs)]]}}
+{[[x ˢ:: xs]]}{[[from⧔' (alloc ►map d ⟼ (d ⨞ (::)) ►case ¹ν (dx, dxs) ⟼ dx ◀ x ; dxs ◀ xs)]]}}
 
 \paragraph{Difference lists}
 \newcommand{\lstcat}{\mathop{+\!+}}
@@ -436,15 +436,15 @@ In \destcalculus{} we can represent a difference list as a list with a hole. A s
 \newoperatorb
   {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
   {[[ys append y]]}{\!\!\!\begin{array}[t]{l}[[
-ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
-‥‥(dy, dys') ⟼ dy ˢ⨞ y ; dys'
+ys ►map dys ⟼ (dys ⨞ (::)) ►case ¹ν⮒
+‥‥(dy, dys') ⟼ dy ◀ y ; dys'
 ]]\end{array}}
 \newoperator
   {\ottkw{concat}}{[[DList T ¹ν → DList T ¹ν → DList T]]}
-  {[[ys concat ys']]}{[[ys map d ⟼ d ⨞· ys']]}
+  {[[ys concat ys']]}{[[ys ►map d ⟼ d ⨞· ys']]}
 \newoperator
   {\ottkw{to}_{\ottkw{List} }}{[[DList T ¹ν → List T]]}
-  {[[toList ys]]}{[[from⧔' (ys map d ⟼ d ⨞ [])]]}
+  {[[toList ys]]}{[[from⧔' (ys ►map d ⟼ d ⨞ [])]]}
 }{
 \newtype{[[Queue T]]}{[[(List T) ⨂ (DList T)]]}
 \newoperator
@@ -452,13 +452,13 @@ ys map dys ⟼ (dys ⨞ (::)) case ¹ν⮒
   {[[singleton x]]}{[[ˢ(ˢInr (x ˢ:: ˢ[]), alloc)]]}
 \newoperatorb
   {\ottkw{enqueue}}{[[Queue T ¹ν → T ¹ν → Queue T]]}
-  {[[q enqueue y]]}{[[q case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
+  {[[q enqueue y]]}{[[q ►case ¹ν (xs, ys) ⟼ ˢ(xs, ys append y)]]}
 \newoperatorb
   {\ottkw{dequeue}}{[[Queue T ¹ν → ① ⨁ (T ⨂ (Queue T))]]}
   {[[dequeue q]]}{\!\!\!\begin{array}[t]{l}[[
-q case ¹ν {⮒
+q ►case ¹ν {⮒
 ‥‥ˢ((x ˢ:: xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
-‥‥ˢ(ˢ[], ys) ⟼ (toList ys) case ¹ν {⮒
+‥‥ˢ(ˢ[], ys) ⟼ (toList ys) ►case ¹ν {⮒
 ‥‥‥‥ˢ[] ⟼ Inl (),⮒
 ‥‥‥‥x ˢ:: xs ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
 ‥‥}⮒
@@ -478,18 +478,18 @@ So we can give an improved version of the simple functional queue using destinat
 
 In \cref{sec:working-with-dests}, we've silently been making an assumption: establishing a linear discipline on destinations ensures that all destinations will eventually find their way to the left of a fill operator $\blacktriangleleft$ or $\triangleleft$, so that the associated holes get written to. This turns out to be more subtle than it may first appear.
 
-To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T\,*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their places in the structure. In particular if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$, we can form $[[dd ˢ⨞ d]]$.
+To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T\,*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their places in the structure. In particular if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$, we can form $[[dd ◀ d]]$.
 
 This, by itself, is fine: we're building a linear data structure containing a destination; the destination $[[d]]$ is used linearly as it will eventually be consumed when that structure is consumed. However, as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and they witness how incomplete the structure is. As a result, to make a structure readable, it is not enough to know that all its remaining destinations will end up on the left of a fill operator \emph{eventually}; they must do so \emph{now}, before the scope they belong to ends. Otherwise some holes might not have been written to \emph{yet} when the structure is made readable.
 
-The problem is, with a malicious use of $[[dd ˢ⨞ d]]$, we can store away $[[d]]$ in a parent scope, so $[[d]]$ might not end up on the left of a fill operator before the scope it originates from is complete. And still, that would be accepted by the linear type system.
+The problem is, with a malicious use of $[[dd ◀ d]]$, we can store away $[[d]]$ in a parent scope, so $[[d]]$ might not end up on the left of a fill operator before the scope it originates from is complete. And still, that would be accepted by the linear type system.
 
 To visualize the problem, let's consider simple linear store semantics. We'll need the $\ottkw{alloc'}$ operator\footnote{The actual semantics that we'll develop in \cref{sec:ectxs-sem} is more refined and can give a semantics to the more flexible $[[from⧔' t]]$ and $[[alloc]]$ operators directly, but for now, this simpler semantic will suffice for $\ottkw{alloc'}$.}
 
 % the mode on the right-most arrow should be $[[¹∞]]$, but we mask it for now: it doesn't matter as we are exposing this particular problem of the system
 \codehere{\newoperator
   {\ottkw{alloc'}}{[[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]}
-  {[[alloc' f]]}{[[from⧔' (alloc map d ⟼ f d)]]}
+  {[[alloc' f]]}{[[from⧔' (alloc ►map d ⟼ f d)]]}
 }
 
 The semantics of $\ottkw{alloc'}$ is: allocate a hole in the store, call the function with the corresponding destination; when the function has returned, dereference the destination to obtain a $[[T]]$. Which we can visualize as:
@@ -505,20 +505,20 @@ For instance:
 \end{array}}
 
 Now, we are ready to see a counterexample and how it goes wrong:
-\codehere{[[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) case ¹ν { true ⟼ (), false ⟼ () }) ]]}
+\codehere{[[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d)) ►case ¹ν { true ⟼ (), false ⟼ () }) ]]}
 Here $[[dd]] \pmb{:} [[⌊⌊ Bool ⌋ ¹ν⌋ ¹ν]]$ and $[[d]] \pmb{:} [[⌊ Bool ⌋ ¹ν]]$. The problem with this example stems from the fact that $[[d]]$ is fed to $[[dd]]$, instead of being filled, in the scope of $[[d]]$. Let's look a the problem in action:
 
 \codehere{\!\!\!\begin{array}{crcl}
-       & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ˢ⨞ d)) case ¹ν { true ⟼ (), false ⟼ () }) ]] \\
-[[⟶]] & [[ { hd ≔ ⬜ } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ˢ⨞ d)) case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]] \\
-[[⟶]] & [[ { hd ≔ ⬜ , h ≔ ⬜ } ]] &|& [[(-hd ˢ⨞ -h ; deref -h) case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]] \\
-[[⟶]] & [[ { hd ≔ -h , ul< h ≔ ⬜ > } ]] &|& [[ ul< (deref -h) > case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]]
+       & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d)) ►case ¹ν { true ⟼ (), false ⟼ () }) ]] \\
+[[⟶]] & [[ { hd ≔ ⬜ } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ◀ d)) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]] \\
+[[⟶]] & [[ { hd ≔ ⬜ , h ≔ ⬜ } ]] &|& [[(-hd ◀ -h ; deref -h) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]] \\
+[[⟶]] & [[ { hd ≔ -h , ul< h ≔ ⬜ > } ]] &|& [[ ul< (deref -h) > ►case ¹ν { true ⟼ (), false ⟼ () } ; deref -hd]]
 \end{array}}\egroup
 \noindent{}Because of $[[d]]$ escaping its scope, we end up reading uninitialized memory.
 
-This example must be rejected by our type system. As demonstrated by~\cite{bagrel_destination-passing_2024}, it's possible to reject this example using purely a linear type system: they make it so that, in $[[d ˢ⨞ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. This is a rather blunt restriction! Indeed, it makes the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ practically useless: we can form destinations with type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ but they can never be filled. More concretely, this means that destination can never be stored in data structures with holes, such as the difference list or queues of \cref{ssec:efficient-queue}.
+This example must be rejected by our type system. As demonstrated by~\cite{bagrel_destination-passing_2024}, it's possible to reject this example using purely a linear type system: they make it so that, in $[[d ◀ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. This is a rather blunt restriction! Indeed, it makes the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ practically useless: we can form destinations with type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ but they can never be filled. More concretely, this means that destination can never be stored in data structures with holes, such as the difference list or queues of \cref{ssec:efficient-queue}.
 
-But we really want to be able to store destinations in data structures with holes, in fact, we'll use this capability to our advantage in \cref{fig:impl-bfs}. So we want $[[t]]$ in $[[d ˢ⨞ t]]$ to be allowed to be linear. Without further restrictions, the counterexample would be well-typed. To address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
+But we really want to be able to store destinations in data structures with holes, in fact, we'll use this capability to our advantage in \cref{fig:impl-bfs}. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. Without further restrictions, the counterexample would be well-typed. To address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
@@ -544,14 +544,14 @@ New in \cref{fig:impl-bfs} are the \textcolor{modecolor}{fuchsia} annotations: t
 \newoperator[~\mathsfbf{rec}]
 {\ottkw{go}}{[[(S ω∞ → T1 ¹ν → (! ω∞ S) ⨂ T2) ω∞→ S ω∞ → Queue (Tree T1 ⨂ ⌊ Tree T2 ⌋ ¹ν) ¹ν → ①]]}
 {[[go f st q]]}{\!\!\!\begin{array}[t]{l}[[
-(dequeue q) case ¹ν {⮒
+(dequeue q) ►case ¹ν {⮒
 ‥‥Inl () ⟼ (),⮒
-‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree case ¹ν {⮒
+‥‥ˢInr ˢ(ˢ(tree, dtree), q') ⟼ tree ►case ¹ν {⮒
 ‥‥‥‥ˢNil ⟼ dtree ⨞ Nil ; go f st q',⮒
-‥‥‥‥ˢNode x tl tr ⟼ ༼(dtree ⨞ Node) case ¹ν⮒
-‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ ༼(༼f st༽ x) case ¹ν⮒
+‥‥‥‥ˢNode x tl tr ⟼ ༼(dtree ⨞ Node) ►case ¹ν⮒
+‥‥‥‥‥‥ˢ(dy, ˢ(dtl, dtr)) ⟼ ༼(༼f st༽ x) ►case ¹ν⮒
 ‥‥‥‥‥‥‥‥ˢ(ˢᴇ ω∞ st', y) ⟼⮒
-‥‥‥‥‥‥‥‥‥‥dy ˢ⨞ y ;⮒
+‥‥‥‥‥‥‥‥‥‥dy ◀ y ;⮒
 ‥‥‥‥‥‥‥‥‥‥go f st' (q' enqueue ˢ(tl, dtl) enqueue ˢ(tr, dtr))༽༽⮒
 ‥‥}⮒
 }
@@ -559,7 +559,7 @@ New in \cref{fig:impl-bfs} are the \textcolor{modecolor}{fuchsia} annotations: t
 \newoperator
 {\ottkw{mapAccumBFS}}{[[(S ω∞ → T1 ¹ν → (! ω∞ S) ⨂ T2) ω∞→ S ω∞ → Tree T1 ¹∞ → Tree T2]]}
 {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
+from⧔' (alloc ►map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
 ]]\end{array}}
 \newoperator
 {\ottkw{relabelDPS}}{[[Tree ① ¹∞ → Tree Nat]]}
@@ -576,9 +576,9 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 \begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{1ex}
 \!\!\!\begin{array}{rrl}
 [[t]], [[u]] &::=& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
-             &|\,& [[ t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t case m ( x1 , x2 ) ⟼ u]] \grammsep [[t case m ᴇ n x ⟼ u]] \\
-             &|\,& [[t map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
-             &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \\
+             &|\,& [[ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[t ►case m ᴇ n x ⟼ u]] \\
+             &|\,& [[t ►map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
+             &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \grammsep [[t ◀ t']] \\
 &&\\
 [[T]], [[U]], [[S]] &::=& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
                     &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
@@ -593,43 +593,40 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 }\end{codefig}
 
 \sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
-[[t ˢ⨞ t']] \btriangleq \!\!\!\begin{array}[t]{l}[[
-t ⨞· (to⧔ t')
-]]\end{array}\\[\interdefskip]
 [[ˢ()]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼ d ⨞ () )
+from⧔' (alloc ►map d ⟼ d ⨞ () )
 ]]\end{array}\\[\interdefskip]
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼⮒
-‥‥d ⨞ Inl ˢ⨞ t⮒
+from⧔' (alloc ►map d ⟼⮒
+‥‥d ⨞ Inl ◀ t⮒
 )
 ]]\end{array}\\[\interdefskip]
 [[ˢInr t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼⮒
-‥‥d ⨞ Inr ˢ⨞ t⮒
+from⧔' (alloc ►map d ⟼⮒
+‥‥d ⨞ Inr ◀ t⮒
 )
 ]]\end{array}\\[\interdefskip]
 [[ˢᴇ m t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼⮒
-‥‥d ⨞ ᴇ m ˢ⨞ t⮒
+from⧔' (alloc ►map d ⟼⮒
+‥‥d ⨞ ᴇ m ◀ t⮒
 )
 ]]\end{array}
 }{
 [[from⧔' t]] \btriangleq \\
 \myspace{1}\!\!\!\begin{array}[t]{l}[[
-(from⧔ (t map un ⟼ un ; ᴇ ¹∞ () )) case ¹ν⮒
-‥‥( st , ex ) ⟼ ༼ex case ¹ν⮒
+(from⧔ (t ►map un ⟼ un ; ᴇ ¹∞ () )) ►case ¹ν⮒
+‥‥( st , ex ) ⟼ ༼ex ►case ¹ν⮒
 ‥‥‥‥ᴇ ¹∞ un ⟼ un ; st༽
 ]]\end{array}\\[\interdefskip]
 [[ˢλ x m ⟼ u]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥d ⨞ ( λ x m ⟼ u )⮒
 )
 ]]\end{array}\\[\interdefskip]
 [[ˢ( t1 , t2 )]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc map d ⟼⮒
-‥‥(d ⨞ (,)) case ¹ν⮒
-‥‥‥‥( d1 , d2 ) ⟼ d1 ˢ⨞ t1 ; d2 ˢ⨞ t2⮒
+from⧔' (alloc ►map d ⟼⮒
+‥‥(d ⨞ (,)) ►case ¹ν⮒
+‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2⮒
 )
 ]]\end{array}
 }
@@ -643,9 +640,9 @@ We usually omit mode annotations when the mode is the unit element $[[¹ν]]$. I
 
 \subsection{The age semiring}\label{ssec:age-control}
 
-In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t map x ⟼ t']]$. If we have a term $[[t1 map x1 ⟼ t2 map x2 ⟼ t3 map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^2$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
+In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^2$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
 
-We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations.\info{I removed the bit about extending ages to variables because we, in fact, have no age (or multiplicity, or mod) variables.} Finally, we will write $[[ν]] \btriangleq [[↑]]^0$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^1$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by $1$.
+We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations.\info{I removed the bit about extending ages to variables because we, in fact, have no age (or multiplicity, or mod) variables.} Finally, we will write $[[ν]] \btriangleq [[↑]]^0$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^1$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by $1$.
 
 This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be read as giving the variable the same age on both sides.
 Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
@@ -760,7 +757,7 @@ Pattern-matching with rules \rref*{Ty-term-App}, \rref*{Ty-term-PatS}, \rref*{Ty
 
 \paragraph{Rules for scoping}
 
-As destinations always exist in the context of a structure with holes, and must stay in that context (see \cref{sec:scope-escape-dests}), we need a formal notion of \emph{destination scope}. Destination scopes (we’ll usually just say \emph{scopes}) are created by \rref{Ty-term-Map}, as destinations are only ever accessed through $\ottkw{map}$. More precisely, $[[t map x ⟼ t']]$ creates a new scope for $[[x]]$ which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (``now''), and the age of the other bindings in the typing context is incremented by $1$ (i.e. scaled by $[[↑]]$). We see that $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t map x ⟼ t']]$ mentions unscaled context $[[P2]]$. The notion of age, that we attach on bindings, lets us distinguish $[[x]]$ --- introduced by $\ottkw{map}$ to bind the right-hand side of the ampar, containing destinations --- from anything else that was previously bound, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing destination-filling primitives. 
+As destinations always exist in the context of a structure with holes, and must stay in that context (see \cref{sec:scope-escape-dests}), we need a formal notion of \emph{destination scope}. Destination scopes (we’ll usually just say \emph{scopes}) are created by \rref{Ty-term-Map}, as destinations are only ever accessed through $\ottkw{map}$. More precisely, $[[t ►map x ⟼ t']]$ creates a new scope for $[[x]]$ which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (``now''), and the age of the other bindings in the typing context is incremented by $1$ (i.e. scaled by $[[↑]]$). We see that $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t ►map x ⟼ t']]$ mentions unscaled context $[[P2]]$. The notion of age, that we attach on bindings, lets us distinguish $[[x]]$ --- introduced by $\ottkw{map}$ to bind the right-hand side of the ampar, containing destinations --- from anything else that was previously bound, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing destination-filling primitives. 
 
 \Cref{fig:scope-rules} illustrates scopes introduced by $\ottkw{map}$, and how the typing rules for $\ottkw{map}$ and $\blacktriangleleft$ interact.
 
@@ -770,7 +767,7 @@ As destinations always exist in the context of a structure with holes, and must 
   \label{fig:scope-rules}
 \end{figure}
 
-Anticipating \cref{ssec:runtime-values}, ampar values are pairs with a structure with holes on the left, and destinations on the right. With $\ottkw{map}$ we enter a new scope where the destinations are accessible, but the structure with holes remains in the outer scope. As a result, when filling a destination with \rref{Ty-sterm-FillLeaf}, for instance $[[x1 ˢ⨞ x0]]$ in the figure, we type $[[x1]]$ in the new scope, while we type $[[x0]]$ in the outer scope, as it’s being moved to the structure with holes on the left of the ampar, which lives in the outer scope too. This is, in fact the opposite of the scaling that $\ottkw{map}$ does: while $\ottkw{map}$ creates a new scope for its body, operator $\blacktriangleleft$, and similarly, $\triangleleft\mycirc$ and $[[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$, transfer their right operand to the outer scope. We chose this destination-filling form for function creation because of that similarity, and so that any data can be built through piecemeal destination filling, for consistency.
+Anticipating \cref{ssec:runtime-values}, ampar values are pairs with a structure with holes on the left, and destinations on the right. With $\ottkw{map}$ we enter a new scope where the destinations are accessible, but the structure with holes remains in the outer scope. As a result, when filling a destination with \rref{Ty-term-FillLeaf}, for instance $[[x1 ◀ x0]]$ in the figure, we type $[[x1]]$ in the new scope, while we type $[[x0]]$ in the outer scope, as it’s being moved to the structure with holes on the left of the ampar, which lives in the outer scope too. This is, in fact the opposite of the scaling that $\ottkw{map}$ does: while $\ottkw{map}$ creates a new scope for its body, operator $\blacktriangleleft$, and similarly, $\triangleleft\mycirc$ and $[[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$, transfer their right operand to the outer scope. We chose this destination-filling form for function creation because of that similarity, and so that any data can be built through piecemeal destination filling, for consistency.
 
 When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \rref*{Ty-sterm-FromA'}), the left of an ampar is extracted to the current scope (as seen at the bottom of~\cref{fig:scope-rules} with $[[x22]]$): this is the fundamental reason why the left of an ampar has to ``take place'' in the current scope. We know the structure is complete and can be extracted because the right side is of type unit ($[[①]]$), and thus no destination on the right side means no hole can remain on the left. $\ottkw{from}_{\ottkw{\ltimes}}'$ is implemented in terms of $\ottkw{from}_{\ottkw{\ltimes}}$ in~\cref{fig:sterm} to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
@@ -848,7 +845,7 @@ We don't distinguish values with holes from fully-defined values at the syntacti
 
 Notice, also, that values can't have free variables, since contexts $[[G]]$ only contain hole and destination bindings, no variable binding. That values are closed is a standard feature of denotational semantics or abstract machine semantics. This is true even for function values (\rref{Ty-val-Fun}), which, also is prevented from containing free holes. Since a function's body is unevaluated, it's unclear what it'd mean for a function to contain holes; at the very least it'd complicate our system a lot, and we are unaware of any benefit supporting free holes in function could bring.
 
-One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
+One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
 
 Rules \rref*{Ty-val-Hole} and \rref*{Ty-val-Dest} are interesting. The mode must be exactly $[[¹ν]]$: there is no mode weakening for hole or destinations. Typing of value keeps track precisely of holes and destinations during evaluation. Which is what we need to make sure that holes are written before they are read.
 
@@ -862,12 +859,14 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
 
 The intuition behind our using such commands is that destination actually require a very tame notion of state. So tame, in fact, that we can simply represent writing to a hole by a mere substitution in the evaluation context.
 
+\TODO{Fix overflowing figure}
+
 \begin{codefig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}{\setlength{\arraycolsep}{1ex}
 \!\!\!\begin{array}{rrl}
 [[c]] &::=& [[t' ⬜]] \grammsep [[⬜ v]] \grammsep [[⬜ ; u]] \\
-      &|\,& [[ ⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[⬜ case m ( x1 , x2 ) ⟼ u]] \grammsep [[⬜ case m ᴇ n x ⟼ u]] \\
-      &|\,& [[⬜ map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \\
-      &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \\
+      &|\,& [[ ⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[⬜ ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[⬜ ►case m ᴇ n x ⟼ u]] \\
+      &|\,& [[⬜ ►map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \\
+      &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \grammsep [[⬜ ◀ t']] \grammsep [[v ◀ ⬜]]\\
       &|\,& [[ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ ]] \quad\quad\textit{(open ampar focusing component)} \\
 &&\\
 [[C]] &::=& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
@@ -887,6 +886,8 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
 Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$.
 
 In other words, while $[[P ⊢ t : T]]$ \emph{requires} the binding in context $[[P]]$, $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings in $[[D]]$. The typing rules for evaluation contexts $[[C]]$ and commands $[[ C[t] ]]$ are presented in~\cref{fig:ty-ectxs-cmd}.
+
+\TODO{Fix overflowing figure}
 
 \begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}
 \ottdefnTyXXectxs{}
@@ -910,7 +911,7 @@ All typing rules for evaluation contexts can be derived systematically from the 
 \begin{itemize}
   \item the typing context $[[m·D1,D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \rref*{Ty-term-PatP};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \rref*{Ty-term-PatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{Ty-term-PatP} (the term $[[t]]$ is located where the focus $[]$ is in \rref*{Ty-ectxs-OpenAmpar}).
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{Ty-term-PatP} (the term $[[t]]$ is located where the focus $[]$ is in \rref*{Ty-ectxs-OpenAmpar}).
 \end{itemize}
 
 We think of the typing rule for an evaluation context as a rotation of the typing rule for the associated term, where the typing contexts of one subterm and the conclusion are swapped, an the typing contexts of the other potential subterms are kept unchanged (with the difference that typing contexts for evaluation contexts are of shape $[[D]]$ instead of $[[P]]$).
@@ -994,6 +995,7 @@ Red-FillR,
 Red-FillE,
 Red-FillP,
 Red-FillComp,
+Red-FillLeaf,
 Open-Ampar,
 Close-Ampar}
 \egroup
@@ -1081,7 +1083,7 @@ First, \destcalculus{} doesn't have recursion, this would have obscured the pres
 
 Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a non-linear difference list $0 \ottsctor{::} \holesq$), and then used twice, each time in a different way:
 \codehere{[[
-༼ˢᴇ ων {h} ˢ⟨ ˢ0 ˢ:: +h ❟ -h ⟩༽ case ¹ν ᴇ ων x ⟼⮒
+༼ˢᴇ ων {h} ˢ⟨ ˢ0 ˢ:: +h ❟ -h ⟩༽ ►case ¹ν ᴇ ων x ⟼⮒
 ‥‥let x1 ≔ x append ˢ1 in⮒
 ‥‥let x2 ≔ x append ˢ2 in⮒
 ‥‥‥‥toList (x1 concat x2)
@@ -1158,7 +1160,7 @@ This ability to store destination does come at a cost though: the system needs t
 
 In~\cite{bagrel_destination-passing_2024}, the author proposes a system much like ours: it has a destination type, and a par-like construct (that they call $\ottstype{Incomplete}$), where only the right-hand side can be modified; together these two elements give extra expressiveness to the language compared to~\cite{minamide_functional_1998}.
 
-In their system, $[[d ˢ⨞ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. One consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do. The other consequence is that their system require both primitive constructors and destination-filling primitives; it cannot be bootstrapped with the later alone, as we do in the current article.
+In their system, $[[d ◀ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. One consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do. The other consequence is that their system require both primitive constructors and destination-filling primitives; it cannot be bootstrapped with the later alone, as we do in the current article.
 
 However, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which just features linear types. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.
 
@@ -1237,6 +1239,8 @@ Close-Ampar
 }
 \end{augmentwidth}\end{ottfig}
 
+\TODO{Fix overflowing figure}
+
 \begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 2)}\label{fig:sem-full2}}\begin{augmentwidth}{1.7cm}
 \drules{}{}{%
 Focus-ToA,
@@ -1277,7 +1281,13 @@ Focus-FillCompOne,
 Unfocus-FillCompOne,
 Focus-FillCompTwo,
 Unfocus-FillCompTwo,
-Red-FillComp
+Red-FillComp,
+%
+Focus-FillLeafOne,
+Unfocus-FillLeafOne,
+Focus-FillLeafTwo,
+Unfocus-FillLeafTwo,
+Red-FillLeaf
 }
 \end{augmentwidth}\end{ottfig}
 

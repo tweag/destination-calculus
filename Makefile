@@ -21,7 +21,7 @@ clean: Makefile.coq
 	$(MAKE) -f Makefile.coq cleanall
 	rm -f Makefile.coq Makefile.coq.conf
 	rm -f ott_coq/destination_calculus_ott.v
-	rm -f *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
+	rm -f *.aux *.bbl *.ptb *.toc *.out *.run.xml
 	rm -f *.log *.bcf *.fdb_latexmk *.fls *.blg
 	rm -f no-editing-marks
 	rm -f destination_calculus.pdf

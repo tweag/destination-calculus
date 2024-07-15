@@ -47,15 +47,6 @@ Proof.
       * rewrite union_empty_l_eq with (G := ᴳ{ 1 : ¹ν ‗ T}). apply Ty_term_Var. { apply DisposableOnly_empty. }  { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
 
-Lemma Ty_term_sterm_FillLeaf : forall (P1 P2 : ctx) (t t' : term) (T : type) (n : mode), IsValid n -> P1 ⊢ t : ⌊T⌋n -> P2 ⊢ t' : T -> P1 ᴳ+ (¹↑ · n) ᴳ·P2 ⊢ t ˢ⨞ t' : ①.
-Proof.
-  intros * Validn Tyt Tyt'.
-  unfold sterm_FillLeaf.
-  replace (¹↑ · n) with (mode_times' ((¹↑ :: nil) ++ (n :: nil) ++ nil)). 2:{ cbn. destruct n; try destruct p; try destruct p2, a2; cbn; try destruct m, a; cbn; try rewrite Nat.add_0_r; trivial. }
-  apply Ty_term_FillComp with (U := T); trivial.
-  apply Ty_term_ToA. assumption.
-Qed.
-
 Lemma Ty_term_sterm_Unit : forall (P : ctx), UserDefined P -> DisposableOnly P -> P ⊢ ˢ() : ①.
 Proof.
   intros * UserDefinedP DisposP.
@@ -97,8 +88,8 @@ Proof.
   { apply UserDefined_Disjoint; trivial. lia. }
   apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
-  replace (¹↑) with (¹↑ · ¹ν). 2:{ cbn. reflexivity. }
-  apply Ty_term_sterm_FillLeaf with (T := T1); trivial.
+  replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
+  apply Ty_term_FillLeaf with (T := T1); trivial.
   constructor.
   apply Ty_term_FillL with (T1 := T1) (T2 := T2); trivial.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨁ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
@@ -114,8 +105,8 @@ Proof.
   { apply UserDefined_Disjoint; trivial. lia. }
   apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
-  replace (¹↑) with (¹↑ · ¹ν). 2:{ cbn. reflexivity. }
-  apply Ty_term_sterm_FillLeaf with (T := T2); trivial.
+  replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
+  apply Ty_term_FillLeaf with (T := T2); trivial.
   constructor.
   apply Ty_term_FillR with (T1 := T1) (T2 := T2); trivial.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨁ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
@@ -134,7 +125,8 @@ Proof.
   apply Ty_term_Alloc. apply DisposableOnly_empty.
   rewrite union_commutative.
   rewrite stimes_is_action.
-  apply Ty_term_sterm_FillLeaf with (P2 := P2) (T := T); trivial.
+  replace (¹↑ · m) with (mode_times' ((¹↑ :: nil) ++ (m :: nil) ++ nil)). 2:{ cbn. rewrite mode_times_linnu_r_eq. reflexivity. }
+  apply Ty_term_FillLeaf with (P2 := P2) (T := T); trivial.
   replace (⌊ T ⌋ m) with (⌊ T ⌋ mode_times' ((m :: nil) ++ (¹ν :: nil) ++ nil)). 2: { f_equal. cbn. apply mode_times_linnu_r_eq. }
   apply Ty_term_FillE.
   assumption.
@@ -166,11 +158,11 @@ Proof.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
   replace (¹↑ ᴳ· (P21 ᴳ+ P22) ᴳ+ ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν}) with ((ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· P21) ᴳ+ (ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· P22)). 2:{ rewrite stimes_distrib_on_union. rewrite union_commutative with (G1 := ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν}). rewrite union_associative. rewrite <- union_associative with (G1 := ¹↑ ᴳ· P21). rewrite <- union_associative. rewrite union_commutative with (G1 := ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν}). crush. }
   apply Ty_term_PatU;
-  replace (¹↑) with (¹↑ · ¹ν); try (cbn; reflexivity).
-  apply Ty_term_sterm_FillLeaf with (P2 := P21) (T := T1); trivial.
+  replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)); try (cbn; reflexivity).
+  apply Ty_term_FillLeaf with (P2 := P21) (T := T1); trivial.
   constructor.
   rewrite union_empty_l_eq with (G := ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
-  apply Ty_term_sterm_FillLeaf with (P2 := P22) (T := T2); trivial.
+  apply Ty_term_FillLeaf with (P2 := P22) (T := T2); trivial.
   constructor.
   rewrite union_empty_l_eq with (G := ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
@@ -179,7 +171,6 @@ Theorem Ty_sterm_coherency : forall (P : ctx) (t : term) (T : type), P ˢ⊢ t :
 Proof.
   intros * Tyst. inversion Tyst; subst.
   { apply Ty_term_sterm_FromA'; trivial. }
-  { replace (mode_times' ((¹↑ :: nil) ++ (n :: nil) ++ nil)) with (¹↑ · n). 2:{ cbn. destruct n; try destruct p; try destruct p2, a2; cbn; try destruct m, a; cbn; try rewrite Nat.add_0_r; trivial. } apply Ty_term_sterm_FillLeaf with (T := T0); trivial. }
   { apply Ty_term_sterm_Unit; trivial. }
   { apply Ty_term_sterm_Fun; trivial. }
   { apply Ty_term_sterm_Left; trivial. }

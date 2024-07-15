@@ -25,10 +25,10 @@ Proof.
   - exists C, ( t' $ ᵥ₎ v). constructor.
   - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v' $ ᵥ₎ v). constructor.
   - exists C, (ᵥ₎ v ᵗ; u). constructor.
-  - exists C, (ᵥ₎ v caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). constructor.
-  - exists C, (ᵥ₎ v caseᵖ m ᵗ( x1, x2) ⟼ u). constructor.
-  - exists C, (ᵥ₎ v caseᵉ m ᴇ m' ⁔ x ⟼ u). constructor.
-  - exists C, (ᵥ₎ v map x ⟼ t'). constructor.
+  - exists C, (ᵥ₎ v ►caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2}). constructor.
+  - exists C, (ᵥ₎ v ►caseᵖ m ᵗ( x1, x2) ⟼ u). constructor.
+  - exists C, (ᵥ₎ v ►caseᵉ m ᴇ m' ⁔ x ⟼ u). constructor.
+  - exists C, (ᵥ₎ v ►map x ⟼ t'). constructor.
   - exists C, (to⧔ (ᵥ₎ v)). constructor.
   - exists C, (from⧔ (ᵥ₎ v)). constructor.
   - exists C, (ᵥ₎ v ⨞()). constructor.
@@ -39,6 +39,8 @@ Proof.
   - exists C, (ᵥ₎ v ⨞(λ x ⁔ m ⟼ u)). constructor.
   - exists C, (ᵥ₎ v ⨞· t'). constructor.
   - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v ⨞· ᵥ₎ v'). constructor.
+  - exists C, (ᵥ₎ v ◀ t'). constructor.
+  - rename v into v', v0 into v, D into D2, ValidOnlyD into ValidOnlyD2. clear DestOnlyD. exists C, (ᵥ₎ v ◀ ᵥ₎ v'). constructor.
   - rename v into v1, Tyv into Tyv1. exists C, (ᵥ₎ hnamesᴳ(D3) ⟨ v2 ❟ v1 ⟩). constructor.
   - assert (P ᴳ+ ᴳ{ x : m ‗ T} = ᴳ{ x : m ‗ T}) as elimP. { apply nDisposable_in_DestOnly; tauto. } rewrite elimP in *.
     exfalso. unfold DestOnly in DestOnlyD. specialize (DestOnlyD (ˣ x) (ₓ m ‗ T)). unfold ctx_singleton in DestOnlyD. rewrite singleton_MapsTo_at_elt in DestOnlyD. specialize (DestOnlyD eq_refl). unfold IsDest in DestOnlyD. contradiction.
@@ -47,8 +49,8 @@ Proof.
     * destruct (NotVal_dec t'). all: try destruct e; subst. all: try rename x into v'.
       + inversion Tytp; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : T ⁔ m → U ‗ ¹ν}) (h := h) (T := T ⁔ m → U); tauto. }
       exists C, (u ᵗ[x ≔ v]). constructor.
-      + exists (C ∘ (v ⬜)), t'. constructor; tauto.
-    * exists (C ∘ ⬜ t'), t. constructor; tauto.
+      + exists (C ∘ (v ►⬜)), t'. constructor; tauto.
+    * exists (C ∘ ⬜► t'), t. constructor; tauto.
   - rename Tyt into TyPatU, T into U, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ① ‗ ¹ν}) (h := h) (T := ①); tauto. } exists C, u. constructor.
     * exists (C ∘ ⬜; u), t. constructor; tauto.
@@ -56,20 +58,20 @@ Proof.
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : T1 ⨁ T2 ‗ ¹ν}) (h := h) (T := T1 ⨁ T2); tauto. }
       { exists C, (u1 ᵗ[x1 ≔ v1]). constructor. }
       { exists C, (u2 ᵗ[x2 ≔ v2]). constructor. }
-    * exists (C ∘ (⬜caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2})), t. constructor; tauto.
+    * exists (C ∘ (⬜►caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2})), t. constructor; tauto.
   - rename Tyt into TyPatP, T into U, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : T1 ⨂ T2 ‗ ¹ν}) (h := h) (T := T1 ⨂ T2); tauto. }
       { exists C, (u ᵗ[x1 ≔ v1] ᵗ[x2 ≔ v2]). constructor. }
-    * exists (C ∘ ⬜caseᵖ m ᵗ( x1, x2)⟼ u), t. constructor; tauto.
+    * exists (C ∘ ⬜►caseᵖ m ᵗ( x1, x2)⟼ u), t. constructor; tauto.
   - rename Tyt into TyPatE, T into U, T0 into T, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ! n ⁔ T ‗ ¹ν}) (h := h) (T := ! n ⁔ T); tauto. }
       { exists C, (u ᵗ[x ≔ v']). constructor. }
-    * exists (C ∘ ⬜caseᵉ m ᴇ n ⁔ x ⟼ u), t. constructor; tauto.
+    * exists (C ∘ ⬜►caseᵉ m ᴇ n ⁔ x ⟼ u), t. constructor; tauto.
   - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
       rename D2 into D', D0 into D2. assert (DestOnly (P ᴳ+ (D1 ᴳ+ D2))) as DestOnlyPuD1uD2. { crush. } rewrite (nDisposable_in_DestOnly P (D1 ᴳ+ D2) DisposP DestOnlyPuD1uD2) in *.
       exists (C ∘ hnamesᴳ(D3) ᴴ⩲ (maxᴴ(hnames©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnames©(C)) + 1)] ❟⬜⟩), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnames©(C)) + 1)]]). constructor; tauto.
-    * exists (C ∘ ⬜map x ⟼ t'), t. constructor; tauto.
+    * exists (C ∘ ⬜►map x ⟼ t'), t. constructor; tauto.
   - rename Tyt into TyToA. destruct (NotVal_dec u).
     * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HNames.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.
     * exists (C ∘ to⧔⬜), u. constructor; tauto.
@@ -126,11 +128,20 @@ Proof.
     * exists (C ∘ ⬜⨞(λ x ⁔ m ⟼ u)), t. constructor; tauto.
   - rename Tyt into TyFillComp, Tyt0 into Tyt, t0 into t, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. destruct (NotVal_dec t').
-      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ U ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ n); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename Tyv0 into Tyvp. inversion Tyvp; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } assert (DestOnly (P0 ᴳ+ (D1 ᴳ+ D2))) as DestOnlyP0uD1uD2. { crush. } rewrite (nDisposable_in_DestOnly P0 (D1 ᴳ+ D2) DisposP0 DestOnlyP0uD1uD2) in *.
+      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ U ⌋ ¹ν ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ ¹ν); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename Tyv0 into Tyvp. inversion Tyvp; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } assert (DestOnly (P0 ᴳ+ (D1 ᴳ+ D2))) as DestOnlyP0uD1uD2. { crush. } rewrite (nDisposable_in_DestOnly P0 (D1 ᴳ+ D2) DisposP0 DestOnlyP0uD1uD2) in *.
       exists
         ( C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1) ‗  v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1)] ] ),
         (ᵥ₎ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1)]).
       constructor; tauto.
       + exists (C ∘ v ⨞·⬜), t'. constructor; tauto.
     * exists (C ∘ ⬜⨞· t'), t. constructor; tauto.
+  - rename Tyt into TyFillLeft, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
+    * destruct e; subst. rename x into v. destruct (NotVal_dec t').
+      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ T ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⌋ n); tauto. } rename H1 into DestOnlyD'. rewrite <- union_associative in *. rewrite (nDisposable_in_DestOnly P (ᴳ{- h : ¹ν ⌊ T ⌋ n} ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) DisposP DestOnlyD) in *.
+      exists
+        ( C ©️[ h ≔ HNames.empty ‗  v' ] ),
+        (ᵥ₎ ᵛ() ).
+      constructor.
+      + exists (C ∘ v ◀⬜), t'. constructor; tauto.
+    * exists (C ∘ ⬜◀ t'), t. constructor; tauto.
 Qed.

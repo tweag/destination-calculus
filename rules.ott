@@ -101,7 +101,7 @@ P1 ⊢ t : T1 ⨁ T2 [[:Tyt]]
 P2 + { x1 : m T1 } ⊢ u1 : U [[:Tyu1]]
 P2 + { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatS
-m·P1 + P2 ⊢ t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
+m·P1 + P2 ⊢ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 
 {{ IsValid [[m]] }} [[:Validm]]
 {{ [[P2]] # [[{ x1 : m T1 }]] }} [[:DisjointP2x1]]
@@ -110,7 +110,7 @@ m·P1 + P2 ⊢ t case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } : U
 P1 ⊢ t : T1 ⨂ T2 [[:Tyt]]
 P2 + { x1 : m T1 } + { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatP
-m·P1 + P2 ⊢ t case m (x1 , x2) ⟼ u : U
+m·P1 + P2 ⊢ t ►case m (x1 , x2) ⟼ u : U
 
 {{ IsValid [[m]] }} [[:Validm]]
 {{ IsValid [[n]] }} [[:Validn]]
@@ -118,13 +118,13 @@ m·P1 + P2 ⊢ t case m (x1 , x2) ⟼ u : U
 P1 ⊢ t : !n T [[:Tyt]]
 P2 + { x : m·n T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatE
-m·P1 + P2 ⊢ t case m ᴇ n x ⟼ u : U
+m·P1 + P2 ⊢ t ►case m ᴇ n x ⟼ u : U
 
 {{ [[P2]] # [[{ x : ¹ν T }]] }} [[:DisjointP2x]]
 P1 ⊢ t : U ⧔ T [[:Tyt]]
 ¹↑·P2 + { x : ¹ν T } ⊢ t' : T' [[:Tytp]]
 -------------------------------- :: Map
-P1 + P2 ⊢ t map x ⟼ t' : U ⧔ T'
+P1 + P2 ⊢ t ►map x ⟼ t' : U ⧔ T'
 
 P ⊢ u : U [[:Tyu]]
 ------------------------------- :: ToA
@@ -167,11 +167,16 @@ P2 + { x : m T } ⊢ u : U [[:Tyu]]
 ---------------------------------------- :: FillF
 P1 + (¹↑·n)·P2 ⊢ t ⨞(λ x m ⟼ u) : ①
 
-{{ IsValid [[n]] }} [[:Validn]]
-P1 ⊢ t : ⌊U⌋n [[:Tyt]]
+P1 ⊢ t : ⌊U⌋¹ν [[:Tyt]]
 P2 ⊢ t' : U ⧔ T [[:Tytp]]
 ----------------------------- :: FillComp
-P1 + (¹↑·n)·P2 ⊢ t ⨞· t' : T
+P1 + ¹↑·P2 ⊢ t ⨞· t' : T
+
+{{ IsValid [[n]] }} [[:Validn]]
+P1 ⊢ t : ⌊T⌋n [[:Tyt]]
+P2 ⊢ t' : T [[:Tytp]]
+----------------------------- :: FillLeaf
+P1 + (¹↑·n)·P2 ⊢ t ◀ t' : ①
 
 defn
 P ˢ⊢ t : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syntactic sugar forms }} by
@@ -179,12 +184,6 @@ P ˢ⊢ t : T :: :: Ty_sterm :: Ty_sterm_ {{ com Derived typing judgment for syn
 P ⊢ t : T ⧔ ① [[:Tyt]]
 ---------------- :: FromA'
 P ˢ⊢ from⧔' t : T
-
-{{ IsValid [[n]] }} [[:Validn]]
-P1 ⊢ t : ⌊T⌋n [[:Tyt]]
-P2 ⊢ t' : T [[:Tytp]]
------------------------------ :: FillLeaf
-P1 + (¹↑·n)·P2 ˢ⊢ t ˢ⨞ t' : ①
 
 {{ UserDefined [[P]] }} [[:UserDefinedP]]
 {{ DisposableOnly [[P]] }} [[:DisposP]]
@@ -270,7 +269,7 @@ m·D1 + D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 + { x1 : m T1 } ⊢ u1 : U [[:Tyu1]]
 D2 + { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatS
-D1 ⊣ C ∘ (⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
+D1 ⊣ C ∘ (⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
 % {{ [[D2]] # [[{ x1 : m T1 }]] }} useless with DestOnly
 % {{ [[D2]] # [[{ x2 : m T2 }]] }} useless with DestOnly
@@ -283,7 +282,7 @@ D1 ⊣ C ∘ (⬜ case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U
 m·D1 + D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 + { x1 : m T1 } + { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatP
-D1 ⊣ C ∘ (⬜ case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
+D1 ⊣ C ∘ (⬜ ►case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
 % {{ [[D2]] # [[{ x : m·m' T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
@@ -295,7 +294,7 @@ D1 ⊣ C ∘ (⬜ case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 m·D1 + D2 ⊣ C : U ↣ U0 [[:TyC]]
 D2 + { x : m·m' T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatE
-D1 ⊣ C ∘ (⬜ case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
+D1 ⊣ C ∘ (⬜ ►case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
 % {{ [[D2]] # [[{ x : ¹ν T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
@@ -305,7 +304,7 @@ D1 ⊣ C ∘ (⬜ case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 D1 + D2 ⊣ C : U ⧔ T' ↣ U0 [[:TyC]]
 ¹↑·D2 + { x : ¹ν T } ⊢ t' : T' [[:Tytp]]
 -------------------------------- :: Map
-D1 ⊣ C ∘ (⬜ map x ⟼ t') : (U ⧔ T) ↣ U0
+D1 ⊣ C ∘ (⬜ ►map x ⟼ t') : (U ⧔ T) ↣ U0
 
 D ⊣ C : (U ⧔ ①) ↣ U0 [[:TyC]]
 ------------------------------- :: ToA
@@ -352,21 +351,39 @@ D1 ⊣ C ∘ (⬜ ⨞(λ x m ⟼ u)) : ⌊T m → U⌋n ↣ U0
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ValidOnly [[D2]] }} [[:ValidOnlyD2]]
-{{ IsValid [[n]] }} [[:Validn]]
-D1 + (¹↑·n)·D2 ⊣ C : T ↣ U0 [[:TyC]]
+D1 + ¹↑·D2 ⊣ C : T ↣ U0 [[:TyC]]
 D2 ⊢ t' : U ⧔ T [[:Tytp]]
 ----------------------------- :: FillComp1
-D1 ⊣ C ∘ (⬜ ⨞· t') : ⌊U⌋n ↣ U0
+D1 ⊣ C ∘ (⬜ ⨞· t') : ⌊U⌋¹ν ↣ U0
+
+{{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
+{{ DestOnly [[D1]] }} [[:DestOnlyD1]]
+{{ DestOnly [[D2]] }} [[:DestOnlyD2]]
+{{ ValidOnly [[D1]] }} [[:ValidOnlyD1]]
+D1 + ¹↑·D2 ⊣ C : T ↣ U0 [[:TyC]]
+D1 ⊢ v : ⌊U⌋¹ν [[:Tyt]]
+----------------------------- :: FillComp2
+D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
+
+{{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
+{{ DestOnly [[D1]] }} [[:DestOnlyD1]]
+{{ DestOnly [[D2]] }} [[:DestOnlyD2]]
+{{ ValidOnly [[D2]] }} [[:ValidOnlyD2]]
+{{ IsValid [[n]] }} [[:Validn]]
+D1 + (¹↑·n)·D2 ⊣ C : ① ↣ U0 [[:TyC]]
+D2 ⊢ t' : T [[:Tytp]]
+----------------------------- :: FillLeaf1
+D1 ⊣ C ∘ (⬜ ◀ t') : ⌊T⌋n ↣ U0
 
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ ValidOnly [[D1]] }} [[:ValidOnlyD1]]
 {{ IsValid [[n]] }} [[:Validn]]
-D1 + (¹↑·n)·D2 ⊣ C : T ↣ U0 [[:TyC]]
-D1 ⊢ v : ⌊U⌋n [[:Tyt]]
------------------------------ :: FillComp2
-D2 ⊣ C ∘ (v ⨞· ⬜) : U ⧔ T ↣ U0
+D1 + (¹↑·n)·D2 ⊣ C : ① ↣ U0 [[:TyC]]
+D1 ⊢ v : ⌊T⌋n [[:Tyt]]
+----------------------------- :: FillLeaf2
+D2 ⊣ C ∘ (v ◀ ⬜) : T ↣ U0
 
 % TODO: check that hminus_inv enforces linearity+now
 
@@ -435,47 +452,47 @@ C[() ; u] ⟶ C[u]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: Focus_PatS
-C[t case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ (⬜ case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
+C[t ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ (C ∘ (⬜ ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[t]
 
 ----------------------- :: Unfocus_PatS
-(C ∘ (⬜ case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
+(C ∘ (⬜ ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }))[v] ⟶ C[v ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }]
 
 ----------------------- :: Red_PatL
-C[(Inl v1) case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x1 ≔ v1] ]
+C[(Inl v1) ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u1[x1 ≔ v1] ]
 
 ----------------------- :: Red_PatR
-C[(Inr v2) case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x2 ≔ v2] ]
+C[(Inr v2) ►case m { Inl x1 ⟼ u1, Inr x2 ⟼ u2 }] ⟶ C[u2[x2 ≔ v2] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: Focus_PatP
-C[t case m (x1,x2) ⟼ u] ⟶ (C ∘ (⬜ case m (x1,x2) ⟼ u))[t]
+C[t ►case m (x1,x2) ⟼ u] ⟶ (C ∘ (⬜ ►case m (x1,x2) ⟼ u))[t]
 
 ----------------------- :: Unfocus_PatP
-(C ∘ (⬜ case m (x1,x2) ⟼ u))[v] ⟶ C[v case m (x1,x2) ⟼ u]
+(C ∘ (⬜ ►case m (x1,x2) ⟼ u))[v] ⟶ C[v ►case m (x1,x2) ⟼ u]
 
 ----------------------- :: Red_PatP
-C[(v1, v2) case m (x1,x2) ⟼ u] ⟶ C[u[x1 ≔ v1][x2 ≔ v2] ]
+C[(v1, v2) ►case m (x1,x2) ⟼ u] ⟶ C[u[x1 ≔ v1][x2 ≔ v2] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: Focus_PatE
-C[t case m ᴇ n x ⟼ u] ⟶ (C ∘ (⬜ case m ᴇ n x ⟼ u))[t]
+C[t ►case m ᴇ n x ⟼ u] ⟶ (C ∘ (⬜ ►case m ᴇ n x ⟼ u))[t]
 
 ----------------------- :: Unfocus_PatE
-(C ∘ (⬜ case m ᴇ n x ⟼ u))[v] ⟶ C[v case m ᴇ n x ⟼ u]
+(C ∘ (⬜ ►case m ᴇ n x ⟼ u))[v] ⟶ C[v ►case m ᴇ n x ⟼ u]
 
 ----------------------- :: Red_PatE
-C[ᴇ n v' case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v'] ]
+C[ᴇ n v' ►case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v'] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ----------------------- :: Focus_Map
-C[t map x ⟼ t'] ⟶ (C ∘ (⬜ map x ⟼ t'))[t]
+C[t ►map x ⟼ t'] ⟶ (C ∘ (⬜ ►map x ⟼ t'))[t]
 
 ----------------------- :: Unfocus_Map
-(C ∘ (⬜ map x ⟼ t'))[v] ⟶ C[v map x ⟼ t']
+(C ∘ (⬜ ►map x ⟼ t'))[v] ⟶ C[v ►map x ⟼ t']
 
 {{ [[h'']] = [[max(hnames(C)) + 1]] }} [[:hpMaxC]]
 ---------------------------------- :: Open_Ampar
-C[ H ⟨ v2 ❟ v1 ⟩ map x ⟼ t'] ⟶ (C ∘ (H⩲h'' ᵒᵖ⟨ v2[H⩲h''] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h''] ] ]
+C[ H ⟨ v2 ❟ v1 ⟩ ►map x ⟼ t'] ⟶ (C ∘ (H⩲h'' ᵒᵖ⟨ v2[H⩲h''] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h''] ] ]
 
 ---------------------------------- :: Close_Ampar
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜⟩)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
@@ -588,3 +605,20 @@ C[v ⨞· t'] ⟶ (C ∘ (v ⨞· ⬜))[t']
 {{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
 ---------------------------------------- :: Red_FillComp
 C[-h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h') v2[H⩲h'] ][v1[H⩲h'] ]
+
+{{ NotVal [[t]] }} [[:NotValt]]
+------------------------------------- :: Focus_FillLeaf1
+C[t ◀ t'] ⟶ (C ∘ (⬜ ◀ t'))[t]
+
+------------------------------------- :: Unfocus_FillLeaf1
+(C ∘ (⬜ ◀ t'))[v] ⟶ C[v ◀ t']
+
+{{ NotVal [[t']] }} [[:NotValtp]]
+------------------------------------- :: Focus_FillLeaf2
+C[v ◀ t'] ⟶ (C ∘ (v ◀ ⬜))[t']
+
+------------------------------------- :: Unfocus_FillLeaf2
+(C ∘ (v ◀ ⬜))[v'] ⟶ C[v ◀ v']
+
+---------------------------------------- :: Red_FillLeaf
+C[-h ◀ v] ⟶ C[h ≔ {} v ][ () ]

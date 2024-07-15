@@ -79,6 +79,7 @@ Inductive term : Type :=  (*r Term *)
  | term_FillP (t:term) (*r Fill destination with product constructor *)
  | term_FillF (t:term) (x:var) (m:mode) (u:term) (*r Fill destination with function *)
  | term_FillComp (t:term) (t':term) (*r Fill destination with root of other ampar *)
+ | term_FillLeaf (t:term) (t':term) (*r Fill destination with supplied term *)
 with val : Type :=  (*r Value *)
  | val_Hole (h:hname) (*r Hole *)
  | val_Dest (h:hname) (*r Destination *)
@@ -108,6 +109,8 @@ Inductive ectx : Type :=  (*r Evaluation context component *)
  | ectx_FillF (x:var) (m:mode) (u:term)
  | ectx_FillComp1 (t':term)
  | ectx_FillComp2 (v:val)
+ | ectx_FillLeaf1 (t':term)
+ | ectx_FillLeaf2 (v:val)
  | ectx_OpenAmpar (H:hnames) (v2:val) (*r Open ampar, binding hole names in the next components *).
 
 Inductive type : Type :=  (*r Type *)
@@ -158,6 +161,7 @@ Definition is_sterm_of_term (t_5:term) : bool :=
   | (term_FillP t) => false
   | (term_FillF t x m u) => false
   | (term_FillComp t t') => false
+  | (term_FillLeaf t t') => false
 end.
 
 
@@ -270,6 +274,7 @@ Fixpoint term_sub (te: term) (x':var) (v':val) : term := match te with
     let u' := match Nat.eq_dec x x' with | left _ => u | right _ => term_sub u x' v' end in
     term_FillF (term_sub t x' v') x m u'
   | term_FillComp t t' => term_FillComp (term_sub t x' v') (term_sub t' x' v')
+  | term_FillLeaf t t' => term_FillLeaf (term_sub t x' v') (term_sub t' x' v')
 end.
 
 Definition NotVal (t: term) : Prop := forall (v : val), t <> term_Val v.
@@ -301,9 +306,6 @@ Definition sterm_FromA' (t : term) :=
     )
   ).
 
-Definition sterm_FillLeaf (t t' : term) :=
-  (term_FillComp t (term_ToA t')).
-
 Definition sterm_Unit :=
   (sterm_FromA'
     (term_Map
@@ -332,7 +334,7 @@ Definition sterm_Left (t : term) :=
     (term_Map
       term_Alloc
       0
-      (sterm_FillLeaf
+      (term_FillLeaf
         (term_FillL
           (term_Var 0)
         )
@@ -346,7 +348,7 @@ Definition sterm_Right (t : term) :=
     (term_Map
       term_Alloc
       0
-      (sterm_FillLeaf
+      (term_FillLeaf
         (term_FillR
           (term_Var 0)
         )
@@ -360,7 +362,7 @@ Definition sterm_Exp (m : mode) (t : term) :=
     (term_Map
       term_Alloc
       0
-      (sterm_FillLeaf
+      (term_FillLeaf
         (term_FillE
           (term_Var 0)
           m
@@ -381,11 +383,11 @@ Definition sterm_Prod (t1 t2 : term) :=
         )
         (Some (Lin, (Fin 0))) 1 2
         (term_PatU
-          (sterm_FillLeaf
+          (term_FillLeaf
             (term_Var 1)
             t1
           )
-          (sterm_FillLeaf
+          (term_FillLeaf
             (term_Var 2)
             t2
           )
@@ -442,6 +444,7 @@ with term_cshift (te : term) (H : hnames) (h' : hname) : term :=
   | term_FillP t => term_FillP (term_cshift t H h')
   | term_FillF t x m u => term_FillF (term_cshift t H h') x m (term_cshift u H h')
   | term_FillComp t t' => term_FillComp (term_cshift t H h') (term_cshift t' H h')
+  | term_FillLeaf t t' => term_FillLeaf (term_cshift t H h') (term_cshift t' H h')
 end.
 
 (******************************************************************************
@@ -937,20 +940,19 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (Tyt: Ty_term P1 t (type_Dest (type_Fun T m U) n))
      (Tyu: Ty_term  (union  P2    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  u U),
      Ty_term  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillF t x m u) type_Unit
- | Ty_term_FillComp : forall (P1:ctx) (n:mode) (P2:ctx) (t t':term) (T U:type)
-     (Validn: IsValid n )
-     (Tyt: Ty_term P1 t (type_Dest U n))
+ | Ty_term_FillComp : forall (P1 P2:ctx) (t t':term) (T U:type)
+     (Tyt: Ty_term P1 t (type_Dest U  (Some (pair   Lin     (Fin 0)  )) ))
      (Tytp: Ty_term P2 t' (type_Ampar U T)),
-     Ty_term  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillComp t t') T
+     Ty_term  (union  P1    (stimes   (Some (pair   Lin     (Fin 1)  ))    P2 )  )  (term_FillComp t t') T
+ | Ty_term_FillLeaf : forall (P1:ctx) (n:mode) (P2:ctx) (t t':term) (T:type)
+     (Validn: IsValid n )
+     (Tyt: Ty_term P1 t (type_Dest T n))
+     (Tytp: Ty_term P2 t' T),
+     Ty_term  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )  (term_FillLeaf t t') type_Unit
 with Ty_sterm : ctx -> term -> type -> Prop :=    (* defn Ty_sterm *)
  | Ty_sterm_FromA' : forall (P:ctx) (t:term) (T:type)
      (Tyt: Ty_term P t (type_Ampar T type_Unit)),
      Ty_sterm P  (sterm_FromA'  t )  T
- | Ty_sterm_FillLeaf : forall (P1:ctx) (n:mode) (P2:ctx) (t t':term) (T:type)
-     (Validn: IsValid n )
-     (Tyt: Ty_term P1 t (type_Dest T n))
-     (Tytp: Ty_term P2 t' T),
-     Ty_sterm  (union  P1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     P2 )  )   (sterm_FillLeaf  t   t' )  type_Unit
  | Ty_sterm_Unit : forall (P:ctx)
      (UserDefinedP: UserDefined P )
      (DisposP: DisposableOnly P ),
@@ -1079,24 +1081,40 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_Unit U0)
      (Tyu: Ty_term  (union  D2    (ctx_singleton (name_Var  x ) (binding_Var  m   T ))  )  u U),
      Ty_ectxs D1  (cons   (ectx_FillF x m u)    C )  (type_Dest (type_Fun T m U) n) U0
- | Ty_ectxs_FillComp1 : forall (D1:ctx) (C:ectxs) (t':term) (U:type) (n:mode) (U0:type) (D2:ctx) (T:type)
+ | Ty_ectxs_FillComp1 : forall (D1:ctx) (C:ectxs) (t':term) (U U0:type) (D2:ctx) (T:type)
+     (DisjointD1D2: D1 # D2 )
+     (DestOnlyD1: DestOnly D1 )
+     (DestOnlyD2: DestOnly D2 )
+     (ValidOnlyD2: ValidOnly D2 )
+     (TyC: Ty_ectxs  (union  D1    (stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )  )  C T U0)
+     (Tytp: Ty_term D2 t' (type_Ampar U T)),
+     Ty_ectxs D1  (cons   (ectx_FillComp1 t')    C )  (type_Dest U  (Some (pair   Lin     (Fin 0)  )) ) U0
+ | Ty_ectxs_FillComp2 : forall (D2:ctx) (C:ectxs) (v:val) (U T U0:type) (D1:ctx)
+     (DisjointD1D2: D1 # D2 )
+     (DestOnlyD1: DestOnly D1 )
+     (DestOnlyD2: DestOnly D2 )
+     (ValidOnlyD1: ValidOnly D1 )
+     (TyC: Ty_ectxs  (union  D1    (stimes   (Some (pair   Lin     (Fin 1)  ))    D2 )  )  C T U0)
+     (Tyt: Ty_term D1 (term_Val v) (type_Dest U  (Some (pair   Lin     (Fin 0)  )) )),
+     Ty_ectxs D2  (cons   (ectx_FillComp2 v)    C )  (type_Ampar U T) U0
+ | Ty_ectxs_FillLeaf1 : forall (D1:ctx) (C:ectxs) (t':term) (T:type) (n:mode) (U0:type) (D2:ctx)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
      (ValidOnlyD2: ValidOnly D2 )
      (Validn: IsValid n )
-     (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
-     (Tytp: Ty_term D2 t' (type_Ampar U T)),
-     Ty_ectxs D1  (cons   (ectx_FillComp1 t')    C )  (type_Dest U n) U0
- | Ty_ectxs_FillComp2 : forall (D2:ctx) (C:ectxs) (v:val) (U T U0:type) (D1:ctx) (n:mode)
+     (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_Unit U0)
+     (Tytp: Ty_term D2 t' T),
+     Ty_ectxs D1  (cons   (ectx_FillLeaf1 t')    C )  (type_Dest T n) U0
+ | Ty_ectxs_FillLeaf2 : forall (D2:ctx) (C:ectxs) (v:val) (T U0:type) (D1:ctx) (n:mode)
      (DisjointD1D2: D1 # D2 )
      (DestOnlyD1: DestOnly D1 )
      (DestOnlyD2: DestOnly D2 )
      (ValidOnlyD1: ValidOnly D1 )
      (Validn: IsValid n )
-     (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C T U0)
-     (Tyt: Ty_term D1 (term_Val v) (type_Dest U n)),
-     Ty_ectxs D2  (cons   (ectx_FillComp2 v)    C )  (type_Ampar U T) U0
+     (TyC: Ty_ectxs  (union  D1    (stimes    (mode_times'  ((app (cons  (Some (pair   Lin     (Fin 1)  ))  nil) (app (cons n nil) nil))) )     D2 )  )  C type_Unit U0)
+     (Tyt: Ty_term D1 (term_Val v) (type_Dest T n)),
+     Ty_ectxs D2  (cons   (ectx_FillLeaf2 v)    C )  T U0
  | Ty_ectxs_OpenAmpar : forall (D1 D3:ctx) (C:ectxs) (v2:val) (T' U0:type) (D2:ctx) (U:type)
      (Disjoint1D2: D1 # D2 )
      (Disjoint1D3: D1 # D3 )
@@ -1248,6 +1266,18 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem   (cons   (ectx_FillComp2 v)    C )   (term_Val v') C (term_FillComp (term_Val v) (term_Val v'))
  | Red_FillComp : forall (C:ectxs) (h:hname) (H:hnames) (v2 v1:val) (h':hname)
      (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) ).
+     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) )
+ | Focus_FillLeaf1 : forall (C:ectxs) (t t':term)
+     (NotValt: NotVal t ),
+     Sem C (term_FillLeaf t t')   (cons   (ectx_FillLeaf1 t')    C )   t
+ | Unfocus_FillLeaf1 : forall (C:ectxs) (t':term) (v:val),
+     Sem   (cons   (ectx_FillLeaf1 t')    C )   (term_Val v) C (term_FillLeaf (term_Val v) t')
+ | Focus_FillLeaf2 : forall (C:ectxs) (v:val) (t':term)
+     (NotValtp: NotVal t' ),
+     Sem C (term_FillLeaf (term_Val v) t')   (cons   (ectx_FillLeaf2 v)    C )   t'
+ | Unfocus_FillLeaf2 : forall (C:ectxs) (v v':val),
+     Sem   (cons   (ectx_FillLeaf2 v)    C )   (term_Val v') C (term_FillLeaf (term_Val v) (term_Val v'))
+ | Red_FillLeaf : forall (C:ectxs) (h:hname) (v:val),
+     Sem C (term_FillLeaf (term_Val (val_Dest h)) (term_Val v))  (ectxs_fill  C   h    (hnames_  nil )    v )  (term_Val val_Unit).
 
 
