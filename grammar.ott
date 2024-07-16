@@ -768,7 +768,10 @@ end.
 Definition IsDisposable x : binding_type_of x -> Prop :=
   match x with
   | name_Var _ => fun binding => IsUr (mode_of binding)
-  | name_DH _ => fun _ => False
+  | name_DH _ => fun binding => match binding with
+    | binding_Dest m T n => IsUr (mode_of binding)
+    | binding_Hole T n => False
+    end
   end.
 
 Definition IsDest x : binding_type_of x -> Prop :=

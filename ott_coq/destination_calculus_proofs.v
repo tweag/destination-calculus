@@ -1505,18 +1505,37 @@ Proof.
   - intros nInD nInStimes. apply In_stimes_iff in nInStimes. congruence.
 Qed.
 
-Lemma DisposableOnly_wk_VarOnly : forall (P : ctx), DisposableOnly P -> VarOnly P.
+(* Lemma DisposableOnly_wk_VarOnly : forall (P : ctx), DisposableOnly P -> VarOnly P.
 Proof.
   intros * H. unfold DisposableOnly in H. unfold VarOnly. intros nam b mapstoP. specialize (H nam b mapstoP). unfold IsDisposable in H. destruct nam. 2:{ contradiction. } unfold IsVar. tauto.
+Qed. *)
+
+Lemma IsSubtype_mode_plus: forall (m m' : mode), m <: mode_plus m m'.
+Proof.
+  intros *. destruct m, m'; unfold mode_plus; try destruct p; try destruct p0; try destruct m; try destruct a; try destruct m0; try destruct a0; unfold mul_plus, age_plus; try destruct (age_eq_dec (Fin n) (Fin n0)); try destruct (age_eq_dec (Fin n) Inf); try destruct (age_eq_dec Inf (Fin n)); try congruence; try repeat constructor.
 Qed.
 
-Lemma nDisposable_in_DestOnly: forall (P D : ctx), DisposableOnly P -> DestOnly (P ᴳ+ D) -> (P ᴳ+ D) = D.
+Lemma IsSubtype_refl : forall (m : mode), m <: m.
 Proof.
-  intros * DisposP DestOnlyPuD.
+  intros m. destruct m. destruct p, m, a; try destruct n. all: try repeat constructor.
+Qed.
+
+Lemma IsSubtype_union : forall (P D : ctx) (n : name) (b b' : binding_type_of n), P n = Some b -> (P ᴳ+ D) n = Some b' -> (mode_of b) <: (mode_of b').
+Proof.
+  intros * mapstoP mapstoPuD. unfold union in mapstoPuD. destruct (In_dec n D).
+  - rewrite In_iff_exists_Some in H. destruct H as (b'' & mapstoD). rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b'') in mapstoPuD. destruct n, b, b', b''; unfold union_var in *; unfold union_dh in *; cbn in *; try destruct (type_eq_dec T T1); try destruct (mode_eq_dec n n1); inversion mapstoPuD; subst; try apply IsSubtype_mode_plus; try constructor. tauto.
+  - rewrite nIn_iff_nMapsTo in H. rewrite merge_with_Some_None_eq with (y1 := b) in mapstoPuD. inversion mapstoPuD. apply IsSubtype_refl. tauto.
+Qed.
+
+Lemma nDisposable_in_LinOnly: forall (P D : ctx), DisposableOnly P -> LinOnly (P ᴳ+ D) -> (P ᴳ+ D) = D.
+Proof.
+  intros * DisposP LinOnlyPuD.
   assert (P = ᴳ{}) as Pempty.
   { apply ext_eq. intros n. destruct (In_dec n P) as [[y h_inP]|h_ninP].
     - unfold DisposableOnly in DisposP. specialize (DisposP n y h_inP). unfold IsDisposable in DisposP.
-      unfold DestOnly in DestOnlyPuD. assert (In n P) as inP. { exists y. assumption. } assert (In n (P ᴳ+ D)) as InPuD. { apply In_union_forward_l. assumption. } destruct InPuD as (y' & mapstoPuD). specialize (DestOnlyPuD n y' mapstoPuD). unfold IsDest in DestOnlyPuD. destruct n; contradiction.
+      unfold LinOnly in LinOnlyPuD. assert (In n P) as inP. { exists y. assumption. } assert (In n (P ᴳ+ D)) as InPuD. { apply In_union_forward_l. assumption. } destruct InPuD as (y' & mapstoPuD). specialize (
+      LinOnlyPuD n y' mapstoPuD). inversion LinOnlyPuD.
+      assert (mode_of y <: mode_of y'). { apply IsSubtype_union with (P := P) (D := D). all:assumption. } destruct n, y; try destruct n; inversion DisposP; rewrite <- H0, <- H1 in H; inversion H; inversion H5.
     - apply nIn_iff_nMapsTo. assumption.
   }
   rewrite Pempty. symmetry. apply union_empty_l_eq.
@@ -1924,8 +1943,8 @@ Ltac hauto_ctx :=
         Disjoint_singletons_iff,
         nIn_union_iff,
         nIn_stimes_iff,
-        DisposableOnly_wk_VarOnly,
-        nDisposable_in_DestOnly,
+        (* DisposableOnly_wk_VarOnly, *)
+        nDisposable_in_LinOnly,
         DestOnly_wk_NoVar,
         VarOnly_union_DestOnly_is_Disjoint,
         DestOnly_nMapsTo_var,
@@ -2378,7 +2397,7 @@ Proof.
       { hauto l: on use: ext_eq. } clear Hu.
     assert (P = ᴳ{ x' : m' ‗ T'} /\ D = D2) as UnionEqSplit.
       { rewrite union_commutative with (G1 := D2) in UnionEq.
-        apply ctx_split_DestOnly_VarOnly. apply DisposableOnly_wk_VarOnly. assumption. apply VarOnly_singleton_var. all:assumption.
+        apply ctx_split_DestOnly_VarOnly. (* any dest in P must have multiplicity omega, but cannot be either in singl {x : ...} (no dest) or D2 (LinOnly) *) admit. apply VarOnly_singleton_var. all:assumption.
       } destruct UnionEqSplit; subst.
     assert (ᴳ{ x' : m' ‗ T'} (ˣ x') = Some (ₓ m' ‗ T')) as mapstoSing.
       { unfold ctx_singleton. apply (@singleton_MapsTo_at_elt name binding_type_of). }
@@ -2389,7 +2408,7 @@ Proof.
     assert (P ᴳ+ (ᴳ{ x : m ‗ T}) = D2 ᴳ+ ᴳ{ x' : m' ‗ T'}) as UnionEq.
       { hauto l: on use: ext_eq. } clear Hu.
     assert (VarOnly (P ᴳ+ ᴳ{ x : m ‗ T})).
-      { apply VarOnly_union_iff. split. apply DisposableOnly_wk_VarOnly. assumption. apply VarOnly_singleton_var. }
+      { apply VarOnly_union_iff. split. (* any dest in P must have multiplicity omega, but cannot be either in singl {x : ...} (no dest) or D2 (LinOnly) *) admit. apply VarOnly_singleton_var. }
     rewrite union_empty_r_eq with (G := P ᴳ+ ᴳ{ x : m ‗ T}) in UnionEq.
     rewrite union_commutative with (G1 := D2) in UnionEq.
     apply ctx_split_DestOnly_VarOnly in UnionEq; swap 1 5. assumption. assumption. apply VarOnly_singleton_var. apply DestOnly_empty.

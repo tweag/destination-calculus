@@ -20,6 +20,12 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Lia.
 Require Import Dest.destination_calculus_proofs.
 
+Ltac assert_LinOnly_FinAgeOnly_remove_Disposable G G' C T U0 P DisposP :=
+  assert (LinOnly G /\ FinAgeOnly G) as (LinOnlyD & FinAgeOnlyD) by (apply (Ty_ectxs_LinOnly_FinAgeOnly (G) C T U0); tauto);
+  assert (LinOnly (P ᴳ+ G')) as LinOnlyD' by (crush);
+  rewrite (nDisposable_in_LinOnly P G' DisposP LinOnlyD') in *.
+
+(* ⬇️ for the `impl` relation. *)
 
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
   C ʲ[t] ⟶ C' ʲ[t'] -> ⊢ C' ʲ[t'] : T.
@@ -35,9 +41,7 @@ Proof.
     - (* Unfocus-App1 *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
-      assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
+      assert_LinOnly_FinAgeOnly_remove_Disposable (m ᴳ· (P ᴳ+ D1) ᴳ+ D2) D1 C U U0 P DisposP.
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ t' $ ᵥ₎ v : U) as TyApp.
         { apply (Ty_term_App m D1 D2 t' (ᵥ₎ v) U T); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := t' $ ᵥ₎ v).
@@ -52,11 +56,9 @@ Proof.
     - (* Unfocus-App2 *)
       inversion Tyt; subst. rename Tyv into Tyvp, TyC into TyCc, D0 into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename Tyt into Tytp, Tyv into Tyt, T0 into T.
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
+      assert_LinOnly_FinAgeOnly_remove_Disposable (m ᴳ· D1 ᴳ+ (P ᴳ+ D2)) D2 C U U0 P DisposP.
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v' $ ᵥ₎ v : U) as TyApp.
         { apply (Ty_term_App m D1 D2 (ᵥ₎ v') (ᵥ₎ v) U T); tauto. }
-      assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := (ᵥ₎ v') $ (ᵥ₎ v)).
       all: crush.
     - (* Red-App *)
@@ -66,10 +68,8 @@ Proof.
       rewrite <- Eqmm0 in *. clear Eqmm0. clear m0. rename P1 into D1, P2 into D2. rename Tyt into TyApp, Tyt0 into Tyt, T into U, T0 into T.
       inversion Tytp; subst. clear H1. rename Tyv into Tyv', D into D2.
       assert (DestOnly (P ᴳ+ D2)) as DestOnlyPuD2. { crush. }
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyPuD2) in *.
+      assert_LinOnly_FinAgeOnly_remove_Disposable (m ᴳ· D1 ᴳ+ (P ᴳ+ D2)) D2 C U U0 P DisposP.
       inversion Tyv'; subst. rename H1 into DestOnlyD2.
-      assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ u ᵗ[ x ≔ v] : U) as Tyusub.
       { apply (term_sub_spec_1 D1 D2 m T U u x v). all: crush. }
       constructor 1 with (D := (m ᴳ· D1 ᴳ+ D2)) (T := U) (t := u ᵗ[ x ≔ v]).
@@ -83,9 +83,7 @@ Proof.
     - (* Unfocus-PatU *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename U into T2.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
-      assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C T2 U0); tauto. }
+      assert_LinOnly_FinAgeOnly_remove_Disposable ((P ᴳ+ D1) ᴳ+ D2) D1 C T2 U0 P DisposP.
       assert (D1 ᴳ+ D2 ⊢ ᵥ₎ v ᵗ; u : T2) as TyPat.
         { apply (Ty_term_PatU D1 D2 (ᵥ₎ v) u T2); tauto. }
       constructor 1 with (D := (D1 ᴳ+ D2)) (T := T2) (t := ᵥ₎ v ᵗ; u). all: crush.
@@ -94,6 +92,7 @@ Proof.
       rename P1 into D1, P2 into D2. rename Tyt into TyPat, Tyt0 into Tyt, T into T2.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion Tyv; subst.
+      assert_LinOnly_FinAgeOnly_remove_Disposable ((P ᴳ+ ᴳ{}) ᴳ+ D2) ᴳ{} C T2 U0 P DisposP.
       constructor 1 with (D := D2) (T := T2) (t := u). all: crush.
     - (* Focus-PatS *)
       inversion Tyt; subst.
@@ -104,7 +103,8 @@ Proof.
     - (* Unfocus-PatS *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
+      (* STOPPED HERE *)
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ►caseˢ m {Inl x1 ⟼ u1, Inr x2 ⟼ u2} : U) as TyPat.
@@ -116,7 +116,7 @@ Proof.
       inversion Tyt; subst. rename H1 into DestOnlyD1, Tyv into TyInlv1, D into D1.
       inversion TyInlv1; subst.
       assert (DestOnly (P ᴳ+ D1)) as DestOnlyPuD1. { crush. }
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyPuD1) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v1 : T1) as Tyt'.
         { term_Val_no_dispose D1. }
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
@@ -130,7 +130,7 @@ Proof.
       inversion Tyt; subst. rename H1 into DestOnlyD1, Tyv into TyInlv2, D into D1.
       inversion TyInlv2; subst.
       assert (DestOnly (P ᴳ+ D1)) as DestOnlyPuD1. { crush. }
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyPuD1) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v2 : T2) as Tyt'.
         { term_Val_no_dispose D1. }
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
@@ -147,7 +147,7 @@ Proof.
     - (* Unfocus-PatP *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ►caseᵖ m ᵗ(x1 , x2) ⟼ u : U) as TyPat.
@@ -159,7 +159,7 @@ Proof.
       inversion Tyt; subst. rename H1 into DestOnlyD1, D into D1.
       inversion Tyv; subst. rename G1 into D11, G2 into D12.
       assert (DestOnly (P ᴳ+ (D11 ᴳ+ D12))) as DestOnlyPuD1. { crush. }
-      rewrite (nDisposable_in_DestOnly P (D11 ᴳ+ D12) DisposP DestOnlyPuD1) in *.
+      rewrite (nDisposable_in_LinOnly P (D11 ᴳ+ D12) DisposP DestOnlyPuD1) in *.
       assert (D11 ⊢ ᵥ₎ v1 : T1) as Tyt1.
         { term_Val_no_dispose D11. crush. }
       assert (D12 ⊢ ᵥ₎ v2 : T2) as Tyt2.
@@ -178,7 +178,7 @@ Proof.
     - (* Unfocus-PatE *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (m ᴳ· D1 ᴳ+ D2) /\ FinAgeOnly (m ᴳ· D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (m ᴳ· D1 ᴳ+ D2) C U U0); tauto. }
       assert (m ᴳ· D1 ᴳ+ D2 ⊢ ᵥ₎ v ►caseᵉ m ᴇ n ⁔ x ⟼ u : U) as TyPat.
@@ -190,7 +190,7 @@ Proof.
       inversion Tyt; subst. rename H1 into DestOnlyD1.
       inversion Tyv; subst. rename G into D1.
       assert (DestOnly (P ᴳ+ (n ᴳ· D1))) as DestOnlyPuD1. { crush. }
-      rewrite (nDisposable_in_DestOnly P (n ᴳ· D1) DisposP DestOnlyPuD1) in *.
+      rewrite (nDisposable_in_LinOnly P (n ᴳ· D1) DisposP DestOnlyPuD1) in *.
       assert (D1 ⊢ ᵥ₎ v' : T) as Tyt'.
         { term_Val_no_dispose D1. crush. }
       assert (LinOnly (m ᴳ· (n ᴳ· D1) ᴳ+ D2) /\ FinAgeOnly (m ᴳ· (n ᴳ· D1) ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
@@ -207,7 +207,7 @@ Proof.
     - (* Unfocus-Map *)
       inversion Tyt; subst. rename TyC into TyCc, D0 into D1, ValidOnlyD into ValidOnlyD1, DestOnlyD into DestOnlyD1. clear H1.
       inversion TyCc; subst. clear DestOnlyD0. rename T0 into T.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD1) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD1) in *.
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ D2) C (U ⧔ T') U0); tauto. }
       assert (D1 ᴳ+ D2 ⊢ ᵥ₎ v ►map x ⟼ t' : U ⧔ T') as TyMap.
@@ -219,7 +219,7 @@ Proof.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
       inversion Tyv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
       assert (DestOnly (P ᴳ+ (D11 ᴳ+ D12))) as DestOnlyPuD1. { crush. }
-      rewrite (nDisposable_in_DestOnly P (D11 ᴳ+ D12) DisposP DestOnlyPuD1) in *.
+      rewrite (nDisposable_in_LinOnly P (D11 ᴳ+ D12) DisposP DestOnlyPuD1) in *.
       assert ((D2 ᴳ+ D11) # (D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])) as DisjointD2uD11D13. {
           {  apply Disjoint_union_l_iff. assert (HNames.Subset hnamesᴳ(D11 ᴳ+ D12 ᴳ+ D2) hnames©(C)).
               { apply hnames_C_wk_hnames_G with (U0 := U0) (T := U ⧔ T'). tauto. } split.
@@ -348,7 +348,7 @@ Proof.
     - (* Close-Ampar *)
       inversion Tyt; subst. rename TyC into TyCc, Tyv into Tyv1. clear H2.
       inversion TyCc; subst. rename H6 into hnamesDisjoint, D0 into D.
-      rewrite <- (nDisposable_in_DestOnly P D DisposP DestOnlyD) in Tyv1.
+      rewrite <- (nDisposable_in_LinOnly P D DisposP DestOnlyD) in Tyv1.
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = P ᴳ+ D) as eqD1uD3PuD.
         { unfold union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. }
       rewrite <- eqD1uD3PuD in *. clear H0. clear eqD1uD3PuD. clear D.
@@ -367,7 +367,7 @@ Proof.
     - (* Unfocus-ToA *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (U ⧔ ①) U0). tauto. }
       assert (D ⊢ to⧔ ᵥ₎ v2 : U ⧔ ①) as TyToA.
@@ -377,7 +377,7 @@ Proof.
       inversion Tyt; subst.
       rename Tyt into TyToA, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
       inversion Tyu; subst. rename D into D2.
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
+      rewrite (nDisposable_in_LinOnly P D2 DisposP DestOnlyD2) in *.
       assert (ᴳ{} ᴳ+ D2 ⊢ ᵥ₎ hnames_ nil ⟨ v2 ❟ ᵛ() ⟩ : U ⧔ ①).
         { term_Val_no_dispose (ᴳ{} ᴳ+ D2). assert (hnamesᴳ( ᴳ{}) = hnames_ nil). { crush. } rewrite <- H. apply Ty_val_Ampar; swap 1 11; swap 2 10.
           rewrite hminus_inv_empty_eq, <- union_empty_r_eq; tauto.
@@ -394,7 +394,7 @@ Proof.
     - (* Unfocus-FromA *)
       inversion Tyt; subst. rename TyC into TyCc, T into U, D0 into D. clear H1.
       inversion TyCc; subst. rename U1 into U, v into v2, D into D2, ValidOnlyD into ValidOnlyD2, DestOnlyD into DestOnlyD2.
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD2) in *.
+      rewrite (nDisposable_in_LinOnly P D2 DisposP DestOnlyD2) in *.
       assert (LinOnly D2) as LinOnlyD2.
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D2 C (U ⨂ ! ¹∞ ⁔ T) U0). tauto. }
       assert (D2 ⊢ from⧔ ᵥ₎ v2 : U ⨂ ! ¹∞ ⁔ T) as TyFromA.
@@ -405,7 +405,7 @@ Proof.
       rename Tyt0 into Tytp, D into D2, ValidOnlyD into ValidOnlyD2 , DestOnlyD into DestOnlyD2, T0 into T.
       inversion Tytp; subst.
       inversion Tyv; subst. rename DestOnlyD2 into DestOnlyPuD1uD2, DestOnlyD0 into DestOnlyD2.
-      rewrite (nDisposable_in_DestOnly P (D1 ᴳ+ D2) DisposP DestOnlyPuD1uD2) in *.
+      rewrite (nDisposable_in_LinOnly P (D1 ᴳ+ D2) DisposP DestOnlyPuD1uD2) in *.
       inversion Tyv1. subst.
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = ᴳ{}) as empty.
       { assert (¹↑ ᴳ· D1 ᴳ+ D3 = ¹∞ ᴳ· G) as intermediary.
@@ -440,7 +440,7 @@ Proof.
       rename T0 into T.
       rewrite (union_empty_r_eq D) in *.
       rewrite <- union_empty_r_eq in DisposP.
-      rewrite (nDisposable_in_DestOnly D ᴳ{} DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly D ᴳ{} DisposP DestOnlyD) in *.
       constructor 1 with (D := ᴳ{}) (T := T ⧔ ⌊ T ⌋ ¹ν) (t := ᵥ₎ ᴴ{ 1} ⟨ ᵛ+ 1 ❟ ᵛ- 1 ⟩); swap 1 4.
       term_Val_no_dispose ᴳ{}. rewrite union_empty_r_eq with (G := ᴳ{}).
     assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
@@ -470,7 +470,7 @@ Proof.
     - (* Unfocus-FillU *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C ① U0). tauto. }
       assert (D ⊢ ᵥ₎ v⨞() : ①) as TyFillU.
@@ -483,7 +483,7 @@ Proof.
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C ① U0). tauto. }
       inversion Tytp; subst. clear H1.
       inversion Tyv; subst.
-      rewrite (nDisposable_in_DestOnly P ᴳ{- h : ¹ν ⌊ ① ⌋ n} DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P ᴳ{- h : ¹ν ⌊ ① ⌋ n} DisposP DestOnlyD) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ nil ‗ ᵛ()] : ① ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{})) = ᴳ{}) as e1. { crush. }
           rewrite <- e1.
@@ -503,7 +503,7 @@ Proof.
     - (* Unfocus-FillL *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T1 ⌋ n) U0). tauto. }
       assert (D ⊢ ᵥ₎ v ⨞Inl : ⌊ T1 ⌋ n) as TyFillL.
@@ -515,7 +515,7 @@ Proof.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T1 ⌋ n) U0). tauto. }
       inversion Tytp; subst. clear H1. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       inversion Tyv; subst; intros hpMaxCh.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inl ᵛ+ (h' + 1)] : ⌊ T1 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν })) = ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n }) as e1.
@@ -541,7 +541,7 @@ Proof.
     - (* Unfocus-FillR *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T2 ⌋ n) U0). tauto. }
       assert (D ⊢ ᵥ₎ v ⨞Inr : ⌊ T2 ⌋ n) as TyFillR.
@@ -553,7 +553,7 @@ Proof.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T2 ⌋ n) U0). tauto. }
       inversion Tytp; subst. clear H1. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       inversion Tyv; subst; intros hpMaxCh.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inr ᵛ+ (h' + 1)] : ⌊ T2 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν })) = ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n }) as e1.
@@ -585,7 +585,7 @@ Proof.
       assert (mode_times' ((cons m nil) ++ (cons n nil) ++ nil) = mode_times m n) as SimplMode.
         { cbn. rewrite mode_times_linnu_r_eq. reflexivity. }
       rewrite SimplMode in *.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T ⌋ m · n) U0). tauto. }
       assert (D ⊢ ᵥ₎ v ⨞ᴇ m : ⌊ T ⌋ mode_times' ((cons m nil) ++ (cons n nil) ++ nil)) as TyFillE.
@@ -600,7 +600,7 @@ Proof.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T ⌋ m · n) U0). tauto. }
       inversion Tytp; subst. clear H1. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       inversion Tyv; subst; intros hpMaxCh.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ ᴇ m ⁔ ᵛ+ (h' + 1)] : ⌊ T ⌋ m · n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m })) = ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n }) as e1.
@@ -626,7 +626,7 @@ Proof.
     - (* Unfocus-FillP *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) U0). tauto. }
       assert (D ⊢ ᵥ₎ v ⨞(,) : ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) as TyFillP.
@@ -638,7 +638,7 @@ Proof.
       assert (LinOnly D /\ FinAgeOnly D) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly D C (⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) U0). tauto. }
       inversion Tytp; subst. clear H1. rename D0 into D.
-      rewrite (nDisposable_in_DestOnly P D DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D DisposP DestOnlyD) in *.
       inversion Tyv; subst; intros hpMaxCh.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} # ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) as NewHolesDisjoint. { apply Disjoint_singletons_iff. injection. lia. }
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1, h' + 2} ‗ ᵛ(ᵛ+ (h' + 1), ᵛ+ (h' + 2))] : ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n ↣ U0).
@@ -667,7 +667,7 @@ Proof.
     - (* Unfocus-FillF *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D1, U1 into U.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD) in *.
       assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C ① U0). tauto. }
       assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ⨞(λ x ⁔ m ⟼ u) : ①) as TyFillF.
@@ -681,7 +681,7 @@ Proof.
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C ① U0). tauto. }
       inversion Tytp; subst. clear H1. rename D into D1, P2 into D2.
       rewrite <- union_associative in *.
-      rewrite (nDisposable_in_DestOnly P (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) DisposP DestOnlyD) in *.
       inversion Tyv; subst.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ ᵛλ x ⁔ m ⟼ u] : ① ↣ U0).
         { replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *.
@@ -702,7 +702,7 @@ Proof.
     - (* Unfocus-FillComp1 *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D1, U1 into U.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD) in *.
       assert (LinOnly (D1 ᴳ+ ¹↑ ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2) C (T) U0). tauto. }
       assert (D1 ᴳ+ ¹↑ ᴳ· D2 ⊢ ᵥ₎ v ⨞· t' : T) as TyFillComp1.
@@ -717,7 +717,7 @@ Proof.
     - (* Unfocus-FillComp2 *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D2, U1 into U.
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D2 DisposP DestOnlyD) in *.
       assert (LinOnly (D1 ᴳ+ ¹↑ ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2) C (T) U0). tauto. }
       assert (D1 ᴳ+ ¹↑ ᴳ· D2 ⊢ ᵥ₎ v ⨞· ᵥ₎ v' : T) as TyFillComp2.
@@ -731,8 +731,8 @@ Proof.
       inversion Tyt; subst. inversion Tytp; subst. rename Tyv0 into Tyvp, D into D1, D0 into D2, P into P1, P0 into P2, H2 into DestOnlyD1, H3 into DestOnlyD2, DisposP into DisposP1, DisposP0 into DisposP2.
       assert (DestOnly (P1 ᴳ+ D1)) as DestOnlyP1D1. { crush. }
       assert (DestOnly (P2 ᴳ+ D2)) as DestOnlyP2D2. { crush. }
-      rewrite (nDisposable_in_DestOnly P1 D1 DisposP1 DestOnlyP1D1) in *.
-      rewrite (nDisposable_in_DestOnly P2 D2 DisposP2 DestOnlyP2D2) in *.
+      rewrite (nDisposable_in_LinOnly P1 D1 DisposP1 DestOnlyP1D1) in *.
+      rewrite (nDisposable_in_LinOnly P2 D2 DisposP2 DestOnlyP2D2) in *.
       inversion Tyv; subst. inversion Tyvp; subst. intros hpMaxCh. rename D0 into D2, DestOnlyD1 into DestOnlyDest, DestOnlyD2 into DestOnlyD1D2, DestOnlyD0 into DestOnlyD1, DestOnlyD3 into DestOnlyD2, DestOnlyD4 into DestOnlyD3.
       assert ((ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· (D1 ᴳ+ D2)) # (D3 ᴳ[ hnamesᴳ( D3) ⩲ h'])).
         { apply Ty_ectxs_HDisjoint_to_Disjoint with (C := C) (T := T) (U0 := U0). assumption.
@@ -755,7 +755,7 @@ Proof.
     - (* Unfocus-FillLeaf1 *)
       inversion Tyt; subst. rename TyC into TyCc.
       inversion TyCc; subst. rename D0 into D1, T0 into T.
-      rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D1 DisposP DestOnlyD) in *.
       assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C ① U0). tauto. }
       assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ◀ t' : ①) as TyFillLeaf1.
@@ -770,7 +770,7 @@ Proof.
     - (* Unfocus-FillLeaf2 *)
       inversion Tyt; subst. rename TyC into TyCc.
       inversion TyCc; subst. rename D0 into D2.
-      rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD) in *.
+      rewrite (nDisposable_in_LinOnly P D2 DisposP DestOnlyD) in *.
       assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
         { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C ① U0). tauto. }
       assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ◀ ᵥ₎ v' : ①) as TyFillLeaf2.
@@ -784,8 +784,8 @@ Proof.
       inversion Tyt; subst. inversion Tytp; subst. rename Tyv0 into Tyvp, D into D1, D0 into D2, P into P1, P0 into P2, H1 into DestOnlyD1, H2 into DestOnlyD2, DisposP into DisposP1, DisposP0 into DisposP2.
       assert (DestOnly (P1 ᴳ+ D1)) as DestOnlyP1D1. { crush. }
       assert (DestOnly (P2 ᴳ+ D2)) as DestOnlyP2D2. { crush. }
-      rewrite (nDisposable_in_DestOnly P1 D1 DisposP1 DestOnlyP1D1) in *.
-      rewrite (nDisposable_in_DestOnly P2 D2 DisposP2 DestOnlyP2D2) in *.
+      rewrite (nDisposable_in_LinOnly P1 D1 DisposP1 DestOnlyP1D1) in *.
+      rewrite (nDisposable_in_LinOnly P2 D2 DisposP2 DestOnlyP2D2) in *.
       inversion Tyv; subst.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ v] : ① ↣ U0). {
         apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T).
