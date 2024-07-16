@@ -2520,6 +2520,50 @@ Proof.
     give_up.
 Admitted.
 
+Lemma different_than_gt_max : forall (h h1 h2 : hname) (H H': HNames.t), (0 < h1) -> HNames.In h H' -> ʰ (maxᴴ( H ∪ H') + h1 + h2) <> ʰ h.
+Proof.
+  intros *.
+  intros h1notnull inhH' contra. injection contra. intros contra'. unfold hname_max in *. destruct (HNames.max_elt (H ∪ H')) eqn:edestr. 2:{ apply HNames.max_elt_spec3 in edestr. unfold HNames.Empty in edestr. specialize (edestr h). assert (HNames.In h (H ∪ H')). apply HNames.union_spec. right. assumption. contradiction. } apply HNames.max_elt_spec2 with (y := h) in edestr. rewrite <- contra' in edestr. contradiction edestr. rewrite <- Nat.add_assoc. lia. apply HNames.union_spec. right. assumption.
+Qed.
+
+Lemma hunion_commutative : forall (H H' : HNames.t), H ∪ H' = H' ∪ H.
+Proof.
+  intros. apply HNames.eq_leibniz. intros h. rewrite 2 HNames.union_spec. tauto.
+Qed.
+
+Lemma HDisjoint_gt_max : forall (h h1 h2 : hname) (H : HNames.t), (0 < h1) -> H ## ᴴ{ maxᴴ( H ∪ ᴴ{ h}) + h1 + h2}.
+Proof.
+  intros *.
+  intros h1notnull.
+  unfold HDisjoint. intros h' contra. rewrite HNames.inter_spec in contra. destruct contra as (contra & contra'). unfold hnames_ in contra'. rewrite HNames.add_spec in contra'. destruct contra' as [contra' | contra'].
+  * rewrite contra' in *. apply different_than_gt_max with (h1 := h1) (h2 := h2) (H := ᴴ{ h}) in contra. rewrite 1 hunion_commutative in contra. simpl in contra. contradiction contra. reflexivity. assumption.
+  * apply HNames.empty_spec in contra'. contradiction.
+Qed.
+
+Lemma HDisjoint_union_iff : forall (H H' H'' : HNames.t), (H ## H' /\ H ## H'') <-> H ## H' ∪ H''.
+Proof.
+  intros. split.
+  - intros (disj1 & disj2) h contra. rewrite HNames.inter_spec in contra. destruct contra as (contra & contra'). apply HNames.union_spec in contra'. destruct contra' as [contra' | contra'].
+    + contradiction disj1 with (a := h). apply HNames.inter_spec. tauto.
+    + contradiction disj2 with (a := h). apply HNames.inter_spec. tauto.
+  - intros disj. split; intros h contra; contradiction disj with (a := h); apply HNames.inter_spec; apply HNames.inter_spec in contra; destruct contra as (contra & contra'); split; trivial.
+    * apply HNames.union_spec. left. assumption.
+    * apply HNames.union_spec. right. assumption.
+Qed.
+
+Lemma hnames_singleton_union_eq : forall (h1 h2 : hname), ᴴ{ h1 } ∪ ᴴ{ h2 } = ᴴ{ h1, h2 }.
+Proof.
+  intros. apply HNames.eq_leibniz. intros h. split.
+  - intros InUnion. apply HNames.union_spec in InUnion. destruct InUnion as [InUnion | InUnion].
+    + apply HNames.singleton_spec in InUnion. subst. apply HNames.add_spec. left. reflexivity.
+    + apply HNames.singleton_spec in InUnion. subst. apply HNames.add_spec. right. apply HNames.add_spec. left. reflexivity.
+  - intros InUnion. apply HNames.add_spec in InUnion. destruct InUnion as [InUnion | InUnion].
+    + subst. apply HNames.union_spec. left. apply HNames.singleton_spec. reflexivity.
+    + apply HNames.add_spec in InUnion. destruct InUnion as [InUnion | InUnion].
+      * subst. apply HNames.union_spec. right. apply HNames.singleton_spec. reflexivity.
+      * apply HNames.empty_spec in InUnion. contradiction.
+Qed.
+
 Lemma term_sub_spec_2 :
   forall (D11 D12 D2 : ctx) (m' : mode) (T1' T2' U' : type) (te : term) (x1' x2' : var) (v1' v2' : val),
   IsValid m' ->
