@@ -150,7 +150,7 @@ Proof. Admitted.
 (* TODO: add to canonalize? *)
 
 (* TODO: not true, requires h' to be bigger than the max of H' as well, I believe. *)
-Lemma cshift_by_max_impl_HDisjoint : forall (H H' : hnames) (h' : hname), maxᴴ(H) < h' -> H ## (H' ᴴ⩲ h').
+Lemma shift_by_max_impl_HDisjoint : forall (H H' : hnames) (h' : hname), maxᴴ(H) < h' -> H ## (H' ᴴ⩲ h').
 Proof. Admitted.
 
 Lemma total_cshift_eq : forall (G : ctx) (h' : hname), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
@@ -1796,7 +1796,7 @@ Ltac hauto_ctx :=
         cshift_by_Disjoint_eq,
         cshift_distrib_on_union,
         cshift_distrib_on_stimes,
-        cshift_by_max_impl_HDisjoint,
+        shift_by_max_impl_HDisjoint,
         total_cshift_eq,
         cshift_distrib_on_hminus_inv,
         cshift_distrib_on_hminus,
@@ -2576,5 +2576,5 @@ Lemma ectxs_fillComp_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (T U 
   ValidOnly D3 ->
   D1 ᴳ+ ¹↑ ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν } ⊣ C : T ↣ U0 ->
   D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
-  D1 ᴳ+ (ᴳ-⁻¹ D3) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
+  D1 ᴳ+ D3 ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.

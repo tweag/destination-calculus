@@ -228,7 +228,7 @@ Proof.
               assert (maxᴴ(hnamesᴳ(D2)) <= maxᴴ(hnames©(C))).
               { apply HSubset_impl_lt_max. tauto. }
               assert (hnamesᴳ(D2) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnames©(C)) + 1))).
-              { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hnamesᴳ(D2) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
               { unfold HDisjoint. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
@@ -238,7 +238,7 @@ Proof.
               assert (maxᴴ(hnamesᴳ(D11)) <= maxᴴ(hnames©(C))).
               { apply HSubset_impl_lt_max. tauto. }
               assert (hnamesᴳ(D11) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnames©(C)) + 1))).
-              { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hnamesᴳ(D11) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
               { rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
@@ -305,7 +305,7 @@ Proof.
       rewrite <- total_cshift_eq.
       assert (LinOnly (D11 ᴳ+ D12 ᴳ+ D2)) as LinOnlyD. { apply (Ty_ectxs_LinOnly_FinAgeOnly (D11 ᴳ+ D12 ᴳ+ D2) C (U ⧔ T') U0). tauto. }
       assert (hnames©( C) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ( hnames©( C)) + 1)])) as hnamesDisjoint.
-        { rewrite total_cshift_eq. apply cshift_by_max_impl_HDisjoint with (h' := maxᴴ(hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
+        { rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint with (h' := maxᴴ(hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; reflexivity. }
       constructor 21 with (D1 := D2 ᴳ+ D11) (D3 := D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12).
         { apply LinOnly_union_iff. rewrite <- union_associative. rewrite union_commutative. tauto. }
@@ -317,7 +317,7 @@ Proof.
               assert (maxᴴ(hnamesᴳ(D2)) <= maxᴴ(hnames©(C))).
               { apply HSubset_impl_lt_max. tauto. }
               assert (hnamesᴳ(D2) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnames©(C)) + 1))).
-              { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hnamesᴳ(D2) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
               { rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
@@ -327,7 +327,7 @@ Proof.
               assert (maxᴴ(hnamesᴳ(D11)) <= maxᴴ(hnames©(C))).
               { apply HSubset_impl_lt_max. tauto. }
               assert (hnamesᴳ(D11) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnames©(C)) + 1))).
-              { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hnamesᴳ(D11) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
               { rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint; crush.
@@ -339,7 +339,7 @@ Proof.
               assert (maxᴴ(hnamesᴳ(D12)) <= maxᴴ(hnames©(C))).
               { apply HSubset_impl_lt_max. tauto. }
               assert (hnamesᴳ(D12) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnames©(C)) + 1))).
-              { apply cshift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
+              { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S; tauto. }
               assert (hnamesᴳ(D12) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
               { unfold HDisjoint. rewrite total_cshift_eq. tauto. }
               apply HDisjoint_to_Disjoint. crush. assumption.
@@ -685,54 +685,66 @@ Proof.
       inversion Tyv; subst.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ ᵛλ x ⁔ m ⟼ u] : ① ↣ U0).
         { replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *.
-          apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T ⁔ m → U); swap 1 8. (* STOPPED HERE *)
+          apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T ⁔ m → U); swap 1 8.
+          { crush. } { crush. }  { crush. } { crush. }
+          { apply Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. }
+          { rewrite <- union_empty_l_eq. rewrite union_commutative. assumption. }
           { apply Ty_val_Fun. assumption. assumption. crush. }
-          { crush. } { crush. } { crush. } { crush. } { apply Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite <- union_empty_l_eq. rewrite union_commutative. assumption. }
-      constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4. term_Val_no_dispose ᴳ{}. apply Ty_val_Unit. all: crush.
+          { cbn. rewrite mode_times_linnu_r_eq. reflexivity. } }
+        constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4. term_Val_no_dispose ᴳ{}.
+        apply Ty_val_Unit. all:crush.
     - (* Focus-FillComp1 *)
       inversion Tyt; subst.
       rename Tyt into TyFillComp1, Tyt0 into Tyt.
-      assert (LinOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C (T) U0). tauto. }
-      constructor 1 with (D := P1) (t := t) (T := ⌊ U ⌋ n); swap 1 3. constructor 17 with (D2 := P2) (T := T). all: crush.
+      assert (LinOnly (P1 ᴳ+ ¹↑ ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2) C (T) U0). tauto. }
+      constructor 1 with (D := P1) (t := t) (T := ⌊ U ⌋ ¹ν); swap 1 3. constructor 17 with (D2 := P2) (T := T). all: crush.
     - (* Unfocus-FillComp1 *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D1, U1 into U.
       rewrite (nDisposable_in_DestOnly P D1 DisposP DestOnlyD) in *.
-      assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C (T) U0). tauto. }
-      assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ⨞· t' : T) as TyFillComp1.
-        { apply (Ty_term_FillComp D1 n D2 (ᵥ₎ v) t' T U). all:trivial. }
-      constructor 1 with (D := D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) (T := T) (t := ᵥ₎ v ⨞· t'). apply ValidOnly_union_forward; repeat split. assumption. replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *. apply ValidOnly_stimes_forward; repeat split. assumption. apply IsValid_times_iff; repeat split. assumption. simpl. rewrite mode_times_linnu_r_eq. reflexivity.
-      apply LinOnly_union_iff. assumption. crush. assumption. assumption.
+      assert (LinOnly (D1 ᴳ+ ¹↑ ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2) C (T) U0). tauto. }
+      assert (D1 ᴳ+ ¹↑ ᴳ· D2 ⊢ ᵥ₎ v ⨞· t' : T) as TyFillComp1.
+        { apply (Ty_term_FillComp D1 D2 (ᵥ₎ v) t' T U). all:trivial. }
+      constructor 1 with (D := D1 ᴳ+ ¹↑ ᴳ· D2) (T := T) (t := ᵥ₎ v ⨞· t'). apply ValidOnly_union_forward; repeat split. assumption. apply ValidOnly_stimes_forward; repeat split. assumption. crush. crush. assumption. assumption.
     - (* Focus-FillComp2 *)
       inversion Tyt; subst.
       rename Tyt into TyFillComp2, Tyt0 into Tyt.
-      assert (LinOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C (T) U0). tauto. }
-      constructor 1 with (D := P2) (T := U ⧔ T); swap 1 3. constructor 18 with (D1 := P1) (n := n) (D2 := P2). all: crush.
+      assert (LinOnly (P1 ᴳ+ ¹↑ ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2) C (T) U0). tauto. }
+      constructor 1 with (D := P2) (T := U ⧔ T); swap 1 3. constructor 18 with (D1 := P1)  (D2 := P2). all: crush.
     - (* Unfocus-FillComp2 *)
       inversion Tyt; subst. rename TyC into TyCc, T into U. clear H1.
       inversion TyCc; subst. rename D0 into D2, U1 into U.
       rewrite (nDisposable_in_DestOnly P D2 DisposP DestOnlyD) in *.
-      assert (LinOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) C (T) U0). tauto. }
-      assert (D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2 ⊢ ᵥ₎ v ⨞· ᵥ₎ v' : T) as TyFillComp2.
-        { apply (Ty_term_FillComp D1 n D2 (ᵥ₎ v) (ᵥ₎ v') T U). all:trivial. }
-      constructor 1 with (D := D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) (T := T) (t := ᵥ₎ v ⨞· ᵥ₎ v'). apply ValidOnly_union_forward; repeat split. assumption. replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *. apply ValidOnly_stimes_forward; repeat split. assumption. apply IsValid_times_iff; repeat split. assumption. simpl. rewrite mode_times_linnu_r_eq. reflexivity. all: crush.
+      assert (LinOnly (D1 ᴳ+ ¹↑ ᴳ· D2) /\ FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (D1 ᴳ+ ¹↑ ᴳ· D2) C (T) U0). tauto. }
+      assert (D1 ᴳ+ ¹↑ ᴳ· D2 ⊢ ᵥ₎ v ⨞· ᵥ₎ v' : T) as TyFillComp2.
+        { apply (Ty_term_FillComp D1 D2 (ᵥ₎ v) (ᵥ₎ v') T U). all:trivial. }
+      constructor 1 with (D := D1 ᴳ+ ¹↑ ᴳ· D2) (T := T) (t := ᵥ₎ v ⨞· ᵥ₎ v'). apply ValidOnly_union_forward; repeat split. assumption. crush. crush. crush. assumption. assumption.
     - (* Red-FillComp *)
       inversion Tyt; revert hpMaxCh; subst.
       rename Tyt into TyFillComp, Tyt0 into Tyt.
-      assert (LinOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
-        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) C (T) U0). tauto. }
+      assert (LinOnly (P1 ᴳ+ ¹↑ ᴳ· P2) /\ FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2)) as (LinOnlyD & FinAgeOnlyD).
+        { apply (Ty_ectxs_LinOnly_FinAgeOnly (P1 ᴳ+ ¹↑ ᴳ· P2) C (T) U0). tauto. }
       inversion Tyt; subst. inversion Tytp; subst. rename Tyv0 into Tyvp, D into D1, D0 into D2, P into P1, P0 into P2, H2 into DestOnlyD1, H3 into DestOnlyD2, DisposP into DisposP1, DisposP0 into DisposP2.
       assert (DestOnly (P1 ᴳ+ D1)) as DestOnlyP1D1. { crush. }
       assert (DestOnly (P2 ᴳ+ D2)) as DestOnlyP2D2. { crush. }
       rewrite (nDisposable_in_DestOnly P1 D1 DisposP1 DestOnlyP1D1) in *.
       rewrite (nDisposable_in_DestOnly P2 D2 DisposP2 DestOnlyP2D2) in *.
       inversion Tyv; subst. inversion Tyvp; subst. intros hpMaxCh. rename D0 into D2, DestOnlyD1 into DestOnlyDest, DestOnlyD2 into DestOnlyD1D2, DestOnlyD0 into DestOnlyD1, DestOnlyD3 into DestOnlyD2, DestOnlyD4 into DestOnlyD3.
-      assert ((D1 ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ᴳ[ hnamesᴳ( D3) ⩲ h'] ⊣ C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ h' ‗ v2 ᵛ[ hnamesᴳ( D3) ⩲ h']] : T ↣ U0).
-        { rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- total_cshift_eq. rewrite cshift_distrib_on_hminus. rewrite cshift_distrib_on_stimes. rewrite cshift_distrib_on_hminus_inv. }
-      admit.
+      assert ((ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· (D1 ᴳ+ D2)) # (D3 ᴳ[ hnamesᴳ( D3) ⩲ h'])).
+        { apply Ty_ectxs_HDisjoint_to_Disjoint with (C := C) (T := T) (U0 := U0). assumption.
+          assert (maxᴴ(hnames©( C)) < h'). { rewrite hpMaxCh. assert (maxᴴ( hnames©( C)) <= maxᴴ( hnames©( C) ∪ ᴴ{ h})). { apply HSubset_impl_lt_max. unfold HNames.Subset. intros a H. apply HNames.union_spec. left. assumption. } lia. } rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption.
+        }
+      assert ((¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h'] ⊣ C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ h' ‗ v2 ᵛ[ hnamesᴳ( D3) ⩲ h']] : T ↣ U0). {
+        rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- total_cshift_eq.
+        apply ectxs_fillComp_spec with (D1 := ¹↑ ᴳ· D1) (D2 := D2) (D3 := D3 ᴳ[ hnamesᴳ( D3) ⩲ h']) (T := T) (U := U).
+        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. crush. } { assert (maxᴴ(hnames©( C)) < h'). { rewrite hpMaxCh. assert (maxᴴ( hnames©( C)) <= maxᴴ( hnames©( C) ∪ ᴴ{ h})). { apply HSubset_impl_lt_max. unfold HNames.Subset. intros a H'. apply HNames.union_spec. left. assumption. } lia. } rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption. } { crush. } { crush. } { crush. }
+        { rewrite <- stimes_distrib_on_union. rewrite union_commutative. assumption. }
+        { rewrite <- cshift_by_Disjoint_eq with (D := D2) (D' := D3) (h' := h'). rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. assumption. assumption. } { crush. }
+      }
+      constructor 1 with (D := (¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h']) (T := T) (t := ᵥ₎ v1 ᵛ[ hnamesᴳ( D3) ⩲ h']); swap 1 4. term_Val_no_dispose ((¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h']). apply Ty_val_cshift. assumption. crush. crush. assumption. { rewrite cshift_distrib_on_union. apply ValidOnly_union_forward. rewrite cshift_distrib_on_stimes. rewrite cshift_by_Disjoint_eq. apply ValidOnly_union_backward in ValidOnlyD. destruct ValidOnlyD as (ValidOnlyH & ValidOnlyD). rewrite stimes_distrib_on_union in ValidOnlyD. crush. assumption. apply ValidOnly_cshift_iff. assumption. apply Disjoint_union_l_iff in H. destruct H as (H1 & H2). rewrite stimes_distrib_on_union in H2. apply Disjoint_union_l_iff in H2. destruct H2 as (H2 & H3). rewrite cshift_by_Disjoint_eq. assumption. crush. }
     - give_up.
 Admitted.
