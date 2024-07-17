@@ -904,6 +904,12 @@ Proof.
   unfold IsDest in destonly. assumption.
 Qed.
 
+Lemma DestOnly_Disjoint_singleton_var' : forall (G : ctx) (x : var) (m : mode) (T : type), Basics.impl (DestOnly G) (G # (ᴳ{ x : m ‗ T})).
+Proof.
+  exact DestOnly_Disjoint_singleton_var.
+Qed.
+Hint Rewrite <- DestOnly_Disjoint_singleton_var' : suffices.
+
 Lemma mode_plus_commutative : forall (m n: mode), mode_plus m n = mode_plus n m.
 Proof.
   intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
