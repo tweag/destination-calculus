@@ -72,7 +72,7 @@ continuous::
 	ls destination_calculus.mng bibliography.bib $(OTT_FILES) ottstyling.sty | entr make
 
 coq: Makefile.coq $(OTT_COQ)
-	$(MAKE) -f Makefile.coq
+	$(MAKE) TIMED=1 -f Makefile.coq
 
 Makefile.coq: _CoqProject
 	coq_makefile -f _CoqProject -o Makefile.coq
