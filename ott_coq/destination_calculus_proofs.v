@@ -2007,7 +2007,9 @@ Ltac crush :=
   (* occasionally, we have an early solve. Since `propagate` actually
      loses information, better to try for it. *)
   let saturate' := (saturate; (solve[eauto] || autorewrite with propagate_down in *)) in
-  let finisher := solve [ hauto lq: on | rewrite_db suffices; hauto lq:on ] in
+  let finisher := solve [ hauto lq: on
+                        | (rewrite_strat
+                            (topdown (choice (hints suffices) (hints propagate_down)))); hauto lq:on ] in
   let workhorse :=
     solve
       [ trivial with autolemmas
