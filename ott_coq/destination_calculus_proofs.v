@@ -165,7 +165,15 @@ Proof. Admitted.
 
 (* Could really be generalised to any var-only context. *)
 Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
-Proof. Admitted.
+Proof.
+  intros *. unfold ctx_singleton. unfold ctx_cshift, ctx_shift.
+  apply ext_eq. intros n.
+  destruct (name_eq_dec n (ˣ x)); subst.
+  * rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. exists (ₓ m ‗ T). split. cbn. unfold Fun.singleton. destruct (name_eq_dec (ˣ x) (ˣ x)) as [e|e]. dependent destruction e. reflexivity. congruence. cbn. reflexivity.
+  * assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = ☠). { rewrite singleton_nMapsTo_iff. symmetry. assumption. } rewrite H0.
+  apply map_nMapsTo_iff. cbn. rewrite <- singleton_spec. apply singleton_nMapsTo_iff. destruct n.
+  { cbn. symmetry. assumption. } { cbn. congruence. }
+Qed.
 
 Lemma cshift_singleton_hname : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
 Proof. Admitted.
