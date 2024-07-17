@@ -820,6 +820,12 @@ Proof.
 Qed.
 Hint Resolve DisposableOnly_empty : autolemmas.
 
+Lemma ValidOnly_empty : ValidOnly ᴳ{}.
+Proof.
+  sauto q: on unfold: ValidOnly.
+Qed.
+Hint Resolve ValidOnly_empty : autolemmas.
+
 Lemma DisposableOnly_stimes : forall (P : ctx) (m : mode), IsValid m -> DisposableOnly P -> DisposableOnly (m ᴳ· P).
 Proof.
   intros * validm dispoP.
@@ -1809,6 +1815,54 @@ Proof.
   - apply In_singleton_iff in Hin2. inversion Hin2.
 Qed.
 
+Lemma IsLin_linnu : True <-> IsLin (¹ν).
+Proof. split. intros _. exact (IsLinProof (Fin 0)). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsLin_linup : True <-> IsLin (¹↑).
+Proof. split. intros _. exact (IsLinProof (Fin 1)). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsFinAge_linnu : True <-> IsFinAge (¹ν).
+Proof. split. intros _. exact (IsFinAgeProof Lin 0). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsFinAge_linup : True <-> IsFinAge (¹↑).
+Proof. split. intros _. exact (IsFinAgeProof Lin 1). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsValid_linnu : True <-> IsValid (¹ν).
+Proof. split. intros _. exact (IsValidProof (Lin, (Fin 0))). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsValid_linup : True <-> IsValid (¹↑).
+Proof. split. intros _. exact (IsValidProof (Lin, (Fin 1))). intros _. tauto. Qed.
+Hint Rewrite <- IsLin_linnu : propagate_down.
+
+Lemma IsLin_linnu' : IsLin (¹ν).
+Proof. exact (IsLinProof (Fin 0)). Qed.
+Hint Resolve IsLin_linnu' : autolemmas.
+
+Lemma IsLin_linup' : IsLin (¹↑).
+Proof. exact (IsLinProof (Fin 1)). Qed.
+Hint Resolve IsLin_linup' : autolemmas.
+
+Lemma IsFinAge_linnu' : IsFinAge (¹ν).
+Proof. exact (IsFinAgeProof Lin 0). Qed.
+Hint Resolve IsFinAge_linnu' : autolemmas.
+
+Lemma IsFinAge_linup' : IsFinAge (¹↑).
+Proof. exact (IsFinAgeProof Lin 1). Qed.
+Hint Resolve IsFinAge_linup' : autolemmas.
+
+Lemma IsValid_linnu' : IsValid (¹ν).
+Proof. exact (IsValidProof (Lin, (Fin 0))). Qed.
+Hint Resolve IsValid_linnu' : autolemmas.
+
+Lemma IsValid_linup' : IsValid (¹↑).
+Proof. exact (IsValidProof (Lin, (Fin 1))). Qed.
+Hint Resolve IsValid_linup' : autolemmas.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
@@ -1971,12 +2025,12 @@ Ltac hauto_ctx :=
         union_self_stimes_plus_eq,
         (* UserDefined_union_iff, *)
         (* UserDefined_Disjoint, *)
-        (IsLinProof (Fin 0)),
-        (IsLinProof (Fin 1)),
-        (IsFinAgeProof Lin 0),
-        (IsFinAgeProof Lin 1),
-        (IsValidProof (Lin, (Fin 0))),
-        (IsValidProof (Lin, (Fin 1)))
+        IsLin_linnu',
+        IsLin_linup',
+        IsFinAge_linnu',
+        IsFinAge_linup',
+        IsValid_linnu',
+        IsValid_linup'
     .
 
 Ltac term_Val_no_dispose D :=
@@ -2003,13 +2057,13 @@ Ltac saturate :=
         change (Blocked P) with P in H
     end.
 
-Ltac crush :=
+Ltac crush' :=
   (* occasionally, we have an early solve. Since `propagate` actually
      loses information, better to try for it. *)
   let saturate' := (saturate; (solve[eauto] || autorewrite with propagate_down in *)) in
-  let finisher := solve [ hauto lq: on
+  let finisher := solve [ hauto
                         | (rewrite_strat
-                            (topdown (choice (hints suffices) (hints propagate_down)))); hauto lq:on ] in
+                            (topdown (choice (hints suffices) (hints propagate_down)))); hauto ] in
   let workhorse :=
     solve
       [ trivial with autolemmas
@@ -2024,6 +2078,9 @@ Ltac crush :=
   solve
     [ trivial
     | autorewrite with canonalize in *; workhorse ].
+
+Ltac crush :=
+  timeout 30 crush'.
 
 Lemma Ty_val_NoVar : forall (G : ctx) (v : val) (T : type) (Ty: G ⫦ v : T), NoVar G.
 Proof.
@@ -2654,7 +2711,3 @@ Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : typ
 Proof.
   intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
 Qed.
-
-(* T <-> (LinOnly ...) (Proofterm qui est actuellement en bas de la liste des lemmes) 
-   Hint Resolve nom : propagate_down.
-*)

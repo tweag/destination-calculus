@@ -598,7 +598,7 @@ Proof.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) U0 P DisposP.
       inversion Tyv; subst; intros hpMaxCh.
       rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m (T1 ⨂ T2) n LinOnlyD FinAgeOnlyD Subtypem) in *.
-      assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} # ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) as NewHolesDisjoint. { apply Disjoint_singletons_iff. injection. lia. } (* STOPPED HERE *)
+      assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} # ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) as NewHolesDisjoint. { apply Disjoint_singletons_iff. injection. lia. }
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1, h' + 2} ‗ ᵛ(ᵛ+ (h' + 1), ᵛ+ (h' + 2))] : ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}))) = (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n})) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_distrib_on_union. rewrite stimes_distrib_on_union. rewrite hminus_distrib_on_union. rewrite 2 hminus_inv_singleton. rewrite 2 stimes_singleton_hole. rewrite 2 hminus_singleton. rewrite * mode_times_linnu_l_eq. tauto. rewrite 2 hminus_inv_singleton; rewrite 2 stimes_singleton_hole. all: apply Disjoint_singletons_iff. injection. lia. injection. lia. }
@@ -615,7 +615,7 @@ Proof.
           { apply ValidOnly_union_forward. crush. crush. assumption. }
           { crush. } { crush. }
         }
-      constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ(ᵛ- (h' + 1), ᵛ- (h' + 2))); swap 1 4. term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Prod. apply Ty_val_Dest. apply Ty_val_Dest. { apply DestOnly_union_iff. crush. } { apply DestOnly_union_iff. crush. } { assert (hnames_ ((©️⬜ ∘ h' + 1) ++ (©️⬜ ∘ h' + 2) ++ ©️⬜) = ᴴ{ h' + 1, h' + 2}). cbn. reflexivity. assumption. } { apply ValidOnly_union_forward. crush. crush. apply Disjoint_singletons_iff. injection. lia. }
+      constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ(ᵛ- (h' + 1), ᵛ- (h' + 2))); swap 1 4. term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Prod. apply Ty_val_Dest. apply IsSubtype_refl. apply Ty_val_Dest. { apply IsSubtype_refl. } { apply DestOnly_union_iff. crush. } { apply DestOnly_union_iff. crush. } { assert (hnames_ ((©️⬜ ∘ h' + 1) ++ (©️⬜ ∘ h' + 2) ++ ©️⬜) = ᴴ{ h' + 1, h' + 2}). cbn. reflexivity. assumption. } { apply ValidOnly_union_forward. crush. crush. apply Disjoint_singletons_iff. injection. lia. }
     - (* Focus-FillF *)
       inversion Tyt; subst.
       rename Tyt into TyFillF, Tyt0 into Tyt, T0 into T.
@@ -636,6 +636,9 @@ Proof.
       inversion Tytp; subst. clear H1. rename D into D1, P2 into D2.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· D2) D1 C ① U0 P DisposP.
       inversion Tyv; subst.
+      assert (LinOnly ᴳ{- h : m0 ⌊ T ⁔ m → U ⌋ n}) as LinOnlySingl. { crush. }
+      assert (FinAgeOnly ᴳ{- h : m0 ⌊ T ⁔ m → U ⌋ n}) as FinAgeOnlySingl. { crush. }
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m0 (T ⁔ m → U) n LinOnlySingl FinAgeOnlySingl Subtypem) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ ᵛλ x ⁔ m ⟼ u] : ① ↣ U0).
         { replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *.
           apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T ⁔ m → U); swap 1 8.
@@ -683,6 +686,9 @@ Proof.
       rewrite (nDisposable_in_LinOnly P1 D1 DisposP1 LinOnlyP1D1) in *.
       rewrite (nDisposable_in_LinOnly P2 D2 DisposP2 LinOnlyP2D2) in *.
       inversion Tyv; subst. inversion Tyvp; subst. intros hpMaxCh. rename D0 into D2, DestOnlyD1 into DestOnlyDest, DestOnlyD2 into DestOnlyD1D2, DestOnlyD0 into DestOnlyD1, DestOnlyD3 into DestOnlyD2, DestOnlyD4 into DestOnlyD3.
+      assert (LinOnly ᴳ{- h : m ⌊ U ⌋ ¹ν}) as LinOnlySingl. { crush. }
+      assert (FinAgeOnly ᴳ{- h : m ⌊ U ⌋ ¹ν}) as FinAgeOnlySingl. { crush. }
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m U ¹ν LinOnlySingl FinAgeOnlySingl Subtypem) in *.
       assert ((ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· (D1 ᴳ+ D2)) # (D3 ᴳ[ hnamesᴳ( D3) ⩲ h'])).
         { apply Ty_ectxs_HDisjoint_to_Disjoint with (C := C) (T := T) (U0 := U0). assumption.
           assert (maxᴴ(hnames©( C)) < h'). { rewrite hpMaxCh. assert (maxᴴ( hnames©( C)) <= maxᴴ( hnames©( C) ∪ ᴴ{ h})). { apply HSubset_impl_lt_max. unfold HNames.Subset. intros a H. apply HNames.union_spec. left. assumption. } lia. } rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption.
@@ -732,6 +738,9 @@ Proof.
       rewrite (nDisposable_in_LinOnly P1 D1 DisposP1 LinOnlyP1D1) in *.
       rewrite (nDisposable_in_LinOnly P2 D2 DisposP2 LinOnlyP2D2) in *.
       inversion Tyv; subst.
+      assert (LinOnly ᴳ{- h : m ⌊ T ⌋ n}) as LinOnlySingl. { crush. }
+      assert (FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n}) as FinAgeOnlySingl. { crush. }
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m T n LinOnlySingl FinAgeOnlySingl Subtypem) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ v] : ① ↣ U0). {
         apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T).
         { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite <- union_empty_l_eq. rewrite union_commutative. replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *. 2:{ simpl. rewrite mode_times_linnu_r_eq. reflexivity. } assumption. } { assumption. }

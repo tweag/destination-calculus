@@ -847,6 +847,8 @@ Notice, also, that values can't have free variables, since contexts $[[G]]$ only
 
 One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
 
+\TODO{Revisit this paragraph}
+
 Rules \rref*{Ty-val-Hole} and \rref*{Ty-val-Dest} are interesting. The mode must be exactly $[[¹ν]]$: there is no mode weakening for hole or destinations. Typing of value keeps track precisely of holes and destinations during evaluation. Which is what we need to make sure that holes are written before they are read.
 
 Consequently the mode $[[n]]$ of a hole binding $[[{ + h : T n }]]$ arises precisely when a structure with holes has exponentials e.g. $[[ᴇ ων +h]]$. It means that only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
