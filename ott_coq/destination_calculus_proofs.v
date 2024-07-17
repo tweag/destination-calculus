@@ -177,7 +177,7 @@ Proof.
     + cbn. rewrite cshift_singleton_hname.
       constructor.
     + cbn. rewrite cshift_singleton_hname.
-      constructor.
+      constructor. assumption.
     + replace (ᴳ{} ᴳ[ H ⩲ h']) with ᴳ{}.
       2:{ apply ext_eq. cbn. congruence. }
       cbn.
@@ -1980,7 +1980,7 @@ Ltac hauto_ctx :=
     .
 
 Ltac term_Val_no_dispose D :=
-  assert (DisposableOnly ᴳ{}) as DisposEmpty by (exact DisposableOnly_empty); rewrite union_empty_l_eq with (G := D); apply Ty_term_Val with (P := ᴳ{}); trivial.
+  assert (DisposableOnly ᴳ{}) as DisposEmpty by (exact DisposableOnly_empty); rewrite union_empty_l_eq with (G := D); apply Ty_term_Val with (P := ᴳ{}); trivial; [ apply Disjoint_empty_l | .. ].
 
 (* Silly stuff to avoid matching hypotheses many times *)
 Definition Blocked (P : Prop) : Prop := P.
@@ -2649,3 +2649,12 @@ Lemma ectxs_fillComp_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (T U 
   D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
   D1 ᴳ+ D3 ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.
+
+Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
+Proof.
+  intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
+Qed.
+
+(* T <-> (LinOnly ...) (Proofterm qui est actuellement en bas de la liste des lemmes) 
+   Hint Resolve nom : propagate_down.
+*)

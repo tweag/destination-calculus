@@ -420,7 +420,7 @@ Proof.
     assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
       { unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
       rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 10; swap 2 11.
-      + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest.
+      + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest. repeat constructor.
       + rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Hole.
       + apply DestOnly_singleton_dest.
       + apply LinOnly_singleton_iff. cbn. constructor.
@@ -452,7 +452,8 @@ Proof.
       rename Tyt into TyFillU, Tyt0 into Tytp.
       inversion Tytp; subst. clear H1.
       inversion Tyv; subst.
-      assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ (ᴳ{- h : ¹ν ⌊ ① ⌋ n})) (ᴳ{- h : ¹ν ⌊ ① ⌋ n}) C ① U0 P DisposP.
+      assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ (ᴳ{- h : m ⌊ ① ⌋ n})) (ᴳ{- h : m ⌊ ① ⌋ n}) C ① U0 P DisposP.
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m ① n LinOnlyD FinAgeOnlyD Subtypem) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ nil ‗ ᵛ()] : ① ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{})) = ᴳ{}) as e1. { crush. }
           rewrite <- e1.
@@ -482,6 +483,7 @@ Proof.
       inversion Tytp; subst. clear H1. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T1 ⌋ n) U0 P DisposP.
       inversion Tyv; subst; intros hpMaxCh.
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m (T1 ⨁ T2) n LinOnlyD FinAgeOnlyD Subtypem) in *.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inl ᵛ+ (h' + 1)] : ⌊ T1 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν })) = ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n }) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. rewrite stimes_singleton_hole. rewrite hminus_singleton. rewrite mode_times_linnu_l_eq. tauto. }
@@ -516,6 +518,7 @@ Proof.
       inversion Tytp; subst. clear H1. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T2 ⌋ n) U0 P DisposP.
       inversion Tyv; subst; intros hpMaxCh.
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m (T1 ⨁ T2) n LinOnlyD FinAgeOnlyD Subtypem) in *.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ Inr ᵛ+ (h' + 1)] : ⌊ T2 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν })) = ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n }) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. rewrite stimes_singleton_hole. rewrite hminus_singleton. rewrite mode_times_linnu_l_eq. tauto. }
@@ -559,6 +562,7 @@ Proof.
       inversion Tytp; subst. clear H1. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T ⌋ m · n) U0 P DisposP.
       inversion Tyv; subst; intros hpMaxCh.
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m0 (! m ⁔ T) n LinOnlyD FinAgeOnlyD Subtypem) in *.
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1} ‗ ᴇ m ⁔ ᵛ+ (h' + 1)] : ⌊ T ⌋ m · n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m })) = ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n }) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. rewrite stimes_singleton_hole. rewrite hminus_singleton. tauto. }
@@ -593,7 +597,8 @@ Proof.
       inversion Tytp; subst. clear H1. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) U0 P DisposP.
       inversion Tyv; subst; intros hpMaxCh.
-      assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} # ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) as NewHolesDisjoint. { apply Disjoint_singletons_iff. injection. lia. }
+      rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m (T1 ⨂ T2) n LinOnlyD FinAgeOnlyD Subtypem) in *.
+      assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} # ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) as NewHolesDisjoint. { apply Disjoint_singletons_iff. injection. lia. } (* STOPPED HERE *)
       assert (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n} ⊣ C ©️[ h ≔ ᴴ{ h' + 1, h' + 2} ‗ ᵛ(ᵛ+ (h' + 1), ᵛ+ (h' + 2))] : ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n ↣ U0).
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}))) = (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n})) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_distrib_on_union. rewrite stimes_distrib_on_union. rewrite hminus_distrib_on_union. rewrite 2 hminus_inv_singleton. rewrite 2 stimes_singleton_hole. rewrite 2 hminus_singleton. rewrite * mode_times_linnu_l_eq. tauto. rewrite 2 hminus_inv_singleton; rewrite 2 stimes_singleton_hole. all: apply Disjoint_singletons_iff. injection. lia. injection. lia. }

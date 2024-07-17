@@ -827,8 +827,9 @@ Inductive pred : Type :=  (*r Serves for the .mng file. Isn't used in the actual
 Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
  | Ty_val_Hole : forall (h:hname) (T:type),
      Ty_val  (ctx_singleton (name_DH  h ) (binding_Hole  T    (Some (pair   Lin     (Fin 0)  ))  ))  (val_Hole h) T
- | Ty_val_Dest : forall (h:hname) (T:type) (n:mode),
-     Ty_val  (ctx_singleton (name_DH  h ) (binding_Dest   (Some (pair   Lin     (Fin 0)  ))    T   n ))  (val_Dest h) (type_Dest T n)
+ | Ty_val_Dest : forall (h:hname) (m:mode) (T:type) (n:mode)
+     (Subtypem:  (Some (pair   Lin     (Fin 0)  ))  <: m ),
+     Ty_val  (ctx_singleton (name_DH  h ) (binding_Dest  m   T   n ))  (val_Dest h) (type_Dest T n)
  | Ty_val_Unit : 
      Ty_val  ctx_empty  val_Unit type_Unit
  | Ty_val_Fun : forall (D:ctx) (x:var) (m:mode) (u:term) (T U:type)
@@ -865,6 +866,7 @@ Inductive Ty_val : ctx -> val -> type -> Prop :=    (* defn Ty_val *)
      Ty_val  (union  D1   D2 )  (val_Ampar  (hnames_ctx  D3 )  v2 v1) (type_Ampar U T)
 with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
  | Ty_term_Val : forall (P D:ctx) (v:val) (T:type)
+     (DisjointPD: P # D )
      (DisposP: DisposableOnly P )
      (Tyv: Ty_val D v T),
      DestOnly D  ->

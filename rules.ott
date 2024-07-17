@@ -8,8 +8,9 @@ G ⫦ v : T :: :: Ty_val :: Ty_val_ {{ com Typing judgment for values }} by
 --------------------- :: Hole
 { +h : T ¹ν } ⫦ +h : T
 
+{{ [[¹ν]] <: [[m]] }} [[:Subtypem]]
 ---------------- :: Dest
-{ -h : ¹ν ⌊T⌋n } ⫦ -h : ⌊T⌋n
+{ -h : m ⌊T⌋n } ⫦ -h : ⌊T⌋n
 
 --------------------- :: Unit
 {} ⫦ () :①
@@ -71,6 +72,7 @@ defn
 P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
 
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
+{{ [[P]] # [[D]] }} [[:DisjointPD]]
 {{ DisposableOnly [[P]] }} [[:DisposP]]
 % {{ [[D]] # [[P]] }} for free
 D ⫦ v : T [[:Tyv]]

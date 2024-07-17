@@ -35,7 +35,7 @@ Proof.
     + assumption.
     + rewrite stimes_empty_eq, union_commutative. apply Ty_term_PatU.
       * rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ①}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
-      * rewrite union_empty_l_eq with (G := ᴳ{}). apply Ty_term_Val. { apply DisposableOnly_empty. } { rewrite <- stimes_empty_eq with (m := ¹∞). apply Ty_val_Exp. apply Ty_val_Unit. repeat constructor. } { apply DestOnly_empty. }
+      * rewrite union_empty_l_eq with (G := ᴳ{}). apply Ty_term_Val. { apply Disjoint_empty_l. } { apply DisposableOnly_empty. } { rewrite <- stimes_empty_eq with (m := ¹∞). apply Ty_val_Exp. apply Ty_val_Unit. repeat constructor. } { apply DestOnly_empty. }
   - replace (ᴳ{} ᴳ+ ᴳ{ 1 : ¹ν ‗ T} ᴳ+ ᴳ{ 2 : ¹ν ‗ ! ¹∞ ⁔ ①}) with (¹ν ᴳ· ᴳ{ 2 : ¹ν ‗ ! ¹∞ ⁔ ①} ᴳ+ ᴳ{ 1 : ¹ν ‗ T}). 2:{ crush. }
     apply Ty_term_PatE with (T := ①).
     + repeat constructor.
