@@ -153,10 +153,70 @@ Qed.
  * Still admitted
  * ========================================================================= *)
 
+Lemma option_eta : forall A (o:option A), match o with Some x => Some x | None => None end = o.
+Proof.
+  hauto lq: on.
+Qed.
+
+(* TODO: move to Finitely *)
+Lemma support_ext_eq : forall A B (f g:Finitely.T A B) (l:list A), Finitely.Fun.Support l f -> Finitely.Fun.Support l g -> (forall x, List.In x l -> f x = g x) -> f = g.
+Proof.
+  intros * h_supp_f h_supp_g h.
+  apply Finitely.ext_eq. intros x.
+  destruct (f x) as [|x'] eqn: h_x'.
+  - sfirstorder.
+  - destruct (g x) as [|x''] eqn: h_x''.
+    + sfirstorder.
+    + trivial.
+Qed.
+
+(* TODO: move to Permutation *)
+Definition fixes (p:Permutation.T) (l:list name) : Prop :=
+  forall xh, List.In (ʰ xh) l -> Permutation.sem p xh = xh.
+
+Lemma fixes_inverse_fixes : forall p l, fixes p l -> fixes (List.rev p) l.
+Proof.
+Admitted.
+
+Lemma perm_support_fixes : forall (p:Permutation.T) (l:list name) (C:ctx), Finitely.Fun.Support l C -> fixes p l -> ctx_shift p C = C.
+Proof.
+  intros * h_supp h_fixes. unfold ctx_shift.
+  apply support_ext_eq with (l:=l).
+  { unfold Fun.Support. cbn. intros [xx|xh] b.
+    - unfold Fun.map. cbn. rewrite option_eta.
+      sfirstorder.
+    - unfold Fun.map. cbn. rewrite option_eta.
+      intros h.
+      assert (List.In (ʰ Permutation.sem p xh) l) as h'.
+      { sfirstorder. }
+      rewrite <- (Permutation.post_inverse p xh).
+      hauto l: on use: fixes_inverse_fixes.
+  }
+  { trivial. }
+  intros [xx|xh]. all: cbn.
+  - intros _. compute. hauto lq: on.
+  - intros h. unfold Fun.map. cbn. rewrite option_eta.
+    rewrite h_fixes.
+    + trivial.
+    + trivial.
+Qed.
+
+Lemma perm_support_fixes' : forall (p:Permutation.T) (C:ctx), fixes p (Finitely.dom C) -> ctx_shift p C = C.
+Proof.
+  intros *.
+  apply perm_support_fixes.
+  apply Finitely.Support_dom.
+Qed.
+
 (* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
 (* Should be good now with extra constraint maxᴴ(hnamesᴳ( D )) < h' *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> maxᴴ(hnamesᴳ( D )) < h' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
-Proof. Admitted.
+Proof.
+  intros * disj h_max. unfold ctx_cshift.
+  apply perm_support_fixes'.
+  apply fixes_inverse_fixes.
+  unfold shift_perm, shift_one.
+Admitted.
 
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hnames) (h' : hname), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
 Proof.
@@ -2342,7 +2402,7 @@ end) in inD1. rewrite In_iff_exists_Some in inD1. destruct inD1 as (binding & ma
 Qed.
 
 #[program]
-Definition ctx_remove (n : name) (G : ctx) : ctx := {| 
+Definition ctx_remove (n : name) (G : ctx) : ctx := {|
   underlying := fun n' => if name_eq_dec n n' then None else G n';
 |}.
 Next Obligation.
@@ -2512,7 +2572,7 @@ Proof.
     * rewrite IHTyte2. reflexivity. intros inP2x1x2. apply In_union_iff in inP2x1x2. destruct inP2x1x2.
       { apply In_union_iff in H. destruct H. contradiction NotInP. apply In_union_forward_r. assumption. apply In_singleton_iff in H. inversion H. congruence. }
       { apply In_singleton_iff in H. inversion H. congruence. }
-  - rewrite IHTyte1. 2: { apply nIn_union_iff in NotInP. destruct NotInP. intros inP1. contradiction H. apply In_stimes_iff. assumption. } 
+  - rewrite IHTyte1. 2: { apply nIn_union_iff in NotInP. destruct NotInP. intros inP1. contradiction H. apply In_stimes_iff. assumption. }
     destruct (HNamesFacts.eq_dec x x'); subst.
     * reflexivity.
     * rewrite IHTyte2. reflexivity. intros inP2x. apply In_union_iff in inP2x. destruct inP2x. { apply nIn_union_iff in NotInP. destruct NotInP. congruence. } { apply In_singleton_iff in H. inversion H. congruence. }
