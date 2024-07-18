@@ -232,7 +232,8 @@ Proof.
   intros * disj h_max. unfold ctx_cshift.
   apply perm_support_fixes'.
   apply fixes_inverse_fixes.
-  unfold shift_perm, shift_one.
+  apply fixes_untouched. intros t ht.
+  unfold shift_perm, shift_one in *. rewrite List.in_map_iff in ht. destruct ht as [xh [<- ht]]. cbn.
 Admitted.
 
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hnames) (h' : hname), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
