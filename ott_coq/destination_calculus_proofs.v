@@ -32,6 +32,14 @@ Proof.
   - sfirstorder use: HNamesFacts.mem_iff.
 Qed.
 
+Lemma gt_max_not_in : forall (h : HNames.elt) (H : HNames.t), maxᴴ(H) < h -> ~(HNames.In h H).
+Proof.
+  intros * h_max h_in.
+  rewrite <- HNames.mem_spec in h_in.
+  apply gt_S_max in h_in.
+  lia.
+Qed.
+
 Lemma pre_cshift_surjective : forall p x, exists x', pre_shift p x' = x.
 Proof.
   intros *. unfold pre_shift.
@@ -149,9 +157,18 @@ Lemma cshift_distrib_on_stimes : forall (m : mode) (G : ctx) (H : hnames) (h' : 
 Proof. Admitted.
 (* TODO: add to canonalize? *)
 
-(* TODO: not true, requires h' to be bigger than the max of H' as well, I believe. *)
+Lemma shift_spec : forall (h : HNames.elt) (H : HNames.t) (h' : nat), HNames.In h (H ᴴ⩲ h') <-> (exists h'' : HNames.elt, HNames.In h'' H /\ h = h'' + h').
+Proof.
+Admitted.
+
 Lemma shift_by_max_impl_HDisjoint : forall (H H' : hnames) (h' : hname), maxᴴ(H) < h' -> H ## (H' ᴴ⩲ h').
-Proof. Admitted.
+Proof.
+  intros * hH h hh. rewrite HNames.inter_spec in hh. destruct hh as [hhH hhH'].
+  rewrite shift_spec in hhH'. destruct hhH' as [h'' [hh''H' hh''h']].
+  assert (maxᴴ( H) < h).
+  { lia. }
+  sfirstorder use: gt_max_not_in.
+Qed.
 
 Lemma total_cshift_eq : forall (G : ctx) (h' : hname), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
