@@ -154,7 +154,8 @@ Qed.
  * ========================================================================= *)
 
 (* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
-Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
+(* Should be good now with extra constraint maxᴴ(hnamesᴳ( D )) < h' *)
+Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> maxᴴ(hnamesᴳ( D )) < h' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
 
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hnames) (h' : hname), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
@@ -1341,6 +1342,13 @@ Proof.
   - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold hminus. rewrite <- In_iff_exists_Some. rewrite In_map_iff. assumption.
 Qed.
 
+Lemma hnames_stimes_eq : forall (m : mode) (D : ctx), hnamesᴳ( m ᴳ· D) = hnamesᴳ( D).
+Proof.
+  intros m D. apply HNames.eq_leibniz. unfold HNames.eq. intros h. rewrite! hnames_spec. split.
+  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold stimes in Hin. rewrite In_map_iff in Hin. rewrite <- In_iff_exists_Some. assumption.
+  - intros Hin. rewrite <- In_iff_exists_Some in Hin. unfold stimes. rewrite <- In_iff_exists_Some. rewrite In_map_iff. assumption.
+Qed.
+
 Lemma hnames_C_wk_hnames_G : forall (C : ectxs) (D : ctx) (T U0 : type) (TyC : D ⊣ C : T ↣ U0), HNames.Subset hnamesᴳ(D) hnames©(C).
 Proof.
   intros * TyC. induction TyC.
@@ -1392,6 +1400,11 @@ Proof.
         apply not_lt_le; assumption.
       + apply HNames.max_elt_spec3 in eMax'. unfold HNames.Empty in eMax'. specialize (eMax' h). congruence.
     - apply Nat.le_0_l.
+Qed.
+
+Lemma HSubset_weaken : forall (H H' H'' : hnames), HNames.Subset H H' -> HNames.Subset H (H' ∪ H'').
+Proof.
+  intros *. unfold HNames.Subset. intros Hyp h Hin. apply HNamesFacts.union_iff. left. apply Hyp. assumption.
 Qed.
 
 Lemma hnames_empty_is_hempty : hnamesᴳ(ᴳ{}) = HNames.empty.
