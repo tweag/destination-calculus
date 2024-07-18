@@ -169,9 +169,31 @@ Lemma cshift_distrib_on_stimes : forall (m : mode) (G : ctx) (H : hnames) (h' : 
 Proof. Admitted.
 (* TODO: add to canonalize? *)
 
+Lemma InA_eq_eq : forall A (x:A) l, SetoidList.InA eq x l <-> List.In x l.
+Proof.
+  intros *. rewrite SetoidList.InA_alt.
+  hauto lq: on.
+Qed.
+
 Lemma shift_spec : forall (h : HNames.elt) (H : HNames.t) (h' : nat), HNames.In h (H ᴴ⩲ h') <-> (exists h'' : HNames.elt, HNames.In h'' H /\ h = h'' + h').
 Proof.
-Admitted.
+  assert (forall (h : HNames.elt) (H : HNames.t) (h' : nat) , HNames.In h (H ᴴ⩲ h') <-> (exists h'' : HNames.elt , List.In h'' (List.rev (HNames.elements H)) /\ h = h'' + h')) as main.
+  { intros *. unfold hnames_shift.
+    rewrite HNames.fold_spec, <- List.fold_left_rev_right.
+    induction (rev (HNames.elements H)) as [ | h'' elems ih ].
+    - cbn. sauto q: on.
+    - cbn. rewrite HNames.add_spec. rewrite ih. clear ih.
+      sfirstorder.
+  }
+  (* Needs some wrangling a bit because rewrites don't work well under exists. *)
+  intros *. split.
+  - intros hh. apply main in hh. destruct hh as [h'' hh].
+    exists h''.
+    sauto use: in_rev.
+  - intros [h'' hh].
+    apply main. exists h''. rewrite <- List.in_rev, <- InA_eq_eq, HNames.elements_spec1.
+    sfirstorder.
+Qed.
 
 Lemma shift_by_max_impl_HDisjoint : forall (H H' : hnames) (h' : hname), maxᴴ(H) < h' -> H ## (H' ᴴ⩲ h').
 Proof.
