@@ -178,6 +178,20 @@ Lemma fixes_inverse_fixes : forall p l, fixes p l -> fixes (List.rev p) l.
 Proof.
 Admitted.
 
+Lemma fixes_untouched : forall p l, (forall t, List.In t p -> ~List.In (ʰ t.(Permutation.Transposition.from)) l /\ ~List.In (ʰ t.(Permutation.Transposition.to)) l) -> fixes p l.
+Proof.
+  intros *. induction p as [|t p ih].
+  - intros _. sfirstorder.
+  - intros h. cbn in *.
+    unfold fixes. intros xh. cbn. fold (Permutation.sem p xh). intros h_in.
+    rewrite ih.
+    2:{ sfirstorder. }
+    2:{ trivial. }
+    generalize (h t (or_introl eq_refl)). intros [h_from h_to].
+    destruct t as [from to]. unfold Permutation.Transposition.sem. cbn in *.
+    hauto q: on.
+Qed.
+
 Lemma perm_support_fixes : forall (p:Permutation.T) (l:list name) (C:ctx), Finitely.Fun.Support l C -> fixes p l -> ctx_shift p C = C.
 Proof.
   intros * h_supp h_fixes. unfold ctx_shift.
