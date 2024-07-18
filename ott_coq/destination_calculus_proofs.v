@@ -176,7 +176,10 @@ Definition fixes (p:Permutation.T) (l:list name) : Prop :=
 
 Lemma fixes_inverse_fixes : forall p l, fixes p l -> fixes (List.rev p) l.
 Proof.
-Admitted.
+  intros *. unfold fixes. intros h xh h_in.
+  apply Permutation.eqn_inverse.
+  sfirstorder.
+Qed.
 
 Lemma fixes_untouched : forall p l, (forall t, List.In t p -> ~List.In (ʰ t.(Permutation.Transposition.from)) l /\ ~List.In (ʰ t.(Permutation.Transposition.to)) l) -> fixes p l.
 Proof.

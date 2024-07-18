@@ -68,6 +68,12 @@ Proof.
   trivial.
 Qed.
 
+Lemma eqn_inverse : forall (p : T) n m, ⟦List.rev p⟧  n = m <-> n = ⟦p⟧ m.
+Proof.
+  intros *.
+  sfirstorder use: pre_inverse, post_inverse.
+Qed.
+
 Corollary surjective : forall p n, exists m, ⟦p⟧ m = n.
 Proof.
   intros *.
