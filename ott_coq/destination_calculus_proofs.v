@@ -2177,7 +2177,7 @@ Ltac saturate :=
         change (Blocked P) with P in H
     end.
 
-Ltac crush' :=
+Ltac crush :=
   (* occasionally, we have an early solve. Since `propagate` actually
      loses information, better to try for it. *)
   let saturate' := (saturate; (solve[eauto] || autorewrite with propagate_down in *)) in
@@ -2193,14 +2193,14 @@ Ltac crush' :=
          something new after simplification. *)
       | saturate'; solve [ finisher | saturate'; finisher ]
       (* ⬇️ should really be the last case because it can be quite slow. *)
-      | hauto_ctx ]
+      | timeout 20 hauto_ctx ]
   in
   solve
     [ trivial
     | autorewrite with canonalize in *; workhorse ].
 
-Ltac crush :=
-  timeout 20 crush'.
+Ltac supercrush :=
+  autorewrite with propagate_down in * ; crush.
 
 Lemma Ty_val_NoVar : forall (G : ctx) (v : val) (T : type) (Ty: G ⫦ v : T), NoVar G.
 Proof.
@@ -2801,24 +2801,74 @@ Ltac auto_destruct_and H :=
          | _ => idtac
          end.
 
-Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), DestOnly D2 -> D2 ⫦ v : T ->
-  forall (m : mode) (U U0 : type) (D1: ctx),
-  IsValid m ->
+Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), DestOnly D2 -> D2 # ᴳ{- h : ¹ν ⌊ T ⌋ n } -> D2 ⫦ v : T ->
+  forall (m0 : mode) (U U0 : type) (D1: ctx),
+  IsValid m0 ->
   DestOnly D1 ->
   D1 # D2 ->
-  D1 # ᴳ{- h : m ⌊ T ⌋ n } ->
-  D2 # ᴳ{- h : m ⌊ T ⌋ n } ->
-  D1 ᴳ+ m ᴳ· ((¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n }) ⊣ C : U ↣ U0 ->
+  D1 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
+  D1 ᴳ+ m0 ᴳ· ((¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n }) ⊣ C : U ↣ U0 ->
   D1 ⊣ C ©️[ h ≔ HNames.empty ‗ v ] : U ↣ U0.
 Proof.
-  intros * DestOnlyD2 Tyv. induction C.
-  - intros * Validm DestOnlyD1 DisjointD1D2 DisjointD1h DisjointD2h TyC.
+  intros * DestOnlyD2 DisjointD2h Tyv. induction C.
+  - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1h TyC.
     dependent destruction TyC. (* Prove that union of singleton + other things is not the empty context *) admit.
-  - intros * Validm DestOnlyD1 DisjointD1D2 DisjointD1h DisjointD2h TyC.
+  - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1h TyC.
     destruct a; simpl; dependent destruction TyC.
-    * assert (LinOnly (m0 ᴳ· (D1 ᴳ+ m ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3) /\ FinAgeOnly (m0 ᴳ· (D1 ᴳ+ m ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD). { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
-    give_up.
-    (* constructor 2 with (D2 := m0 ᴳ· D1 ᴳ+ D3) (m := m) (U := U); trivial. { autorewrite with propagate_down in *. admit. } { apply IHC with (D1 := m0 ᴳ· D1) (m := m0 · m). { crush. } { autorewrite with propagate_down in *. crush. } { autorewrite with propagate_down in *. crush. } { autorewrite with propagate_down in *. split. crush. auto_destruct_and LinOnlyD. apply Disjoint_commutative in H10. crush. } { autorewrite with propagate_down in *. auto_destruct_and LinOnlyD. crush. } {  } } *)
+    * (* Ty-ectxs-App1 *)
+      assert (LinOnly (m ᴳ· (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3) /\ FinAgeOnly (m ᴳ· (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD).
+        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
+      constructor 2 with (D2 := D3) (m := m) (U := U); trivial.
+        { supercrush. }
+        { apply IHC with (D1 := m ᴳ· D1 ᴳ+ D3) (m0 := m · m0); swap 1 5.
+          rewrite stimes_distrib_on_union, stimes_is_action in TyC. rewrite <- union_associative. rewrite union_commutative with (G1 := D3). rewrite union_associative. assumption.
+          { crush. } { supercrush. } { supercrush. } { crush. } }
+    * (* Ty-ectxs-App2 *)
+      assert (LinOnly (m ᴳ· D3 ᴳ+ (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}))) /\ FinAgeOnly (m ᴳ· D3 ᴳ+ (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})))) as (LinOnlyD & FinAgeOnlyD).
+        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
+      constructor 3 with (D2 := D1) (D1 := D3) (m := m) (U := U); trivial.
+        { supercrush. }
+        { apply IHC with (D1 := m ᴳ· D3 ᴳ+ D1) (m0 := m0); swap 1 5.
+          rewrite union_associative in TyC. assumption.
+          { crush. } { supercrush. } { supercrush. } { crush. } }
+    * (* Ty-ectxs-PatU *) admit.
+    * (* Ty-ectxs-PatS *) admit.
+    * (* Ty-ectxs-PatP *) admit.
+    * (* Ty-ectxs-PatE *) admit.
+    * (* Ty-ectxs-Map *)
+      assert (LinOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ D3) /\ FinAgeOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD).
+        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
+      constructor 8 with (D2 := D3) (U := U) (T' := T'); trivial.
+        { supercrush. }
+        { apply IHC with (D1 := D1 ᴳ+ D3) (m0 := m0); swap 1 5.
+          rewrite <- union_associative. rewrite union_commutative with (G1 := D3). rewrite union_associative. assumption.
+          { crush. } { supercrush. } { supercrush. } { crush. } }
+    * (* Ty-ectxs-ToA *) admit.
+    * (* Ty-ectxs-FromA *) admit.
+    * (* Ty-ectxs-FillU *) admit.
+    * (* Ty-ectxs-FillL *) admit.
+    * (* Ty-ectxs-FillR *) admit.
+    * (* Ty-ectxs-FillE *) admit.
+    * (* Ty-ectxs-FillP *) admit.
+    * (* Ty-ectxs-FillF *) admit.
+    * (* Ty-ectxs-FillComp1 *)
+      assert (LinOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ ¹↑ ᴳ· D3) /\ FinAgeOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ ¹↑ ᴳ· D3)) as (LinOnlyD & FinAgeOnlyD).
+        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := T0) (U0 := U0). tauto. }
+      constructor 17 with (D2 := D3) (U := U) (T := T0); trivial.
+        { supercrush. }
+        { apply IHC with (D1 := D1 ᴳ+ ¹↑ ᴳ· D3) (m0 := m0); swap 1 5.
+          rewrite <- union_associative. rewrite union_commutative with (G1 := ¹↑ ᴳ· D3). rewrite union_associative. assumption.
+          { crush. } { supercrush. } { supercrush. } { crush. } }
+    * (* Ty-ectxs-FillComp2 *) admit.
+    * (* Ty-ectxs-FillLeaf1 *) admit.
+    * (* Ty-ectxs-FillLeaf2 *) admit.
+    * (* Ty-ectxs-OpenAmpar *)
+      assert ((¹↑ ᴳ· D0 ᴳ+ D3).(underlying) = (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})).(underlying)). { unfold union, merge_with, merge, ctx_singleton. simpl. apply x. } clear x.
+      assert (LinOnly (D0 ᴳ+ D4) /\ FinAgeOnly (D0 ᴳ+ D4)) as (LinOnlyD & FinAgeOnlyD).
+        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
+      destruct (HNames.mem h hnamesᴳ( D3)) eqn:emem.
+      + apply HNames.mem_spec in emem. admit.
+      + admit.
 Admitted.
 
 Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mode) (T U0 : type) (v : val),
@@ -2832,7 +2882,7 @@ Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mod
   D1 ⊣ C ©️[ h ≔ HNames.empty ‗ v ] : ① ↣ U0.
 Proof.
   intros * DestOnlyD1 DestOnlyD2 DisjointD1D2 DisjointD1h DisjointD2h TyC Tyv.
-  apply ectxs_fillLeaf_spec' with (D2 := D2) (T := T) (n := n) (m := ¹ν); trivial. crush. rewrite <- stimes_linnu_eq. rewrite union_associative. assumption.
+  apply ectxs_fillLeaf_spec' with (D2 := D2) (T := T) (n := n) (m0 := ¹ν); trivial. crush. rewrite <- stimes_linnu_eq. rewrite union_associative. assumption.
 Qed.
 
 Lemma ectxs_fillCtor_spec : forall (D1 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T T' U0 : type) (v : val),
