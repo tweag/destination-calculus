@@ -17,10 +17,6 @@ Require Import Coq.Arith.Plus.
 Require Import Arith.
 Require Import Lia.
 
-(* =========================================================================
- * Waiting for PR #2 to be merged
- * ========================================================================= *)
-
 Lemma gt_S_max : forall h H, HNames.mem h H = true -> h < maxᴴ(H) + 1.
 Proof.
   intros * h_H. unfold hname_max.
@@ -141,6 +137,22 @@ Proof.
   sfirstorder.
 Qed.
 
+(* Could really be generalised to any var-only context. *)
+Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
+Proof.
+  intros *. unfold ctx_singleton. unfold ctx_cshift, ctx_shift.
+  apply ext_eq. intros n.
+  destruct (name_eq_dec n (ˣ x)); subst.
+  * rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. exists (ₓ m ‗ T). split. cbn. unfold Fun.singleton. destruct (name_eq_dec (ˣ x) (ˣ x)) as [e|e]. dependent destruction e. reflexivity. congruence. cbn. reflexivity.
+  * assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = ☠). { rewrite singleton_nMapsTo_iff. symmetry. assumption. } rewrite H0.
+  apply map_nMapsTo_iff. cbn. rewrite <- singleton_spec. apply singleton_nMapsTo_iff. destruct n.
+  { cbn. symmetry. assumption. } { cbn. congruence. }
+Qed.
+
+(* =========================================================================
+ * Still admitted
+ * ========================================================================= *)
+
 (* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof. Admitted.
@@ -179,18 +191,6 @@ Proof. Admitted.
 
 Lemma cshift_distrib_on_hnames : forall H h' D, hnames_cshift hnamesᴳ( D) H h' = hnamesᴳ( D ᴳ[ H ⩲ h']).
 Proof. Admitted.
-
-(* Could really be generalised to any var-only context. *)
-Lemma cshift_singleton_var_eq : forall H h' x m T, ᴳ{ x : m ‗ T}ᴳ[ H ⩲ h'] = ᴳ{ x : m ‗ T}.
-Proof.
-  intros *. unfold ctx_singleton. unfold ctx_cshift, ctx_shift.
-  apply ext_eq. intros n.
-  destruct (name_eq_dec n (ˣ x)); subst.
-  * rewrite singleton_MapsTo_at_elt. apply map_MapsTo_iff. exists (ₓ m ‗ T). split. cbn. unfold Fun.singleton. destruct (name_eq_dec (ˣ x) (ˣ x)) as [e|e]. dependent destruction e. reflexivity. congruence. cbn. reflexivity.
-  * assert (@singleton name binding_type_of (ˣ x) name_eq_dec (ₓ m ‗ T) n = ☠). { rewrite singleton_nMapsTo_iff. symmetry. assumption. } rewrite H0.
-  apply map_nMapsTo_iff. cbn. rewrite <- singleton_spec. apply singleton_nMapsTo_iff. destruct n.
-  { cbn. symmetry. assumption. } { cbn. congruence. }
-Qed.
 
 Lemma cshift_singleton_hname : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
 Proof. Admitted.
@@ -914,13 +914,32 @@ Proof.
 Qed.
 Hint Rewrite <- union_empty_l_eq : canonalize.
 
+Theorem func_eq_on_arg : forall (n : name) (f g : T name binding_type_of), f = g -> f n = g n.
+Proof.
+  intros * H.
+  (* Apply the hypothesis H to the argument x *)
+  rewrite H.
+  (* This simplifies the goal to g x = g x, which is trivial *)
+  reflexivity.
+Qed.
+
 (* Could be an equivalence *)
 Lemma union_empty_iff : forall G1 G2, G1 ᴳ+ G2 = ᴳ{} <-> G1 = ᴳ{} /\ G2 = ᴳ{}.
-Proof. Admitted.
+Proof.
+  intros *.
+  split.
+  - intros union_empty. split; apply ext_eq; intros n; unfold union in union_empty; apply func_eq_on_arg with (n := n) in union_empty; cbn in *; unfold Fun.merge in union_empty; destruct (G2 n), (G1 n), n; cbn in *; trivial; try congruence; destruct b, b0; unfold union_var, union_dh in *; try destruct (type_eq_dec T0 T); try destruct (mode_eq_dec n0 n); cbn; trivial.
+  - intros [empty1 empty2]. rewrite empty1, empty2. symmetry. apply union_empty_r_eq.
+Qed.
 
 (* Could be an equivalence *)
 Lemma stimes_empty_iff : forall G m, m ᴳ· G = ᴳ{} <-> G = ᴳ{}.
-Proof. Admitted.
+Proof.
+  intros *.
+  split.
+  - intros stimes_empty. apply ext_eq. intros n. unfold stimes in stimes_empty. apply func_eq_on_arg with (n := n) in stimes_empty. cbn in *; unfold Fun.map in stimes_empty; destruct (G n), n; cbn in *; trivial; try congruence; destruct b; unfold stimes_var, stimes_dh in *; try destruct (type_eq_dec T0 T); try destruct (mode_eq_dec n0 m); cbn; trivial.
+  - intros empty. rewrite empty. apply stimes_empty_eq.
+Qed.
 
 Lemma DestOnly_Disjoint_singleton_var : forall (G : ctx) (x : var) (m : mode) (T : type), DestOnly G -> G # (ᴳ{ x : m ‗ T}).
 Proof.
@@ -1583,7 +1602,7 @@ Proof.
   intros * H. unfold DestOnly in H. unfold NoVar. intros nam b mapstoD. specialize (H nam b mapstoD). destruct nam. { inversion H. } { intros contra. inversion contra. }
 Qed.
 
-Lemma VarOnly_union_DestOnly_is_Disjoint : forall (P1 G2 : ctx), VarOnly P1 -> NoVar G2 -> P1 # G2.
+Lemma VarOnly_union_NoVar_is_Disjoint : forall (P1 G2 : ctx), VarOnly P1 -> NoVar G2 -> P1 # G2.
 Proof.
   intros * VarOnlyP NoVarG. unfold Disjoint. intros nam inP1 inG2. unfold VarOnly, NoVar, Fun.In, IsVar in *. destruct inP1; specialize (VarOnlyP nam x H). destruct inG2; specialize (NoVarG nam x0 H0). destruct nam; simpl in *; congruence.
 Qed.
@@ -1888,6 +1907,57 @@ Lemma IsValid_linup' : IsValid (¹↑).
 Proof. exact (IsValidProof (Lin, (Fin 1))). Qed.
 Hint Resolve IsValid_linup' : autolemmas.
 
+Lemma Disjoint_singleton_var_iff_same_name : forall (G : ctx) (x : var) (m1 m2 : mode) (T1 T2 : type), G # ᴳ{ x : m1 ‗ T1} <-> G # (ᴳ{ x : m2 ‗ T2}).
+Proof.
+  intros *.
+  unfold Disjoint.
+  split.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ˣ x) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ˣ x) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+Qed.
+
+Lemma Disjoint_singleton_dest_iff_same_name : forall (G : ctx) (h : hname) (m1 m2 n1 n2 : mode) (T1 T2 : type), G # ᴳ{- h : m1 ⌊ T1 ⌋ n1 } <-> G # ᴳ{- h : m2 ⌊ T2 ⌋ n2 }.
+Proof.
+  intros *.
+  unfold Disjoint.
+  split.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ʰ h) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ʰ h) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+Qed.
+
+Lemma Disjoint_singleton_hole_iff_same_name : forall (G : ctx) (h : hname) (n1 n2 : mode) (T1 T2 : type), G # ᴳ{+ h : T1 ‗ n1 } <-> G # ᴳ{+ h : T2 ‗ n2 }.
+Proof.
+  intros *.
+  unfold Disjoint.
+  split.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ʰ h) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+  - intros * DisjointG. intros * InG InS. unfold ctx_singleton in *.
+    rewrite In_singleton_iff in InS; subst.
+    specialize (DisjointG (ʰ h) InG).
+    contradiction DisjointG.
+    rewrite In_singleton_iff. reflexivity.
+Qed.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
@@ -1897,13 +1967,13 @@ Ltac hauto_ctx :=
         LinNuOnly_cshift_iff,
         LinOnly_cshift_iff,
         FinAgeOnly_cshift_iff,
-        cshift_by_Disjoint_eq,
-        cshift_distrib_on_union,
-        cshift_distrib_on_stimes,
-        shift_by_max_impl_HDisjoint,
-        total_cshift_eq,
-        cshift_distrib_on_hminus_inv,
-        cshift_distrib_on_hminus,
+        (* cshift_by_Disjoint_eq, *)
+        (* cshift_distrib_on_union, *)
+        (* cshift_distrib_on_stimes, *)
+        (* shift_by_max_impl_HDisjoint, *)
+        (* total_cshift_eq, *)
+        (* cshift_distrib_on_hminus_inv, *)
+        (* cshift_distrib_on_hminus, *)
         (* Ty_val_cshift,
         val_Ampar_cshift, *)
         union_commutative,
@@ -1991,20 +2061,20 @@ Ltac hauto_ctx :=
         hunion_hempty_r_eq,
         (* ListSubset_refl,
         ListSubset_cons_iff, *)
-        hnames_spec,
-        HIn_union_iff,
-        HIn_stimes_iff,
-        HSubset_union_backward,
+        (* hnames_spec, *)
+        (* HIn_union_iff,
+        HIn_stimes_iff, *)
+        (* HSubset_union_backward, *)
         (* HSubset_union_backward', *)
-        HSubset_stimes_backward,
+        (* HSubset_stimes_backward, *)
         (* HSubset_stimes_backward', *)
         hnames_hminus_inv_eq,
         hnames_hminus_eq,
-        hnames_C_wk_hnames_G,
+        (* hnames_C_wk_hnames_G, *)
         HDisjoint_to_Disjoint,
         Disjoint_to_HDisjoint,
         (* not_lt_le, *)
-        HSubset_impl_lt_max,
+        (* HSubset_impl_lt_max, *)
         hnames_empty_is_hempty,
         HDisjoint_hempty_r,
         HDisjoint_hempty_l,
@@ -2018,25 +2088,25 @@ Ltac hauto_ctx :=
         hnames_singleton_hole,
         DestOnly_singleton_dest,
         VarOnly_singleton_var,
-        dom_nil_is_empty,
-        HSubset_preserves_HDisjoint,
-        In_union_forward_l,
+        (* dom_nil_is_empty, *)
+        (* HSubset_preserves_HDisjoint, *)
+        (* In_union_forward_l,
         In_union_forward_r,
         In_union_iff,
-        In_stimes_iff,
-        nIn_iff_Disjoint_singleton,
+        In_stimes_iff, *)
+        (* nIn_iff_Disjoint_singleton, *)
         Disjoint_singletons_iff,
-        nIn_union_iff,
-        nIn_stimes_iff,
+        (* nIn_union_iff,
+        nIn_stimes_iff, *)
         (* DisposableOnly_wk_VarOnly, *)
-        nDisposable_in_LinOnly,
-        DestOnly_wk_NoVar,
-        VarOnly_union_DestOnly_is_Disjoint,
-        DestOnly_nMapsTo_var,
+        (* nDisposable_in_LinOnly, *)
+        (* DestOnly_wk_NoVar,
+        VarOnly_union_NoVar_is_Disjoint, *)
+        (* DestOnly_nMapsTo_var,
         VarOnly_nMapsTo_hd,
-        DestOnly_union_singleton_x_at_x,
+        DestOnly_union_singleton_x_at_x, *)
         ModeSubtype_linnu_eq,
-        DestOnly_singleton_var_contra,
+        (* DestOnly_singleton_var_contra, *)
         IsValid_times_backward,
         IsValid_plus_backward,
         IsLin_times_iff,
@@ -2055,7 +2125,10 @@ Ltac hauto_ctx :=
         IsFinAge_linnu',
         IsFinAge_linup',
         IsValid_linnu',
-        IsValid_linup'
+        IsValid_linup',
+        Disjoint_singleton_var_iff_same_name,
+        Disjoint_singleton_dest_iff_same_name,
+        Disjoint_singleton_hole_iff_same_name
     .
 
 Ltac term_Val_no_dispose D :=
@@ -2105,7 +2178,7 @@ Ltac crush' :=
     | autorewrite with canonalize in *; workhorse ].
 
 Ltac crush :=
-  timeout 30 crush'.
+  timeout 20 crush'.
 
 Lemma Ty_val_NoVar : forall (G : ctx) (v : val) (T : type) (Ty: G ⫦ v : T), NoVar G.
 Proof.
@@ -2181,6 +2254,11 @@ Proof.
   - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD). apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD2 & DisjointD1D2). apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD2). split.
     * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
     * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
+Qed.
+
+Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
+Proof.
+  intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
 Qed.
 
 Lemma Empty_dec : forall (G : ctx), { G = ᴳ{}} + { exists n binding, G n = Some binding }.
@@ -2469,6 +2547,10 @@ Proof.
   rewrite ctx_remove_distrib_on_union in H. rewrite ctx_remove_disjoint_singleton with (n := ˣ x) (tyb := ₓ m ‗ T) (G := D2) in H. rewrite ctx_remove_disjoint_singleton with (n := ˣ x) (tyb := ₓ m ‗ T) (G := D) in H. rewrite ctx_remove_nMapsTo_unchanged with (G := m' ᴳ· D1) in H. assumption. apply DestOnly_nMapsTo_var. crush. apply DestOnly_Disjoint_singleton_var. assumption. apply DestOnly_Disjoint_singleton_var. assumption.
 Qed.
 
+(* =========================================================================
+ * Still admitted
+ * ========================================================================= *)
+
 Lemma term_sub_spec_1 :
   forall (D1 D2 : ctx) (m' : mode) (T' U' : type) (te : term) (x' : var) (v' : val),
   IsValid m' ->
@@ -2613,9 +2695,9 @@ Proof.
       try (specialize (DisjointP2x2 (ˣ x')); contradiction DisjointP2x2; try apply In_union_forward_r; apply In_singleton_iff; reflexivity).
     * assert (m ᴳ· D1'' ᴳ+ D2' = D2). { apply remove_singletons_in_union_eq_stimes_l in UnionEq; assumption. } rewrite <- H in *.
       assert (LinOnly (m1' ᴳ· D1 ᴳ+ D1'')). {
-        apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). apply LinOnly_stimes_plus_backward in LinOnlyD1. destruct LinOnlyD1 as (LinOnlymm1pD1 & LinOnlym2D1). apply LinOnly_union_iff; repeat split. all:crush. }
+        apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). apply LinOnly_stimes_plus_backward in LinOnlyD1. destruct LinOnlyD1 as (LinOnlymm1pD1 & LinOnlym2D1). apply LinOnly_union_iff; repeat split. all:admit. (* all:crush. *) }
       assert (FinAgeOnly (m1' ᴳ· D1 ᴳ+ D1'')). {
-        apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD1ppD2p). apply FinAgeOnly_stimes_plus_backward in FinAgeOnlyD1. destruct FinAgeOnlyD1 as (FinAgeOnlymm1pD1 & FinAgeOnlym2D1). apply FinAgeOnly_union_forward; repeat split; apply LinOnly_union_iff in LinOnlyD; destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). all:crush. }
+        apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD1ppD2p). apply FinAgeOnly_stimes_plus_backward in FinAgeOnlyD1. destruct FinAgeOnlyD1 as (FinAgeOnlymm1pD1 & FinAgeOnlym2D1). apply FinAgeOnly_union_forward; repeat split; apply LinOnly_union_iff in LinOnlyD; destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). all:admit. (* all:crush. *) }
       specialize (IHTyte1 DestOnlyD1 x' T' m1' Validm1' D1'' DestOnlyD1pp H0 H1 eq_refl Tyvp).
       assert (LinOnly (m2 ᴳ· D1 ᴳ+ (D2' ᴳ+ ᴳ{ x1 : m ‗ T1}))). {
         apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD1ppD2p & DisjointD). apply LinOnly_stimes_plus_backward in LinOnlyD1. destruct LinOnlyD1 as (LinOnlymm1pD1 & LinOnlym2D1). apply LinOnly_union_iff in LinOnlyD1ppD2p. destruct LinOnlyD1ppD2p as (LinOnlyD1pp & LinOnlyD2p & DisjointD1ppD2p). apply LinOnly_union_iff; repeat split. all:admit. (* all:crush. *) }
@@ -2687,6 +2769,36 @@ Lemma term_sub_spec_2 :
   (m' ᴳ· (D11 ᴳ+ D12) ᴳ+ D2 ⊢ te ᵗ[ x1' ≔ v1' ] ᵗ[ x2' ≔ v2' ] : U').
 Proof. Admitted.
 
+Ltac auto_destruct_and H :=
+  repeat match type of H with
+         | _ /\ _ => let H1 := fresh "H" in
+                     let H2 := fresh "H" in
+                     destruct H as [H1 H2];
+                     auto_destruct_and H1;
+                     auto_destruct_and H2
+         | _ => idtac
+         end.
+
+Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), DestOnly D2 -> D2 ⫦ v : T ->
+  forall (m : mode) (U U0 : type) (D1: ctx),
+  IsValid m ->
+  DestOnly D1 ->
+  D1 # D2 ->
+  D1 # ᴳ{- h : m ⌊ T ⌋ n } ->
+  D2 # ᴳ{- h : m ⌊ T ⌋ n } ->
+  D1 ᴳ+ m ᴳ· ((¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n }) ⊣ C : U ↣ U0 ->
+  D1 ⊣ C ©️[ h ≔ HNames.empty ‗ v ] : U ↣ U0.
+Proof.
+  intros * DestOnlyD2 Tyv. induction C.
+  - intros * Validm DestOnlyD1 DisjointD1D2 DisjointD1h DisjointD2h TyC.
+    dependent destruction TyC. (* Prove that union of singleton + other things is not the empty context *) admit.
+  - intros * Validm DestOnlyD1 DisjointD1D2 DisjointD1h DisjointD2h TyC.
+    destruct a; simpl; dependent destruction TyC.
+    * assert (LinOnly (m0 ᴳ· (D1 ᴳ+ m ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3) /\ FinAgeOnly (m0 ᴳ· (D1 ᴳ+ m ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD). { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
+    give_up.
+    (* constructor 2 with (D2 := m0 ᴳ· D1 ᴳ+ D3) (m := m) (U := U); trivial. { autorewrite with propagate_down in *. admit. } { apply IHC with (D1 := m0 ᴳ· D1) (m := m0 · m). { crush. } { autorewrite with propagate_down in *. crush. } { autorewrite with propagate_down in *. crush. } { autorewrite with propagate_down in *. split. crush. auto_destruct_and LinOnlyD. apply Disjoint_commutative in H10. crush. } { autorewrite with propagate_down in *. auto_destruct_and LinOnlyD. crush. } {  } } *)
+Admitted.
+
 Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mode) (T U0 : type) (v : val),
   DestOnly D1 ->
   DestOnly D2 ->
@@ -2696,7 +2808,10 @@ Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mod
   D1 ᴳ+ (¹↑ · n) ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n } ⊣ C : ① ↣ U0 ->
   D2 ⫦ v : T ->
   D1 ⊣ C ©️[ h ≔ HNames.empty ‗ v ] : ① ↣ U0.
-Proof. Admitted.
+Proof.
+  intros * DestOnlyD1 DestOnlyD2 DisjointD1D2 DisjointD1h DisjointD2h TyC Tyv.
+  apply ectxs_fillLeaf_spec' with (D2 := D2) (T := T) (n := n) (m := ¹ν); trivial. crush. rewrite <- stimes_linnu_eq. rewrite union_associative. assumption.
+Qed.
 
 Lemma ectxs_fillCtor_spec : forall (D1 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T T' U0 : type) (v : val),
   DestOnly D1 ->
@@ -2732,7 +2847,4 @@ Lemma ectxs_fillComp_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (T U 
   D1 ᴳ+ D3 ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof. Admitted.
 
-Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
-Proof.
-  intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
-Qed.
+(* ========================================================================= *)
