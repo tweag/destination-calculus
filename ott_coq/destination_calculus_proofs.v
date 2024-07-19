@@ -225,6 +225,25 @@ Proof.
   apply Finitely.Support_dom.
 Qed.
 
+Lemma hnames_dom_spec : forall (l:list name) h, HNames.In h (hnames_dom l) <-> List.In (ʰ h) l.
+Proof.
+  induction l as [|[xx|xh] l ih].
+  - cbn. sauto q: on.
+  - cbn. hauto lq: on.
+  - hauto q: on use: HNames.add_spec.
+Qed.
+
+Lemma in_hnames : forall (C:ctx) h, HNames.In h (hnamesᴳ( C)) <-> Finitely.In (ʰ h) C.
+Proof.
+  hauto lq: on unfold: hnames_ctx use: hnames_dom_spec, Finitely.dom_spec.
+Qed.
+
+Lemma InA_eq_eq : forall A (x:A) l, SetoidList.InA eq x l <-> List.In x l.
+Proof.
+  intros *. rewrite SetoidList.InA_alt.
+  hauto lq: on.
+Qed.
+
 (* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
 (* Should be good now with extra constraint maxᴴ(hnamesᴳ( D )) < h' *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> maxᴴ(hnamesᴳ( D )) < h' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
@@ -234,7 +253,16 @@ Proof.
   apply fixes_inverse_fixes.
   apply fixes_untouched. intros t ht.
   unfold shift_perm, shift_one in *. rewrite List.in_map_iff in ht. destruct ht as [xh [<- ht]]. cbn.
-Admitted.
+  split.
+  - intros h. unfold Disjoint in disj. eapply disj.
+    { rewrite <- dom_spec. exact h. }
+    rewrite <- InA_eq_eq, HNames.elements_spec1, in_hnames in ht.
+    trivial.
+  - assert (maxᴴ( hnamesᴳ( D)) < (xh + h')) as h by lia.
+    apply gt_max_not_in in h.
+    rewrite in_hnames, <- dom_spec in h.
+    trivial.
+Qed.
 
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hnames) (h' : hname), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
 Proof.
@@ -247,12 +275,6 @@ Admitted.
 Lemma cshift_distrib_on_stimes : forall (m : mode) (G : ctx) (H : hnames) (h' : hname), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
 Proof. Admitted.
 (* TODO: add to canonalize? *)
-
-Lemma InA_eq_eq : forall A (x:A) l, SetoidList.InA eq x l <-> List.In x l.
-Proof.
-  intros *. rewrite SetoidList.InA_alt.
-  hauto lq: on.
-Qed.
 
 Lemma shift_spec : forall (h : HNames.elt) (H : HNames.t) (h' : nat), HNames.In h (H ᴴ⩲ h') <-> (exists h'' : HNames.elt, HNames.In h'' H /\ h = h'' + h').
 Proof.
