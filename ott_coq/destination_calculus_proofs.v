@@ -244,8 +244,6 @@ Proof.
   hauto lq: on.
 Qed.
 
-(* TODO: Not necessarily true if `h\in D'` and `h-h' \in D`. *)
-(* Should be good now with extra constraint maxᴴ(hnamesᴳ( D )) < h' *)
 Lemma cshift_by_Disjoint_eq : forall (D D': ctx) (h': hname), D # D' -> maxᴴ(hnamesᴳ( D )) < h' -> D ᴳ[ hnamesᴳ( D' ) ⩲ h' ] = D.
 Proof.
   intros * disj h_max. unfold ctx_cshift.
