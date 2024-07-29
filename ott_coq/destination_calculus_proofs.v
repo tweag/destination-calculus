@@ -380,9 +380,7 @@ Proof.
       * hauto l: on use: DestOnly_cshift_iff.
       * hauto l: on use: DestOnly_cshift_iff.
       * hauto l: on use: DestOnly_cshift_iff.
-      * hauto l: on use: LinOnly_cshift_iff.
-      * hauto l: on use: FinAgeOnly_cshift_iff.
-      * hauto l: on use: ValidOnly_cshift_iff.
+      * rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption.
       * hauto l: on use: Disjoint_cshift_iff.
       * hauto l: on use: Disjoint_cshift_iff.
       * hauto l: on use: Disjoint_cshift_iff.
@@ -572,6 +570,18 @@ Proof.
 Qed.
 Hint Rewrite IsLinNu_wk_IsLin' : saturate.
 
+Lemma IsLinNu_wk_IsFinAge : forall (m : mode), IsLinNu m -> IsFinAge m.
+Proof.
+  intros *.
+  sauto lq: on.
+Qed.
+
+Lemma IsLinNu_wk_IsFinAge' : forall (m : mode), Basics.impl (IsLinNu m) (IsLinNu m /\ IsFinAge m).
+Proof.
+  sfirstorder use: IsLinNu_wk_IsFinAge.
+Qed.
+Hint Rewrite IsLinNu_wk_IsFinAge' : saturate.
+
 Lemma IsLin_wk_IsValid : forall (m : mode), IsLin m -> IsValid m.
 Proof.
   intros m H. destruct H. apply (IsValidProof (Lin, a)).
@@ -614,6 +624,12 @@ Lemma LinNuOnly_wk_LinOnly : forall (G : ctx), LinNuOnly G -> LinOnly G.
 Proof.
   intros *.
   sfirstorder use: IsLinNu_wk_IsLin.
+Qed.
+
+Lemma LinNuOnly_wk_FinAgeOnly : forall (G : ctx), LinNuOnly G -> FinAgeOnly G.
+Proof.
+  intros *.
+  sfirstorder use: IsLinNu_wk_IsFinAge.
 Qed.
 
 Lemma LinOnly_wk_ValidOnly : forall (G : ctx), LinOnly G -> ValidOnly G.
@@ -2123,6 +2139,9 @@ Proof.
     rewrite In_singleton_iff. reflexivity.
 Qed.
 
+Lemma ValidOnly_hminus_inv_DestOnly_LinNuOnly : forall D, ValidOnly (ᴳ-⁻¹ D) -> DestOnly D /\ LinNuOnly D.
+Admitted.
+
 Ltac hauto_ctx :=
   hauto
     depth: 3
@@ -2162,11 +2181,14 @@ Ltac hauto_ctx :=
         nIsLin_mode_plus,
         IsLinNu_wk_IsLin,
         (* IsLinNu_wk_IsLin', *)
+        IsLinNu_wk_IsFinAge,
+        (* IsLinNu_wk_IsFinAge', *)
         IsLin_wk_IsValid,
         (* IsLin_wk_IsValid', *)
         IsLinNu_mode_plus,
         LinOnly_union_iff,
         LinNuOnly_wk_LinOnly,
+        LinNuOnly_wk_FinAgeOnly,
         LinOnly_wk_ValidOnly,
         LinNuOnly_union_iff,
         (* n_plus_n0_eq_0_implies_n0_eq_0, *)
@@ -2417,8 +2439,8 @@ Proof.
   - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD).
     hauto lq: on use: LinOnly_union_iff, LinOnly_stimes_backward, FinAgeOnly_union_backward, FinAgeOnly_stimes_backward, LinOnly_wk_ValidOnly.
   - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD). apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD2 & DisjointD1D2). apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD2). split.
-    * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
-    * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. assumption. apply Disjoint_stimes_l_iff. assumption.
+    * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyhmD3). apply LinNuOnly_wk_LinOnly in ValidOnlyhmD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
+    * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyhmD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhmD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
 Qed.
 
 Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
@@ -2944,6 +2966,33 @@ Ltac auto_destruct_and H :=
          | _ => idtac
          end.
 
+Lemma Ty_val_fill : forall (D20 D5 : ctx) (h : hname) (v' : val) (T : type) , D20 ᴳ+ ᴳ-⁻¹ D5 ⫦ v' : T ->
+  forall (v : val) (D4 D13 : ctx) (n : mode) (U : type),
+  D4 # D5 ->
+  D4 # D13 ->
+  D4 # D20 ->
+  D4 # ᴳ{- h : ¹ν ⌊ T ⌋ n} ->
+  D5 # D13 ->
+  D5 # D20 ->
+  D5 # ᴳ{- h : ¹ν ⌊ T ⌋ n} ->
+  D13 # D20 ->
+  D13 # ᴳ{- h : ¹ν ⌊ T ⌋ n} ->
+  D20 # ᴳ{- h : ¹ν ⌊ T ⌋ n} ->
+  D4 ᴳ+ ᴳ-⁻¹ (D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ⫦ v : U ->
+  D4 ᴳ+ n ᴳ· D20 ᴳ+ ᴳ-⁻¹ D13 ᴳ+ n ᴳ· ᴳ-⁻¹ D5 ⫦ val_fill v h hnamesᴳ( D5) v' : U.
+Proof.
+  intros * Tyv'. induction v; intros * DisjointD4D5 DisjointD4D13 DisjointD4D20 DisjointD4h DisjointD5D13 DisjointD5D20 DisjointD5h DisjointD13D20 DisjointD13h DisjointD20h Tyv; simpl.
+  - destruct (HNamesFacts.eq_dec h0 h) eqn:h_eq.
+    * subst. rewrite hminus_inv_distrib_on_union in Tyv. rewrite hminus_inv_singleton in Tyv.
+      assert (D4 = ᴳ{} /\ D13 = ᴳ{} /\ T = U /\ n = ¹ν) as (D4eq & D13eq & Teq & neq). 3:{ assumption. } { admit. (* follows from dependent destruction of Tyv *) } subst. rewrite hminus_inv_empty_eq. rewrite <- !stimes_linnu_eq. rewrite <- !union_empty_l_eq. rewrite <- !union_empty_r_eq. assumption.
+    * dependent destruction Tyv. admit. (* contradiction follows from dependent destruction of Tyv *)
+  - admit. (* contradiction follows from dependent destruction of Tyv *)
+  - admit. (* contradiction follows from dependent destruction of Tyv *)
+  - admit. (* contradiction because typing context of lam is DestOnly *)
+  - give_up.
+  (* - apply Ty_val_Left. *)
+Admitted.
+
 Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), DestOnly D2 -> D2 # ᴳ{- h : ¹ν ⌊ T ⌋ n } -> D2 ⫦ v : T ->
   forall (m0 : mode) (U U0 : type) (D1: ctx),
   IsValid m0 ->
@@ -3007,10 +3056,39 @@ Proof.
     * (* Ty-ectxs-FillLeaf2 *) admit.
     * (* Ty-ectxs-OpenAmpar *)
       assert ((¹↑ ᴳ· D0 ᴳ+ D3).(underlying) = (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})).(underlying)). { unfold union, merge_with, merge, ctx_singleton. simpl. apply x. } clear x.
+      assert (¹↑ ᴳ· D0 ᴳ+ D3 = D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})). { apply ext_eq. intros n'. rewrite H. reflexivity. }
       assert (LinOnly (D0 ᴳ+ D4) /\ FinAgeOnly (D0 ᴳ+ D4)) as (LinOnlyD & FinAgeOnlyD).
         { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
-      destruct (HNames.mem h hnamesᴳ( D3)) eqn:emem.
-      + apply HNames.mem_spec in emem. admit.
+      clear H. rename H1 into ctx_eq.
+      pose proof ValidOnlyhmD3 as ValidOnlyhmD3'. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3'. destruct ValidOnlyhmD3' as (_ & ValidOnlyD3). pose proof ValidOnlyD3 as LinOnlyD3. pose proof ValidOnlyD3 as FinAgeOnlyD3. apply LinNuOnly_wk_LinOnly in LinOnlyD3, ValidOnlyD3. apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3.
+      assert (LinOnly (¹↑ ᴳ· D0 ᴳ+ D3) /\ FinAgeOnly (¹↑ ᴳ· D0 ᴳ+ D3)) as (LinOnlyD' & FinAgeOnlyD'). split.
+        { supercrush. } { supercrush. }
+      rewrite ctx_eq in LinOnlyD', FinAgeOnlyD'.
+      assert (
+        exists (D10 D13 D20 D23 : ctx),
+        D1 = ¹↑ ᴳ· D10 ᴳ+ D13 /\
+        D2 = D20 ᴳ+ D23 /\
+        D0 = D10 ᴳ+ (m0 · n) ᴳ· D20 /\
+        D3 = D13 ᴳ+ m0 ᴳ· ((¹↑ · n) ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) /\
+        DestOnly D10 /\ DestOnly D13 /\ DestOnly D20 /\ DestOnly D23 /\
+        D10 # D13 /\ D10 # D20 /\ D10 # D23 /\ D13 # D20 /\ D13 # D23 /\ D20 # D23 /\
+        D10 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D13 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D20 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D23 # ᴳ{- h : ¹ν ⌊ T ⌋ n}
+      ). { admit. }
+      destruct H as (
+        D10 & D13 & D20 & D23 &
+        D1eq & D2eq & D0eq & D3eq &
+        DestOnlyD10 & DestOnlyD13 & DestOnlyD20 & DestOnlyD23 &
+        DisjointD10D13 & DisjointD10D20 & DisjointD10D23 & DisjointD13D20 & DisjointD13D23 & DisjointD20D23 &
+        DisjointD10h & DisjointD13h & DisjointD20h & DisjointD23h
+      ). rewrite D1eq, D2eq, D0eq, D3eq in *. clear D1eq D2eq D0eq D3eq. clear D1 D2 D0 D3 IHC.
+      destruct (HNames.mem h hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}))) eqn:emem.
+      + apply HNames.mem_spec in emem.
+        admit.
+        (* assert (HNames.remove h hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ∪ HNames.empty = hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23))) as remove_eq. { admit. } rewrite remove_eq.
+        assert (D23 = ᴳ{} /\ m0 = ¹ν) as (D23eq & m0eq). { admit. (* follows from ValidOnlyhmD3 *) } rewrite D23eq, m0eq in *. clear D23eq m0eq.
+        rewrite stimes_empty_eq in *. rewrite stimes_empty_eq in *. rewrite <- stimes_linnu_eq in *. rewrite <- union_empty_l_eq in *. rewrite <- union_empty_r_eq in *. rewrite mode_times_linnu_l_eq in *. rewrite <- stimes_linnu_eq in *. clear DestOnlyD23 DisjointD10D23 DisjointD13D23 DisjointD20D23 DisjointD23h.
+        assert ()
+        constructor 21. *)
       + admit.
 Admitted.
 

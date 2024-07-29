@@ -26,6 +26,7 @@
 \usepackage{ottstyling}
 % Hide "Index for ranges" from the metavars displayed tabular
 \patchcmd{\ottmetavars}{$ \ottmv{k} $ & \ottcom{Index for ranges} \\}{}{}{}
+% TODO fix if I remove LinOnly / FinAgeOnly
 \patchcmd{\ottdruleTyXXectxsXXOpenAmpar}{%
 \ottpremise{\texttt{LinOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
 \ottpremise{\texttt{FinAgeOnly }\Delta_{{\mathrm{3}}}\texttt{ }}%
@@ -837,6 +838,8 @@ Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined i
 Furthermore, in \rref{Ty-val-Ampar}, the holes and the corresponding destination are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination.
 
 On the other hand, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$\unsure{Not sure whether we should explain why $[[D1]]$ is offset by $[[¹↑]]$ in the premise but not in conclusion. It's hard to come up with an intuitive narrative.}.
+
+\TODO{Revisit LinOnly / FinAgeOnly ?}
 
 The properties $\mathtt{LinOnly}~[[D3]]$ and $\mathtt{FinAgeOnly}~[[D3]]$ are true given that $[[-⁻¹ D3]]$ is a valid typing context, so are not really a new restriction on $[[D3]]$. They are mostly used to ease the mechanized proof of type safety for the system.\improvement{We haven't defined what LinOnly and FinAgeOnly mean. This is intuitive, but still. Can we simply remove LinOnly and FinOnly from the rule? This way we can remove this paragraph}
 

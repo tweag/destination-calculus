@@ -199,7 +199,7 @@ Proof.
       inversion Tyt; subst.
       rename P1 into D1, P2 into D2. rename Tyt into TyMap, Tyt0 into Tyt, T0 into T.
       inversion Tyt; subst. rename H2 into DestOnlyD1.
-      inversion Tyv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, LinOnlyD3 into LinOnlyD13, ValidOnlyD3 into ValidOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, FinAgeOnlyD3 into FinAgeOnlyD13.
+      inversion Tyv; subst. rename D1 into D11, D0 into D12, D3 into D13, DestOnlyD0 into DestOnlyD11, DestOnlyD2 into DestOnlyD12, DestOnlyD3 into DestOnlyD13, DisjointD1D2 into DisjointD11D12, DisjointD1D3 into DisjointD11D13, DisjointD2D3 into DisjointD12D13, ValidOnlyhmD3 into ValidOnlyhmD13.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ (D11 ᴳ+ D12) ᴳ+ D2) (D11 ᴳ+ D12) C (U ⧔ T') U0 P DisposP.
       assert (HNames.Subset hnamesᴳ(D11 ᴳ+ D12 ᴳ+ D2) hnames©(C)).
               { apply hnames_C_wk_hnames_G with (U0 := U0) (T := U ⧔ T'). tauto. }
@@ -235,8 +235,11 @@ Proof.
         { term_Val_no_dispose ((¹↑ ᴳ· D11 ᴳ+ D13) ᴳ[hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)]). apply Ty_val_cshift; trivial. apply DestOnly_cshift_iff; apply DestOnly_union_iff; split; try apply DestOnly_stimes_iff. crush. crush. }
       assert (D11 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)] = D11) as D11Eq. { apply cshift_by_Disjoint_eq; crush. }
       assert (D12 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)] = D12) as D12Eq. { apply cshift_by_Disjoint_eq; crush. }
+      assert (ValidOnly D13) as ValidOnlyD13. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD13. destruct ValidOnlyhmD13 as (_ & ValidOnlyD13). apply LinNuOnly_wk_LinOnly in ValidOnlyD13. apply LinOnly_wk_ValidOnly in ValidOnlyD13. assumption. }
+      assert (LinOnly D13) as LinOnlyD13. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD13. destruct ValidOnlyhmD13 as (_ & LinOnlyD13). apply LinNuOnly_wk_LinOnly in LinOnlyD13. assumption. }
+      assert (FinAgeOnly D13) as FinAgeOnlyD13. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD13. destruct ValidOnlyhmD13 as (_ & FinAgeOnlyD13). apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD13. assumption. }
       assert (ValidOnly (D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)])).
-          { apply ValidOnly_cshift_iff; tauto. }
+          { apply ValidOnly_cshift_iff.  assumption. }
       assert (ValidOnly (¹↑ ᴳ· (D2 ᴳ+ D11))).
           { apply ValidOnly_stimes_forward. split.
             - rewrite (union_commutative (D11 ᴳ+ D12) D2) in ValidOnlyD.
@@ -278,11 +281,14 @@ Proof.
       rewrite <- total_cshift_eq.
       constructor 21 with (D1 := D2 ᴳ+ D11) (D3 := D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnames©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12); trivial.
-        { rewrite Disjoint_union_l_iff. supercrush. } { apply HDisjoint_to_Disjoint. crush. crush. } { crush. } { crush. } { crush. } { crush. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
+        { rewrite Disjoint_union_l_iff. supercrush. } { apply HDisjoint_to_Disjoint. crush. crush. } { crush. } { crush. } { rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff; assumption. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
         { rewrite <- D12Eq. rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. tauto. }
     - (* Close-Ampar *)
       inversion Tyt; subst. rename TyC into TyCc, Tyv into Tyv1. clear H2.
       inversion TyCc; subst. rename H6 into hnamesDisjoint, D0 into D.
+      assert (ValidOnly D3) as ValidOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyD3). apply LinNuOnly_wk_LinOnly in ValidOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3. assumption. }
+      assert (LinOnly D3) as LinOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinOnlyD3). apply LinNuOnly_wk_LinOnly in LinOnlyD3. assumption. }
+      assert (FinAgeOnly D3) as FinAgeOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & FinAgeOnlyD3). apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. assumption. }
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = P ᴳ+ D) as eqD1uD3PuD.
         { unfold union, merge_with, merge. apply ext_eq. intros n. all:simpl. rewrite H0. reflexivity. }
       assert (LinOnly (D1 ᴳ+ D2) /\ FinAgeOnly (D1 ᴳ+ D2)) as (LinOnlyD & FinAgeOnlyD).
@@ -313,7 +319,7 @@ Proof.
       inversion Tyu; subst. rename D into D2.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D2) D2 C (U ⧔ ①) U0 P DisposP.
       assert (ᴳ{} ᴳ+ D2 ⊢ ᵥ₎ hnames_ nil ⟨ v2 ❟ ᵛ() ⟩ : U ⧔ ①).
-        { term_Val_no_dispose (ᴳ{} ᴳ+ D2). assert (hnamesᴳ( ᴳ{}) = hnames_ nil). { crush. } rewrite <- H. apply Ty_val_Ampar; swap 1 11; swap 2 10.
+        { term_Val_no_dispose (ᴳ{} ᴳ+ D2). assert (hnamesᴳ( ᴳ{}) = hnames_ nil). { crush. } rewrite <- H. apply Ty_val_Ampar; swap 1 9; swap 2 8.
           rewrite hminus_inv_empty_eq, <- union_empty_r_eq; tauto.
           rewrite stimes_empty_eq. rewrite <- union_empty_r_eq. constructor.
           all:crush. }
@@ -339,6 +345,9 @@ Proof.
       inversion Tyv; subst. rename DestOnlyD2 into DestOnlyPuD1uD2, DestOnlyD0 into DestOnlyD2.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ (D1 ᴳ+ D2)) (D1 ᴳ+ D2) C (U ⨂ ! ¹∞ ⁔ T) U0 P DisposP.
       inversion Tyv1. subst.
+      assert (ValidOnly D3) as ValidOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyD3). apply LinNuOnly_wk_LinOnly in ValidOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3. assumption. }
+      assert (LinOnly D3) as LinOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinOnlyD3). apply LinNuOnly_wk_LinOnly in LinOnlyD3. assumption. }
+      assert (FinAgeOnly D3) as FinAgeOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & FinAgeOnlyD3). apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. assumption. }
       assert (¹↑ ᴳ· D1 ᴳ+ D3 = ᴳ{}) as empty.
       { assert (¹↑ ᴳ· D1 ᴳ+ D3 = ¹∞ ᴳ· G) as intermediary.
         { apply ext_eq'. symmetry. exact H0. }
@@ -376,13 +385,11 @@ Proof.
       term_Val_no_dispose ᴳ{}. rewrite union_empty_r_eq with (G := ᴳ{}).
     assert (hnamesᴳ( ᴳ{- 1 : ¹ν ⌊ T ⌋ ¹ν }) = ᴴ{ 1}) as hnamesD3Eq.
       { unfold hnames_ctx, hnames_dom, ctx_singleton, hminus_inv. rewrite dom_singleton_eq. cbn. reflexivity. }
-      rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 10; swap 2 11.
+      rewrite <- hnamesD3Eq. apply Ty_val_Ampar; swap 1 8; swap 2 9.
       + rewrite stimes_empty_eq, <- union_empty_l_eq. apply Ty_val_Dest. repeat constructor.
       + rewrite <- union_empty_l_eq. rewrite hminus_inv_singleton. apply Ty_val_Hole.
       + apply DestOnly_singleton_dest.
-      + apply LinOnly_singleton_iff. cbn. constructor.
-      + apply FinAgeOnly_singleton_iff. cbn. constructor.
-      + apply ValidOnly_singleton_iff. cbn. constructor.
+      + rewrite hminus_inv_singleton. apply ValidOnly_singleton_iff. cbn. constructor.
       + apply Disjoint_empty_l.
       + apply Disjoint_empty_l.
       + apply Disjoint_empty_l.
@@ -655,6 +662,9 @@ Proof.
         { apply hnames_C_wk_hnames_G in TyC. apply HSubset_union_backward in TyC. destruct TyC as (_ & TyC). rewrite stimes_distrib_on_union in TyC. apply HSubset_union_backward in TyC. destruct TyC as (_ & TyC). apply HSubset_stimes_backward in TyC. assumption. }
       assert (HNames.Subset hnamesᴳ( D1) hnames©( C)).
         { apply hnames_C_wk_hnames_G in TyC. apply HSubset_union_backward in TyC. destruct TyC as (_ & TyC). rewrite stimes_distrib_on_union in TyC. apply HSubset_union_backward in TyC. destruct TyC as (TyC & _). apply HSubset_stimes_backward in TyC. assumption. }
+      assert (ValidOnly D3) as ValidOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyD3). apply LinNuOnly_wk_LinOnly in ValidOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3. assumption. }
+      assert (LinOnly D3) as LinOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinOnlyD3). apply LinNuOnly_wk_LinOnly in LinOnlyD3. assumption. }
+      assert (FinAgeOnly D3) as FinAgeOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & FinAgeOnlyD3). apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. assumption. }
       assert ((¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h'] ⊣ C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ h' ‗ v2 ᵛ[ hnamesᴳ( D3) ⩲ h']] : T ↣ U0). {
         rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- total_cshift_eq.
         apply ectxs_fillComp_spec with (D1 := ¹↑ ᴳ· D1) (D2 := D2) (D3 := D3 ᴳ[ hnamesᴳ( D3) ⩲ h']) (T := T) (U := U).

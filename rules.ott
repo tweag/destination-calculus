@@ -42,29 +42,17 @@ G ⫦ v' : T [[:Tyvp]]
 --------------------- :: Exp
 n·G ⫦ ᴇ n v' : ! n T
 
-% We perform controls here on Ampar, and not on the other rules, because outside of the ampar, the hole/dests that are compensated will no longer be visible.
-% DestOnly [[G2 + G3]] ensures that v2 is just made of dests, and with DestOnly [[G1]] in G1 + (-⁻¹G3) ⫦ v1 : T1 we can conclude that v2 dests compensates at least all the holes from this ampar. This forbids <<(+h0, +h), -h>, -h0> which isn't constructible through alloc anyway.
-% These more complex rules are made to allow this program, in which v2 is made of dests which are not exclusively from this ampar:
-% alloc >map x0 |-> 
-%     alloc >map x1 |->
-%         let x2 = fromA (alloc >map xt |-> xt <| E ↑ <|. (toA x0)) in
-%         fromA ( alloc >map xt |-> xt <| (,) >case (xt1, xt2) |->
-%                     xt1 <|. (toA x1) ; xt2 <|. (toA x2)
-%               )
-% We would have x2 = E ↑ -h0, and res = < +h0, < +h1 , (-h1, E ↑ -h0) > >
-% If such a program typechecks, then we need the extra context G2 to v2 for dests coming from outside of this ampar (with DestOnly G2)
-% We need to make sure that an ampar will bind as many holes as possible (i.e that holes and matching dests cannot escape respectively in G1 and G2) -> ensured by {{ DestOnly [[G1]] }}, as G1 and G2 cannot interact. So we no longer need [[G1]] # [[G2]]
+% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhmD3]]
+% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhmD3]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
-{{ LinOnly [[D3]] }} [[:LinOnlyD3]]
-{{ FinAgeOnly [[D3]] }} [[:FinAgeOnlyD3]]
-{{ ValidOnly [[D3]] }} [[:ValidOnlyD3]]
+{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhmD3]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ [[D1]] # [[D3]] }} [[:DisjointD1D3]]
 {{ [[D2]] # [[D3]] }} [[:DisjointD2D3]]
 ¹↑·D1 + D3 ⫦ v1 : T [[:Tyv1]]
-D2 + (-⁻¹D3) ⫦ v2 : U [[:Tyv2]]
+D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: Ampar
 D1 + D2 ⫦ hnames(D3) ⟨v2 ❟ v1⟩ : U ⧔ T
 
@@ -389,16 +377,17 @@ D2 ⊣ C ∘ (v ◀ ⬜) : T ↣ U0
 
 % TODO: check that hminus_inv enforces linearity+now
 
+% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhmD3]]
+% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhmD3]]
+
 {{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
 {{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]
 {{ [[D2]] # [[D3]] }} [[:Disjoint2D3]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
-{{ LinOnly [[D3]] }} [[:LinOnlyD3]]
-{{ FinAgeOnly [[D3]] }} [[:FinAgeOnlyD3]]
+{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhmD3]]
 {{ [[hnames(C)]] ## [[hnames(D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
-{{ ValidOnly [[D3]] }} [[:ValidOnlyD3]]
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar
