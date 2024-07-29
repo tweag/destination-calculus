@@ -262,16 +262,41 @@ Proof.
     trivial.
 Qed.
 
+Lemma merge_with_cshift :
+  forall (G1 G2 : ctx) H h' (f_var : binding_var -> binding_var -> binding_var) (f_dh : binding_dh -> binding_dh -> binding_dh) ,
+    (merge_with (fsimple (fun t => t -> t -> t) f_var f_dh) G1 G2) ᴳ[ H⩲h' ]
+    = merge_with (fsimple (fun t => t -> t -> t) f_var f_dh) (G1 ᴳ[ H⩲h' ]) (G2 ᴳ[ H⩲h' ]).
+Proof.
+  intros *. unfold ctx_cshift, ctx_shift.
+  apply ext_eq. intros [xx|xh]. all: cbn.
+  { compute. hauto lq: on. }
+  unfold Fun.map, Fun.merge. cbn. rewrite !option_eta.
+  sfirstorder.
+Qed.
+
+Lemma map_cshift : forall G H h' (f_var : binding_var -> binding_var) (f_dh : binding_dh -> binding_dh),
+    (map (fsimple (fun t => t -> t) f_var f_dh) G) ᴳ[ H⩲h' ]
+    = map (fsimple (fun t => t -> t) f_var f_dh) (G ᴳ[ H⩲h' ]).
+Proof.
+  intros *. unfold ctx_cshift, ctx_shift.
+  apply ext_eq. intros [xx|xh]. all: cbn.
+  { compute. hauto lq: on. }
+  unfold Fun.map, Fun.merge. cbn. rewrite !option_eta.
+  sfirstorder.
+Qed.
+
 Lemma cshift_distrib_on_union : forall (G1 G2 : ctx) (H : hnames) (h' : hname), (G1 ᴳ+ G2)ᴳ[ H⩲h' ] = G1 ᴳ[ H⩲h' ] ᴳ+ G2 ᴳ[ H⩲h' ].
 Proof.
-  intros *. unfold ctx_cshift, ctx_shift, union.
-  rewrite merge_with_map. (* rewrite map_precomp. *)
-  (* rewrite merge_with_precomp. *)
-Admitted.
+  intros *. unfold union.
+  apply merge_with_cshift.
+Qed.
 (* TODO: add to canonalize? *)
 
 Lemma cshift_distrib_on_stimes : forall (m : mode) (G : ctx) (H : hnames) (h' : hname), (m ᴳ· G)ᴳ[ H⩲h' ] = m ᴳ· (G ᴳ[ H⩲h' ]).
-Proof. Admitted.
+Proof.
+  intros *. unfold stimes.
+  apply map_cshift.
+Qed.
 (* TODO: add to canonalize? *)
 
 Lemma shift_spec : forall (h : HNames.elt) (H : HNames.t) (h' : nat), HNames.In h (H ᴴ⩲ h') <-> (exists h'' : HNames.elt, HNames.In h'' H /\ h = h'' + h').
@@ -306,9 +331,16 @@ Qed.
 Lemma total_cshift_eq : forall (G : ctx) (h' : hname), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof. Admitted.
 Lemma cshift_distrib_on_hminus_inv : forall (G : ctx) (H : hnames) (h' : hname), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = (ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ])).
-Proof. Admitted.
+Proof.
+  intros *. unfold hminus_inv.
+  apply map_cshift.
+Qed.
+
 Lemma cshift_distrib_on_hminus : forall (G : ctx) (H : hnames) (h' : hname), (ᴳ- G) ᴳ[ H ⩲ h' ] = (ᴳ- (G ᴳ[ H ⩲ h' ])).
-Proof. Admitted.
+Proof.
+  intros *. unfold hminus.
+  apply map_cshift.
+Qed.
 
 Lemma cshift_distrib_on_hnames : forall H h' D, hnames_cshift hnamesᴳ( D) H h' = hnamesᴳ( D ᴳ[ H ⩲ h']).
 Proof. Admitted.

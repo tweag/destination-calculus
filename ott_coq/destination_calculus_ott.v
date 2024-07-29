@@ -662,45 +662,39 @@ Definition ctx_singleton (v : name) (binding: binding_type_of v): ctx :=
 
 Definition ctx_empty : ctx := Finitely.empty.
 
+Definition fsimple (T:Type -> Type) (f_var : T binding_var) (f_dh : T binding_dh) : forall (n:name), T (binding_type_of n) := fun n =>
+  match n return T (binding_type_of n) with
+  | name_Var _ => f_var
+  | name_DH _ => f_dh
+  end.
+
 Definition union (G1 G2 : ctx) : ctx :=
-  Finitely.merge_with (fun n =>
-    match n return (binding_type_of n) -> (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => union_var
-    | name_DH _ => union_dh
-    end
-  ) G1 G2.
+  Finitely.merge_with (fsimple (fun t => t -> t -> t) union_var union_dh) G1 G2.
 
 Definition stimes (m' : mode) (G : ctx) : ctx :=
-  Finitely.map (fun n =>
-    match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => stimes_var m'
-    | name_DH _ => stimes_dh m'
-    end
-  ) G.
+  Finitely.map (fsimple (fun t => t -> t) (stimes_var m') (stimes_dh m')) G.
 
 Definition hminus_inv (G : ctx) : ctx :=
-  Finitely.map (fun n =>
-    match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => fun binding => binding_Var None type_Unit
-    | name_DH _ => fun binding => match binding with
+  Finitely.map (fsimple (fun t => t -> t)
+    (fun binding => binding_Var None type_Unit)
+    (fun binding => match binding with
       | binding_Dest (Some (Lin, (Fin 0))) T n => binding_Hole T n
       | binding_Dest _ _ _ => binding_Dest None type_Unit None
       | binding_Hole _ _ => binding_Hole type_Unit None
-      end
-    end
-  ) G.
+      end)
+    )
+    G.
 
 Definition hminus (G : ctx) : ctx :=
-  Finitely.map (fun n =>
-    match n return (binding_type_of n) -> (binding_type_of n) with
-    | name_Var _ => fun binding => binding_Var None type_Unit
-    | name_DH _ => fun binding => match binding with
+  Finitely.map (fsimple (fun t => t -> t)
+    (fun binding => binding_Var None type_Unit)
+    (fun binding => match binding with
       | binding_Dest _ _ _ => binding_Dest None type_Unit None
       | binding_Hole T n => binding_Dest (Some (Lin, (Fin 0))) T n
       (* TODO: should we check that n is valid? *)
-      end
-    end
-  ) G.
+      end)
+    )
+    G.
 
 Definition pre_shift (p : Permutation.T) (n : name) : name :=
   match n with
