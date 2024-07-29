@@ -74,6 +74,12 @@ Proof.
   sfirstorder use: pre_inverse, post_inverse.
 Qed.
 
+Lemma eqn_inverse' : forall (p : T) n m, ⟦p⟧  n = m <-> n = ⟦List.rev p⟧ m.
+Proof.
+  intros.
+  hauto q: on use: eqn_inverse.
+Qed.
+
 Corollary surjective : forall p n, exists m, ⟦p⟧ m = n.
 Proof.
   intros *.

@@ -361,7 +361,21 @@ Lemma cshift_distrib_on_hnames : forall H h' D, hnames_cshift hnamesᴳ( D) H h'
 Proof. Admitted.
 
 Lemma cshift_singleton_hname : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
-Proof. Admitted.
+Proof.
+  intros *. apply Finitely.ext_eq. intros [xx|xh]. all: cbn.
+  { reflexivity. }
+  unfold Fun.map. unfold Fun.singleton, hname_cshift, pre_shift.
+  destruct (Nat.eq_dec (Permutation.sem (shift_perm H h') h) xh) as [<-|ne].
+  - rewrite Permutation.post_inverse.
+    destruct (name_eq_dec (ʰ h) (ʰ h)) as [e1|ne1].
+    * hauto l: on dep: on.
+    * sfirstorder.
+  - destruct (name_eq_dec (ʰ h) (ʰ Permutation.sem (rev (shift_perm H h')) xh)) as [e1|ne1].
+    { hauto lq: on use: Permutation.eqn_inverse. }
+    destruct (name_eq_dec (ʰ Permutation.sem (shift_perm H h') h) (ʰ xh)) as [e2|ne2].
+    { hauto lq: on use: Permutation.eqn_inverse. }
+    reflexivity.
+Qed.
 
 Lemma Ty_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hnames) (h': hname), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
 with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hnames) (h': hname), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
