@@ -328,8 +328,23 @@ Proof.
   sfirstorder use: gt_max_not_in.
 Qed.
 
+Lemma in_cshift : forall G h' H h, Finitely.In (ʰ h) (G ᴳ[ H ⩲ h' ]) <-> Finitely.In (ʰ Permutation.sem (List.rev (shift_perm H h')) h) G.
+Proof.
+  intros *. unfold ctx_cshift, ctx_shift, Finitely.In, Fun.In. cbn. unfold Fun.map. cbn.
+  rewrite option_eta.
+  reflexivity.
+Qed.
+
+(* Should probably be: maxᴴ(hnamesᴳ( G )) < h' -> hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'. *)
 Lemma total_cshift_eq : forall (G : ctx) (h' : hname), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
-Proof. Admitted.
+Proof.
+  intros *. apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros xh.
+  rewrite in_hnames. rewrite shift_spec. rewrite in_cshift.
+  split.
+  - give_up.
+  - intros [xh' [h_in' ->]]. rewrite in_hnames in h_in'.
+  unfold hnames_ctx.
+Admitted.
 Lemma cshift_distrib_on_hminus_inv : forall (G : ctx) (H : hnames) (h' : hname), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = (ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ])).
 Proof.
   intros *. unfold hminus_inv.
