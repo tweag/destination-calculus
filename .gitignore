@@ -404,3 +404,6 @@ Makefile.coq.conf
 .Makefile.coq.d
 .coqdeps.d
 rules_mod.ott
+
+coqformat
+coqindent
