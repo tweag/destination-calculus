@@ -368,8 +368,40 @@ Proof.
   apply map_cshift.
 Qed.
 
+Lemma in_hnames_dom : forall h G, List.In (ʰ h) (dom G) <-> List.In h (HNames.elements (hnamesᴳ( G))).
+Proof.
+  intros *. unfold hnames_ctx, hnames_dom.
+  rewrite <- InA_eq_eq with (x:=h). rewrite HNames.elements_spec1.
+  induction (dom G) as [|h' G_elts].
+  - compute. sauto lq: on.
+  - cbn. split.
+    * intros [-> | h_in].
+      + rewrite HNames.add_spec. sfirstorder.
+      + destruct h' as [x'|h'].
+        { sfirstorder. }
+        rewrite HNames.add_spec. sfirstorder.
+    * destruct h' as [x'|h'].
+      { sfirstorder. }
+      rewrite HNames.add_spec.
+      sfirstorder.
+Qed.
+
 Lemma cshift_distrib_on_hnames : forall H h' D, hnames_cshift hnamesᴳ( D) H h' = hnamesᴳ( D ᴳ[ H ⩲ h']).
-Proof. Admitted.
+Proof.
+  intros *. apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros xh.
+  unfold hnames_cshift. rewrite HNames.fold_spec, <- fold_left_rev_right.
+  rewrite in_hnames, in_cshift. rewrite <- dom_spec, in_hnames_dom, in_rev.
+  (*  Writing an assert because for some reason `induction (rev (HNames.elements hnamesᴳ( D))) as [|h D_elts].` only destructed the first occurrence *)
+
+  assert (forall D_elts,
+             HNames.In xh (fold_right (fun (y : HNames.elt) (x : HNames.t) => HNames.add (y ʰ[ H ⩲ h']) x) HNames.empty D_elts)
+             <-> List.In (Permutation.sem (rev (shift_perm H h')) xh) D_elts).
+  2:{ sfirstorder. }
+  induction D_elts as [|h D_elts ih].
+  - compute. sauto lq: on.
+  - cbn. rewrite HNames.add_spec.
+    hauto l: on use: Permutation.pre_inverse, Permutation.post_inverse.
+Qed.
 
 Lemma cshift_singleton_hname : forall H h' h b, (ctx_singleton (name_DH h) b) ᴳ[ H ⩲ h'] = ctx_singleton (name_DH (h ʰ[ H ⩲ h'])) b.
 Proof.
