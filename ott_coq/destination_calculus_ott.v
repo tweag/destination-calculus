@@ -1182,9 +1182,9 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem C (term_Map t x t')   (cons   (ectx_Map x t')    C )   t
  | Unfocus_Map : forall (C:ectxs) (x:var) (t':term) (v:val),
      Sem   (cons   (ectx_Map x t')    C )   (term_Val v) C (term_Map (term_Val v) x t')
- | Open_Ampar : forall (C:ectxs) (H:hnames) (v2 v1:val) (x:var) (t':term) (h'':hname)
-     (hpMaxC: h'' =  (  (hname_max   (hnames_ectxs  C )  )   +   1  )  ),
-     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar  (hnames_shift  H   h'' )   (val_cshift  v2   H   h'' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h'' )  ) 
+ | Open_Ampar : forall (C:ectxs) (H:hnames) (v2 v1:val) (x:var) (t':term) (h''':hname)
+     (hpMaxC: h''' =  (  (hname_max   (HNames.union  H    (hnames_ectxs  C )  )  )   +   1  )  ),
+     Sem C (term_Map (term_Val (val_Ampar H v2 v1)) x t')   (cons   (ectx_OpenAmpar  (hnames_shift  H   h''' )   (val_cshift  v2   H   h''' ) )    C )    (term_sub  t'   x    (val_cshift  v1   H   h''' )  ) 
  | Close_Ampar : forall (C:ectxs) (H:hnames) (v2 v1:val),
      Sem   (cons  (ectx_OpenAmpar H v2)   C )   (term_Val v1) C (term_Val (val_Ampar H v2 v1))
  | Focus_ToA : forall (C:ectxs) (u:term)
@@ -1259,9 +1259,9 @@ Inductive Sem : ectxs -> term -> ectxs -> term -> Prop :=    (* defn Sem *)
      Sem C (term_FillComp (term_Val v) t')   (cons   (ectx_FillComp2 v)    C )   t'
  | Unfocus_FillComp2 : forall (C:ectxs) (v v':val),
      Sem   (cons   (ectx_FillComp2 v)    C )   (term_Val v') C (term_FillComp (term_Val v) (term_Val v'))
- | Red_FillComp : forall (C:ectxs) (h:hname) (H:hnames) (v2 v1:val) (h':hname)
-     (hpMaxCh: h' =  (  (hname_max   (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )  )   +   1  )  ),
-     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h' )      (val_cshift  v2   H   h' )  )  (term_Val  (val_cshift  v1   H   h' ) )
+ | Red_FillComp : forall (C:ectxs) (h:hname) (H:hnames) (v2 v1:val) (h'':hname)
+     (hpMaxCh: h'' =  (  (hname_max   (HNames.union  H     (HNames.union   (hnames_ectxs  C )     (hnames_  (cons h nil) )  )   )  )   +   1  )  ),
+     Sem C (term_FillComp (term_Val (val_Dest h)) (term_Val (val_Ampar H v2 v1)))  (ectxs_fill  C   h     (hnames_shift  H   h'' )      (val_cshift  v2   H   h'' )  )  (term_Val  (val_cshift  v1   H   h'' ) )
  | Focus_FillLeaf1 : forall (C:ectxs) (t t':term)
      (NotValt: NotVal t ),
      Sem C (term_FillLeaf t t')   (cons   (ectx_FillLeaf1 t')    C )   t

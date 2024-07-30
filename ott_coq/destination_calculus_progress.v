@@ -70,7 +70,7 @@ Proof.
   - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
       rename D2 into D', D0 into D2. assert (LinOnly (P ᴳ+ (D1 ᴳ+ D2))) as LinOnlyPuD1uD2. { crush. } rewrite (nDisposable_in_LinOnly P (D1 ᴳ+ D2) DisposP LinOnlyPuD1uD2) in *.
-      exists (C ∘ hnamesᴳ(D3) ᴴ⩲ (maxᴴ(hnames©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnames©(C)) + 1)] ❟⬜⟩), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnames©(C)) + 1)]]). constructor; tauto.
+      exists (C ∘ hnamesᴳ(D3) ᴴ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1)] ❟⬜⟩), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1)]]). constructor; tauto.
     * exists (C ∘ ⬜►map x ⟼ t'), t. constructor; tauto.
   - rename Tyt into TyToA. destruct (NotVal_dec u).
     * destruct e; subst. rename x into v2. exists C, (ᵥ₎ HNames.empty ⟨ v2 ❟ ᵛ() ⟩ ). constructor.
@@ -130,8 +130,8 @@ Proof.
     * destruct e; subst. rename x into v. destruct (NotVal_dec t').
       + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ U ⌋ ¹ν ‗ ¹ν}) (h := h) (T := ⌊ U ⌋ ¹ν); tauto. } rename H1 into DestOnlyD'. inversion Tytp; subst. rename Tyv0 into Tyvp. inversion Tyvp; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h0 : U ⧔ T ‗ ¹ν}) (h := h0) (T := U ⧔ T); tauto. } assert (LinOnly (P0 ᴳ+ (D1 ᴳ+ D2))) as LinOnlyP0uD1uD2. { crush. } rewrite (nDisposable_in_LinOnly P0 (D1 ᴳ+ D2) DisposP0 LinOnlyP0uD1uD2) in *.
       exists
-        ( C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1) ‗  v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1)] ] ),
-        (ᵥ₎ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ( hnames©(C) ∪ ᴴ{ h}) + 1)]).
+        ( C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ (maxᴴ(hnamesᴳ( D3) ∪ (hnames©(C) ∪ ᴴ{ h})) + 1) ‗  v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ (hnames©(C) ∪ ᴴ{ h})) + 1)] ] ),
+        (ᵥ₎ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ (hnames©(C) ∪ ᴴ{ h})) + 1)]).
       constructor; tauto.
       + exists (C ∘ v ⨞·⬜), t'. constructor; tauto.
     * exists (C ∘ ⬜⨞· t'), t. constructor; tauto.

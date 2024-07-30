@@ -1005,6 +1005,7 @@ Open-Ampar,
 Close-Ampar}
 \egroup
 \vspace*{-0.5cm}
+\TODO{Fix h'' h'''}
 \[
 \text{\textit{where}}\quad\left\{\begin{array}{rcl}
 [[h']] &=& [[max(hnames(C) ∪ {h}) + 1]]\\

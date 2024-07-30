@@ -347,9 +347,9 @@ Proof.
 Qed.
 
 (* Should probably be: maxᴴ(hnamesᴳ( G )) < h' -> hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'. *)
-Lemma total_cshift_eq : forall (G : ctx) (h' : hname), hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
+Lemma total_cshift_eq : forall (G : ctx) (h' : hname), maxᴴ(hnamesᴳ( G )) < h' -> hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof.
-  intros *. apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros xh.
+  intros * hpGreater. apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros xh.
   rewrite in_hnames. rewrite shift_spec. rewrite in_cshift.
   split.
   - give_up.
@@ -1545,9 +1545,14 @@ Proof.
     - apply Nat.le_0_l.
 Qed.
 
-Lemma HSubset_weaken : forall (H H' H'' : hnames), HNames.Subset H H' -> HNames.Subset H (H' ∪ H'').
+Lemma HSubset_weaken_l : forall (H H' H'' : hnames), HNames.Subset H H' -> HNames.Subset H (H' ∪ H'').
 Proof.
   intros *. unfold HNames.Subset. intros Hyp h Hin. apply HNamesFacts.union_iff. left. apply Hyp. assumption.
+Qed.
+
+Lemma HSubset_weaken_r : forall (H H' H'' : hnames), HNames.Subset H H'' -> HNames.Subset H (H' ∪ H'').
+Proof.
+  intros *. unfold HNames.Subset. intros Hyp h Hin. apply HNamesFacts.union_iff. right. apply Hyp. assumption.
 Qed.
 
 Lemma hnames_empty_is_hempty : hnamesᴳ(ᴳ{}) = HNames.empty.

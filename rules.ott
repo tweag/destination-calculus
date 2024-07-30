@@ -481,9 +481,9 @@ C[t ►map x ⟼ t'] ⟶ (C ∘ (⬜ ►map x ⟼ t'))[t]
 ----------------------- :: Unfocus_Map
 (C ∘ (⬜ ►map x ⟼ t'))[v] ⟶ C[v ►map x ⟼ t']
 
-{{ [[h'']] = [[max(hnames(C)) + 1]] }} [[:hpMaxC]]
+{{ [[h''']] = [[max(H ∪ hnames(C)) + 1]] }} [[:hpMaxC]]
 ---------------------------------- :: Open_Ampar
-C[ H ⟨ v2 ❟ v1 ⟩ ►map x ⟼ t'] ⟶ (C ∘ (H⩲h'' ᵒᵖ⟨ v2[H⩲h''] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h''] ] ]
+C[ H ⟨ v2 ❟ v1 ⟩ ►map x ⟼ t'] ⟶ (C ∘ (H⩲h''' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h'''] ] ]
 
 ---------------------------------- :: Close_Ampar
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜⟩)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
@@ -593,9 +593,9 @@ C[v ⨞· t'] ⟶ (C ∘ (v ⨞· ⬜))[t']
 ------------------------------------- :: Unfocus_FillComp2
 (C ∘ (v ⨞· ⬜))[v'] ⟶ C[v ⨞· v']
 
-{{ [[h']] = [[max(hnames(C) ∪ {h}) + 1]] }} [[:hpMaxCh]]
+{{ [[h'']] = [[max(H ∪ (hnames(C) ∪ {h})) + 1]] }} [[:hpMaxCh]]
 ---------------------------------------- :: Red_FillComp
-C[-h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h') v2[H⩲h'] ][v1[H⩲h'] ]
+C[-h ⨞· H ⟨ v2 ❟ v1 ⟩] ⟶ C[h ≔ (H⩲h'') v2[H⩲h''] ][v1[H⩲h''] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
 ------------------------------------- :: Focus_FillLeaf1
