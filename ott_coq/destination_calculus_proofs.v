@@ -56,6 +56,17 @@ Proof.
 Qed.
 Hint Rewrite <- ValidOnly_cshift_iff : propagate_down.
 
+Lemma DisposableOnly_cshift_iff: forall (G : ctx) (H : hnames) (h' : hname), DisposableOnly G <-> DisposableOnly (G ᴳ[ H⩲h' ]).
+Proof.
+  intros *. unfold DisposableOnly, ctx_cshift, ctx_shift.
+  erewrite map_propagate_both with (Q := fun x b => IsDisposable _ b).
+  2:{ intros [xx|xh] **. all: cbn.
+      all: reflexivity. }
+  apply precomp_propagate_both. intros x2.
+  sfirstorder use: pre_cshift_surjective.
+Qed.
+Hint Rewrite <- DisposableOnly_cshift_iff : propagate_down.
+
 Lemma DestOnly_cshift_iff: forall (G : ctx) (H : hnames) (h' : hname), DestOnly G <-> DestOnly (G ᴳ[ H⩲h' ]).
 Proof.
   intros *. unfold DestOnly, ctx_cshift, ctx_shift.
@@ -376,49 +387,6 @@ Proof.
     { hauto lq: on use: Permutation.eqn_inverse. }
     reflexivity.
 Qed.
-
-Lemma Ty_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hnames) (h': hname), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
-with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hnames) (h': hname), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
-Proof.
-  - destruct 1.
-    + cbn. rewrite cshift_singleton_hname.
-      constructor.
-    + cbn. rewrite cshift_singleton_hname.
-      constructor. assumption.
-    + replace (ᴳ{} ᴳ[ H ⩲ h']) with ᴳ{}.
-      2:{ apply ext_eq. cbn. congruence. }
-      cbn.
-      constructor.
-    + cbn.
-      constructor.
-      * assumption.
-      * erewrite <- cshift_singleton_var_eq, <- cshift_distrib_on_union.
-        auto.
-      * hauto l: on use: DestOnly_cshift_iff.
-    + cbn.
-      constructor. auto.
-    + cbn.
-      constructor. auto.
-    + cbn. rewrite cshift_distrib_on_union.
-      constructor. all: auto.
-    + cbn. rewrite cshift_distrib_on_stimes.
-      constructor. all: auto.
-    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hnames.
-      constructor.
-      (* 11 goals *)
-      * hauto l: on use: DestOnly_cshift_iff.
-      * hauto l: on use: DestOnly_cshift_iff.
-      * hauto l: on use: DestOnly_cshift_iff.
-      * rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption.
-      * hauto l: on use: Disjoint_cshift_iff.
-      * hauto l: on use: Disjoint_cshift_iff.
-      * hauto l: on use: Disjoint_cshift_iff.
-      * rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
-        auto.
-      * rewrite <- cshift_distrib_on_hminus_inv, <- cshift_distrib_on_union.
-        auto.
-  - (* TODO *) give_up.
-Admitted.
 
 (* ========================================================================= *)
 
@@ -2169,13 +2137,40 @@ Proof.
 Qed.
 
 Lemma ValidOnly_hminus_inv_DestOnly_LinNuOnly : forall D, ValidOnly (ᴳ-⁻¹ D) -> DestOnly D /\ LinNuOnly D.
-Admitted.
+Proof.
+  intros * ValidOnlyhmD.
+  split.
+  - intros n b mapsto.
+    pose (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
+| ₋ ¹ν ⌊ T ⌋ n => ₊ T ‗ n
+| ₊ _ ‗ _ => ₊ ① ‗ ☠
+| _ => ₋ ☠ ⌊ ① ⌋ ☠
+end)) as f.
+    specialize (ValidOnlyhmD n (f n b)).
+    assert ((ᴳ-⁻¹ D) n = Some (f n b)).
+      { unfold hminus_inv. apply map_MapsTo_if; trivial. }
+    specialize (ValidOnlyhmD H). inversion ValidOnlyhmD. destruct n, b; simpl in *; trivial; try congruence.
+  - intros n b mapsto.
+    pose (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
+| ₋ ¹ν ⌊ T ⌋ n => ₊ T ‗ n
+| ₊ _ ‗ _ => ₊ ① ‗ ☠
+| _ => ₋ ☠ ⌊ ① ⌋ ☠
+end)) as f.
+    specialize (ValidOnlyhmD n (f n b)).
+    assert ((ᴳ-⁻¹ D) n = Some (f n b)).
+      { unfold hminus_inv. apply map_MapsTo_if; trivial. }
+    specialize (ValidOnlyhmD H). inversion ValidOnlyhmD. destruct n, b; simpl in *; trivial; try congruence.
+    destruct m.
+    * destruct p. destruct m, a; try destruct n0; trivial; try congruence; try constructor.
+    * congruence.
+Qed.
 
 Ltac hauto_ctx :=
   hauto
     depth: 3
     use:
         ValidOnly_cshift_iff,
+        DisposableOnly_cshift_iff,
         DestOnly_cshift_iff,
         LinNuOnly_cshift_iff,
         LinOnly_cshift_iff,
@@ -2994,6 +2989,77 @@ Ltac auto_destruct_and H :=
                      auto_destruct_and H2
          | _ => idtac
          end.
+
+Lemma Ty_val_cshift : forall (G : ctx) (v : val) (T : type) (H: hnames) (h': hname), (G ⫦ v : T) -> (G ᴳ[ H⩲h' ] ⫦ v ᵛ[H⩲h'] : T)
+with Ty_term_cshift : forall (G : ctx) (t : term) (T : type) (H: hnames) (h': hname), (G ⊢ t : T) -> (G ᴳ[ H⩲h' ] ⊢ term_cshift t H h' : T).
+Proof.
+  - destruct 1.
+    + cbn. rewrite cshift_singleton_hname.
+      constructor.
+    + cbn. rewrite cshift_singleton_hname.
+      constructor. assumption.
+    + replace (ᴳ{} ᴳ[ H ⩲ h']) with ᴳ{}.
+      2:{ apply ext_eq. cbn. congruence. }
+      cbn.
+      constructor.
+    + cbn.
+      constructor.
+      * assumption.
+      * erewrite <- cshift_singleton_var_eq, <- cshift_distrib_on_union.
+        auto.
+      * hauto l: on use: DestOnly_cshift_iff.
+    + cbn.
+      constructor. auto.
+    + cbn.
+      constructor. auto.
+    + cbn. rewrite cshift_distrib_on_union.
+      constructor. all: auto.
+    + cbn. rewrite cshift_distrib_on_stimes.
+      constructor. all: auto.
+    + cbn. rewrite cshift_distrib_on_union, cshift_distrib_on_hnames.
+      constructor.
+      (* 11 goals *)
+      * hauto l: on use: DestOnly_cshift_iff.
+      * hauto l: on use: DestOnly_cshift_iff.
+      * hauto l: on use: DestOnly_cshift_iff.
+      * rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption.
+      * hauto l: on use: Disjoint_cshift_iff.
+      * hauto l: on use: Disjoint_cshift_iff.
+      * hauto l: on use: Disjoint_cshift_iff.
+      * rewrite <- cshift_distrib_on_stimes, <- cshift_distrib_on_union.
+        auto.
+      * rewrite <- cshift_distrib_on_hminus_inv, <- cshift_distrib_on_union.
+        auto.
+  - destruct 1.
+    { cbn. rewrite cshift_distrib_on_union. apply Ty_term_Val. apply Disjoint_cshift_iff. assumption. apply DisposableOnly_cshift_iff. assumption.
+      eapply Ty_val_cshift; trivial.
+      apply DestOnly_cshift_iff; assumption. }
+    { cbn. rewrite cshift_distrib_on_union. rewrite cshift_singleton_var_eq.
+     apply Ty_term_Var. apply DisposableOnly_cshift_iff. assumption.
+     rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. assumption. }
+    all: cbn; try rewrite cshift_distrib_on_union; try rewrite cshift_distrib_on_stimes; try rewrite cshift_distrib_on_stimes.
+    * apply Ty_term_App with (T := T); trivial. eapply Ty_term_cshift; trivial. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_PatU; trivial. eapply Ty_term_cshift; trivial. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_PatS with (T1 := T1) (T2 := T2); trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial.
+    rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_PatP with (T1 := T1) (T2 := T2); trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial.
+    rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_singleton_var_eq with (x := x2) (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_PatE with (T := T); trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial.
+    rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_Map with (T := T). rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial. rewrite <- cshift_distrib_on_stimes. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_ToA. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FromA. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_Alloc. apply DisposableOnly_cshift_iff. assumption.
+    * apply Ty_term_FillU with (n := n). eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillL with (n := n) (T2 := T2). eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillR with (n := n) (T1 := T1). eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillP with (n := n) (T1 := T1) (T2 := T2). eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillE with (n := n) (T := T); trivial. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillF with (T := T) (U := U); trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillComp with (U := U). eapply Ty_term_cshift; trivial. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_FillLeaf with (T := T); trivial. eapply Ty_term_cshift; trivial. eapply Ty_term_cshift; trivial.
+Qed.
 
 Lemma Ty_val_fill : forall (D20 D5 : ctx) (h : hname) (v' : val) (T : type) , D20 ᴳ+ ᴳ-⁻¹ D5 ⫦ v' : T ->
   forall (v : val) (D4 D13 : ctx) (n : mode) (U : type),

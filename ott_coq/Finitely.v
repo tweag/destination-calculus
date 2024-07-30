@@ -774,6 +774,14 @@ Proof.
 - intros [z [eq1 eq2]]. unfold Fun.map. destruct (f x) eqn:emap. assert (b = z) as e. { injection eq1; tauto. } subst. tauto. congruence.
 Qed.
 
+Lemma map_MapsTo_if : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A) (y : B1 x), f x = Some y -> map m f x = Some (m x y).
+Proof.
+  intros *.
+  rewrite map_spec.
+  unfold Fun.map.
+  destruct (f x); intro H; inversion H; trivial.
+Qed.
+
 Lemma map_nMapsTo_iff : forall {A B1 B2} (m : forall x, B1 x -> B2 x) (f : T A B1) (x : A), map m f x = None <-> f x = None.
 Proof.
   intros *.
