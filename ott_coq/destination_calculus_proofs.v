@@ -346,16 +346,206 @@ Proof.
   reflexivity.
 Qed.
 
-(* Should probably be: maxᴴ(hnamesᴳ( G )) < h' -> hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'. *)
+Lemma hname_max_list_max : forall H, maxᴴ( H) = list_max (HNames.elements H).
+Proof.
+  intros *.
+  assert (forall n, maxᴴ( H) <= n <-> list_max (HNames.elements H) <= n).
+  2:{ sauto l: on. }
+  intros n.
+  rewrite List.list_max_le. rewrite Forall_forall. unfold hname_max.
+  destruct (HNames.max_elt H) as [h'|] eqn:h_max.
+  - split.
+    * intros h_le h h_in. rewrite <- InA_eq_eq, HNames.elements_spec1 in h_in.
+      sfirstorder use: HNames.max_elt_spec2.
+    * intros h_le. apply h_le.
+      rewrite <- InA_eq_eq, HNames.elements_spec1.
+      sfirstorder use: HNames.max_elt_spec1.
+  - hauto l: on use: HNames.max_elt_spec3, InA_eq_eq, HNames.elements_spec1 unfold: HNames.Empty.
+Qed.
+
+(* Lemma gt_S_max : forall h H, HNames.mem h H = true -> h < maxᴴ(H) + 1. *)
+(* Lemma gt_max_not_in : forall (h : HNames.elt) (H : HNames.t), maxᴴ(H) < h -> ~(HNames.In h H). *)
+
+(* This is a technical lemma which appears in the proof of other shift_perm_spec* lemmas. *)
+Lemma shift_perm_spec3' : forall  H (h' h: hname), Sorted.Sorted lt H -> list_max H < h' -> ~List.In h H -> (forall h'', h''+h' = h -> ~List.In h'' H) -> fold_right Permutation.Transposition.sem h (rev (List.map (shift_one h') H)) = h.
+Proof.
+  intros * h_sorted h_max h_nin h_nin'.
+  induction H as [|h'' H' ih].
+  - cbn. reflexivity.
+  - cbn. rewrite List.fold_right_app. cbn. unfold shift_one at 1, Permutation.Transposition.sem at 2. cbn.
+    assert (h <> h'') as h_ne.
+    { cbn in h_nin. clear -h_nin. sfirstorder. }
+    destruct (HNamesFacts.eq_dec h h'') as [-> | _].
+    1:{ sfirstorder. }
+    assert (h <> h''+h') as h_ne'.
+    { hauto lq: on. }
+    destruct (HNamesFacts.eq_dec h (h'' + h')) as [->|_].
+    1:{ sfirstorder. }
+    apply ih.
+    all: qblast.
+Qed.
+
+Lemma shift_perm_spec3 : forall  H (h' h: hname), maxᴴ( H) < h' -> ~HNames.In h H -> (forall h'', h''+h' = h -> ~HNames.In h'' H) -> Permutation.sem (rev (shift_perm H h')) h = h.
+Proof.
+  assert (forall  H (h' h: hname), list_max (HNames.elements H) < h' -> ~List.In h (HNames.elements H) -> (forall h'', h''+h' = h -> ~List.In h'' (HNames.elements H)) -> Permutation.sem (rev (shift_perm H h')) h = h).
+  2:{ hauto l: on use: hname_max_list_max, InA_eq_eq, HNames.elements_spec1. }
+  intros * h_max h_nin h_nin'. unfold shift_perm.
+  generalize (HNames.elements_spec2 H). intros h_sorted.
+  apply shift_perm_spec3'.
+  all: trivial.
+Qed.
+
+Lemma gt_list_max_not_in : forall l x, list_max l < x -> ~List.In x l.
+Proof.
+  intros * h_max h_in.
+  induction l.
+  - sfirstorder.
+  - simpl in *.
+    destruct h_in as [->|h_in].
+    * lia.
+    * hauto l: on.
+Qed.
+
+Lemma HdRel_lt_not_in : forall l x, Sorted.HdRel lt x l -> Sorted.Sorted lt l -> ~List.In x l.
+Proof.
+  intros * h h_sorted.
+  induction l as [|y l ih].
+  - cbn. sfirstorder.
+  - cbn. apply Sorted.HdRel_inv in h.
+    intros [-> | h_in].
+    * lia.
+    * apply Sorted.Sorted_inv in h_sorted.
+      sfirstorder.
+Qed.
+
+Lemma shift_perm_spec1 : forall  H (h' h: hname), maxᴴ( H) < h' -> HNames.In h H -> Permutation.sem (rev (shift_perm H h')) h = h+h'.
+Proof.
+  intros * h_max h_in.
+  unfold shift_perm. rewrite hname_max_list_max in h_max. rewrite <- HNames.elements_spec1, InA_eq_eq in h_in.
+  generalize (HNames.elements_spec2 H). intros h_sorted.
+  induction (HNames.elements H) as [|h'' H' ih].
+  - cbn in *. lia.
+  - cbn in *.
+    rewrite fold_right_app. cbn.
+    destruct h_in as [-> | h_in].
+    * unfold shift_one at 1, Permutation.Transposition.sem at 2. cbn.
+      destruct (HNamesFacts.eq_dec h h) as [_|h_ne].
+      2:{ congruence. }
+      fold (Permutation.sem (rev (shift_perm H h')) (h+h')).
+      apply shift_perm_spec3'.
+      + sauto lq: on.
+      + sfirstorder unfold: list_max.
+      + assert (list_max H' < h+h') as h_more_max.
+        { fold (list_max H') in h_max. lia. }
+        sfirstorder use: gt_list_max_not_in.
+      + intros h'' h_h''.
+        assert (h'' = h) as ->.
+        { lia. }
+        clear h_h''.
+        apply Sorted.Sorted_inv in h_sorted. destruct h_sorted as [h_sorted h_lt].
+        sfirstorder use: HdRel_lt_not_in.
+   * unfold shift_one at 1, Permutation.Transposition.sem at 2. cbn. fold (list_max H') in h_max.
+     assert (~List.In h'' H') as h__nin.
+     { apply Sorted.Sorted_inv in h_sorted.
+       sfirstorder use: HdRel_lt_not_in. }
+     assert (h <> h'') as h_ne.
+     { intros <-. sfirstorder. }
+     destruct (HNamesFacts.eq_dec h h'') as [<- | _].
+     1:{ congruence. }
+     assert (~List.In (h''+h') H') as h_nin'.
+     { apply gt_list_max_not_in.
+       lia. }
+     assert (h <> h'' + h') as h_ne'.
+     { intros ->. sfirstorder. }
+     destruct (HNamesFacts.eq_dec h (h'' + h')) as [-> | _].
+     1:{ congruence. }
+     apply ih.
+      + lia.
+      + assumption.
+      + hauto lq: on use: Sorted.Sorted_inv.
+Qed.
+
+Lemma shift_perm_spec2 : forall  H (h' h: hname), maxᴴ( H) < h' -> HNames.In h H -> Permutation.sem (rev (shift_perm H h')) (h+h') = h.
+Proof.
+  intros * h_max h_in.
+  unfold shift_perm. rewrite hname_max_list_max in h_max. rewrite <- HNames.elements_spec1, InA_eq_eq in h_in.
+  generalize (HNames.elements_spec2 H). intros h_sorted.
+  induction (HNames.elements H) as [|h'' H' ih].
+  - cbn in *. lia.
+  - cbn in *.
+    rewrite fold_right_app. cbn.
+    destruct h_in as [-> | h_in].
+    * unfold shift_one at 1, Permutation.Transposition.sem at 2. cbn.
+      destruct (HNamesFacts.eq_dec (h+h') h) as [e|h_ne].
+      { lia. }
+      destruct (HNamesFacts.eq_dec (h+h') (h+h')) as [_|h_ne'].
+      2:{ lia. }
+      apply shift_perm_spec3'.
+      + sauto lq: on.
+      + sfirstorder unfold: list_max.
+      + hauto lq: on use: Sorted.Sorted_inv, HdRel_lt_not_in.
+      + intros h'' <-.
+        lia.
+    * unfold shift_one at 1, Permutation.Transposition.sem at 2. cbn. fold (list_max H') in h_max.
+      destruct (HNamesFacts.eq_dec (h + h') h'') as [e|h_ne].
+      1:{ lia. }
+      destruct (HNamesFacts.eq_dec (h + h') (h'' + h')) as [e|h_ne'].
+      1:{ apply Sorted.Sorted_inv in h_sorted.
+          assert (~List.In h'' H').
+          { sfirstorder use: HdRel_lt_not_in. }
+          assert (h=h'') as <-.
+          { lia. }
+          sfirstorder. }
+      apply ih.
+      + lia.
+      + assumption.
+      + sauto lq: on.
+Qed.
+
 Lemma total_cshift_eq : forall (G : ctx) (h' : hname), maxᴴ(hnamesᴳ( G )) < h' -> hnamesᴳ(G ᴳ[ hnamesᴳ( G ) ⩲ h' ]) = hnamesᴳ(G) ᴴ⩲ h'.
 Proof.
   intros * hpGreater. apply HNames.eq_leibniz. unfold HNames.eq, HNames.Equal. intros xh.
   rewrite in_hnames. rewrite shift_spec. rewrite in_cshift.
   split.
-  - give_up.
-  - intros [xh' [h_in' ->]]. rewrite in_hnames in h_in'.
-  unfold hnames_ctx.
-Admitted.
+  - intros h_in.
+    destruct (Finitely.In_dec (ʰ xh) G) as [h_in'|h_nin'].
+    1:{ rewrite <- in_hnames in h_in'.
+        apply shift_perm_spec1 with (h':=h') in h_in'.
+        2:{ assumption. }
+        rewrite h_in' in *. clear h_in'.
+        hauto l: on use: gt_max_not_in, in_hnames. }
+    assert ((exists h'' : HNames.elt, HNames.In h'' hnamesᴳ( G) /\ xh = h'' + h') \/ ~(exists h'' : HNames.elt, HNames.In h'' hnamesᴳ( G) /\ xh = h'' + h')) as [hh|hh].
+    { assert (xh >= h' \/ ~( xh >= h')) as [l|r].
+      { lia. }
+      + assert (HNames.mem (xh - h') (hnamesᴳ( G))= true \/ ~(HNames.mem (xh - h') hnamesᴳ( G) = true)) as h_mem.
+        { destruct (HNames.mem (xh - h') (hnamesᴳ( G))).
+          all: sfirstorder. }
+        rewrite !HNames.mem_spec in h_mem. destruct h_mem as [ll|rr].
+        * left. exists (xh-h').
+          split.
+          - assumption.
+          - lia.
+        * right. intros [h'' [h_in' h_eq]].
+          assert (h'' = xh - h') as ->.
+          { lia. }
+          sfirstorder.
+      + right.
+        intros [h'' [h_in' h_eq]].
+        lia.
+    }
+    * assumption.
+    * rewrite shift_perm_spec3 in h_in.
+      + sfirstorder.
+      + assumption.
+      + hauto lq: on use: in_hnames.
+      + sfirstorder.
+  - intros [h'' [h_in ->]].
+    rewrite shift_perm_spec2.
+    * hauto lq: on use: in_hnames.
+    * assumption.
+    * assumption.
+Qed.
+
 Lemma cshift_distrib_on_hminus_inv : forall (G : ctx) (H : hnames) (h' : hname), (ᴳ-⁻¹ G) ᴳ[ H ⩲ h' ] = (ᴳ-⁻¹ (G ᴳ[ H ⩲ h' ])).
 Proof.
   intros *. unfold hminus_inv.
