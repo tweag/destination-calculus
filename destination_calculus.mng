@@ -1005,11 +1005,11 @@ Open-Ampar,
 Close-Ampar}
 \egroup
 \vspace*{-0.5cm}
-\TODO{Fix h'' h'''}
 \[
 \text{\textit{where}}\quad\left\{\begin{array}{rcl}
 [[h']] &=& [[max(hnames(C) ∪ {h}) + 1]]\\
-[[h'']] &=& [[max(hnames(C)) + 1]]
+[[h'']] &=& [[max(H ∪ (hnames(C) ∪ {h})) + 1]] \\
+[[h''']] &=& [[max(H ∪ hnames(C)) + 1]]
 \end{array}\right.\]
 \end{ottfig}
 
@@ -1018,6 +1018,8 @@ Reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottkw{
 All reduction rules for destination-filling primitives trigger a memory write on hole $[[+h]]$; we model this as a special substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$. \rref*{Red-FillU} and \rref*{Red-FillF} do not create any new hole; they only write a value to an existing one. On the other hand, rules \rref*{Red-FillL}, \rref*{Red-FillR}, \rref*{Red-FillE} and \rref*{Red-FillP} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
 The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{Ty-ectxs-OpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{map}$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
+
+\TODO{Fix renaming with new defs for $[[h']]$, $[[h'']]$...}
 
 To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ to find the next unused name. Then we use either the \emph{shifted set}\\ $[[H ⩲ h']] \btriangleq \{ [[h+h']]~|~[[h]]\in [[H]] \}$ or the \emph{conditional shift operator}:
 $$
