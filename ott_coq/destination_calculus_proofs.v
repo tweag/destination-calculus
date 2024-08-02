@@ -3311,154 +3311,6 @@ Proof.
     * apply Ty_term_FillLeaf with (T := T); trivial. eapply Ty_term_cshift; trivial. eapply Ty_term_cshift; trivial.
 Qed.
 
-(* Definition age_times_inv (a : age) (a' : age) : option age :=
-  match a, a' with
-  | (Fin n), (Fin n') => match le_lt_dec n' n with
-    | left le => Some (Fin (n - n'))
-    | right ilt => None
-    end
-  | (Fin n), Inf => None
-  | Inf, _ => Some Inf
-  end.
-
-Definition mul_times_inv (p : mul) (p' : mul) : option mul :=
-  match p, p' with
-  | Lin, Lin => Some Lin
-  | Lin, Ur => None
-  | Ur, _ => Some Ur
-  end.
-
-Lemma age_times_inv_correct : forall (a a' r : age), age_times_inv a a' = Some r -> age_times a' r = a.
-Proof.
-  intros * H. destruct a, a'; simpl in *; try destruct (le_lt_dec n0 n) eqn:lt in H; try congruence; destruct r; try discriminate H; trivial. inversion H. f_equal. rewrite Nat.add_comm. rewrite Nat.sub_add; trivial.
-Qed.
-
-Lemma mul_times_inv_correct : forall (p p' r : mul), mul_times_inv p p' = Some r -> mul_times p' r = p.
-Proof.
-  intros * H. destruct p, p'; simpl in *; try congruence; try destruct r; try discriminate H; trivial.
-Qed.
-
-Definition times_inv (m : mode) (m' : mode) : option mode :=
-  match m, m' with
-  | Some (p, a), Some (p', a') => match mul_times_inv p p', age_times_inv a a' with
-    | Some p'', Some a'' => Some (Some (p'', a''))
-    | _, _ => None
-    end
-  | Some (p, a), None => None
-  | None, _ => Some None
-  end.
-
-Lemma times_inv_correct : forall (m m' r : mode), times_inv m m' = Some r -> m' · r = m.
-Proof.
-  intros * H. destruct m as [(p, a) |], m' as [(p', a') |]; simpl in *; try destruct (mul_times_inv p p') eqn:mul in H; try destruct (age_times_inv a a') eqn:age in H; try destruct r; try congruence; try discriminate H; trivial.
-  destruct p0. inversion H. f_equal. apply mul_times_inv_correct in mul. apply age_times_inv_correct in age. subst. reflexivity.
-Qed.
-
-Definition times_inv_total (m : mode) (m' : mode) : mode :=
-  match times_inv m m' with
-  | Some r => r
-  | None => None
-  end.
-
-Lemma times_inv_total_correct : forall (m m' : mode), IsValid (times_inv_total m m') -> m' · times_inv_total m m' = m.
-Proof.
-  intros * Valid. unfold times_inv_total. destruct (times_inv m m') eqn:inv; try discriminate Valid. apply times_inv_correct in inv. assumption.
-  inversion Valid. unfold times_inv_total in H0; rewrite inv in H0; congruence.
-Qed.
-
-Definition stimes_inv_var (m' : mode) (b : binding_var) : binding_var := match b with
-  | binding_Var m T => binding_Var (times_inv_total m m') T
-end.
-Definition stimes_inv_dh (m' : mode) (b : binding_dh) : binding_dh := match b with
-  | binding_Dest m T n => binding_Dest (times_inv_total m m') T n
-  | binding_Hole T n => binding_Hole T (times_inv_total n m')
-end.
-
-Definition stimes_inv (m' : mode) (G : ctx) : ctx :=
-  Finitely.map (fsimple (fun t => t -> t) (stimes_inv_var m') (stimes_inv_dh m')) G.
-
-Lemma stimes_inv_correct : forall (m : mode) (G R : ctx), stimes_inv m G = R -> ValidOnly R -> m ᴳ· R = G.
-Proof.
-  intros * H ValidR. unfold stimes_inv in H. apply ext_eq. intros n. unfold stimes.
-  rewrite <- H in *. unfold ValidOnly in ValidR. destruct (G n) eqn:mapsto; rewrite map_comp.
-  - specialize (ValidR n).
-    assert (map (fsimple (fun t : Type => t -> t) (stimes_inv_var m) (stimes_inv_dh m)) G n = Some ((fsimple (fun t : Type => t -> t) (stimes_inv_var m) (stimes_inv_dh m)) n b)).
-      { apply map_MapsTo_if; trivial. }
-    specialize (ValidR (fsimple (fun t : Type => t -> t) (stimes_inv_var m) (stimes_inv_dh m) n b) H0). simpl in ValidR.
-    destruct n, b; unfold map, Fun.map; simpl; try rewrite mapsto; f_equal; cbn in *; apply times_inv_total_correct in ValidR; rewrite ValidR; reflexivity.
-  - apply map_nMapsTo_iff; trivial.
-Qed.
-
-Lemma age_times_inv_exists : forall (a a' : age), exists r, age_times_inv (age_times a' a) a' = Some r.
-Proof.
-  intros. destruct a, a'; simpl.
-  exists (Fin (n0 + n - n0)). destruct (le_lt_dec n0 (n0 + n)). reflexivity.
-  assert (H1: n0 + n >= n0). {
-    (* Since n0 + n >= n0 holds for natural numbers *)
-    apply Nat.le_add_r.
-  }
-  exfalso.
-  apply (Nat.nlt_ge (n0 + n) n0). lia. assumption.
-  all: exists Inf; reflexivity.
-Qed.
-
-Lemma mul_times_inv_exists : forall (p p' : mul), exists r, mul_times_inv (mul_times p' p) p' = Some r.
-Proof.
-  intros. destruct p, p'; simpl.
-  exists Lin. reflexivity. all: exists Ur; reflexivity.
-Qed.
-
-Lemma times_inv_exists : forall (m m' : mode), exists r, times_inv (m' · m) m' = Some r.
-Proof.
-  intros. destruct m as [(p, a) |], m' as [(p', a') |]; simpl.
-  destruct (mul_times_inv_exists p p') as (p'' & muleq); rewrite muleq.
-  destruct (age_times_inv_exists a a') as (a'' & ageeq); rewrite ageeq.
-  exists (Some (p'', a'')). reflexivity.
-  all: exists None; reflexivity.
-Qed.
-
-Lemma times_inv_total_exists : forall (m m' : mode), IsValid (m' · m) -> IsValid (times_inv_total (m' · m) m').
-Proof.
-  intros * Valid. unfold times_inv_total. destruct m as [(p, a) |], m' as [(p', a') |]; simpl.
-  destruct (mul_times_inv_exists p p') as (p'' & muleq); rewrite muleq.
-  destruct (age_times_inv_exists a a') as (a'' & ageeq); rewrite ageeq.
-  constructor. all: cbn in Valid; congruence.
-Qed.
-
-Lemma stimes_inv_exists : forall (m : mode) (G G1 : ctx) (n : name) (b b' : binding_type_of n), ValidOnly G1 -> (m ᴳ· G) n = Some b -> G1 n = Some b -> (stimes_inv m G1) n = Some b' -> IsValid (mode_of b').
-Proof.
-  intros * ValidOnlyG1 Geq G1eq stimes_inveq.
-  specialize (ValidOnlyG1 n b G1eq).
-  unfold stimes in Geq. unfold stimes_inv in stimes_inveq. unfold map, Fun.map in *. simpl in *. rewrite G1eq in stimes_inveq. destruct (G n). 2:{ congruence. }
-  inversion Geq. inversion stimes_inveq. rewrite <- H0 in *. rewrite <- H1 in *. destruct n, b0; cbn in *; apply times_inv_total_exists; assumption.
-Qed.
-
-Lemma ctx_split_stimes_union_weak : forall (m : mode) (G G1 G2 : ctx), ValidOnly G1 -> ValidOnly G2 -> G1 # G2 -> m ᴳ· G = G1 ᴳ+ G2 -> exists G1' G2', G1 = m ᴳ· G1' /\ G2 = m ᴳ· G2'. (* G = G1' ᴳ+ G2' is not true because we are not sure we computed the right exact inverse *)
-Proof.
-  intros * ValidOnlyG1 ValidOnlyG2 DisjointG1G2 CtxEq.
-  assert (ValidOnly (stimes_inv m G1)).
-    { unfold ValidOnly. intros n b mapsto.
-      assert (exists b', G1 n = Some b') as mapsto'. { unfold stimes_inv in mapsto. rewrite map_MapsTo_iff in mapsto. destruct mapsto as (b' & mapsto' & mapeq). exists b'; assumption. } destruct mapsto' as (b' & mapsto').
-      assert (In n G1). { unfold In. exists b'; assumption. }
-      assert (~In n G2). { intros contra. contradiction DisjointG1G2 with (x := n). }
-      assert ((m ᴳ· G) n = (G1 ᴳ+ G2) n). { rewrite CtxEq. reflexivity. }
-      unfold union in H1. rewrite merge_with_Some_None_eq with (y1 := b') in H1. 2:{ split. assumption. rewrite <- nIn_iff_nMapsTo. assumption. }
-      apply stimes_inv_exists with (m := m) (G := G) (G1 := G1) (b := b'); trivial.
-    }
-  assert (ValidOnly (stimes_inv m G2)).
-    { unfold ValidOnly. intros n b mapsto.
-      assert (exists b', G2 n = Some b') as mapsto'. { unfold stimes_inv in mapsto. rewrite map_MapsTo_iff in mapsto. destruct mapsto as (b' & mapsto' & mapeq). exists b'; assumption. } destruct mapsto' as (b' & mapsto').
-      assert (In n G2). { unfold In. exists b'; assumption. }
-      assert (~In n G1). { intros contra. contradiction DisjointG1G2 with (x := n). }
-      assert ((m ᴳ· G) n = (G1 ᴳ+ G2) n). { rewrite CtxEq. reflexivity. }
-      unfold union in H2. rewrite merge_with_None_Some_eq with (y2 := b') in H2. 2:{ split. rewrite nIn_iff_nMapsTo in H1; assumption. assumption. }
-      apply stimes_inv_exists with (m := m) (G := G) (G1 := G2) (b := b'); trivial.
-    }
-  exists (stimes_inv m G1), (stimes_inv m G2). repeat split.
-  symmetry; apply stimes_inv_correct; trivial.
-  symmetry; apply stimes_inv_correct; trivial.
-Qed. *)
-
 #[program]
 Definition restriction (G G1 : ctx) : ctx :=
   {|
@@ -3527,14 +3379,58 @@ Proof.
       apply restriction_MapsTo_iff. split. assumption. exists b0; assumption.
     * rewrite merge_with_None_None_eq. reflexivity. split; apply restriction_nIn_iff_nMapsTo; left; assumption.
     * rewrite merge_with_None_None_eq. reflexivity. split; apply restriction_nIn_iff_nMapsTo; left; assumption.
+Qed. 
+
+Definition DomSubset (G G' : ctx) : Prop :=
+  forall (n : name), In n G -> In n G'.
+
+Lemma DomSubset_union_l : forall (G1 G2 : ctx), DomSubset G1 (G1 ᴳ+ G2).
+Proof.
+  intros * n InG. apply In_union_iff. left; assumption.
 Qed.
 
-Lemma ctx_split_union_union : forall (G3 G4 G1 G2 : ctx), G1 # G2 -> G3 ᴳ+ G4 = G1 ᴳ+ G2 -> exists G13 G14 G23 G24, G1 = G13 ᴳ+ G14 /\ G2 = G23 ᴳ+ G24.
+Lemma DomSubset_union_r : forall (G1 G2 : ctx), DomSubset G2 (G1 ᴳ+ G2).
+Proof.
+  intros * n InG. apply In_union_iff. right; assumption.
+Qed.
+
+Lemma Disjoint_MapsTo_contra : forall (G1 G2 : ctx) (n : name) (b1 b2 : binding_type_of n), G1 # G2 -> G1 n = Some b1 -> G2 n = Some b2 -> False.
+Proof.
+  intros * DisjointG1G2 G1mapsto G2mapsto. apply DisjointG1G2 with (x := n). unfold In; exists b1; assumption.
+  unfold In; exists b2; assumption.
+Qed.
+
+Lemma In_union_nMapsTo_contra : forall (G1 G2 : ctx) (n : name), In n (G1 ᴳ+ G2) -> G1 n = None -> G2 n = None -> False.
+Proof.
+  intros * InG G1n G2n. apply In_union_iff in InG. destruct InG as [(b & InG) | (b & InG)]; congruence.
+Qed.
+
+Lemma split_into_restrictions : forall (G G1 G2 : ctx), G1 # G2 -> DomSubset G (G1 ᴳ+ G2) -> G = restriction G G1 ᴳ+ restriction G G2.
+Proof.
+  intros * DisjointG1G2 DomSubsetG. apply ext_eq. intros n.
+  destruct (G n) eqn:Gmapsto. assert (In n G). { unfold In. exists b. assumption. } specialize (DomSubsetG n H). all: destruct ((restriction G G1 ᴳ+ restriction G G2) n) eqn:restrmapsto.
+  all: unfold union in *; destruct (G1 n) eqn:G1mapsto; destruct (G2 n) eqn:G2mapsto; trivial; try contradiction (Disjoint_MapsTo_contra G1 G2 n b1 b2 DisjointG1G2 G1mapsto G2mapsto); try contradiction (Disjoint_MapsTo_contra G1 G2 n b0 b1 DisjointG1G2 G1mapsto G2mapsto); try contradiction (In_union_nMapsTo_contra G1 G2 n DomSubsetG G1mapsto G2mapsto).
+  { assert ((restriction G G1) n = Some b). { apply restriction_MapsTo_iff; split. assumption. exists b1; assumption. }
+    assert ((restriction G G2) n = None). { apply restriction_nIn_iff_nMapsTo. right. assumption. }
+    assert (merge_with (fsimple (fun t : Type => t -> t -> t) union_var union_dh) (restriction G G1) (restriction G G2) n = Some b). { apply merge_with_Some_None_eq. split; assumption. }
+    rewrite <- restrmapsto. rewrite H2. reflexivity. }
+  { assert ((restriction G G1) n = None). { apply restriction_nIn_iff_nMapsTo. right. assumption. }
+    assert ((restriction G G2) n = Some b). { apply restriction_MapsTo_iff; split. assumption. exists b1; assumption. }
+    assert (merge_with (fsimple (fun t : Type => t -> t -> t) union_var union_dh) (restriction G G1) (restriction G G2) n = Some b). { apply merge_with_None_Some_eq. split; assumption. }
+    rewrite <- restrmapsto. rewrite H2. reflexivity. }
+  all: try (assert (~ In n ((restriction G G1) ᴳ+ (restriction G G2))) by (rewrite nIn_iff_nMapsTo; rewrite <- restrmapsto; reflexivity);
+  apply nIn_union_iff in H0; rewrite 2 nIn_iff_nMapsTo in H0; rewrite <- 2 restriction_nIn_iff_nMapsTo in H0; destruct H0 as (H1 & H2); destruct H1, H2; trivial; try congruence).
+  all: assert (In n ((restriction G G1) ᴳ+ (restriction G G2))) by (unfold In; exists b; unfold union; assumption); rewrite In_union_iff in H; destruct H; unfold In in H; destruct H as (b' & H); apply restriction_MapsTo_iff in H; destruct H; congruence.
+Qed.
+
+Lemma ctx_split_union_union : forall (G3 G4 G1 G2 : ctx), G1 # G2 -> G3 ᴳ+ G4 = G1 ᴳ+ G2 -> exists G13 G14 G23 G24, G1 = G13 ᴳ+ G14 /\ G2 = G23 ᴳ+ G24 /\ G3 = G13 ᴳ+ G23 /\ G4 = G14 ᴳ+ G24.
 Proof.
   intros * DisjointG1G2 CtxEq.
   exists (restriction G3 G1), (restriction G4 G1), (restriction G3 G2), (restriction G4 G2). repeat split.
   - assert (restriction (G3 ᴳ+ G4) G1 = restriction (G1 ᴳ+ G2) G1). { rewrite CtxEq. reflexivity. } rewrite restriction_distrib_on_union in H. rewrite restriction_distrib_on_union in H. rewrite restriction_disjoint_empty with (G := G2) in H. 2:{ apply Disjoint_commutative; assumption. } rewrite restriction_self_eq in H. rewrite <- union_empty_r_eq in H. symmetry; assumption.
   - assert (restriction (G3 ᴳ+ G4) G2 = restriction (G1 ᴳ+ G2) G2). { rewrite CtxEq. reflexivity. } rewrite restriction_distrib_on_union in H. rewrite restriction_distrib_on_union in H. rewrite restriction_disjoint_empty with (G := G1) in H. 2:{ assumption. } rewrite restriction_self_eq in H. rewrite <- union_empty_l_eq in H. symmetry; assumption.
+  - apply split_into_restrictions. assumption. rewrite <- CtxEq. apply DomSubset_union_l.
+  - apply split_into_restrictions. assumption. rewrite <- CtxEq. apply DomSubset_union_r.
 Qed.
 
 Lemma ctx_split_stimes_union_3 : forall (m : mode) (G G1 G2 G3 : ctx), G1 # G2 -> G1 # G3 -> G2 # G3 -> m ᴳ· G = G1 ᴳ+ (G2 ᴳ+ G3) -> exists G1' G2' G3', G1 = m ᴳ· G1' /\ G2 = m ᴳ· G2' /\ G3 = m ᴳ· G3' /\ G = G1' ᴳ+ (G2' ᴳ+ G3').
@@ -3545,12 +3441,12 @@ Proof.
   destruct (ctx_split_stimes_union m G2G3' G2 G3) as (G2' & G3' & G2eq & G3eq & G2G3eq_); trivial. rewrite G2G3eq_ in *. exists G1', G2', G3'. repeat split; trivial.
 Qed.
 
-Lemma ctx_split_union_union_3 : forall (G4 G5 G1 G2 G3 : ctx), G1 # G2 -> G1 # G3 -> G2 # G3 -> G4 ᴳ+ G5 = G1 ᴳ+ (G2 ᴳ+ G3) -> exists G14 G15 G24 G25 G34 G35, G1 = G14 ᴳ+ G15 /\ G2 = G24 ᴳ+ G25 /\ G3 = G34 ᴳ+ G35.
+Lemma ctx_split_union_union_3 : forall (G4 G5 G1 G2 G3 : ctx), G1 # G2 -> G1 # G3 -> G2 # G3 -> G4 ᴳ+ G5 = G1 ᴳ+ (G2 ᴳ+ G3) -> exists G14 G15 G24 G25 G34 G35, G1 = G14 ᴳ+ G15 /\ G2 = G24 ᴳ+ G25 /\ G3 = G34 ᴳ+ G35 /\ G4 = G14 ᴳ+ (G24 ᴳ+ G34) /\ G5 = G15 ᴳ+ (G25 ᴳ+ G35).
 Proof.
   intros * DisjointG1G2 DisjointG1G3 DisjointG2G3 CtxEq.
-  destruct (ctx_split_union_union G4 G5 G1 (G2 ᴳ+ G3)) as (G14 & G15 & G234 & G235 & G1eq & G2G3eq); trivial. crush.
+  destruct (ctx_split_union_union G4 G5 G1 (G2 ᴳ+ G3)) as (G14 & G15 & G234 & G235 & G1eq & G2G3eq & G4eq & G5eq); trivial. crush.
   apply eq_sym in G2G3eq.
-  destruct (ctx_split_union_union G234 G235 G2 G3) as (G24 & G25 & G34 & G35 & G2eq & G3eq); trivial. exists G14, G15, G24, G25, G34, G35. repeat split; trivial.
+  destruct (ctx_split_union_union G234 G235 G2 G3) as (G24 & G25 & G34 & G35 & G2eq & G3eq & G234eq & G235eq); trivial. exists G14, G15, G24, G25, G34, G35. repeat split; trivial; subst; trivial.
 Qed.
 
 Lemma singleton_is_one_of_disjoint_union : forall (n : name) (b : binding_type_of n) (G1 G2 : ctx), G1 # G2 -> ctx_singleton n b = G1 ᴳ+ G2 -> { G1 = ctx_singleton n b /\ G2 = ᴳ{} } + { G1 = ᴳ{} /\ G2 = ctx_singleton n b }.
@@ -3629,6 +3525,76 @@ Proof.
   - assert (In (ʰ h) (m ᴳ· G)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_stimes_iff in H. destruct H as (b' & mapsto). congruence.
 Qed.
 
+Lemma union_inv_singleton_hole : forall (G1 G2 : ctx) (h : hname) (T : type) (n : mode), IsValid n -> G1 ᴳ+ G2 = ᴳ{+ h : T ‗ n} -> {exists n1 n2, G1 = ᴳ{+ h : T ‗ n1} /\ G2 = ᴳ{+ h : T ‗ n2} /\ n = mode_plus n1 n2} + {G1 = ᴳ{+ h : T ‗ n} /\ G2 = ᴳ{}} + {G1 = ᴳ{} /\ G2 = ᴳ{+ h : T ‗ n}}.
+Proof.
+  intros * IsValidn Geq.
+  destruct (G1 (ʰ h)) eqn:G1mapstoh, (G2 (ʰ h)) eqn:G2mapstoh.
+  - left. left. exists (mode_of b), (mode_of b0). repeat split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b0) in H. 2:{ split; assumption. } destruct b, b0; simpl in *; try destruct (type_eq_dec T0 T1); try destruct (mode_eq_dec n0 n1); simpl in *; inversion H; subst; try congruence; try inversion IsValidn; trivial.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+        assert (ᴳ{+ h : T ‗ mode_of b} n' = None). { unfold ctx_singleton. rewrite singleton_nMapsTo_iff. assumption. }
+      rewrite H1, H2; reflexivity.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b0) in H. 2:{ split; assumption. } destruct b, b0; simpl in *; try destruct (type_eq_dec T0 T1); try destruct (mode_eq_dec n0 n1); simpl in *; inversion H; subst; try congruence; try inversion IsValidn; trivial.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+        assert (ᴳ{+ h : T ‗ mode_of b0} n' = None). { unfold ctx_singleton. rewrite singleton_nMapsTo_iff. assumption. }
+      rewrite H1, H2; reflexivity.
+    + assert ((G1 ᴳ+ G2) (ʰ h) = ᴳ{+ h : T ‗ n} (ʰ h)). { rewrite Geq. reflexivity. }
+      unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do, ctx_singleton in H. rewrite singleton_MapsTo_at_elt in H; simpl in H; rewrite G1mapstoh, G2mapstoh in H; unfold union_dh in H.
+      destruct b, b0; simpl in *; try destruct (type_eq_dec T0 T1); try destruct (mode_eq_dec n0 n1); simpl in *; inversion H; subst;  try congruence; try inversion IsValidn; trivial.
+  - left. right. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_None_eq with (y1 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsValidn; trivial.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. simpl. assumption.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. } simpl. assumption.
+  - right. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsValidn; trivial.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. } simpl. assumption.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{+ h : T ‗ n} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsValidn; trivial.
+      * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+  - exfalso. assert (In (ʰ h) (G1 ᴳ+ G2)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_union_iff in H. destruct H as [H | H].
+    + unfold In, Fun.In in H. destruct H. congruence.
+    + unfold In, Fun.In in H. destruct H. congruence.
+Qed.
+
+Lemma union_inv_singleton_dest_IsLin : forall (G1 G2 : ctx) (h : hname) (T : type) (m0 m1 : mode), IsLin m0 -> G1 ᴳ+ G2 = ᴳ{- h : m0 ⌊ T ⌋ m1} -> {G1 = ᴳ{- h : m0 ⌊ T ⌋ m1} /\ G2 = ᴳ{}} + {G1 = ᴳ{} /\ G2 = ᴳ{- h : m0 ⌊ T ⌋ m1}}.
+Proof.
+  intros * IsLinm0 Geq.
+  destruct (G1 (ʰ h)) eqn:G1mapstoh, (G2 (ʰ h)) eqn:G2mapstoh.
+  - exfalso.
+    assert ((G1 ᴳ+ G2) (ʰ h) = ᴳ{- h : m0 ⌊ T ⌋ m1} (ʰ h)). { rewrite Geq. reflexivity. }
+    unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do, ctx_singleton in H. rewrite singleton_MapsTo_at_elt in H; simpl in H; rewrite G1mapstoh, G2mapstoh in H; unfold union_dh in H;
+    destruct b, b0; simpl in *; try destruct (type_eq_dec T0 T1); try destruct (mode_eq_dec n n0); inversion H; rewrite <- H1 in *; try inversion IsLinm0.
+    apply (nIsLin_mode_plus m m2 IsLinm0).
+  - left. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{- h : m0 ⌊ T ⌋ m1} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_None_eq with (y1 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsLinm0; trivial.
+      * assert (ᴳ{- h : m0 ⌊ T ⌋ m1} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{- h : m0 ⌊ T ⌋ m1} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. simpl. assumption.
+      * assert (ᴳ{- h : m0 ⌊ T ⌋ m1} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. } simpl. assumption.
+  - right. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{- h : m0 ⌊ T ⌋ m1} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsLinm0; trivial.
+      * assert (ᴳ{- h : m0 ⌊ T ⌋ m1} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      simpl. assumption.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{- h : m0 ⌊ T ⌋ m1} n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ʰ h) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion IsLinm0; trivial.
+      * assert (ᴳ{- h : m0 ⌊ T ⌋ m1} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+  - exfalso. assert (In (ʰ h) (G1 ᴳ+ G2)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_union_iff in H. destruct H as [H | H].
+    + unfold In, Fun.In in H. destruct H. congruence.
+    + unfold In, Fun.In in H. destruct H. congruence.
+Qed.
+
 Lemma hminus_hminus_inv_eq : forall (G : ctx), ValidOnly (ᴳ-⁻¹ G) -> ᴳ- (ᴳ-⁻¹ G) = G.
 Proof.
   intros * ValidOnlyG. apply ext_eq. intros n. unfold hminus, hminus_inv, map, Fun.map; simpl. destruct (G n) eqn:Gmapsto; simpl. f_equal. 2:{ reflexivity. }
@@ -3698,6 +3664,20 @@ Proof.
 Qed.
 Hint Rewrite <- HoleOnly_stimes_iff : propagate_down.
 
+Lemma HoleOnly_union_backward : forall (G1 G2 : ctx), HoleOnly (G1 ᴳ+ G2) -> ValidOnly (G1 ᴳ+ G2) -> HoleOnly G1 /\ HoleOnly G2.
+  intros * HoleOnlyU ValidOnlyU. unfold HoleOnly, union. split.
+  - intros n b G1mapsto. destruct (G2 n) eqn:G2mapsto.
+    * assert ((G1 ᴳ+ G2) n = Some ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b b0)). { unfold union; simpl. unfold Fun.merge, Fun.on_conflict_do; rewrite G1mapsto; rewrite G2mapsto; simpl; reflexivity. }
+      specialize (HoleOnlyU n ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b b0) H). specialize (ValidOnlyU n ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b b0) H). unfold IsHole in HoleOnlyU. inversion ValidOnlyU. destruct n; try destruct b; try destruct b0; simpl in *; try destruct (type_eq_dec T T0); try destruct (mode_eq_dec n n0); simpl in *; try congruence; trivial.
+    * assert ((G1 ᴳ+ G2) n = Some b). { unfold union; simpl. unfold Fun.merge, Fun.on_conflict_do; rewrite G1mapsto; rewrite G2mapsto; simpl; reflexivity. }
+      specialize (HoleOnlyU n b H). specialize (ValidOnlyU n b H). unfold IsHole in HoleOnlyU. inversion ValidOnlyU. destruct n, b; simpl in *; try congruence; trivial.
+  - intros n b G2mapsto. destruct (G1 n) eqn:G1mapsto.
+    * assert ((G1 ᴳ+ G2) n = Some ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b0 b)). { unfold union; simpl. unfold Fun.merge, Fun.on_conflict_do; rewrite G1mapsto; rewrite G2mapsto; simpl; reflexivity. }
+      specialize (HoleOnlyU n ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b0 b) H). specialize (ValidOnlyU n ((fsimple (fun t : Type => t -> t -> t) union_var union_dh) n b0 b) H). unfold IsHole in HoleOnlyU. inversion ValidOnlyU. destruct n; try destruct b0; try destruct b; simpl in *; try destruct (type_eq_dec T T0); try destruct (mode_eq_dec n n0); simpl in *; try congruence; trivial.
+    * assert ((G1 ᴳ+ G2) n = Some b). { unfold union; simpl. unfold Fun.merge, Fun.on_conflict_do; rewrite G1mapsto; rewrite G2mapsto; simpl; reflexivity. }
+      specialize (HoleOnlyU n b H). specialize (ValidOnlyU n b H). unfold IsHole in HoleOnlyU. inversion ValidOnlyU. destruct n, b; simpl in *; try congruence; trivial.
+Qed.
+
 Lemma ValidOnly_hminus : forall (G : ctx), ValidOnly G -> HoleOnly G -> ValidOnly (ᴳ-⁻¹ (ᴳ- G)).
 Proof.
   intros * ValidOnlyG HoleOnlyG. unfold ValidOnly. intros n b hmhGmapsto. specialize (ValidOnlyG n).
@@ -3722,12 +3702,114 @@ Proof.
   symmetry. apply hminus_inv_hminus_eq. apply ValidOnly_hminus; assumption.
 Qed.
 
+Lemma union_inv_hminus_inv : forall (G G1 G2 : ctx), ValidOnly (ᴳ-⁻¹ G) -> ᴳ-⁻¹ G = G1 ᴳ+ G2 -> G1 = ᴳ-⁻¹ (ᴳ- G1) /\ G2 = ᴳ-⁻¹ (ᴳ- G2).
+Proof.
+  intros * ValidOnlyhmG union_eq. repeat split.
+  - assert (ValidOnly G1). { rewrite union_eq in ValidOnlyhmG. crush. }
+    assert (HoleOnly G1). { pose proof ValidOnlyhmG as ValidOnlyhmG'. apply HoleOnly_hminus_inv in ValidOnlyhmG. rewrite union_eq in ValidOnlyhmG, ValidOnlyhmG'. apply HoleOnly_union_backward in ValidOnlyhmG. all:crush. }
+    symmetry. apply hminus_inv_hminus_eq. apply ValidOnly_hminus; assumption.
+  - assert (ValidOnly G2). { rewrite union_eq in ValidOnlyhmG. crush. }
+    assert (HoleOnly G2). { pose proof ValidOnlyhmG as ValidOnlyhmG'. apply HoleOnly_hminus_inv in ValidOnlyhmG. rewrite union_eq in ValidOnlyhmG, ValidOnlyhmG'. apply HoleOnly_union_backward in ValidOnlyhmG. all:crush. }
+    symmetry. apply hminus_inv_hminus_eq. apply ValidOnly_hminus; assumption.
+Qed.
+
+Ltac Disjoint_singleton_using' DisjointHyp :=
+ match type of DisjointHyp with
+  | _ /\ _ => let DisjointHyp2 := fresh DisjointHyp "" in
+    destruct DisjointHyp as (DisjointHyp & DisjointHyp2); apply nIn_iff_Disjoint_singleton; apply nIn_iff_Disjoint_singleton in DisjointHyp; apply nIn_iff_Disjoint_singleton in DisjointHyp2; assumption
+  | _ => apply nIn_iff_Disjoint_singleton; apply nIn_iff_Disjoint_singleton in DisjointHyp; assumption
+ end.
+
 Ltac Disjoint_singleton_using DisjointHyp :=
-  autorewrite with propagate_down in *; apply nIn_iff_Disjoint_singleton; apply nIn_iff_Disjoint_singleton in DisjointHyp; assumption.
+  autorewrite with propagate_down in *; Disjoint_singleton_using' DisjointHyp.
+
+Lemma val_fill_nIn_no_effect : forall (v v': val) (h : hname) (H : hnames) (G : ctx) (T : type), ~ In (ʰ h) G -> G ⫦ v : T -> val_fill v h H v' = v.
+Proof.
+  intros * nInG Tyv. dependent induction Tyv; simpl.
+  rewrite nIn_iff_Disjoint_singleton with (n := (ʰ h)) (binding := ₊ T ‗ ¹ν) in nInG. rewrite Disjoint_singletons_iff in nInG. destruct (HNamesFacts.eq_dec h0 h). congruence. reflexivity.
+  all: trivial.
+  - f_equal. apply IHTyv; assumption.
+  - f_equal. apply IHTyv; assumption.
+  - f_equal. { apply IHTyv1. apply nIn_union_iff in nInG. crush. } { apply IHTyv2. apply nIn_union_iff in nInG. crush. }
+  - f_equal. apply IHTyv. apply nIn_stimes_iff in nInG. crush.
+Qed.
+
+Lemma union_swap_1_2_l3 : forall (G1 G2 G3 : ctx), G1 ᴳ+ G2 ᴳ+ G3 = G2 ᴳ+ G1 ᴳ+ G3.
+Proof. intros *. rewrite union_commutative with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_3_l3 : forall (G1 G2 G3 : ctx), G1 ᴳ+ G2 ᴳ+ G3 = G3 ᴳ+ G2 ᴳ+ G1.
+Proof. intros *. rewrite union_commutative. rewrite union_commutative with (G1 := G1). rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_2_3_l3 : forall (G1 G2 G3 : ctx), G1 ᴳ+ G2 ᴳ+ G3 = G1 ᴳ+ G3 ᴳ+ G2.
+Proof. intros *. rewrite <- union_associative. rewrite union_commutative with (G1 := G2). rewrite union_associative. reflexivity. Qed.
+
+Lemma union_swap_1_2_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G2 ᴳ+ G1 ᴳ+ G3 ᴳ+ G4.
+Proof. intros *. rewrite union_commutative with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_3_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G3 ᴳ+ G2 ᴳ+ G1 ᴳ+ G4.
+Proof. intros *. rewrite union_swap_1_3_l3 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_4_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G4 ᴳ+ G2 ᴳ+ G3 ᴳ+ G1.
+Proof. intros *. rewrite union_swap_1_3_l3 with (G1 := G1). rewrite union_swap_1_3_l3 with (G1 := G3 ᴳ+ G2). rewrite <- union_associative. rewrite union_commutative with (G1 := G1). rewrite union_commutative with (G1 := G3). repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_2_3_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G1 ᴳ+ G3 ᴳ+ G2 ᴳ+ G4.
+Proof. intros *. rewrite union_swap_2_3_l3 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_4_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G1 ᴳ+ G4 ᴳ+ G3 ᴳ+ G2.
+Proof. intros *. rewrite <- 2 union_associative. rewrite union_associative with (G1 := G2). rewrite union_swap_1_3_l3 with (G1 := G2). repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_4_l4 : forall (G1 G2 G3 G4 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 = G1 ᴳ+ G2 ᴳ+ G4 ᴳ+ G3.
+Proof. intros *. rewrite union_swap_2_3_l3 with (G1 := G1 ᴳ+ G2). reflexivity. Qed.
+
+Lemma union_swap_1_2_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G2 ᴳ+ G1 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5.
+Proof. intros *. rewrite union_commutative with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_3_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G3 ᴳ+ G2 ᴳ+ G1 ᴳ+ G4 ᴳ+ G5.
+Proof. intros *. rewrite union_swap_1_3_l4 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_4_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G4 ᴳ+ G2 ᴳ+ G3 ᴳ+ G1 ᴳ+ G5.
+Proof. intros *. rewrite union_swap_1_4_l4 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_5_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G5 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G1.
+Proof. intros *. rewrite union_swap_1_4_l4 with (G1 := G1). rewrite union_swap_1_4_l4 with (G1 := G4 ᴳ+ G2). rewrite <- union_associative. rewrite union_commutative with (G1 := G1). rewrite union_commutative with (G1 := G4). repeat rewrite union_associative. rewrite union_swap_2_3_l3 with (G1 := G5). reflexivity. Qed.
+Lemma union_swap_2_3_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G3 ᴳ+ G2 ᴳ+ G4 ᴳ+ G5.
+Proof. intros *. rewrite union_swap_2_3_l4 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_4_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G4 ᴳ+ G3 ᴳ+ G2 ᴳ+ G5.
+Proof. intros *. rewrite union_swap_2_4_l4 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_5_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G5 ᴳ+ G3 ᴳ+ G4 ᴳ+ G2.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_swap_1_4_l4. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_4_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G2 ᴳ+ G4 ᴳ+ G3 ᴳ+ G5.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_swap_2_3_l4. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_5_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G2 ᴳ+ G5 ᴳ+ G4 ᴳ+ G3.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_swap_2_4_l4. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_4_5_l5 : forall (G1 G2 G3 G4 G5 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 = G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G5 ᴳ+ G4.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_commutative with (G1 := G4). reflexivity. Qed.
+
+Lemma union_swap_1_2_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G2 ᴳ+ G1 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. rewrite union_commutative with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_3_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G3 ᴳ+ G2 ᴳ+ G1 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_1_3_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_4_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G4 ᴳ+ G2 ᴳ+ G3 ᴳ+ G1 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_1_4_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_5_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G5 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G1 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_1_5_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_1_6_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G6 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G1.
+Proof. intros *. rewrite union_swap_1_5_l5 with (G1 := G1 ᴳ+ G2). rewrite union_commutative with (G1 := G1). rewrite union_associative. rewrite union_swap_2_5_l5 with (G5 := G2). rewrite union_swap_3_5_l5 with (G5 := G3). rewrite union_swap_4_5_l5 with (G5 := G4). reflexivity. Qed.
+Lemma union_swap_2_3_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G3 ᴳ+ G2 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_2_3_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_4_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G4 ᴳ+ G3 ᴳ+ G2 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_2_4_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_5_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G5 ᴳ+ G3 ᴳ+ G4 ᴳ+ G2 ᴳ+ G6.
+Proof. intros *. rewrite union_swap_2_5_l5 with (G1 := G1). reflexivity. Qed.
+Lemma union_swap_2_6_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G6 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G2.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4). rewrite union_swap_1_5_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_4_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G4 ᴳ+ G3 ᴳ+ G5 ᴳ+ G6.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4).  rewrite union_swap_2_3_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_5_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G5 ᴳ+ G4 ᴳ+ G3 ᴳ+ G6.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4).  rewrite union_swap_2_4_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_3_6_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G6 ᴳ+ G4 ᴳ+ G5 ᴳ+ G3.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4).  rewrite union_swap_2_5_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_4_5_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G5 ᴳ+ G4 ᴳ+ G6.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4). rewrite union_swap_3_4_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_4_6_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G6 ᴳ+ G5 ᴳ+ G4.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_associative with (G1 := G2). rewrite union_associative with (G1 := G2 ᴳ+ G3). rewrite union_associative with (G1 := G2 ᴳ+ G3 ᴳ+ G4). rewrite union_swap_3_5_l5. repeat rewrite union_associative. reflexivity. Qed.
+Lemma union_swap_5_6_l6 : forall (G1 G2 G3 G4 G5 G6 : ctx), G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G5 ᴳ+ G6 = G1 ᴳ+ G2 ᴳ+ G3 ᴳ+ G4 ᴳ+ G6 ᴳ+ G5.
+Proof. intros *. repeat rewrite <- union_associative. rewrite union_commutative with (G1 := G5). reflexivity. Qed.
 
 Lemma Ty_val_fill : forall (D20 D5 : ctx) (h : hname) (v' : val) (T : type) , D20 ᴳ+ ᴳ-⁻¹ D5 ⫦ v' : T ->
   forall (v : val) (D4 D13 : ctx) (n : mode) (U : type),
   ValidOnly (ᴳ-⁻¹ D13) ->
+  IsValid n ->
   D4 # D5 ->
   D4 # D13 ->
   D4 # D20 ->
@@ -3741,7 +3823,7 @@ Lemma Ty_val_fill : forall (D20 D5 : ctx) (h : hname) (v' : val) (T : type) , D2
   D4 ᴳ+ ᴳ-⁻¹ (D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ⫦ v : U ->
   D4 ᴳ+ ᴳ-⁻¹ D13 ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5) ⫦ val_fill v h hnamesᴳ( D5) v' : U.
 Proof.
-  intros * Tyv'. induction v; intros * ValidOnlyhmD13 DisjointD4D5 DisjointD4D13 DisjointD4D20 DisjointD4h DisjointD5D13 DisjointD5D20 DisjointD5h DisjointD13D20 DisjointD13h DisjointD20h Tyv; simpl.
+  intros * Tyv'. induction v; intros * ValidOnlyhmD13 IsValidn DisjointD4D5 DisjointD4D13 DisjointD4D20 DisjointD4h DisjointD5D13 DisjointD5D20 DisjointD5h DisjointD13D20 DisjointD13h DisjointD20h Tyv; simpl.
   - subst. rewrite hminus_inv_distrib_on_union in Tyv. rewrite hminus_inv_singleton in Tyv.
     assert (ᴳ{+ h0 : U ‗ ¹ν} = D4 ᴳ+ (ᴳ-⁻¹ D13 ᴳ+ ᴳ{+ h : T ‗ n})). { dependent destruction Tyv. unfold ctx_singleton, singleton, union, hminus_inv, merge_with, merge; cbn. apply ext_eq'. cbn. rewrite x. reflexivity. } 2:{ crush. } destruct (HNamesFacts.eq_dec h0 h) eqn:h_eq; subst.
     * assert (D4 = ᴳ{} /\ D13 = ᴳ{} /\ T = U /\ n = ¹ν) as (D4eq & D13eq & Teq & neq). { destruct (singleton_is_one_of_disjoint_union_3 (ʰ h) (₊ U ‗ ¹ν) D4 (ᴳ-⁻¹ D13) (ᴳ{+ h : T ‗ n})). { crush. } { Disjoint_singleton_using DisjointD4h. } { Disjoint_singleton_using DisjointD13h. } { assumption. } destruct s. { destruct a as (_ & _ & contra). apply singleton_eq_empty_contra in contra. exfalso; assumption. } { destruct a as (_ & _ & contra). apply singleton_eq_empty_contra in contra. exfalso; assumption. }
@@ -3764,14 +3846,78 @@ Proof.
     destruct (ctx_split_stimes_union_3 m G D4 (ᴳ-⁻¹ D13) (ᴳ{+ h : T ‗ n})) as (D4' & D13' & hSing' & D4eq & D13eq & hSingeq & Geq); trivial. { crush. } { Disjoint_singleton_using DisjointD4h. } { Disjoint_singleton_using DisjointD13h. } 2:{ assumption. }
     destruct (stimes_inv_singleton_hole m hSing' h T n) as (m' & neq & hSingeq').
     symmetry; assumption. rewrite Disjoint_hminus_inv_r_iff with (D' := D13) in *. rewrite Disjoint_hminus_inv_l_iff with (D := D13) in *. rewrite D4eq, D13eq, neq in *. rewrite <- stimes_is_action. rewrite <- 2 stimes_distrib_on_union.
-    constructor. apply eq_sym in D13eq. apply stimes_inv_hminus_inv in D13eq. rewrite D13eq in *. apply IHv; trivial; swap 1 11. rewrite hSingeq' in Geq. rewrite Geq in Tyv. rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption.
-    { Disjoint_singleton_using DisjointD13h. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. } { crush. } { rewrite <- D13eq; assumption. } { assumption. }
+    constructor. apply eq_sym in D13eq. apply stimes_inv_hminus_inv in D13eq. rewrite D13eq in *. apply IHv; trivial; swap 1 12. rewrite hSingeq' in Geq. rewrite Geq in Tyv. rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption.
+    { Disjoint_singleton_using DisjointD13h. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. } { crush. } { rewrite <- D13eq; assumption. } { assumption. }
   - dependent destruction Tyv.
     assert (G1 ᴳ+ G2 = D4 ᴳ+ ᴳ-⁻¹ (D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})). { apply ext_eq. intros name. cbn; rewrite x. reflexivity. } clear x.
     rewrite hminus_inv_distrib_on_union in H. rewrite hminus_inv_singleton in H.
-    destruct (ctx_split_union_union_3 G1 G2 D4 (ᴳ-⁻¹ D13) (ᴳ{+ h : T ‗ n})) as (D41 & D42 & D131' & D132' & sing1 & sing2 & D4eq & D13eq & singeq); trivial. { crush. } { Disjoint_singleton_using DisjointD4h. } { Disjoint_singleton_using DisjointD13h. } 2:{ assumption. }
-    give_up.
-Admitted.
+    destruct (ctx_split_union_union_3 G1 G2 D4 (ᴳ-⁻¹ D13) (ᴳ{+ h : T ‗ n})) as (D41 & D42 & D131' & D132' & sing1 & sing2 & D4eq & D13eq & singeq & G1eq & G2eq); trivial. { crush. } { Disjoint_singleton_using DisjointD4h. } { Disjoint_singleton_using DisjointD13h. } 2:{ assumption. }
+    pose proof singeq as singeq'.
+    apply eq_sym in singeq. apply union_inv_singleton_hole in singeq. 2:{ assumption. }
+    pose proof D13eq as D13eq'.
+    apply union_inv_hminus_inv in D13eq. destruct D13eq as (D131eq & D132eq).
+    rewrite G1eq, G2eq in *.
+    rewrite Disjoint_hminus_inv_r_iff with (D' := D13) in *. rewrite Disjoint_hminus_inv_l_iff with (D := D13) in *.
+    rewrite D4eq, D131eq, D132eq in *. rewrite D13eq' in *. 2:{ assumption. }
+    destruct singeq as [[(n1 & n2 & sing1eq & sing2eq & neq) | (sing1eq & sing2eq)] | (sing1eq & sing2eq)].
+    * rewrite sing1eq, sing2eq, neq in *. rewrite singeq' in *.
+      replace (D41 ᴳ+ D42 ᴳ+ (ᴳ-⁻¹ (ᴳ- D131') ᴳ+ ᴳ-⁻¹ (ᴳ- D132')) ᴳ+ mode_plus n1 n2 ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5)) with ((D41 ᴳ+ ᴳ-⁻¹ (ᴳ- D131') ᴳ+ n1 ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5)) ᴳ+ (D42 ᴳ+ ᴳ-⁻¹ (ᴳ- D132') ᴳ+ n2 ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5))).
+      constructor.
+      apply IHv1.
+        { crush. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. }
+        { rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption. Disjoint_singleton_using DisjointD13h. }
+      apply IHv2.
+        { crush. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. }
+        { rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption. Disjoint_singleton_using DisjointD13h. }
+      rewrite <- union_self_stimes_plus_eq.
+      repeat rewrite union_associative.
+      rewrite union_swap_2_4_l6.
+      rewrite union_swap_3_4_l6.
+      rewrite union_swap_4_5_l6.
+      reflexivity.
+    * rewrite sing2eq in *. rewrite <- union_empty_r_eq in *. rewrite sing1eq in *.
+      replace (D41 ᴳ+ D42 ᴳ+ (ᴳ-⁻¹ (ᴳ- D131') ᴳ+ ᴳ-⁻¹ (ᴳ- D132')) ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5)) with ((D41 ᴳ+ ᴳ-⁻¹ (ᴳ- D131') ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5)) ᴳ+ (D42 ᴳ+ ᴳ-⁻¹ (ᴳ- D132'))).
+      constructor.
+      apply IHv1.
+        { crush. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. }
+        { rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption. Disjoint_singleton_using DisjointD13h. }
+      rewrite val_fill_nIn_no_effect with (G := D42 ᴳ+ ᴳ-⁻¹ (ᴳ- D132')) (T := T2).
+        { assumption. } { apply nIn_union_iff; split; apply nIn_iff_Disjoint_singleton with (n := ʰ h) (binding := ₋ ¹ν ⌊ T ⌋ n). crush. crush. } { assumption. }
+      repeat rewrite union_associative.
+      rewrite union_swap_2_4_l5.
+      rewrite union_swap_3_5_l5.
+      rewrite union_swap_3_4_l5.
+      reflexivity.
+    * rewrite sing1eq in *. rewrite <- union_empty_r_eq in *. rewrite sing2eq in *.
+      replace (D41 ᴳ+ D42 ᴳ+ (ᴳ-⁻¹ (ᴳ- D131') ᴳ+ ᴳ-⁻¹ (ᴳ- D132')) ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5)) with ((D41 ᴳ+ ᴳ-⁻¹ (ᴳ- D131')) ᴳ+ (D42 ᴳ+ ᴳ-⁻¹ (ᴳ- D132') ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5))).
+      constructor.
+      rewrite val_fill_nIn_no_effect with (G := D41 ᴳ+ ᴳ-⁻¹ (ᴳ- D131')) (T := T1).
+        { assumption. } { apply nIn_union_iff; split; apply nIn_iff_Disjoint_singleton with (n := ʰ h) (binding := ₋ ¹ν ⌊ T ⌋ n). crush. crush. } { assumption. }
+      apply IHv2.
+        { crush. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. }
+        { rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption. Disjoint_singleton_using DisjointD13h. }
+      repeat rewrite union_associative.
+      rewrite union_swap_2_3_l5.
+      reflexivity.
+  - assert (exists D1 D2, D1 ᴳ+ D2 = D4 ᴳ+ ᴳ-⁻¹ (D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) /\ DestOnly D1 /\ DestOnly D2). { dependent destruction Tyv. exists D1, D2. repeat split; trivial. unfold ctx_singleton, singleton, union, hminus_inv, merge_with, merge; cbn. apply ext_eq'. cbn. rewrite x. reflexivity. }
+    destruct H0 as (D1 & D2 & CtxEq & DestOnlyD1 & DestOnlyD2).
+    assert (DestOnly (D1 ᴳ+ D2)). { crush. }
+    rewrite CtxEq in H0. rewrite hminus_inv_distrib_on_union in H0. autorewrite with propagate_down in H0. destruct H0 as (_ & _ & contra). rewrite hminus_inv_singleton in contra. apply DestOnly_singleton_hole_contra in contra. contradiction. { crush. }
+Qed.
+
+Lemma stimes_linone_equal_iff : forall (G1 G2 : ctx), ¹↑ ᴳ· G1 = ¹↑ ᴳ· G2 <-> G1 = G2.
+Proof.
+  intros *.
+  split.
+  - intros Geq. apply ext_eq. intros n.
+    destruct (G1 n) eqn:G1mapsto, (G2 n) eqn:G2mapsto.
+    assert ((¹↑ ᴳ· G1) n = (¹↑ ᴳ· G2) n). { rewrite Geq; reflexivity. }
+    unfold stimes in H. simpl in H. unfold Fun.map in H. rewrite G1mapsto, G2mapsto in H. inversion H. destruct n, b, b0; simpl in H1; try destruct m; try destruct m0; try destruct n; try destruct n0; try destruct p; try destruct p0; try destruct m; try destruct m0; try destruct a; try destruct a0; inversion H1; trivial.
+    assert (In n G2). { rewrite <- In_stimes_iff with (m := ¹↑). rewrite <- Geq. rewrite In_stimes_iff. exists b; assumption. } destruct H; congruence.
+    assert (In n G1). { rewrite <- In_stimes_iff with (m := ¹↑). rewrite Geq. rewrite In_stimes_iff. exists b; assumption. } destruct H; congruence.
+    reflexivity.
+  - intros Geq. rewrite Geq. reflexivity.
+Qed.
 
 Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), DestOnly D2 -> D2 # ᴳ{- h : ¹ν ⌊ T ⌋ n } -> D2 ⫦ v : T ->
   forall (m0 : mode) (U U0 : type) (D1: ctx),
@@ -3784,7 +3930,9 @@ Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx)
 Proof.
   intros * DestOnlyD2 DisjointD2h Tyv. induction C.
   - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1h TyC.
-    dependent destruction TyC. (* Prove that union of singleton + other things is not the empty context *) admit.
+    assert (ᴳ{} = D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})). { dependent destruction TyC. unfold ctx_singleton, singleton, union, hminus_inv, merge_with, merge; cbn. apply ext_eq'. cbn. rewrite x. reflexivity. }
+    assert (In (ʰ h) ᴳ{}). { rewrite H. apply In_union_iff. right. rewrite  stimes_distrib_on_union. apply In_union_iff. right. repeat rewrite In_stimes_iff. apply In_singleton_iff. reflexivity. }
+    destruct H0 as (b & contra). simpl in contra. congruence.
   - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1h TyC.
     destruct a; simpl; dependent destruction TyC.
     * (* Ty-ectxs-App1 *)
@@ -3844,31 +3992,20 @@ Proof.
       assert (LinOnly (¹↑ ᴳ· D0 ᴳ+ D3) /\ FinAgeOnly (¹↑ ᴳ· D0 ᴳ+ D3)) as (LinOnlyD' & FinAgeOnlyD'). split.
         { supercrush. } { supercrush. }
       rewrite ctx_eq in LinOnlyD', FinAgeOnlyD'.
-      assert (
-        exists (D10 D13 D20 D23 : ctx),
-        D1 = ¹↑ ᴳ· D10 ᴳ+ D13 /\
-        D2 = D20 ᴳ+ D23 /\
-        D0 = D10 ᴳ+ (m0 · n) ᴳ· D20 /\
-        D3 = D13 ᴳ+ m0 ᴳ· ((¹↑ · n) ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) /\
-        DestOnly D10 /\ DestOnly D13 /\ DestOnly D20 /\ DestOnly D23 /\
-        D10 # D13 /\ D10 # D20 /\ D10 # D23 /\ D13 # D20 /\ D13 # D23 /\ D20 # D23 /\
-        D10 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D13 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D20 # ᴳ{- h : ¹ν ⌊ T ⌋ n} /\ D23 # ᴳ{- h : ¹ν ⌊ T ⌋ n}
-      ). { admit. }
-      destruct H as (
-        D10 & D13 & D20 & D23 &
-        D1eq & D2eq & D0eq & D3eq &
-        DestOnlyD10 & DestOnlyD13 & DestOnlyD20 & DestOnlyD23 &
-        DisjointD10D13 & DisjointD10D20 & DisjointD10D23 & DisjointD13D20 & DisjointD13D23 & DisjointD20D23 &
-        DisjointD10h & DisjointD13h & DisjointD20h & DisjointD23h
-      ). rewrite D1eq, D2eq, D0eq, D3eq in *. clear D1eq D2eq D0eq D3eq. clear D1 D2 D0 D3 IHC.
-      destruct (HNames.mem h hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}))) eqn:emem.
-      + apply HNames.mem_spec in emem.
-        admit.
-        (* assert (HNames.remove h hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ∪ HNames.empty = hnamesᴳ( D13 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D23))) as remove_eq. { admit. } rewrite remove_eq.
-        assert (D23 = ᴳ{} /\ m0 = ¹ν) as (D23eq & m0eq). { admit. (* follows from ValidOnlyhmD3 *) } rewrite D23eq, m0eq in *. clear D23eq m0eq.
-        rewrite stimes_empty_eq in *. rewrite stimes_empty_eq in *. rewrite <- stimes_linnu_eq in *. rewrite <- union_empty_l_eq in *. rewrite <- union_empty_r_eq in *. rewrite mode_times_linnu_l_eq in *. rewrite <- stimes_linnu_eq in *. clear DestOnlyD23 DisjointD10D23 DisjointD13D23 DisjointD20D23 DisjointD23h.
-        assert ()
-        constructor 21. *)
+      rewrite stimes_distrib_on_union in ctx_eq. rewrite stimes_is_action in ctx_eq.
+      destruct (ctx_split_union_union_3 (¹↑ ᴳ· D0) D3 D1 (m0 · ¹↑ · n ᴳ· D2) (m0 ᴳ· ᴳ{- h : ¹ν ⌊ T ⌋ n})) as (D10 & D13 & D20 & D23 & sing0 & sing3 & D1eq & D2eq & singeq & D0eq & D3eq).
+        { crush. } { crush. } { crush. } { crush. }
+      assert (IsLin m0). { rewrite stimes_distrib_on_union in LinOnlyD'. rewrite stimes_singleton_dest in LinOnlyD'. rewrite mode_times_linnu_l_eq in LinOnlyD'. assert (LinOnly ᴳ{- h : m0 ⌊ T ⌋ n}) by crush. assert (ᴳ{- h : m0 ⌊ T ⌋ n} (ʰ h) = Some (₋ m0 ⌊ T ⌋ n)). { unfold ctx_singleton; rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (H (ʰ h) (₋ m0 ⌊ T ⌋ n) H1). simpl in H; assumption. }
+      pose proof singeq as singeq'.
+      rewrite stimes_singleton_dest, mode_times_linnu_l_eq in singeq. apply eq_sym, union_inv_singleton_dest_IsLin in singeq. 2:{ assumption. }
+      rewrite D1eq, D2eq, D0eq, D3eq in *.
+      destruct (ctx_split_stimes_union (m0 · ¹↑ · n) D2 D20 D23) as (D20' & D23' & D20eq & D23eq & D2eq'). { rewrite stimes_distrib_on_union in LinOnlyD'. rewrite stimes_is_action in LinOnlyD'. rewrite D2eq in LinOnlyD'. crush. } { assumption. } rewrite D20eq, D23eq, D2eq' in *.
+      destruct (ctx_split_stimes_union_3 ¹↑ D0 D10 (m0 · ¹↑ · n ᴳ· D20') sing0) as (D10' & D20'' & sing0' & D10eq & D20eq' & singeq0 & D0eq'); trivial. { crush. } { rewrite stimes_distrib_on_union in LinOnlyD'. rewrite singeq' in LinOnlyD'. crush. } { rewrite stimes_distrib_on_union in LinOnlyD'. rewrite singeq' in LinOnlyD'. crush. } rewrite D10eq, singeq0, D0eq' in *.
+      rewrite mode_times_commutative with (m := m0) in D20eq'. rewrite <- mode_times_associative in D20eq'. rewrite mode_times_commutative with (m := n) in D20eq'. rewrite <- stimes_is_action with (m := ¹↑) in D20eq'.
+      rewrite stimes_linone_equal_iff in D20eq'. rewrite <- D20eq' in *.
+      clear D20eq' D20''. clear D1eq D1 D2eq D2eq' D2 D3eq D3 D20eq D20 D23eq D23 D10eq D10 singeq0 sing0 D0eq D0eq' D0 singeq'.
+      destruct singeq as [(sing0peq & sing3eq) | (sing0peq & sing3eq)].
+      + admit.
       + admit.
 Admitted.
 
