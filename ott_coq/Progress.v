@@ -1,8 +1,8 @@
 Require Import List.
 Require Import Ott.ott_list_core.
 Require Import Dest.destination_calculus_ott.
-Require Import Dest.destination_calculus_notations.
-Require Import Dest.ext_nat.
+Require Import Dest.Notations.
+Require Import Dest.ExtNat.
 Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
@@ -15,7 +15,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
 Require Import Arith.
-Require Import Dest.destination_calculus_proofs.
+Require Import Dest.Lemmas.
 
 Theorem Progress : forall (C : ectxs) (t : term) (U0 : type), ⊢ C ʲ[t] : U0 -> ((exists v, t = ᵥ₎ v) -> C <> ©️⬜) -> exists (C' : ectxs) (t' : term), C ʲ[t] ⟶ C' ʲ[t'].
 Proof.

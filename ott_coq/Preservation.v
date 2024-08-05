@@ -1,8 +1,8 @@
 Require Import List.
 Require Import Ott.ott_list_core.
 Require Import Dest.destination_calculus_ott.
-Require Import Dest.destination_calculus_notations.
-Require Import Dest.ext_nat.
+Require Import Dest.Notations.
+Require Import Dest.ExtNat.
 Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
@@ -18,7 +18,12 @@ Require Import Arith.
 Require Import Coq.Init.Nat.
 Require Import Coq.Arith.PeanoNat.
 Require Import Lia.
-Require Import Dest.destination_calculus_proofs.
+Require Import Dest.Lemmas.
+Require Import Dest.EctxsFillLeafSpec.
+Require Import Dest.EctxsFillCtorSpec.
+Require Import Dest.EctxsFillCompSpec.
+Require Import Dest.TermSubSpec1.
+Require Import Dest.TermSubSpec2.
 
 Ltac assert_LinOnly_FinAgeOnly_remove_Disposable G G' C T U0 P DisposP :=
   assert (LinOnly G /\ FinAgeOnly G) as (LinOnlyD & FinAgeOnlyD) by (apply (Ty_ectxs_LinOnly_FinAgeOnly (G) C T U0); tauto);
@@ -415,7 +420,7 @@ Proof.
       inversion TyCc; subst. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C ① U0 P DisposP.
       assert (D ⊢ ᵥ₎ v⨞() : ①) as TyFillU.
-        { apply (Ty_term_FillU D (ᵥ₎ v) n). tauto. }
+        { apply (Ty_term_FillU D (ᵥ₎ v) n); tauto. }
       constructor 1 with (D := D) (T := ①) (t := ᵥ₎ v⨞()). all: crush.
     - (* Red-FillU *)
       inversion Tyt; subst.
@@ -429,7 +434,7 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{}) = hnames_ nil) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D1 := ᴳ{}) (T := ①); swap 1 11.
+          apply ectxs_fillCtor_spec with (D1 := ᴳ{}) (T := ①); swap 1 12.
           { rewrite hminus_inv_empty_eq. apply Ty_val_Unit. }
           all: crush. }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
@@ -445,7 +450,7 @@ Proof.
       inversion TyCc; subst. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T1 ⌋ n) U0 P DisposP.
       assert (D ⊢ ᵥ₎ v ⨞Inl : ⌊ T1 ⌋ n) as TyFillL.
-        { apply (Ty_term_FillL D (ᵥ₎ v) T1 n T2). tauto. }
+        { apply (Ty_term_FillL D (ᵥ₎ v) T1 n T2); tauto. }
       constructor 1 with (D := D) (T := ⌊ T1 ⌋ n) (t := ᵥ₎ v ⨞Inl). all: crush.
     - (* Red-FillL *)
       inversion Tyt; revert hpMaxCh; subst.
@@ -460,9 +465,9 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 11.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 12.
           { rewrite hminus_inv_singleton. apply Ty_val_Left. constructor. }
-          { crush. } { crush. } { crush. }
+          { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
           { crush. } { crush. } { crush. } { crush. } { crush. }
@@ -480,7 +485,7 @@ Proof.
       inversion TyCc; subst. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T2 ⌋ n) U0 P DisposP.
       assert (D ⊢ ᵥ₎ v ⨞Inr : ⌊ T2 ⌋ n) as TyFillR.
-        { apply (Ty_term_FillR D (ᵥ₎ v) T2 n T1). tauto. }
+        { apply (Ty_term_FillR D (ᵥ₎ v) T2 n T1); tauto. }
       constructor 1 with (D := D) (T := ⌊ T2 ⌋ n) (t := ᵥ₎ v ⨞Inr). all: crush.
     - (* Red-FillR *)
       inversion Tyt; revert hpMaxCh; subst.
@@ -495,9 +500,9 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 11.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 12.
           { rewrite hminus_inv_singleton. apply Ty_val_Right. constructor. }
-          { crush. } { crush. } { crush. }
+          { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
           { crush. } { crush. } { crush. } { crush. } { crush. }
@@ -521,7 +526,7 @@ Proof.
       rewrite SimplMode in *.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T ⌋ m · n) U0 P DisposP.
       assert (D ⊢ ᵥ₎ v ⨞ᴇ m : ⌊ T ⌋ mode_times' ((cons m nil) ++ (cons n nil) ++ nil)) as TyFillE.
-        { apply (Ty_term_FillE D (ᵥ₎ v) m T n). assumption. tauto. }
+        { apply (Ty_term_FillE D (ᵥ₎ v) m T n); tauto. }
       constructor 1 with (D := D) (T := ⌊ T ⌋ m · n) (t := ᵥ₎ v ⨞ᴇ m); rewrite SimplMode in *. all: crush.
     - (* Red-FillE *)
       inversion Tyt; revert hpMaxCh; subst.
@@ -539,9 +544,9 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) (T := ! m ⁔ T); swap 1 11.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) (T := ! m ⁔ T); swap 1 12.
           { rewrite hminus_inv_singleton. assert (m ᴳ· ᴳ{+ (h' + 1) : T ‗ ¹ν} = ᴳ{+ (h' + 1) : T ‗ m}). { rewrite  <- mode_times_linnu_l_eq at 2. apply stimes_singleton_hole. } rewrite <- H. apply Ty_val_Exp. constructor. assumption. }
-          { crush. } { crush. } { crush. }
+          { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
           { crush. } { crush. } { crush. } { crush. } { crush. }
@@ -559,7 +564,7 @@ Proof.
       inversion TyCc; subst. rename D0 into D.
       assert_LinOnly_FinAgeOnly_remove_Disposable (P ᴳ+ D) D C (⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) U0 P DisposP.
       assert (D ⊢ ᵥ₎ v ⨞(,) : ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) as TyFillP.
-        { apply (Ty_term_FillP D (ᵥ₎ v) T1 n T2). tauto. }
+        { apply (Ty_term_FillP D (ᵥ₎ v) T1 n T2); tauto. }
       constructor 1 with (D := D) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ v ⨞(,)). all: crush.
     - (* Red-FillP *)
       inversion Tyt; revert hpMaxCh; subst.
@@ -575,8 +580,8 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) = ᴴ{ h' + 1, h' + 2}) as e2. { rewrite hnames_distrib_on_union. rewrite 2 hnames_singleton_dest. apply hnames_singleton_union_eq. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) (T := T1 ⨂ T2); swap 1 11.
-          { rewrite hminus_inv_distrib_on_union. rewrite 2 hminus_inv_singleton. apply Ty_val_Prod. apply Ty_val_Hole. apply Ty_val_Hole. assumption. }
+          apply ectxs_fillCtor_spec with (D3 := (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) (T := T1 ⨂ T2); swap 1 12.
+          { rewrite hminus_inv_distrib_on_union. rewrite 2 hminus_inv_singleton. apply Ty_val_Prod. apply Ty_val_Hole. apply Ty_val_Hole. assumption. } { crush. }
           { apply DestOnly_union_iff. crush. } { crush. } { crush. }
           { apply Disjoint_union_l_iff. split; rewrite hpMaxCh; apply Disjoint_singletons_iff. { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } }
           { rewrite e2. rewrite hpMaxCh. rewrite <- hnames_singleton_union_eq. apply HDisjoint_union_iff; repeat split. apply HDisjoint_gt_max. lia. apply HDisjoint_gt_max. lia. }
@@ -611,8 +616,8 @@ Proof.
       rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m0 (T ⁔ m → U) n LinOnlySingl FinAgeOnlySingl Subtypem) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ ᵛλ x ⁔ m ⟼ u] : ① ↣ U0).
         { replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *.
-          apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T ⁔ m → U); swap 1 8.
-          { crush. } { crush. }  { crush. } { crush. }
+          apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T ⁔ m → U).
+          { crush. } { crush. } { crush. } { crush. } { crush. }
           { apply Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. }
           { rewrite <- union_empty_l_eq. rewrite union_commutative. assumption. }
           { apply Ty_val_Fun. assumption. assumption. crush. }
@@ -723,7 +728,7 @@ Proof.
       rewrite <- (LinOnly_FinAgeOnly_no_derelict h ¹ν m T n LinOnlySingl FinAgeOnlySingl Subtypem) in *.
       assert (ᴳ{} ⊣ C ©️[ h ≔ hnames_ ©️⬜ ‗ v] : ① ↣ U0). {
         apply ectxs_fillLeaf_spec with (D2 := D2) (n := n) (T := T).
-        { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite <- union_empty_l_eq. rewrite union_commutative. replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *. 2:{ simpl. rewrite mode_times_linnu_r_eq. reflexivity. } assumption. } { assumption. }
+        { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite <- union_empty_l_eq. rewrite union_commutative. replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) with (¹↑ · n) in *. 2:{ simpl. rewrite mode_times_linnu_r_eq. reflexivity. } assumption. } { assumption. }
       }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4. term_Val_no_dispose ᴳ{}. apply Ty_val_Unit. all:crush.
 Qed.

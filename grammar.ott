@@ -1,7 +1,7 @@
 embed
 {{ coq
 Import EqNotations.
-Require Import Dest.ext_nat.
+Require Import Dest.ExtNat.
 Require Import Coq.Structures.Equalities.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.

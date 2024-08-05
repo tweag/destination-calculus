@@ -7,7 +7,7 @@ Require Import Ott.ott_list_core.
 
 
 Import EqNotations.
-Require Import Dest.ext_nat.
+Require Import Dest.ExtNat.
 Require Import Coq.Structures.Equalities.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
@@ -915,18 +915,23 @@ with Ty_term : ctx -> term -> type -> Prop :=    (* defn Ty_term *)
      (DisposP: DisposableOnly P ),
      Ty_term P term_Alloc (type_Ampar T (type_Dest T  (Some (pair   Lin     (Fin 0)  )) ))
  | Ty_term_FillU : forall (P:ctx) (t:term) (n:mode)
+     (Validn: IsValid n )
      (Tyt: Ty_term P t (type_Dest type_Unit n)),
      Ty_term P (term_FillU t) type_Unit
  | Ty_term_FillL : forall (P:ctx) (t:term) (T1:type) (n:mode) (T2:type)
+     (Validn: IsValid n )
      (Tyt: Ty_term P t (type_Dest (type_Sum T1 T2) n)),
      Ty_term P (term_FillL t) (type_Dest T1 n)
  | Ty_term_FillR : forall (P:ctx) (t:term) (T2:type) (n:mode) (T1:type)
+     (Validn: IsValid n )
      (Tyt: Ty_term P t (type_Dest (type_Sum T1 T2) n)),
      Ty_term P (term_FillR t) (type_Dest T2 n)
  | Ty_term_FillP : forall (P:ctx) (t:term) (T1:type) (n:mode) (T2:type)
+     (Validn: IsValid n )
      (Tyt: Ty_term P t (type_Dest (type_Prod T1 T2) n)),
      Ty_term P (term_FillP t) (type_Prod (type_Dest T1 n) (type_Dest T2 n))
  | Ty_term_FillE : forall (P:ctx) (t:term) (n':mode) (T:type) (n:mode)
+     (Validn: IsValid n )
      (Validnp: IsValid n' )
      (Tyt: Ty_term P t (type_Dest (type_Exp n' T) n)),
      Ty_term P (term_FillE t n') (type_Dest T  (mode_times'  ((app (cons n' nil) (app (cons n nil) nil))) ) )
@@ -1053,18 +1058,23 @@ with Ty_ectxs : ctx -> ectxs -> type -> type -> Prop :=    (* defn Ty_ectxs *)
      (TyC: Ty_ectxs D C  (type_Prod U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )  U0),
      Ty_ectxs D  (cons   ectx_FromA    C )   (type_Ampar U  (type_Exp  (Some (pair   Lin     Inf  ))  T) )  U0
  | Ty_ectxs_FillU : forall (D:ctx) (C:ectxs) (n:mode) (U0:type)
+     (Validn: IsValid n )
      (TyC: Ty_ectxs D C type_Unit U0),
      Ty_ectxs D  (cons   ectx_FillU    C )  (type_Dest type_Unit n) U0
  | Ty_ectxs_FillL : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     (Validn: IsValid n )
      (TyC: Ty_ectxs D C (type_Dest T1 n) U0),
      Ty_ectxs D  (cons   ectx_FillL    C )  (type_Dest (type_Sum T1 T2) n) U0
  | Ty_ectxs_FillR : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     (Validn: IsValid n )
      (TyC: Ty_ectxs D C (type_Dest T2 n) U0),
      Ty_ectxs D  (cons   ectx_FillR    C )  (type_Dest (type_Sum T1 T2) n) U0
  | Ty_ectxs_FillP : forall (D:ctx) (C:ectxs) (T1 T2:type) (n:mode) (U0:type)
+     (Validn: IsValid n )
      (TyC: Ty_ectxs D C  (type_Prod (type_Dest T1 n) (type_Dest T2 n))  U0),
      Ty_ectxs D  (cons   ectx_FillP    C )  (type_Dest (type_Prod T1 T2) n) U0
  | Ty_ectxs_FillE : forall (D:ctx) (C:ectxs) (m:mode) (T:type) (n:mode) (U0:type)
+     (Validn: IsValid n )
      (Validm: IsValid m )
      (TyC: Ty_ectxs D C (type_Dest T  (mode_times'  ((app (cons m nil) (app (cons n nil) nil))) ) ) U0),
      Ty_ectxs D  (cons   (ectx_FillE m)    C )  (type_Dest (type_Exp m T) n) U0

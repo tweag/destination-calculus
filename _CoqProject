@@ -5,10 +5,15 @@
 
 ott_coq/Finitely.v
 ott_coq/Permutation.v
-ott_coq/ext_nat.v
+ott_coq/ExtNat.v
 ott_coq/destination_calculus_ott.v
-ott_coq/destination_calculus_notations.v
-ott_coq/destination_calculus_proofs.v
-ott_coq/destination_calculus_sugar_typing.v
-ott_coq/destination_calculus_progress.v
-ott_coq/destination_calculus_preservation.v
+ott_coq/Notations.v
+ott_coq/Lemmas.v
+ott_coq/TySterm.v
+ott_coq/Progress.v
+ott_coq/EctxsFillLeafSpec.v
+ott_coq/EctxsFillCtorSpec.v
+ott_coq/EctxsFillCompSpec.v
+ott_coq/TermSubSpec1.v
+ott_coq/TermSubSpec2.v
+ott_coq/Preservation.v

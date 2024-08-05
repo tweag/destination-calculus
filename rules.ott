@@ -128,22 +128,27 @@ P ⊢ from⧔ t : U ⨂ (! ¹∞ T)
 -------------------- :: Alloc
 P ⊢ alloc : T ⧔ ⌊ T ⌋ ¹ν
 
+{{ IsValid [[n]] }} [[:Validn]]
 P ⊢ t : ⌊①⌋n [[:Tyt]]
 ------------------------------ :: FillU
 P ⊢ t ⨞ () : ①
 
+{{ IsValid [[n]] }} [[:Validn]]
 P ⊢ t : ⌊T1 ⨁ T2⌋n [[:Tyt]]
 ------------------------------ :: FillL
 P ⊢ t ⨞ Inl : ⌊T1⌋n
 
+{{ IsValid [[n]] }} [[:Validn]]
 P ⊢ t : ⌊T1 ⨁ T2⌋n [[:Tyt]]
 ------------------------------ :: FillR
 P ⊢ t ⨞ Inr : ⌊T2⌋n
 
+{{ IsValid [[n]] }} [[:Validn]]
 P ⊢ t : ⌊T1 ⨂ T2⌋n [[:Tyt]]
 ------------------------------ :: FillP
 P ⊢ t ⨞ (,) : ⌊T1⌋n ⨂ ⌊T2⌋n
 
+{{ IsValid [[n]] }} [[:Validn]]
 {{ IsValid [[n']] }} [[:Validnp]]
 P ⊢ t : ⌊!n' T⌋n [[:Tyt]]
 ------------------------------ :: FillE
@@ -304,22 +309,27 @@ D ⊣ C : (U ⨂ (! ¹∞ T)) ↣ U0 [[:TyC]]
 ------------------------------- :: FromA
 D ⊣ C ∘ (from⧔ ⬜) : (U ⧔ (! ¹∞ T)) ↣ U0
 
+{{ IsValid [[n]] }} [[:Validn]]
 D ⊣ C : ① ↣ U0 [[:TyC]]
 ------------------------------ :: FillU
 D ⊣ C ∘ (⬜ ⨞ ()) : ⌊①⌋n ↣ U0
 
+{{ IsValid [[n]] }} [[:Validn]]
 D ⊣ C : ⌊T1⌋n ↣ U0 [[:TyC]]
 ------------------------------ :: FillL
 D ⊣ C ∘ (⬜ ⨞ Inl) : ⌊T1 ⨁ T2⌋n ↣ U0
 
+{{ IsValid [[n]] }} [[:Validn]]
 D ⊣ C : ⌊T2⌋n ↣ U0 [[:TyC]]
 ------------------------------ :: FillR
 D ⊣ C ∘ (⬜ ⨞ Inr) : ⌊T1 ⨁ T2⌋n ↣ U0
 
+{{ IsValid [[n]] }} [[:Validn]]
 D ⊣ C : (⌊T1⌋n ⨂ ⌊T2⌋n) ↣ U0 [[:TyC]]
 ------------------------------ :: FillP
 D ⊣ C ∘ (⬜ ⨞ (,)) : ⌊T1 ⨂ T2⌋n ↣ U0
 
+{{ IsValid [[n]] }} [[:Validn]]
 {{ IsValid [[m]] }} [[:Validm]]
 D ⊣ C : ⌊T⌋m·n ↣ U0 [[:TyC]]
 ------------------------------ :: FillE

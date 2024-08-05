@@ -1,8 +1,8 @@
 Require Import List.
 Require Import Ott.ott_list_core.
 Require Import Dest.destination_calculus_ott.
-Require Import Dest.destination_calculus_notations.
-Require Import Dest.ext_nat.
+Require Import Dest.Notations.
+Require Import Dest.ExtNat.
 Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
@@ -15,7 +15,7 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Arith.Plus.
 Require Import Arith.
-Require Import Dest.destination_calculus_proofs.
+Require Import Dest.Lemmas.
 Require Import Lia.
 
 Theorem Ty_term_sterm_FromA' : forall (P : ctx) (t : term) (T : type), P ⊢ t : T ⧔ ① -> P ⊢ from⧔' t : T.
@@ -56,7 +56,7 @@ Proof.
   apply Ty_term_Map with (T := ⌊①⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
   apply Ty_term_Alloc. apply DisposableOnly_empty.
-  apply Ty_term_FillU with (n := ¹ν); trivial.
+  apply Ty_term_FillU with (n := ¹ν); trivial. constructor.
   apply Ty_term_Var with (P := mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil) ᴳ· P).
   apply DisposableOnly_stimes. cbn. constructor. assumption.
   apply UserDefined_Disjoint. apply UserDefined_stimes. assumption. lia. repeat constructor.
@@ -91,7 +91,7 @@ Proof.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillLeaf with (T := T1); trivial.
   constructor.
-  apply Ty_term_FillL with (T1 := T1) (T2 := T2); trivial.
+  apply Ty_term_FillL with (T1 := T1) (T2 := T2); trivial. constructor.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨁ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
 
@@ -108,7 +108,7 @@ Proof.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillLeaf with (T := T2); trivial.
   constructor.
-  apply Ty_term_FillR with (T1 := T1) (T2 := T2); trivial.
+  apply Ty_term_FillR with (T1 := T1) (T2 := T2); trivial. constructor.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨁ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
 
@@ -128,7 +128,7 @@ Proof.
   replace (¹↑ · m) with (mode_times' ((¹↑ :: nil) ++ (m :: nil) ++ nil)). 2:{ cbn. rewrite mode_times_linnu_r_eq. reflexivity. }
   apply Ty_term_FillLeaf with (P2 := P2) (T := T); trivial.
   replace (⌊ T ⌋ m) with (⌊ T ⌋ mode_times' ((m :: nil) ++ (¹ν :: nil) ++ nil)). 2: { f_equal. cbn. apply mode_times_linnu_r_eq. }
-  apply Ty_term_FillE.
+  apply Ty_term_FillE. constructor.
   assumption.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ ! m ⁔ T ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
 Qed.
@@ -154,7 +154,7 @@ Proof.
     unfold UserDefined in *. intros x. specialize (H x). unfold stimes. rewrite In_map_iff. assumption.
   unfold max_runtime_var. lia. }
   apply Disjoint_singletons_iff. injection. inversion H0.
-  apply Ty_term_FillP with (T1 := T1) (T2 := T2); trivial.
+  apply Ty_term_FillP with (T1 := T1) (T2 := T2); trivial. constructor.
   rewrite union_empty_l_eq with (G := ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}). apply Ty_term_Var. { apply DisposableOnly_empty. } { apply Disjoint_empty_l. } { repeat constructor. }
   replace (¹↑ ᴳ· (P21 ᴳ+ P22) ᴳ+ ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν}) with ((ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· P21) ᴳ+ (ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· P22)). 2:{ rewrite stimes_distrib_on_union. rewrite union_commutative with (G1 := ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν}). rewrite union_associative. rewrite <- union_associative with (G1 := ¹↑ ᴳ· P21). rewrite <- union_associative. rewrite union_commutative with (G1 := ᴳ{ 1 : ¹ν ‗ ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{ 2 : ¹ν ‗ ⌊ T2 ⌋ ¹ν}). crush. }
   apply Ty_term_PatU;
