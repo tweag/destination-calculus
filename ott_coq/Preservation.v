@@ -434,7 +434,7 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{}) = hnames_ nil) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D1 := ᴳ{}) (T := ①); swap 1 12.
+          apply ectxs_fillCtor_spec with (D1 := ᴳ{}) (T := ①); swap 1 10.
           { rewrite hminus_inv_empty_eq. apply Ty_val_Unit. }
           all: crush. }
       constructor 1 with (D := ᴳ{}) (T := ①) (t := ᵥ₎ ᵛ()); swap 1 4.
@@ -465,12 +465,12 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 12.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 10.
           { rewrite hminus_inv_singleton. apply Ty_val_Left. constructor. }
           { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
-          { crush. } { crush. } { crush. } { crush. } { crush. }
+          { rewrite hminus_inv_singleton. crush. } { crush. } { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n}) (T := ⌊ T1 ⌋ n) (t := ᵥ₎ ᵛ- (h' + 1)); swap 1 4.
       term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n}). apply Ty_val_Dest. all: crush.
@@ -500,12 +500,12 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 12.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ ¹ν}) (T := T1 ⨁ T2); swap 1 10.
           { rewrite hminus_inv_singleton. apply Ty_val_Right. constructor. }
           { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
-          { crush. } { crush. } { crush. } { crush. } { crush. }
+          { rewrite hminus_inv_singleton. crush. } { crush. } { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ- (h' + 1)); swap 1 4.
       term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Dest. all: crush.
@@ -544,12 +544,12 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) = ᴴ{ h' + 1}) as e2. { crush. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) (T := ! m ⁔ T); swap 1 12.
+          apply ectxs_fillCtor_spec with (D3 := ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m}) (T := ! m ⁔ T); swap 1 10.
           { rewrite hminus_inv_singleton. assert (m ᴳ· ᴳ{+ (h' + 1) : T ‗ ¹ν} = ᴳ{+ (h' + 1) : T ‗ m}). { rewrite  <- mode_times_linnu_l_eq at 2. apply stimes_singleton_hole. } rewrite <- H. apply Ty_val_Exp. constructor. assumption. }
           { crush. } { crush. } { crush. } { crush. }
           { rewrite hpMaxCh. apply Disjoint_singletons_iff. apply different_than_gt_max. lia. apply HNames.add_spec. tauto. }
           { rewrite e2. rewrite hpMaxCh. apply HDisjoint_gt_max. lia. }
-          { crush. } { crush. } { crush. } { crush. } { crush. }
+          { rewrite hminus_inv_singleton. crush. } { crush. } { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n}) (T := ⌊ T ⌋ m · n) (t := ᵥ₎ ᵛ- (h' + 1)); swap 1 4.
       term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T ⌋ m · n}). apply Ty_val_Dest. all: crush.
@@ -580,15 +580,12 @@ Proof.
           rewrite <- e1.
           assert (hnamesᴳ( (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) = ᴴ{ h' + 1, h' + 2}) as e2. { rewrite hnames_distrib_on_union. rewrite 2 hnames_singleton_dest. apply hnames_singleton_union_eq. }
           rewrite <- e2.
-          apply ectxs_fillCtor_spec with (D3 := (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) (T := T1 ⨂ T2); swap 1 12.
+          apply ectxs_fillCtor_spec with (D3 := (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) (T := T1 ⨂ T2); swap 1 10.
           { rewrite hminus_inv_distrib_on_union. rewrite 2 hminus_inv_singleton. apply Ty_val_Prod. apply Ty_val_Hole. apply Ty_val_Hole. assumption. } { crush. }
           { apply DestOnly_union_iff. crush. } { crush. } { crush. }
           { apply Disjoint_union_l_iff. split; rewrite hpMaxCh; apply Disjoint_singletons_iff. { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } }
           { rewrite e2. rewrite hpMaxCh. rewrite <- hnames_singleton_union_eq. apply HDisjoint_union_iff; repeat split. apply HDisjoint_gt_max. lia. apply HDisjoint_gt_max. lia. }
-          { apply LinOnly_union_iff. repeat split. crush. crush. assumption. }
-          { apply FinAgeOnly_union_forward. repeat split. crush. crush. assumption. }
-          { apply ValidOnly_union_forward. crush. crush. assumption. }
-          { crush. } { crush. }
+          { apply ValidOnly_hminus_inv_union. rewrite hminus_inv_singleton; crush. rewrite hminus_inv_singleton; crush. apply Disjoint_singletons_iff. injection. lia. } { crush. } { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ(ᵛ- (h' + 1), ᵛ- (h' + 2))); swap 1 4. term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Prod. apply Ty_val_Dest. apply IsSubtype_refl. apply Ty_val_Dest. { apply IsSubtype_refl. } { apply DestOnly_union_iff. crush. } { apply DestOnly_union_iff. crush. } { assert (hnames_ ((©️⬜ ∘ h' + 1) ++ (©️⬜ ∘ h' + 2) ++ ©️⬜) = ᴴ{ h' + 1, h' + 2}). cbn. reflexivity. assumption. } { apply ValidOnly_union_forward. crush. crush. apply Disjoint_singletons_iff. injection. lia. }
     - (* Focus-FillF *)
@@ -681,7 +678,7 @@ Proof.
       assert ((¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h''] ⊣ C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ h'' ‗ v2 ᵛ[ hnamesᴳ( D3) ⩲ h'']] : T ↣ U0). {
         rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- total_cshift_eq.
         apply ectxs_fillComp_spec with (D1 := ¹↑ ᴳ· D1) (D2 := D2) (D3 := D3 ᴳ[ hnamesᴳ( D3) ⩲ h'']) (T := T) (U := U).
-        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. crush. } { rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption. } { crush. } { crush. } { crush. }
+        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. crush. } { rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption. } { rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption. }
         { rewrite <- stimes_distrib_on_union. rewrite union_commutative. assumption. }
         { rewrite <- cshift_by_Disjoint_eq with (D := D2) (D' := D3) (h' := h''). rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. assumption. assumption. rewrite hpMaxCh. rewrite Nat.add_comm. rewrite Nat.lt_succ_r. apply HSubset_impl_lt_max. apply HSubset_weaken_r. apply HSubset_weaken_l. assumption. } { assumption. } { crush. } { rewrite hnames_stimes_eq. rewrite hpMaxCh. rewrite Nat.add_comm. rewrite Nat.lt_succ_r. apply HSubset_impl_lt_max. apply HSubset_weaken_r. apply HSubset_weaken_l. assumption. }
       }

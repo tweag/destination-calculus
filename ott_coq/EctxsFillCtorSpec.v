@@ -27,9 +27,7 @@ Lemma ectxs_fillCtor_spec : forall (D1 D3: ctx) (h : hname) (C : ectxs) (n : mod
   D1 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
   D3 # ᴳ{- h : ¹ν ⌊ T ⌋ n } ->
   hnames©(C) ## hnamesᴳ( D3) ->
-  LinOnly D3 ->
-  FinAgeOnly D3 ->
-  ValidOnly D3 ->
+  ValidOnly (ᴳ-⁻¹ D3) ->
   D1 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n } ⊣ C : T' ↣ U0 ->
   (ᴳ-⁻¹ D3) ⫦ v : T ->
   D1 ᴳ+ (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T' ↣ U0.

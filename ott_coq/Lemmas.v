@@ -3836,4 +3836,40 @@ Proof.
           { right. right. assumption. }
 Qed.
 
+Lemma HDisjoint_commutative : forall (H1 H2 : hnames), H1 ## H2 <-> H2 ## H1.
+Proof.
+  intros. split.
+  intros H h contra. contradiction (H h). apply HNames.inter_spec. apply HNames.inter_spec in contra. split; tauto.
+  intros H h contra. contradiction (H h). apply HNames.inter_spec. apply HNames.inter_spec in contra. split; tauto.
+Qed.
+
+Lemma HDisjoint_wk_remove : forall (H1 H2 : hnames) (h' : hname), H1 ## H2 -> HNames.remove h' H1 ## H2.
+Proof.
+  intros * H h contra. contradiction (H h). apply HNames.inter_spec. apply HNames.inter_spec in contra. destruct contra as (InH1 & InH2). apply HNames.remove_spec in InH1. destruct InH1 as (InH1 & neq). split; tauto.
+Qed.
+
+Lemma ValidOnly_hminus_inv_union : forall (D1 D2 : ctx), ValidOnly (ᴳ-⁻¹ D1) -> ValidOnly (ᴳ-⁻¹ D2) -> D1 # D2 -> ValidOnly (ᴳ-⁻¹ (D1 ᴳ+ D2)).
+Proof.
+  intros * ValidOnlyD1 ValidOnlyD2 DisjointD1D2. rewrite Disjoint_hminus_inv_l_iff in DisjointD1D2. rewrite Disjoint_hminus_inv_r_iff in DisjointD1D2.
+  intros n b unionmapsto. destruct ((ᴳ-⁻¹ D1) n) eqn:hmD1mapsto.
+  - specialize (ValidOnlyD1 n b0 hmD1mapsto).
+    assert ((ᴳ-⁻¹ D2) n = None). { apply nIn_iff_nMapsTo. intros InnD2. assert (In n (ᴳ-⁻¹ D1)) as InnD1. { unfold In; exists b0; assumption. } specialize (DisjointD1D2 n InnD1 InnD2). assumption. }
+    apply map_MapsTo_iff in hmD1mapsto. destruct hmD1mapsto as (b1 & D1mapsto & b0eq). rewrite b0eq in *; clear b0 b0eq.
+    assert (D2 n = None). { unfold hminus_inv in H. apply map_nMapsTo_iff in H. assumption. }
+    unfold hminus_inv, union, merge_with, merge, map, Fun.map, Fun.merge, Fun.on_conflict_do in unionmapsto. destruct n, b1; simpl in *; rewrite D1mapsto, H0 in unionmapsto; inversion unionmapsto; inversion ValidOnlyD1. constructor.
+  - assert (D1 n = None). { unfold hminus_inv in hmD1mapsto. apply map_nMapsTo_iff in hmD1mapsto. assumption. }
+    assert (In n (ᴳ-⁻¹ (D1 ᴳ+ D2))). { unfold In; exists b; assumption. }
+    rewrite In_hminus_inv_iff in H0. apply In_union_iff in H0. destruct H0. { destruct H0. congruence. } destruct H0 as (b2 & D2mapsto).
+    assert ((ᴳ-⁻¹ D2) n = Some ((fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding : binding_dh => match binding with
+| ₋ ¹ν ⌊ T ⌋ n0 => ₊ T ‗ n0
+| ₊ _ ‗ _ => ₊ ① ‗ ☠
+| _ => ₋ ☠ ⌊ ① ⌋ ☠
+end)) n b2)) as hmD2mapsto. { apply map_MapsTo_if. assumption. }
+    specialize (ValidOnlyD2 n (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding : binding_dh => match binding with
+| ₋ ¹ν ⌊ T ⌋ n0 => ₊ T ‗ n0
+| ₊ _ ‗ _ => ₊ ① ‗ ☠
+| _ => ₋ ☠ ⌊ ① ⌋ ☠
+end) n b2) hmD2mapsto). unfold hminus_inv, union, merge_with, merge, map, Fun.map, Fun.merge, Fun.on_conflict_do in unionmapsto. destruct n, b2; simpl in *; rewrite D2mapsto, H in unionmapsto; inversion unionmapsto; inversion ValidOnlyD2. constructor.
+Qed.
+
 (* ========================================================================= *)
