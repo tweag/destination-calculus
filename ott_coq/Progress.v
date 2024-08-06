@@ -95,7 +95,7 @@ Proof.
           { constructor. }
           apply Ty_ectxs_LinOnly_FinAgeOnly in TyCc.
           crush.
-        - apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyhmD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhmD3; tauto.
+        - apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & ValidOnlyhiD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhiD3; tauto.
         - crush. }
       apply union_empty_iff in Empty. destruct Empty as [_ EmptyD3].
       subst. rewrite hnames_empty_is_hempty.

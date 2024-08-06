@@ -32,7 +32,7 @@ Lemma ectxs_fillComp_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 D3: ct
   D1 ᴳ+ m0 ᴳ· (¹↑ ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν }) ⊣ C : T ↣ U0 ->
   D1 ᴳ+ m0 ᴳ· D3 ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof.
-  intros * DestOnlyD2 DestOnlyD3 DisjointD2D3 DisjointD2h DisjointD3h HDisjointCD3 ValidOnlyhmD3 Tyv. induction C.
+  intros * DestOnlyD2 DestOnlyD3 DisjointD2D3 DisjointD2h DisjointD3h HDisjointCD3 ValidOnlyhiD3 Tyv. induction C.
   - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1D3 DisjointD1h TyC.
     dependent destruction TyC. (* Prove that union of singleton + other things is not the empty context *) admit.
   - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1D3 DisjointD1h TyC.
@@ -70,13 +70,13 @@ Proof.
     * (* Ty-ectxs-FillLeaf1 *) admit.
     * (* Ty-ectxs-FillLeaf2 *) admit.
     * (* Ty-ectxs-OpenAmpar *)
-      rename D3 into D6, D4 into D3, D5 into D4, DestOnlyD3 into DestOnlyD6, ValidOnlyhmD3 into ValidOnlyhmD6, DisjointD3h into DisjointD6h, DisjointD2D3 into DisjointD2D6, HDisjointCD3 into HDisjointCD3D6, DisjointD1D3 into DisjointD1D6, DestOnlyD5 into DestOnlyD3, U into T, U1 into U, ValidOnlyhmD0 into ValidOnlyhmD3.
+      rename D3 into D6, D4 into D3, D5 into D4, DestOnlyD3 into DestOnlyD6, ValidOnlyhiD3 into ValidOnlyhiD6, DisjointD3h into DisjointD6h, DisjointD2D3 into DisjointD2D6, HDisjointCD3 into HDisjointCD3D6, DisjointD1D3 into DisjointD1D6, DestOnlyD5 into DestOnlyD3, U into T, U1 into U, ValidOnlyhiD0 into ValidOnlyhiD3.
       assert ((¹↑ ᴳ· D0 ᴳ+ D3).(underlying) = (D1 ᴳ+ m0 ᴳ· (¹↑ ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ ¹ν})).(underlying)). { unfold union, merge_with, merge, ctx_singleton. simpl. apply x. } clear x.
       assert ((¹↑ ᴳ· D0 ᴳ+ D3) = (D1 ᴳ+ m0 ᴳ· (¹↑ ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ ¹ν}))). { apply ext_eq. intros n'. rewrite H. reflexivity. }
       assert (LinOnly (D0 ᴳ+ D4) /\ FinAgeOnly (D0 ᴳ+ D4)) as (LinOnlyD & FinAgeOnlyD).
         { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
       clear H. rename H1 into ctx_eq.
-      pose proof ValidOnlyhmD3 as ValidOnlyhmD3'. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3'. destruct ValidOnlyhmD3' as (_ & ValidOnlyD3). pose proof ValidOnlyD3 as LinOnlyD3. pose proof ValidOnlyD3 as FinAgeOnlyD3. apply LinNuOnly_wk_LinOnly in LinOnlyD3, ValidOnlyD3. apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3.
+      pose proof ValidOnlyhiD3 as ValidOnlyhiD3'. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3'. destruct ValidOnlyhiD3' as (_ & ValidOnlyD3). pose proof ValidOnlyD3 as LinOnlyD3. pose proof ValidOnlyD3 as FinAgeOnlyD3. apply LinNuOnly_wk_LinOnly in LinOnlyD3, ValidOnlyD3. apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3.
       assert (LinOnly (¹↑ ᴳ· D0 ᴳ+ D3) /\ FinAgeOnly (¹↑ ᴳ· D0 ᴳ+ D3)) as (LinOnlyD' & FinAgeOnlyD'). split.
         { supercrush. } { supercrush. }
       rewrite ctx_eq in LinOnlyD', FinAgeOnlyD'.
@@ -92,8 +92,8 @@ Proof.
       rewrite mode_times_commutative with (m := m0) in D20eq'. rewrite <- stimes_is_action with (m := ¹↑) in D20eq'.
       rewrite stimes_linone_equal_iff in D20eq'. rewrite <- D20eq' in *.
       clear D20eq' D20''. clear D1eq D1 D2eq D2eq' D2 D3eq D3 D20eq D20 D23eq D23 D10eq D10 singeq0 sing0 D0eq D0eq' D0 singeq'.
-      assert (D23' = ᴳ{}). { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinNuOnlyhmD3).
-        apply LinNuOnly_union_iff in LinNuOnlyhmD3. destruct LinNuOnlyhmD3 as (_ & contra & _).
+      assert (D23' = ᴳ{}). { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinNuOnlyhiD3).
+        apply LinNuOnly_union_iff in LinNuOnlyhiD3. destruct LinNuOnlyhiD3 as (_ & contra & _).
         apply LinNuOnly_union_iff in contra. destruct contra as (contra & _ & _).
         rewrite mode_times_commutative in contra. rewrite <- stimes_is_action in contra. apply LinNuOnly_stimes_linone_contra in contra. rewrite stimes_empty_iff in contra. assumption. } rewrite H1 in *. clear H1 D23'. rewrite stimes_empty_eq in *. rewrite <- union_empty_r_eq in *. rewrite <- union_empty_l_eq in *.
       assert (hnames©( C) ## hnamesᴳ( D6)). { simpl in HDisjointCD3D6. intros n contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD6). contradiction (HDisjointCD3D6 n). apply HNames.inter_spec. split. apply HNames.union_spec. right. assumption. assumption. }
@@ -123,7 +123,7 @@ Proof.
         apply IHC with (m0 := m1).
         { crush. } { crush. } { crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } { crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } rewrite union_swap_2_3_l3. assumption.
       + apply stimes_empty_iff in sing0peq. rewrite sing0peq, sing3eq in *. clear sing0peq sing0' sing3eq sing3.
-        replace (m0) with (¹ν) in *. 2:{ rewrite union_commutative in ValidOnlyhmD3. apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinNuOnlysingh). specialize (LinNuOnlysingh (ʰ h) (₋ m0 ⌊ T ⌋ ¹ν)). unfold ctx_singleton in LinNuOnlysingh. rewrite singleton_MapsTo_at_elt in LinNuOnlysingh. specialize (LinNuOnlysingh eq_refl). simpl in LinNuOnlysingh. inversion LinNuOnlysingh. reflexivity. }
+        replace (m0) with (¹ν) in *. 2:{ rewrite union_commutative in ValidOnlyhiD3. apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinNuOnlysingh). specialize (LinNuOnlysingh (ʰ h) (₋ m0 ⌊ T ⌋ ¹ν)). unfold ctx_singleton in LinNuOnlysingh. rewrite singleton_MapsTo_at_elt in LinNuOnlysingh. specialize (LinNuOnlysingh eq_refl). simpl in LinNuOnlysingh. inversion LinNuOnlysingh. reflexivity. }
         rewrite mode_times_linnu_l_eq in *. rewrite <- stimes_linnu_eq in *.
         assert (HNames.mem h hnamesᴳ( D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ ¹ν}) = true). { apply HNames.mem_spec. rewrite hnames_distrib_on_union. apply HNames.union_spec. right. rewrite hnames_singleton_dest. apply HNames.add_spec. left; reflexivity. }
         rewrite H2; clear H2.
@@ -139,12 +139,12 @@ Proof.
         rewrite <- union_associative.
         assert ((D10' ᴳ+ D20' ᴳ+ D4) # D6). { apply HDisjoint_to_Disjoint. crush. apply HSubset_preserves_HDisjoint with (H2 := hnames©( C)). apply (hnames_C_wk_hnames_G _ _ _ _ TyC). assumption. }
         constructor 21 with (D1 := D10') (D3 := D13 ᴳ+ D6) (U := U) (D2 := (D20' ᴳ+ D4)); swap 9 10.
-        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. apply ValidOnly_hminus_inv_union; crush. } { rewrite union_associative. assumption. } { rewrite hnames_distrib_on_union in H0. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD13). specialize (H0 name). contradiction H0. apply HNames.inter_spec. split. assumption. apply HNames.union_spec. rewrite hnames_distrib_on_union in InD13. apply HNames.union_spec in InD13. specialize (H1 name). rewrite HNames.inter_spec in H1. destruct InD13. left. assumption. assert (HNames.In name hnames©( C) /\ HNames.In name hnamesᴳ( D6)). { split; assumption. } congruence. }
+        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. apply ValidOnly_hminus_inv_union; crush. } { rewrite union_associative. assumption. } { rewrite hnames_distrib_on_union in H0. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD13). specialize (H0 name). contradiction H0. apply HNames.inter_spec. split. assumption. apply HNames.union_spec. rewrite hnames_distrib_on_union in InD13. apply HNames.union_spec in InD13. specialize (H1 name). rewrite HNames.inter_spec in H1. destruct InD13. left. assumption. assert (HNames.In name hnames©( C) /\ HNames.In name hnamesᴳ( D6)). { split; assumption. } congruence. }
         rewrite hminus_inv_distrib_on_union. repeat rewrite union_associative.
         rewrite union_swap_1_3_l4. rewrite union_swap_1_2_l4.
         rewrite <- union_associative. rewrite stimes_linnu_eq with (G := D20' ᴳ+ ᴳ-⁻¹ D6).
         apply Ty_val_fill with (T := T); trivial.
-        { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. assumption. }
+        { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. assumption. }
         { crush. } { crush. } { apply Disjoint_commutative. crush. } { crush. } { apply Disjoint_commutative. crush. } { apply Disjoint_commutative. crush. } { crush. } { crush. } { crush. }
 Admitted.
 
@@ -164,7 +164,7 @@ Lemma ectxs_fillComp_spec : forall (D1 D2 D3: ctx) (h : hname) (C : ectxs) (T U 
   D2 ᴳ+ (ᴳ-⁻¹ D3) ⫦ v : U ->
   D1 ᴳ+ D3 ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof.
-  intros * DestOnlyD1 DestOnlyD2 DestOnlyD3 DisjointD1D2 DisjointD1D3 DisjointD2D3 DisjointD1h DisjointD2h DisjointD3h HDisjointCD3 ValidOnlyhmD3 TyC Tyv. rewrite 1 stimes_linnu_eq with (G := D3). rewrite hnames_stimes_eq. apply ectxs_fillComp_spec' with (U := U) (D2 := D2); trivial. apply IsValid_linnu'. rewrite <- stimes_linnu_eq. rewrite union_associative. assumption.
+  intros * DestOnlyD1 DestOnlyD2 DestOnlyD3 DisjointD1D2 DisjointD1D3 DisjointD2D3 DisjointD1h DisjointD2h DisjointD3h HDisjointCD3 ValidOnlyhiD3 TyC Tyv. rewrite 1 stimes_linnu_eq with (G := D3). rewrite hnames_stimes_eq. apply ectxs_fillComp_spec' with (U := U) (D2 := D2); trivial. apply IsValid_linnu'. rewrite <- stimes_linnu_eq. rewrite union_associative. assumption.
 Qed.
 
 (* ========================================================================= *)

@@ -88,7 +88,7 @@ Proof.
       assert (LinOnly (D0 ᴳ+ D4) /\ FinAgeOnly (D0 ᴳ+ D4)) as (LinOnlyD & FinAgeOnlyD).
         { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
       clear H. rename H1 into ctx_eq.
-      pose proof ValidOnlyhmD3 as ValidOnlyhmD3'. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3'. destruct ValidOnlyhmD3' as (_ & ValidOnlyD3). pose proof ValidOnlyD3 as LinOnlyD3. pose proof ValidOnlyD3 as FinAgeOnlyD3. apply LinNuOnly_wk_LinOnly in LinOnlyD3, ValidOnlyD3. apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3.
+      pose proof ValidOnlyhiD3 as ValidOnlyhiD3'. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3'. destruct ValidOnlyhiD3' as (_ & ValidOnlyD3). pose proof ValidOnlyD3 as LinOnlyD3. pose proof ValidOnlyD3 as FinAgeOnlyD3. apply LinNuOnly_wk_LinOnly in LinOnlyD3, ValidOnlyD3. apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. apply LinOnly_wk_ValidOnly in ValidOnlyD3.
       assert (LinOnly (¹↑ ᴳ· D0 ᴳ+ D3) /\ FinAgeOnly (¹↑ ᴳ· D0 ᴳ+ D3)) as (LinOnlyD' & FinAgeOnlyD'). split.
         { supercrush. } { supercrush. }
       rewrite ctx_eq in LinOnlyD', FinAgeOnlyD'.
@@ -104,8 +104,8 @@ Proof.
       rewrite mode_times_commutative with (m := m0) in D20eq'. rewrite <- mode_times_associative in D20eq'. rewrite mode_times_commutative with (m := n) in D20eq'. rewrite <- stimes_is_action with (m := ¹↑) in D20eq'.
       rewrite stimes_linone_equal_iff in D20eq'. rewrite <- D20eq' in *.
       clear D20eq' D20''. clear D1eq D1 D2eq D2eq' D2 D3eq D3 D20eq D20 D23eq D23 D10eq D10 singeq0 sing0 D0eq D0eq' D0 singeq'.
-      assert (D23' = ᴳ{}). { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinNuOnlyhmD3).
-        apply LinNuOnly_union_iff in LinNuOnlyhmD3. destruct LinNuOnlyhmD3 as (_ & contra & _).
+      assert (D23' = ᴳ{}). { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinNuOnlyhiD3).
+        apply LinNuOnly_union_iff in LinNuOnlyhiD3. destruct LinNuOnlyhiD3 as (_ & contra & _).
         apply LinNuOnly_union_iff in contra. destruct contra as (contra & _ & _).
         rewrite mode_times_commutative in contra. rewrite <- mode_times_associative in contra. rewrite <- stimes_is_action in contra. apply LinNuOnly_stimes_linone_contra in contra. rewrite stimes_empty_iff in contra. assumption. } rewrite H1 in *. clear H1 D23'. rewrite stimes_empty_eq in *. rewrite <- union_empty_r_eq in *. rewrite <- union_empty_l_eq in *.
       destruct singeq as [(sing0peq & sing3eq) | (sing0peq & sing3eq)].
@@ -125,7 +125,7 @@ Proof.
         apply IHC with (m0 := m1).
         { crush. } { crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } rewrite union_swap_2_3_l3. assumption.
       + apply stimes_empty_iff in sing0peq. rewrite sing0peq, sing3eq in *. clear sing0peq sing0' sing3eq sing3.
-        replace (m0) with (¹ν) in *. 2:{ rewrite union_commutative in ValidOnlyhmD3. apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & LinNuOnlysingh). specialize (LinNuOnlysingh (ʰ h) (₋ m0 ⌊ T ⌋ n)). unfold ctx_singleton in LinNuOnlysingh. rewrite singleton_MapsTo_at_elt in LinNuOnlysingh. specialize (LinNuOnlysingh eq_refl). simpl in LinNuOnlysingh. inversion LinNuOnlysingh. reflexivity. }
+        replace (m0) with (¹ν) in *. 2:{ rewrite union_commutative in ValidOnlyhiD3. apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinNuOnlysingh). specialize (LinNuOnlysingh (ʰ h) (₋ m0 ⌊ T ⌋ n)). unfold ctx_singleton in LinNuOnlysingh. rewrite singleton_MapsTo_at_elt in LinNuOnlysingh. specialize (LinNuOnlysingh eq_refl). simpl in LinNuOnlysingh. inversion LinNuOnlysingh. reflexivity. }
         rewrite mode_times_linnu_l_eq in *. rewrite <- stimes_linnu_eq in *.
         assert (HNames.mem h hnamesᴳ( D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) = true). { apply HNames.mem_spec. rewrite hnames_distrib_on_union. apply HNames.union_spec. right. rewrite hnames_singleton_dest. apply HNames.add_spec. left; reflexivity. }
         rewrite H1; clear H1.
@@ -140,13 +140,13 @@ Proof.
         rewrite stimes_empty_eq in *. rewrite <- union_empty_r_eq in *.
         rewrite <- union_associative in TyC.
         constructor 21 with (D1 := D10') (D3 := D13) (U := U) (D2 := (n ᴳ· D20' ᴳ+ D4)); swap 9 10.
-        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. assumption. } { assumption. } { rewrite hnames_distrib_on_union in H0. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD13). specialize (H0 name). contradiction H0. apply HNames.inter_spec. split. assumption. apply HNames.union_spec. left. assumption. }
+        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. assumption. } { assumption. } { rewrite hnames_distrib_on_union in H0. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD13). specialize (H0 name). contradiction H0. apply HNames.inter_spec. split. assumption. apply HNames.union_spec. left. assumption. }
         rewrite <- union_associative. rewrite union_commutative.
         replace (D20') with (D20' ᴳ+ ᴳ-⁻¹ ᴳ{}). 2:{ rewrite hminus_inv_empty_eq. rewrite union_empty_r_eq. reflexivity. }
         replace (HNames.empty) with (hnamesᴳ(ᴳ{})). 2:{ apply hnames_empty_is_hempty. }
         apply Ty_val_fill with (T := T).
         { rewrite hminus_inv_empty_eq. rewrite <- union_empty_r_eq. assumption. }
-        { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhmD3. assumption. }
+        { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. assumption. }
         { crush. } { crush. } { crush. } { apply Disjoint_commutative. crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { assumption. }
 Admitted.
 

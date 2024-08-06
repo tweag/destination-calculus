@@ -175,9 +175,9 @@ Lemma support_ext_eq : forall A B (f g:Finitely.T A B) (l:list A), Finitely.Fun.
 Proof.
   intros * h_supp_f h_supp_g h.
   apply Finitely.ext_eq. intros x.
-  destruct (f x) as [|x'] eqn: h_x'.
+  destruct (f x) eqn: h_x'.
   - sfirstorder.
-  - destruct (g x) as [|x''] eqn: h_x''.
+  - destruct (g x) eqn: h_x''.
     + sfirstorder.
     + trivial.
 Qed.
@@ -2388,7 +2388,7 @@ Qed.
 
 Lemma ValidOnly_hminus_inv_DestOnly_LinNuOnly : forall D, ValidOnly (ᴳ-⁻¹ D) -> DestOnly D /\ LinNuOnly D.
 Proof.
-  intros * ValidOnlyhmD.
+  intros * ValidOnlyhiD.
   split.
   - intros n b mapsto.
     pose (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
@@ -2396,20 +2396,20 @@ Proof.
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
 end)) as f.
-    specialize (ValidOnlyhmD n (f n b)).
+    specialize (ValidOnlyhiD n (f n b)).
     assert ((ᴳ-⁻¹ D) n = Some (f n b)).
       { unfold hminus_inv. apply map_MapsTo_if; trivial. }
-    specialize (ValidOnlyhmD H). inversion ValidOnlyhmD. destruct n, b; simpl in *; trivial; try congruence.
+    specialize (ValidOnlyhiD H). inversion ValidOnlyhiD. destruct n, b; simpl in *; trivial; try congruence.
   - intros n b mapsto.
     pose (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
 | ₋ ¹ν ⌊ T ⌋ n => ₊ T ‗ n
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
 end)) as f.
-    specialize (ValidOnlyhmD n (f n b)).
+    specialize (ValidOnlyhiD n (f n b)).
     assert ((ᴳ-⁻¹ D) n = Some (f n b)).
       { unfold hminus_inv. apply map_MapsTo_if; trivial. }
-    specialize (ValidOnlyhmD H). inversion ValidOnlyhmD. destruct n, b; simpl in *; trivial; try congruence.
+    specialize (ValidOnlyhiD H). inversion ValidOnlyhiD. destruct n, b; simpl in *; trivial; try congruence.
     destruct m.
     * destruct p. destruct m, a; try destruct n0; trivial; try congruence; try constructor.
     * congruence.
@@ -2746,9 +2746,9 @@ Proof.
     hauto lq: on use: LinOnly_union_iff, LinOnly_stimes_backward, FinAgeOnly_union_backward, FinAgeOnly_stimes_backward, LinOnly_wk_ValidOnly.
   - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD).
     hauto lq: on use: LinOnly_union_iff, LinOnly_stimes_backward, FinAgeOnly_union_backward, FinAgeOnly_stimes_backward, LinOnly_wk_ValidOnly.
-  - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD). apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD2 & DisjointD1D2). apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD2). split.
-    * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyhmD3). apply LinNuOnly_wk_LinOnly in ValidOnlyhmD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
-    * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhmD3. destruct ValidOnlyhmD3 as (_ & ValidOnlyhmD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhmD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
+  - destruct IHTy_ectxs as (LinOnlyD & FinAgeOnlyD). apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (LinOnlyD1 & LinOnlyD2 & _). apply FinAgeOnly_union_backward in FinAgeOnlyD. destruct FinAgeOnlyD as (FinAgeOnlyD1 & FinAgeOnlyD2). split.
+    * apply LinOnly_union_iff; repeat split. apply LinOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & ValidOnlyhiD3). apply LinNuOnly_wk_LinOnly in ValidOnlyhiD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
+    * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & ValidOnlyhiD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhiD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
 Qed.
 
 Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
@@ -3480,15 +3480,15 @@ Qed.
 
 Lemma hminus_inv_hminus_eq : forall (G : ctx), ValidOnly (ᴳ-⁻¹ (ᴳ- G)) -> ᴳ-⁻¹ (ᴳ- G) = G.
 Proof.
-  intros * ValidOnlyhmG. apply ext_eq. intros n. unfold hminus, hminus_inv, map, Fun.map; simpl. destruct (G n) eqn:Gmapsto; simpl. f_equal. 2:{ reflexivity. }
-  specialize (ValidOnlyhmG n). unfold hminus, hminus_inv in ValidOnlyhmG. rewrite map_comp in ValidOnlyhmG. generalize (map_MapsTo_if (fun (x : name) (y : binding_type_of x) => fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
+  intros * ValidOnlyhiG. apply ext_eq. intros n. unfold hminus, hminus_inv, map, Fun.map; simpl. destruct (G n) eqn:Gmapsto; simpl. f_equal. 2:{ reflexivity. }
+  specialize (ValidOnlyhiG n). unfold hminus, hminus_inv in ValidOnlyhiG. rewrite map_comp in ValidOnlyhiG. generalize (map_MapsTo_if (fun (x : name) (y : binding_type_of x) => fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
 | ₋ ¹ν ⌊ T ⌋ n => ₊ T ‗ n
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
 end) x (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
 | ₋ _ ⌊ _ ⌋ _ => ₋ ☠ ⌊ ① ⌋ ☠
 | ₊ T ‗ n => ₋ ¹ν ⌊ T ⌋ n
-end) x y)) G n b); intros H. specialize (H Gmapsto). specialize (ValidOnlyhmG ((fun (x : name) (y : binding_type_of x) => fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
+end) x y)) G n b); intros H. specialize (H Gmapsto). specialize (ValidOnlyhiG ((fun (x : name) (y : binding_type_of x) => fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding0 : binding_dh => match binding0 with
 | ₋ ¹ν ⌊ T ⌋ n => ₊ T ‗ n
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
@@ -3497,8 +3497,8 @@ end) x (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①
 | ₊ T ‗ n => ₋ ¹ν ⌊ T ⌋ n
 end) x y)) n b) H).
   destruct n, b; simpl in *.
-  * inversion ValidOnlyhmG.
-  * inversion ValidOnlyhmG.
+  * inversion ValidOnlyhiG.
+  * inversion ValidOnlyhiG.
   * unfold Fun.map in H; simpl in H. rewrite Gmapsto in H; simpl in H. reflexivity.
 Qed.
 
@@ -3512,12 +3512,30 @@ Definition HoleOnly G : Prop := forall x b, G x = Some b -> IsHole x b.
 
 Lemma HoleOnly_hminus_inv : forall (G : ctx), ValidOnly (ᴳ-⁻¹ G) -> HoleOnly (ᴳ-⁻¹ G).
 Proof.
-  intros * ValidOnlyhmG n b hmGmapsto. specialize (ValidOnlyhmG n b hmGmapsto).
-  unfold hminus_inv in hmGmapsto. rewrite map_MapsTo_iff in hmGmapsto. destruct hmGmapsto as (b' & Gmapsto & H). destruct n, b; simpl in *.
-  - inversion H; subst. inversion ValidOnlyhmG.
-  - destruct b'; try destruct m0; try destruct p; try destruct m0; try destruct a; try destruct n1; try inversion H; subst; try congruence; try inversion ValidOnlyhmG.
-  - destruct b'; try destruct m0; try destruct p; try destruct m0; try destruct a; try destruct n1; try inversion H; subst; try congruence; try inversion ValidOnlyhmG. trivial.
+  intros * ValidOnlyhiG n b hiGmapsto. specialize (ValidOnlyhiG n b hiGmapsto).
+  unfold hminus_inv in hiGmapsto. rewrite map_MapsTo_iff in hiGmapsto. destruct hiGmapsto as (b' & Gmapsto & H). destruct n, b; simpl in *.
+  - inversion H; subst. inversion ValidOnlyhiG.
+  - destruct b'; try destruct m0; try destruct p; try destruct m0; try destruct a; try destruct n1; try inversion H; subst; try congruence; try inversion ValidOnlyhiG.
+  - destruct b'; try destruct m0; try destruct p; try destruct m0; try destruct a; try destruct n1; try inversion H; subst; try congruence; try inversion ValidOnlyhiG. trivial.
 Qed.
+Lemma HoleOnly_hminus_inv' : forall (G : ctx), Basics.impl (ValidOnly (ᴳ-⁻¹ G)) (HoleOnly (ᴳ-⁻¹ G)).
+Proof.
+  intros * H. apply HoleOnly_hminus_inv. assumption.
+Qed.
+Hint Rewrite <- HoleOnly_hminus_inv' : suffices.
+
+
+Lemma DestOnly_hminus : forall (D : ctx), HoleOnly D -> DestOnly (ᴳ- D).
+Proof.
+  intros * HoleOnlyD.
+  intros n b hMapsto. unfold hminus in hMapsto. apply map_MapsTo_iff in hMapsto. destruct hMapsto as (b' & mapsto & beq). rewrite beq in *; clear beq. specialize (HoleOnlyD n b' mapsto).
+  destruct n, b'; simpl in *; trivial.
+Qed.
+Lemma DestOnly_hminus' : forall (D : ctx), Basics.impl (HoleOnly D) (DestOnly (ᴳ- D)).
+Proof.
+  intros * H. apply DestOnly_hminus. assumption.
+Qed.
+Hint Rewrite <- DestOnly_hminus' : suffices.
 
 Lemma HoleOnly_stimes_iff : forall (m : mode) (G : ctx), HoleOnly G <-> HoleOnly (m ᴳ· G).
 Proof.
@@ -3528,6 +3546,7 @@ Proof.
   hauto lq: on.
 Qed.
 Hint Rewrite <- HoleOnly_stimes_iff : propagate_down.
+Hint Rewrite <- HoleOnly_stimes_iff : suffices.
 
 Lemma HoleOnly_union_backward : forall (G1 G2 : ctx), HoleOnly (G1 ᴳ+ G2) -> ValidOnly (G1 ᴳ+ G2) -> HoleOnly G1 /\ HoleOnly G2.
   intros * HoleOnlyU ValidOnlyU. unfold HoleOnly, union. split.
@@ -3569,12 +3588,12 @@ Qed.
 
 Lemma union_inv_hminus_inv : forall (G G1 G2 : ctx), ValidOnly (ᴳ-⁻¹ G) -> ᴳ-⁻¹ G = G1 ᴳ+ G2 -> G1 = ᴳ-⁻¹ (ᴳ- G1) /\ G2 = ᴳ-⁻¹ (ᴳ- G2).
 Proof.
-  intros * ValidOnlyhmG union_eq. repeat split.
-  - assert (ValidOnly G1). { rewrite union_eq in ValidOnlyhmG. crush. }
-    assert (HoleOnly G1). { pose proof ValidOnlyhmG as ValidOnlyhmG'. apply HoleOnly_hminus_inv in ValidOnlyhmG. rewrite union_eq in ValidOnlyhmG, ValidOnlyhmG'. apply HoleOnly_union_backward in ValidOnlyhmG. all:crush. }
+  intros * ValidOnlyhiG union_eq. repeat split.
+  - assert (ValidOnly G1). { rewrite union_eq in ValidOnlyhiG. crush. }
+    assert (HoleOnly G1). { pose proof ValidOnlyhiG as ValidOnlyhiG'. apply HoleOnly_hminus_inv in ValidOnlyhiG. rewrite union_eq in ValidOnlyhiG, ValidOnlyhiG'. apply HoleOnly_union_backward in ValidOnlyhiG. all:crush. }
     symmetry. apply hminus_inv_hminus_eq. apply ValidOnly_hminus; assumption.
-  - assert (ValidOnly G2). { rewrite union_eq in ValidOnlyhmG. crush. }
-    assert (HoleOnly G2). { pose proof ValidOnlyhmG as ValidOnlyhmG'. apply HoleOnly_hminus_inv in ValidOnlyhmG. rewrite union_eq in ValidOnlyhmG, ValidOnlyhmG'. apply HoleOnly_union_backward in ValidOnlyhmG. all:crush. }
+  - assert (ValidOnly G2). { rewrite union_eq in ValidOnlyhiG. crush. }
+    assert (HoleOnly G2). { pose proof ValidOnlyhiG as ValidOnlyhiG'. apply HoleOnly_hminus_inv in ValidOnlyhiG. rewrite union_eq in ValidOnlyhiG, ValidOnlyhiG'. apply HoleOnly_union_backward in ValidOnlyhiG. all:crush. }
     symmetry. apply hminus_inv_hminus_eq. apply ValidOnly_hminus; assumption.
 Qed.
 
@@ -3688,7 +3707,7 @@ Lemma Ty_val_fill : forall (D20 D5 : ctx) (h : hname) (v' : val) (T : type) , D2
   D4 ᴳ+ ᴳ-⁻¹ (D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ⫦ v : U ->
   D4 ᴳ+ ᴳ-⁻¹ D13 ᴳ+ n ᴳ· (D20 ᴳ+ ᴳ-⁻¹ D5) ⫦ val_fill v h hnamesᴳ( D5) v' : U.
 Proof.
-  intros * Tyv'. induction v; intros * ValidOnlyhmD13 IsValidn DisjointD4D5 DisjointD4D13 DisjointD4D20 DisjointD4h DisjointD5D13 DisjointD5D20 DisjointD5h DisjointD13D20 DisjointD13h DisjointD20h Tyv; simpl.
+  intros * Tyv'. induction v; intros * ValidOnlyhiD13 IsValidn DisjointD4D5 DisjointD4D13 DisjointD4D20 DisjointD4h DisjointD5D13 DisjointD5D20 DisjointD5h DisjointD13D20 DisjointD13h DisjointD20h Tyv; simpl.
   - subst. rewrite hminus_inv_distrib_on_union in Tyv. rewrite hminus_inv_singleton in Tyv.
     assert (ᴳ{+ h0 : U ‗ ¹ν} = D4 ᴳ+ (ᴳ-⁻¹ D13 ᴳ+ ᴳ{+ h : T ‗ n})). { dependent destruction Tyv. unfold ctx_singleton, singleton, union, hminus_inv, merge_with, merge; cbn. apply ext_eq'. cbn. rewrite x. reflexivity. } 2:{ crush. } destruct (HNamesFacts.eq_dec h0 h) eqn:h_eq; subst.
     * assert (D4 = ᴳ{} /\ D13 = ᴳ{} /\ T = U /\ n = ¹ν) as (D4eq & D13eq & Teq & neq). { destruct (singleton_is_one_of_disjoint_union_3 (ʰ h) (₊ U ‗ ¹ν) D4 (ᴳ-⁻¹ D13) (ᴳ{+ h : T ‗ n})). { crush. } { Disjoint_singleton_using DisjointD4h. } { Disjoint_singleton_using DisjointD13h. } { assumption. } destruct s. { destruct a as (_ & _ & contra). apply singleton_eq_empty_contra in contra. exfalso; assumption. } { destruct a as (_ & _ & contra). apply singleton_eq_empty_contra in contra. exfalso; assumption. }
@@ -3851,25 +3870,30 @@ Qed.
 Lemma ValidOnly_hminus_inv_union : forall (D1 D2 : ctx), ValidOnly (ᴳ-⁻¹ D1) -> ValidOnly (ᴳ-⁻¹ D2) -> D1 # D2 -> ValidOnly (ᴳ-⁻¹ (D1 ᴳ+ D2)).
 Proof.
   intros * ValidOnlyD1 ValidOnlyD2 DisjointD1D2. rewrite Disjoint_hminus_inv_l_iff in DisjointD1D2. rewrite Disjoint_hminus_inv_r_iff in DisjointD1D2.
-  intros n b unionmapsto. destruct ((ᴳ-⁻¹ D1) n) eqn:hmD1mapsto.
-  - specialize (ValidOnlyD1 n b0 hmD1mapsto).
+  intros n b unionmapsto. destruct ((ᴳ-⁻¹ D1) n) eqn:hiD1mapsto.
+  - specialize (ValidOnlyD1 n b0 hiD1mapsto).
     assert ((ᴳ-⁻¹ D2) n = None). { apply nIn_iff_nMapsTo. intros InnD2. assert (In n (ᴳ-⁻¹ D1)) as InnD1. { unfold In; exists b0; assumption. } specialize (DisjointD1D2 n InnD1 InnD2). assumption. }
-    apply map_MapsTo_iff in hmD1mapsto. destruct hmD1mapsto as (b1 & D1mapsto & b0eq). rewrite b0eq in *; clear b0 b0eq.
+    apply map_MapsTo_iff in hiD1mapsto. destruct hiD1mapsto as (b1 & D1mapsto & b0eq). rewrite b0eq in *; clear b0 b0eq.
     assert (D2 n = None). { unfold hminus_inv in H. apply map_nMapsTo_iff in H. assumption. }
     unfold hminus_inv, union, merge_with, merge, map, Fun.map, Fun.merge, Fun.on_conflict_do in unionmapsto. destruct n, b1; simpl in *; rewrite D1mapsto, H0 in unionmapsto; inversion unionmapsto; inversion ValidOnlyD1. constructor.
-  - assert (D1 n = None). { unfold hminus_inv in hmD1mapsto. apply map_nMapsTo_iff in hmD1mapsto. assumption. }
+  - assert (D1 n = None). { unfold hminus_inv in hiD1mapsto. apply map_nMapsTo_iff in hiD1mapsto. assumption. }
     assert (In n (ᴳ-⁻¹ (D1 ᴳ+ D2))). { unfold In; exists b; assumption. }
     rewrite In_hminus_inv_iff in H0. apply In_union_iff in H0. destruct H0. { destruct H0. congruence. } destruct H0 as (b2 & D2mapsto).
     assert ((ᴳ-⁻¹ D2) n = Some ((fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding : binding_dh => match binding with
 | ₋ ¹ν ⌊ T ⌋ n0 => ₊ T ‗ n0
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
-end)) n b2)) as hmD2mapsto. { apply map_MapsTo_if. assumption. }
+end)) n b2)) as hiD2mapsto. { apply map_MapsTo_if. assumption. }
     specialize (ValidOnlyD2 n (fsimple (fun t : Type => t -> t) (fun _ : binding_var => ₓ ☠ ‗ ①) (fun binding : binding_dh => match binding with
 | ₋ ¹ν ⌊ T ⌋ n0 => ₊ T ‗ n0
 | ₊ _ ‗ _ => ₊ ① ‗ ☠
 | _ => ₋ ☠ ⌊ ① ⌋ ☠
-end) n b2) hmD2mapsto). unfold hminus_inv, union, merge_with, merge, map, Fun.map, Fun.merge, Fun.on_conflict_do in unionmapsto. destruct n, b2; simpl in *; rewrite D2mapsto, H in unionmapsto; inversion unionmapsto; inversion ValidOnlyD2. constructor.
+end) n b2) hiD2mapsto). unfold hminus_inv, union, merge_with, merge, map, Fun.map, Fun.merge, Fun.on_conflict_do in unionmapsto. destruct n, b2; simpl in *; rewrite D2mapsto, H in unionmapsto; inversion unionmapsto; inversion ValidOnlyD2. constructor.
 Qed.
+Lemma ValidOnly_hminus_inv_union' : forall (D1 D2 : ctx), Basics.impl (ValidOnly (ᴳ-⁻¹ D1) /\ ValidOnly (ᴳ-⁻¹ D2) /\ D1 # D2) (ValidOnly (ᴳ-⁻¹ (D1 ᴳ+ D2))).
+Proof.
+  intros * H. destruct H as (H1 & H2 & H3). apply ValidOnly_hminus_inv_union; assumption.
+Qed.
+Hint Rewrite <- ValidOnly_hminus_inv_union' : suffices.
 
 (* ========================================================================= *)

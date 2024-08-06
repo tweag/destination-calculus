@@ -42,12 +42,12 @@ G ⫦ v' : T [[:Tyvp]]
 --------------------- :: Exp
 n·G ⫦ ᴇ n v' : ! n T
 
-% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhmD3]]
-% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhmD3]]
+% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhiD3]]
+% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhiD3]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
-{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhmD3]]
+{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhiD3]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ [[D1]] # [[D3]] }} [[:DisjointD1D3]]
 {{ [[D2]] # [[D3]] }} [[:DisjointD2D3]]
@@ -387,16 +387,16 @@ D2 ⊣ C ∘ (v ◀ ⬜) : T ↣ U0
 
 % TODO: check that hminus_inv enforces linearity+now
 
-% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhmD3]]
-% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhmD3]]
+% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhiD3]]
+% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhiD3]]
 
-{{ [[D1]] # [[D2]] }} [[:Disjoint1D2]]
-{{ [[D1]] # [[D3]] }} [[:Disjoint1D3]]
-{{ [[D2]] # [[D3]] }} [[:Disjoint2D3]]
+{{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
+{{ [[D1]] # [[D3]] }} [[:DisjointD1D3]]
+{{ [[D2]] # [[D3]] }} [[:DisjointD2D3]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
-{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhmD3]]
+{{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhiD3]]
 {{ [[hnames(C)]] ## [[hnames(D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
