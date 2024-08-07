@@ -19,6 +19,19 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Arith.
 Require Import Lia.
 
+Ltac asserts_fillLeaf TyC :=
+  match type of TyC with
+  | (Ty_ectxs ?V ?W ?X ?Y) =>
+    let LinOnlyD := fresh TyC "LinOnlyD" in
+    let FinAgeOnlyD := fresh TyC "FinAgeOnlyD" in
+    let HSubsetDC := fresh TyC "HSubsetDC" in
+    assert (LinOnly V /\ FinAgeOnly V) as (LinOnlyD & FinAgeOnlyD) by
+      (apply Ty_ectxs_LinOnly_FinAgeOnly with (C := W) (T := X) (U0 := Y); tauto);
+    assert (HNames.Subset hnamesᴳ(V) hnames©(W)) as HSubsetDC by
+      (apply hnames_C_wk_hnames_G with (T := X) (U0 := Y); trivial)
+  | ?Z => fail 1 "TyC not of the right shape" Z
+  end.
+
 Lemma ectxs_fillLeaf_spec' : forall (C : ectxs) (h : hname) (v : val) (D2 : ctx) (T: type) (n : mode), IsValid n -> DestOnly D2 -> D2 # ᴳ{- h : ¹ν ⌊ T ⌋ n } -> D2 ⫦ v : T ->
   forall (m0 : mode) (U U0 : type) (D1: ctx),
   IsValid m0 ->
@@ -35,54 +48,7 @@ Proof.
     destruct H0 as (b & contra). simpl in contra. congruence.
   - intros * Validm0 DestOnlyD1 DisjointD1D2 DisjointD1h TyC.
     destruct a; simpl; dependent destruction TyC.
-    * (* Ty-ectxs-App1 *)
-      assert (LinOnly (m ᴳ· (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3) /\ FinAgeOnly (m ᴳ· (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD).
-        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
-      constructor 2 with (D2 := D3) (m := m) (U := U); trivial.
-        { supercrush. }
-        { apply IHC with (D1 := m ᴳ· D1 ᴳ+ D3) (m0 := m · m0); swap 1 5.
-          rewrite stimes_distrib_on_union, stimes_is_action in TyC. rewrite <- union_associative. rewrite union_commutative with (G1 := D3). rewrite union_associative. assumption.
-          { crush. } { supercrush. } { supercrush. } { crush. } }
-    * (* Ty-ectxs-App2 *)
-      assert (LinOnly (m ᴳ· D3 ᴳ+ (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}))) /\ FinAgeOnly (m ᴳ· D3 ᴳ+ (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})))) as (LinOnlyD & FinAgeOnlyD).
-        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U) (U0 := U0). tauto. }
-      constructor 3 with (D2 := D1) (D1 := D3) (m := m) (U := U); trivial.
-        { supercrush. }
-        { apply IHC with (D1 := m ᴳ· D3 ᴳ+ D1) (m0 := m0); swap 1 5.
-          rewrite union_associative in TyC. assumption.
-          { crush. } { supercrush. } { supercrush. } { crush. } }
-    * (* Ty-ectxs-PatU *) admit.
-    * (* Ty-ectxs-PatS *) admit.
-    * (* Ty-ectxs-PatP *) admit.
-    * (* Ty-ectxs-PatE *) admit.
-    * (* Ty-ectxs-Map *)
-      assert (LinOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ D3) /\ FinAgeOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ D3)) as (LinOnlyD & FinAgeOnlyD).
-        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := U ⧔ T') (U0 := U0). tauto. }
-      constructor 8 with (D2 := D3) (U := U) (T' := T'); trivial.
-        { supercrush. }
-        { apply IHC with (D1 := D1 ᴳ+ D3) (m0 := m0); swap 1 5.
-          rewrite <- union_associative. rewrite union_commutative with (G1 := D3). rewrite union_associative. assumption.
-          { crush. } { supercrush. } { supercrush. } { crush. } }
-    * (* Ty-ectxs-ToA *) admit.
-    * (* Ty-ectxs-FromA *) admit.
-    * (* Ty-ectxs-FillU *) admit.
-    * (* Ty-ectxs-FillL *) admit.
-    * (* Ty-ectxs-FillR *) admit.
-    * (* Ty-ectxs-FillE *) admit.
-    * (* Ty-ectxs-FillP *) admit.
-    * (* Ty-ectxs-FillF *) admit.
-    * (* Ty-ectxs-FillComp1 *)
-      assert (LinOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ ¹↑ ᴳ· D3) /\ FinAgeOnly (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) ᴳ+ ¹↑ ᴳ· D3)) as (LinOnlyD & FinAgeOnlyD).
-        { apply Ty_ectxs_LinOnly_FinAgeOnly with (C := C) (T := T0) (U0 := U0). tauto. }
-      constructor 17 with (D2 := D3) (U := U) (T := T0); trivial.
-        { supercrush. }
-        { apply IHC with (D1 := D1 ᴳ+ ¹↑ ᴳ· D3) (m0 := m0); swap 1 5.
-          rewrite <- union_associative. rewrite union_commutative with (G1 := ¹↑ ᴳ· D3). rewrite union_associative. assumption.
-          { crush. } { supercrush. } { supercrush. } { crush. } }
-    * (* Ty-ectxs-FillComp2 *) admit.
-    * (* Ty-ectxs-FillLeaf1 *) admit.
-    * (* Ty-ectxs-FillLeaf2 *) admit.
-    * (* Ty-ectxs-OpenAmpar *)
+    20: { (* Ty-ectxs-OpenAmpar *)
       assert ((¹↑ ᴳ· D0 ᴳ+ D3).(underlying) = (D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})).(underlying)). { unfold union, merge_with, merge, ctx_singleton. simpl. apply x. } clear x.
       assert (¹↑ ᴳ· D0 ᴳ+ D3 = D1 ᴳ+ m0 ᴳ· (¹↑ · n ᴳ· D2 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n})). { apply ext_eq. intros n'. rewrite H. reflexivity. }
       assert (LinOnly (D0 ᴳ+ D4) /\ FinAgeOnly (D0 ᴳ+ D4)) as (LinOnlyD & FinAgeOnlyD).
@@ -148,7 +114,78 @@ Proof.
         { rewrite hminus_inv_empty_eq. rewrite <- union_empty_r_eq. assumption. }
         { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. assumption. }
         { crush. } { crush. } { crush. } { apply Disjoint_commutative. crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { assumption. }
-Admitted.
+    }
+    all: asserts_fillLeaf TyC; rename TyCLinOnlyD into LinOnlyD, TyCFinAgeOnlyD into FinAgeOnlyD, TyCHSubsetDC into HSubsetDC.
+    * (* Ty-ectxs-App1 *)
+      constructor 2 with (7 := Tytp); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-App2 *)
+      constructor 3 with (7 := Tyv0); first last.
+      rewrite union_associative in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-PatU *)
+      constructor 4 with (6 := Tyu); first last.
+      rewrite union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-PatS *)
+      constructor 5 with (7 := Tyu1) (8 := Tyu2); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-PatP *)
+      constructor 6 with (8 := Tyu); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-PatE *)
+      constructor 7 with (8 := Tyu); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-Map *)
+      constructor 8 with (6 := Tytp); first last.
+      rewrite union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-ToA *)
+      constructor 9; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FromA *)
+      constructor 10; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillU *)
+      constructor 11; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillL *)
+      constructor 12; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillR *)
+      constructor 13; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillE *)
+      constructor 15; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillP *)
+      constructor 14; first last. apply IHC with (5 := TyC); first last. all: trivial.
+    * (* Ty-ectxs-FillF *)
+      constructor 16 with (8 := Tyu); first last.
+      rewrite union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial.
+      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: autorewrite with propagate_down in *; try repeat split.
+      all: supercrush.
+    * (* Ty-ectxs-FillComp1 *)
+      constructor 17 with (6 := Tytp); first last.
+      rewrite union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-FillComp2 *)
+      constructor 18 with (6 := Tyt); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_associative in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
+    * (* Ty-ectxs-FillLeaf1 *)
+      constructor 19 with (7 := Tytp); first last.
+      rewrite union_swap_2_3_l3 in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial.
+      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: supercrush.
+    * (* Ty-ectxs-FillLeaf2 *)
+      constructor 20 with (7 := Tyt); first last.
+      rewrite stimes_distrib_on_union, stimes_is_action, union_associative in TyC.
+      apply IHC with (5 := TyC); first last. all: trivial.
+      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: supercrush.
+Qed.
 
 Lemma ectxs_fillLeaf_spec : forall (D1 D2: ctx) (h : hname) (C : ectxs) (n : mode) (T U0 : type) (v : val),
   IsValid n ->

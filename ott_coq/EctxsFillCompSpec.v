@@ -19,15 +19,6 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Arith.
 Require Import Lia.
 
-Definition ctx_of_Ty_ectxs (D : ctx) (C : ectxs) (T U0 : type) (TyC : (D ⊣ C : T ↣ U0)) : ctx := D.
-
-Ltac Disjoint_singleton_using' DisjointHyp :=
- match type of DisjointHyp with
-  | _ /\ _ => let DisjointHyp2 := fresh DisjointHyp "" in
-    destruct DisjointHyp as (DisjointHyp & DisjointHyp2); apply nIn_iff_Disjoint_singleton; apply nIn_iff_Disjoint_singleton in DisjointHyp; apply nIn_iff_Disjoint_singleton in DisjointHyp2; assumption
-  | _ => apply nIn_iff_Disjoint_singleton; apply nIn_iff_Disjoint_singleton in DisjointHyp; assumption
- end.
-
 Ltac asserts_fillComp TyC D3 HDisjointCD3 :=
   match type of TyC with
   | (Ty_ectxs ?V ?W ?X ?Y) =>

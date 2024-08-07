@@ -161,10 +161,6 @@ Proof.
   { cbn. symmetry. assumption. } { cbn. congruence. }
 Qed.
 
-(* =========================================================================
- * Still admitted
- * ========================================================================= *)
-
 Lemma option_eta : forall A (o:option A), match o with Some x => Some x | None => None end = o.
 Proof.
   hauto lq: on.
@@ -2666,7 +2662,7 @@ Ltac crush :=
          something new after simplification. *)
       | saturate'; solve [ finisher | saturate'; finisher ]
       (* ⬇️ should really be the last case because it can be quite slow. *)
-      | timeout 20 hauto_ctx ]
+      | timeout 30 hauto_ctx ]
   in
   solve
     [ trivial
