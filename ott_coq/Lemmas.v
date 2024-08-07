@@ -2652,7 +2652,7 @@ Ltac crush :=
   let saturate' := (saturate; (solve[eauto] || autorewrite with propagate_down in *)) in
   let finisher := solve [ hauto
                         | (rewrite_strat
-                            (topdown (choice (hints suffices) (hints propagate_down)))); hauto ] in
+                            (topdown (choice (hints suffices) (hints propagate_down)))); hauto use: Disjoint_commutative ] in
   let workhorse :=
     solve
       [ trivial with autolemmas
