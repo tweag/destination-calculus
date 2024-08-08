@@ -679,6 +679,7 @@ Proof.
   - intros IsValidMode. unfold ValidOnly. intros n' binding' mapstoSing. apply singleton_MapsTo_iff in mapstoSing. assert (n = n'). { apply eq_sigT_fst in mapstoSing. assumption. } subst. apply inj_pair2_eq_dec in mapstoSing. 2:{ exact name_eq_dec. } subst. assumption.
 Qed.
 Hint Rewrite ValidOnly_singleton_iff : propagate_down.
+Hint Rewrite ValidOnly_singleton_iff : suffices.
 
 Lemma ValidOnly_stimes_backward : forall (m : mode) (G : ctx), ValidOnly (m ᴳ· G) -> ValidOnly G.
 Proof.
@@ -1345,7 +1346,7 @@ Lemma DestOnly_Disjoint_singleton_var' : forall (G : ctx) (x : var) (m : mode) (
 Proof.
   exact DestOnly_Disjoint_singleton_var.
 Qed.
-Hint Rewrite <- DestOnly_Disjoint_singleton_var' : suffices.
+(* Hint Rewrite <- DestOnly_Disjoint_singleton_var' : suffices. *)
 
 Lemma mode_plus_commutative : forall (m n: mode), mode_plus m n = mode_plus n m.
 Proof.
@@ -2235,7 +2236,7 @@ Proof.
 Qed.
 Hint Rewrite FinAgeOnly_stimes_times_backward' : propagate_down.
 
-Lemma union_self_stimes_plus_eq : forall (G : ctx) (m1 m2 : mode), m1 ᴳ· G ᴳ+ m2 ᴳ· G = (mode_plus m1 m2) ᴳ· G.
+Lemma stimes_mode_plus_eq : forall (G : ctx) (m1 m2 : mode), m1 ᴳ· G ᴳ+ m2 ᴳ· G = (mode_plus m1 m2) ᴳ· G.
 Proof.
   intros *.
   apply ext_eq. intros n. unfold union, stimes. destruct (In_dec n G).
@@ -2608,7 +2609,7 @@ Ltac hauto_ctx :=
         LinOnly_stimes_times_backward,
         FinAgeOnly_stimes_plus_backward,
         FinAgeOnly_stimes_times_backward,
-        union_self_stimes_plus_eq,
+        stimes_mode_plus_eq,
         (* UserDefined_union_iff, *)
         (* UserDefined_Disjoint, *)
         IsLin_linnu',
@@ -3790,7 +3791,7 @@ Proof.
       apply IHv2.
         { crush. } { crush. } { crush. } { crush. } { crush. } { Disjoint_singleton_using DisjointD4h. } { crush. } { crush. } { Disjoint_singleton_using DisjointD5h. } { crush. } { Disjoint_singleton_using DisjointD13h. } { Disjoint_singleton_using DisjointD20h. }
         { rewrite hminus_inv_distrib_on_union. rewrite hminus_inv_singleton. assumption. Disjoint_singleton_using DisjointD13h. }
-      rewrite <- union_self_stimes_plus_eq.
+      rewrite <- stimes_mode_plus_eq.
       repeat rewrite union_associative.
       rewrite union_swap_2_4_l6.
       rewrite union_swap_3_4_l6.
@@ -3932,5 +3933,282 @@ Proof.
   intros * H. destruct H as (H1 & H2 & H3). apply ValidOnly_hminus_inv_union; assumption.
 Qed.
 Hint Rewrite <- ValidOnly_hminus_inv_union' : suffices.
+
+Lemma DestOnly_VarOnly_contra : forall (D : ctx), DestOnly D -> VarOnly D -> D = ᴳ{}.
+Proof.
+  intros D DestOnlyD VarOnlyD.
+  apply DestOnly_wk_NoVar in DestOnlyD.
+  apply ext_eq. intros n. destruct (D n) eqn:mapsto.
+  specialize (DestOnlyD n b mapsto). specialize (VarOnlyD n b mapsto). congruence.
+  simpl. reflexivity.
+Qed.
+
+Lemma DisposableOnly_union_forward : forall (P1 P2 : ctx), DisposableOnly P1 -> DisposableOnly P2 -> P1 # P2 -> DisposableOnly (P1 ᴳ+ P2).
+Proof.
+  intros P1 P2 DisposP1 DisposP2 DisjointP12.
+  unfold DisposableOnly in *.
+  intros n b mapsto.
+  destruct (P1 n) as [b1|] eqn:mapstoP1, (P2 n) as [b2|] eqn:mapstoP2; unfold union in mapsto.
+  - exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+  - specialize (DisposP1 n b1 mapstoP1).
+    rewrite merge_with_Some_None_eq with (y1 := b1) in mapsto. inversion mapsto; subst. all:auto.
+  - specialize (DisposP2 n b2 mapstoP2).
+    rewrite merge_with_None_Some_eq with (y2 := b2) in mapsto. inversion mapsto; subst. all:auto.
+  - assert (merge_with (fsimple (fun t : Type => t -> t -> t) union_var union_dh) P1 P2 n = None). { rewrite merge_with_None_None_eq; auto. }
+    rewrite H in mapsto. congruence.
+Qed.
+
+Lemma DisposableOnly_union_backward : forall (P1 P2 : ctx), DisposableOnly (P1 ᴳ+ P2) -> P1 # P2 -> DisposableOnly P1 /\ DisposableOnly P2.
+Proof.
+  intros P1 P2 DisposP12 DisjointP12.
+  unfold DisposableOnly in *.
+  split.
+  - intros n b1 mapstoP1. destruct (P2 n) as [b2|] eqn:mapstoP2.
+    exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+    assert ((P1 ᴳ+ P2) n = Some b1). { unfold union. rewrite merge_with_Some_None_eq with (y1 := b1); auto. }
+    specialize (DisposP12 n b1 H). assumption.
+  - intros n b2 mapstoP2. destruct (P1 n) as [b1|] eqn:mapstoP1.
+    exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+    assert ((P1 ᴳ+ P2) n = Some b2). { unfold union. rewrite merge_with_None_Some_eq with (y2 := b2); auto. }
+    specialize (DisposP12 n b2 H). assumption.
+Qed.
+
+Lemma DisposableOnly_singleton_var : forall (x : var) (m : mode) (T : type), DisposableOnly (ᴳ{ x : m ‗ T}) <-> IsUr m.
+Proof.
+  intros *.
+  unfold DisposableOnly.
+  split.
+  - intros * DisposSing.
+    specialize (DisposSing (ˣ x) (ₓ m ‗ T)). assert (ᴳ{ x : m ‗ T} (ˣ x) = Some (ₓ m ‗ T)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (DisposSing H). simpl in DisposSing. assumption.
+  - intros IsUrm * mapsto.
+    unfold ctx_singleton in mapsto. rewrite singleton_MapsTo_iff in mapsto.
+    assert ((ˣ x) = n). { apply eq_sigT_fst in mapsto. assumption. } subst. apply inj_pair2_eq_dec in mapsto. subst. simpl. assumption. exact name_eq_dec.
+Qed.
+
+Lemma DisposableOnly_stimes_DestOnly_forward : forall (D : ctx) (m : mode), IsUr m -> DestOnly D -> ValidOnly D -> DisposableOnly (m ᴳ· D).
+Proof.
+  intros D m IsUrm DestOnlyD ValidOnlyD.
+  unfold DisposableOnly.
+  intros n b mapsto. unfold stimes in mapsto.
+  apply map_MapsTo_iff in mapsto. destruct mapsto as (b' & mapstoD & beq).
+  rewrite beq in *. clear beq b. unfold IsDisposable. specialize (DestOnlyD n b' mapstoD). specialize (ValidOnlyD n b' mapstoD).
+  destruct n, b'; unfold stimes; simpl in *; unfold mode_times; inversion IsUrm; try congruence; destruct m0; try destruct p; try destruct m0; try destruct m1; simpl in *; try contradiction; try constructor; try inversion ValidOnlyD.
+Qed.
+
+Lemma DisposableOnly_wk_ValidOnly : forall (D : ctx), DisposableOnly D -> ValidOnly D.
+Proof.
+  intros D DisposD.
+  unfold DisposableOnly, ValidOnly in *.
+  intros n b mapsto.
+  specialize (DisposD n b mapsto).
+  destruct n, b; simpl in *; try destruct m; try contradiction; try constructor; try inversion DisposD.
+Qed.
+
+Lemma DisposableOnly_sub : forall (PtP : ctx) (x' : var) (m' : mode) (Tv' : type) (Dv' : ctx), ValidOnly Dv' -> DestOnly Dv' -> PtP # ᴳ{ x' : m' ‗ Tv'} -> PtP # Dv' -> DisposableOnly (PtP ᴳ+ ᴳ{ x' : m' ‗ Tv'}) -> DisposableOnly (PtP ᴳ+ m' ᴳ· Dv').
+Proof.
+  intros * ValidOnlyDv' DestOnlyDv' DisjointPtP DisjointDv' DisposPtP.
+  apply DisposableOnly_union_forward. apply DisposableOnly_union_backward with (P2 := ᴳ{ x' : m' ‗ Tv'}). assumption. assumption.
+  apply DisposableOnly_stimes_DestOnly_forward.
+  apply DisposableOnly_singleton_var with (x := x') (T := Tv').
+  apply DisposableOnly_union_backward with (P1 := PtP). assumption. assumption. assumption.
+  assert (ValidOnly (PtP ᴳ+ ᴳ{ x' : m' ‗ Tv'})). { apply DisposableOnly_wk_ValidOnly. assumption. } assumption.
+  crush.
+Qed.
+
+Lemma IsValid_in_sub_1 : forall (x x' : var) (m m' : mode) (P Pt : ctx) (T Tv' : type), IsValid m' -> ValidOnly Pt -> Pt # ᴳ{ x' : m' ‗ Tv' } -> P ᴳ+ ᴳ{ x : m ‗ T } = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} -> IsValid m.
+Proof.
+  intros * Validm' ValidOnlyPt DisjointPtP UnionEq.
+  assert (ValidOnly (Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'})). { apply ValidOnly_union_forward; trivial. apply ValidOnly_singleton_iff. simpl; assumption. }
+  assert (ValidOnly (P ᴳ+ ᴳ{ x : m ‗ T})). { rewrite UnionEq; assumption. }
+  apply ValidOnly_union_backward in H0. destruct H0 as (ValidP & ValidSing).
+  apply ValidOnly_singleton_iff in ValidSing. simpl in ValidSing; assumption.
+Qed.
+
+Lemma IsValid_in_sub_2 : forall (x1 x2 x' : var) (m m' : mode) (P Pt : ctx) (T1 T2 Tv' : type), IsValid m' -> ValidOnly Pt -> Pt # ᴳ{ x' : m' ‗ Tv' } -> P ᴳ+ ᴳ{ x1 : m ‗ T1 } ᴳ+ ᴳ{ x2 : m ‗ T2 } = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} -> IsValid m.
+Proof.
+  intros * Validm' ValidOnlyPt DisjointPtP UnionEq.
+  apply IsValid_in_sub_1 with (x := x2) (x' := x') (m' := m') (P := P ᴳ+ ᴳ{ x1 : m ‗ T1 }) (Pt := Pt) (T := T2) (Tv' := Tv'); trivial.
+Qed.
+
+Lemma singletons_var_eq_iff : forall (x1 x2 : var) (m1 m2 : mode) (T1 T2 : type), ᴳ{ x1 : m1 ‗ T1} = ᴳ{ x2 : m2 ‗ T2} <-> x1 = x2 /\ m1 = m2 /\ T1 = T2.
+Proof.
+  intros *.
+  split.
+  - intros H. assert (ᴳ{ x1 : m1 ‗ T1} (ˣ x1) = ᴳ{ x2 : m2 ‗ T2} (ˣ x1)). { rewrite H. reflexivity. } unfold ctx_singleton in H0. rewrite singleton_MapsTo_at_elt in H0. apply eq_sym in H0. apply singleton_MapsTo_iff in H0.
+  assert (x2 = x1). { apply eq_sigT_fst in H0. inversion H0. reflexivity. } subst. apply inj_pair2_eq_dec in H0. inversion H0; subst. auto. exact name_eq_dec.
+  - intros (-> & -> & ->). reflexivity.
+Qed.
+
+Lemma singletons_union_r_neq : forall (x1 x2 : var) (m1 m2 m3 : mode) (T1 T2 T3 : type), x1 <> x2 -> ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2} = ᴳ{ x2 : m3 ‗ T3} -> False.
+Proof.
+  intros * neq H.
+  assert ((ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2}) (ˣ x1) = ᴳ{ x2 : m3 ‗ T3} (ˣ x1)). { rewrite H. reflexivity. }
+  assert ((ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2}) (ˣ x1) = Some (ₓ m1 ‗ T1)). { unfold ctx_singleton, union. rewrite (@merge_with_Some_None_eq name binding_type_of) with (x := (ˣ x1)) (y1 := (ₓ m1 ‗ T1)); split. apply singleton_MapsTo_at_elt. apply singleton_nMapsTo_iff. injection. intros contra. congruence. } rewrite H1 in H0.
+  assert (ᴳ{ x2 : m3 ‗ T3} (ˣ x1) = None). { unfold ctx_singleton. apply singleton_nMapsTo_iff. injection. intros contra. congruence. } rewrite H2 in H0. congruence.
+Qed.
+
+Lemma singletons_union_l_neq : forall (x1 x2 : var) (m1 m2 m3 : mode) (T1 T2 T3 : type), x1 <> x2 -> ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2} = ᴳ{ x1 : m3 ‗ T3} -> False.
+Proof.
+  intros * neq H. rewrite union_commutative in H. apply singletons_union_r_neq with (2 := H). symmetry. assumption.
+Qed.
+
+Lemma ModeSubtype_linnu_stimes : forall (m1 m2 : mode), ¹ν <: m1 -> ¹ν <: m2 -> ¹ν <: m1 · m2.
+Proof.
+  intros * Subtypem1 Subtypem2. destruct m1, m2; try destruct p; try destruct p0; try destruct m; try destruct m0; try destruct a; try destruct a0; try destruct n; try destruct a0; simpl in *; try constructor; try inversion Subtypem1; try inversion Subtypem2; try inversion H4; try congruence; try inversion H4.
+Qed.
+
+(* Lemma Ty_val_DestOnly_weakening : forall (D : ctx) (G : ctx) (m : mode) (T : type) (v : val), (¹ν <: m) -> DestOnly D -> D ᴳ+ G ⫦ v : T -> m ᴳ· D ᴳ+ G ⫦ v : T
+ with Ty_term_DestOnly_weakening : forall (D : ctx) (P : ctx) (m : mode) (T : type) (t : term), (¹ν <: m) -> DestOnly D -> D ᴳ+ P ⊢ t : T -> m ᴳ· D ᴳ+ P ⊢ t : T.
+Proof.
+  - intros * Subtypem DestOnlyD Tyv.
+    dependent induction Tyv; simpl.
+    + specialize (DestOnlyD (ʰ h) (₊ T ‗ ¹ν)). unfold ctx_singleton in DestOnlyD. rewrite singleton_MapsTo_at_elt in DestOnlyD. specialize (DestOnlyD eq_refl). inversion DestOnlyD.
+    + rewrite stimes_singleton_dest. constructor. apply ModeSubtype_linnu_stimes; assumption.
+    + rewrite stimes_empty_eq. constructor.
+    + assert (m ᴳ· D ᴳ+ ᴳ{ x : m0 ‗ T} ⊢ u : U). { apply Ty_term_DestOnly_weakening with (3 := Tyu); trivial. }
+      constructor; trivial. crush.
+    + constructor. apply Ty_val_DestOnly_weakening; trivial.
+    + constructor. apply Ty_val_DestOnly_weakening; trivial.
+    + rewrite stimes_distrib_on_union. constructor. apply Ty_val_DestOnly_weakening; trivial. crush. apply Ty_val_DestOnly_weakening; trivial. crush.
+    +  *)
+
+Lemma LinOnly_FinAgeOnly_stimes_compatible_linnu_impl_eq : forall (D : ctx) (m : mode), ¹ν <: m -> LinOnly (m ᴳ· D) -> FinAgeOnly (m ᴳ· D) -> m ᴳ· D = D.
+Proof.
+  intros * Subtypem LinOnlymD FinAgeOnlymD.
+  apply ext_eq. intros n.
+  destruct (D n) as [b|] eqn:mapsto; unfold stimes in *.
+  2:{ apply map_nMapsTo_iff. assumption. }
+  assert (map (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m)) D n = Some ((fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m)) n b)). { apply map_MapsTo_if. assumption. } rewrite H.
+  f_equal.
+  specialize (LinOnlymD n (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m) n b) H).
+  specialize (FinAgeOnlymD n (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m) n b) H).
+  destruct n, b, m; try destruct m0; inversion LinOnlymD; inversion Subtypem; inversion FinAgeOnlymD; subst; simpl in *; try destruct p; try destruct p0; try destruct p1; try destruct m; try destruct a1; try destruct a0; try destruct n; try destruct n0; simpl in *; trivial; try inversion H1; try inversion H4; try inversion H5; try inversion H7; subst; try destruct p; try destruct p2; try destruct a2; try destruct m; try destruct a0; try inversion H2; try inversion H7; try inversion H8; subst; trivial; try congruence.
+Qed.
+
+Lemma DisposableOnly_LinOnly_contra : forall (P : ctx), DisposableOnly P -> LinOnly P -> P = ᴳ{}.
+Proof.
+  intros P DisposP LinOnlyP.
+  apply ext_eq. intros n. destruct (P n) eqn:mapsto.
+  specialize (DisposP n b mapsto). specialize (LinOnlyP n b mapsto). unfold IsDisposable in DisposP. inversion LinOnlyP.
+  destruct n, b; simpl in *; try destruct m; try contradiction; try constructor; try inversion DisposP; subst; try congruence.
+  simpl; reflexivity.
+Qed.
+
+Lemma stimes_inv_singleton_var : forall (m : mode) (G : ctx) (x : var) (m0 : mode) (T : type) , m ᴳ· G = ᴳ{ x : m0 ‗ T} -> exists m', m0 = m · m' /\ G = ᴳ{ x : m' ‗ T}.
+Proof.
+  intros *. intros Geq.
+  destruct (G (ˣ x)) eqn:Gmapstox.
+  exists (mode_of b). split.
+  - assert ((m ᴳ· G) (ˣ x) = Some (ₓ m0 ‗ T)). { rewrite Geq. unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. }
+    unfold stimes in H. rewrite map_MapsTo_iff in H. destruct H as (b' & mapsto' & H). assert (b = b'). { rewrite mapsto' in Gmapstox. inversion Gmapstox. reflexivity. } subst. destruct b'; simpl in H; inversion H; simpl; reflexivity.
+  - apply ext_eq. intros n'.
+    assert ((m ᴳ· G) n' = ᴳ{ x : m0 ‗ T} n'). { rewrite Geq. reflexivity. }
+    destruct (name_eq_dec (ˣ x) n').
+    * subst. 
+      unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *.
+      unfold stimes in H; unfold map, Fun.map in H; simpl in H. rewrite Gmapstox in H; simpl in H. destruct b; simpl in *. congruence.
+    * assert (ᴳ{ x : m0 ‗ T} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. apply map_nMapsTo_iff in H.
+      assert (ᴳ{ x : mode_of b ‗ T} n' = None). { apply singleton_nMapsTo_iff. assumption. }
+      rewrite H. rewrite H1. reflexivity.
+  - assert (In (ˣ x) (m ᴳ· G)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_stimes_iff in H. destruct H as (b' & mapsto). congruence.
+Qed.
+
+Lemma ctx_split_stimes_union_union : forall (m1 m2 : mode) (P1 P2 Pt : ctx) (x' : var) (m' : mode) (Tv' : type),
+  ValidOnly (Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) ->
+  Pt # ᴳ{ x' : m' ‗ Tv'} ->
+  m1 ᴳ· P1 ᴳ+ m2 ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} ->
+  ( exists m1' m2' Pt1 Pt2, m' = mode_plus (m1 · m1') (m2 · m2') /\ Pt = m1 ᴳ· Pt1 ᴳ+ m2 ᴳ· Pt2 /\ P1 = Pt1 ᴳ+ ᴳ{ x' : m1' ‗ Tv'} /\ P2 = Pt2 ᴳ+ ᴳ{ x' : m2' ‗ Tv'} ) \/
+  ( exists m1' Pt1, m' = m1 · m1' /\ Pt = m1 ᴳ· Pt1 ᴳ+ m2 ᴳ· P2 /\ P1 = Pt1 ᴳ+ ᴳ{ x' : m1' ‗ Tv'} /\ ~In (ˣ x') P2) \/
+  ( exists m2' Pt2, m' = m2 · m2' /\ Pt = m1 ᴳ· P1 ᴳ+ m2 ᴳ· Pt2 /\ P2 = Pt2 ᴳ+ ᴳ{ x' : m2' ‗ Tv'} /\ ~In (ˣ x') P1).
+Proof.
+  intros * ValidOnlyR DisjointPtx UnionEq.
+  destruct (ctx_split_union_union (m1 ᴳ· P1) (m2 ᴳ· P2) Pt (ᴳ{ x' : m' ‗ Tv'}) DisjointPtx UnionEq) as (Pt1 & Pt2 & sing1 & sing2 & PtEq & singEq & P1eq & P2eq).
+  destruct (ctx_split_stimes_union m1 P1 Pt1 sing1) as (Pt1' & sing1' & Pt1eq & sing1eq & P1eq'); trivial. { rewrite PtEq, singEq in DisjointPtx. crush. }
+  destruct (ctx_split_stimes_union m2 P2 Pt2 sing2) as (Pt2' & sing2' & Pt2eq & sing2eq & P2eq'); trivial. { rewrite PtEq, singEq in DisjointPtx. crush. }
+  destruct (union_inv_singleton_var sing1 sing2 x' m' Tv') as [[(m1'' & m2'' & sing1eq' & sing2eq' & m''eq) | (sing1eq' & sing2eq')] | (sing1eq' & sing2eq')].
+  { apply ValidOnly_singleton_iff with (n := (ˣ x')) (binding := ₓ m' ‗ Tv'). crush. }
+  { symmetry; assumption. }
+  all: rewrite sing1eq', sing2eq' in *. clear sing1eq' sing1 sing2eq' sing2.
+  - destruct (stimes_inv_singleton_var m1 sing1' x' m1'' Tv') as (m1' & m1eq & Pt1eq'); trivial. { symmetry; assumption. }
+    destruct (stimes_inv_singleton_var m2 sing2' x' m2'' Tv') as (m2' & m2eq & Pt2eq'); trivial. { symmetry; assumption. }
+    rewrite Pt1eq', Pt2eq', m1eq, m2eq in *. clear Pt1eq' Pt2eq' sing1' sing2' m1eq m2eq m1'' m2''. rewrite Pt1eq, Pt2eq in *. clear Pt1eq Pt2eq Pt1 Pt2. rewrite P1eq, P2eq in *.
+    left. exists m1', m2', Pt1', Pt2'; repeat split; trivial.
+  - apply eq_sym in sing2eq. apply stimes_empty_iff in sing2eq. rewrite sing2eq in *. clear sing2eq sing2eq' sing2 sing2'.
+    destruct (stimes_inv_singleton_var m1 sing1' x' m' Tv') as (m1' & m1eq & Pt1eq'); trivial. { symmetry; assumption. }
+    rewrite Pt1eq', m1eq in *. clear Pt1eq' sing1' sing1eq' m1eq.
+    rewrite <- union_empty_r_eq in *. rewrite <- P2eq' in *. clear P2eq' Pt2'.
+     rewrite Pt1eq, Pt2eq in *. clear Pt1eq Pt2eq Pt1 Pt2. rewrite P1eq in *.
+     right. left. exists m1', Pt1'; repeat split; trivial.
+     rewrite PtEq in DisjointPtx. apply nIn_iff_Disjoint_singleton with (n := (ˣ x')) (binding := ₓ m1 · m1' ‗ Tv'). crush.
+  - apply eq_sym in sing1eq. apply stimes_empty_iff in sing1eq. rewrite sing1eq in *. clear sing1eq sing1eq' sing1 sing1'.
+    destruct (stimes_inv_singleton_var m2 sing2' x' m' Tv') as (m2' & m2eq & Pt2eq'); trivial. { symmetry; assumption. }
+    rewrite Pt2eq', m2eq in *. clear Pt2eq' sing2' sing2eq' m2eq.
+    rewrite <- union_empty_r_eq in *. rewrite <- P1eq' in *. clear P1eq' Pt1'.
+    rewrite Pt1eq, Pt2eq in *. clear Pt1eq Pt2eq Pt1 Pt2. rewrite P2eq in *.
+    right. right. exists m2', Pt2'; repeat split; trivial.
+    rewrite PtEq in DisjointPtx. apply nIn_iff_Disjoint_singleton with (n := (ˣ x')) (binding := ₓ m2 · m2' ‗ Tv'). crush.
+Qed.
+
+Lemma LinOnly_mode_times_backward : forall (m1 m2 : mode) (D : ctx), LinOnly (m1 · m2 ᴳ· D) -> LinOnly (m1 ᴳ· D) /\ LinOnly  (m2 ᴳ· D).
+Proof. intros * LinOnlymD.
+  split.
+  rewrite mode_times_commutative in LinOnlymD.
+  all: rewrite <- stimes_is_action in LinOnlymD; apply LinOnly_stimes_backward in LinOnlymD; assumption.
+Qed.
+
+Lemma FinAgeOnly_mode_times_backward : forall (m1 m2 : mode) (D : ctx), FinAgeOnly (m1 · m2 ᴳ· D) -> FinAgeOnly (m1 ᴳ· D) /\ FinAgeOnly  (m2 ᴳ· D).
+Proof. intros * FinAgeOnlymD.
+  split.
+  rewrite mode_times_commutative in FinAgeOnlymD.
+  all: rewrite <- stimes_is_action in FinAgeOnlymD; apply FinAgeOnly_stimes_backward in FinAgeOnlymD; assumption.
+Qed.
+
+Lemma LinOnly_mode_plus_backward : forall (m1 m2 : mode) (D : ctx), LinOnly ((mode_plus m1 m2) ᴳ· D) -> LinOnly (m1 ᴳ· D) /\ LinOnly (m2 ᴳ· D).
+Proof. intros * LinOnlymD.
+  rewrite <- stimes_mode_plus_eq in LinOnlymD.
+  apply LinOnly_union_iff in LinOnlymD. crush.
+Qed.
+
+Lemma FinAgeOnly_mode_plus_backward : forall (m1 m2 : mode) (D : ctx), FinAgeOnly ((mode_plus m1 m2) ᴳ· D) -> FinAgeOnly (m1 ᴳ· D) /\ FinAgeOnly (m2 ᴳ· D).
+Proof. intros * FinAgeOnlymD.
+  rewrite <- stimes_mode_plus_eq in FinAgeOnlymD.
+  apply FinAgeOnly_union_backward in FinAgeOnlymD. crush.
+Qed.
+
+Lemma ctx_var_decide : forall (G : ctx) (x : var), {exists G' m T, G = G' ᴳ+ ᴳ{ x : m ‗ T} /\ G' # ᴳ{ x : m ‗ T}} + {~In (ˣ x) G}.
+Proof.
+  intros *.
+  destruct (G (ˣ x)) as [b|] eqn:mapsto.
+  - left. exists (ctx_remove (ˣ x) G). destruct b. exists m, T.
+    split.
+    * apply ctx_split_singleton; assumption.
+    * intros n Inrem Insing. destruct Insing as (b' & mapstoSing). unfold ctx_singleton in mapstoSing. apply singleton_MapsTo_iff in mapstoSing.
+    assert (n = ˣ x). { apply eq_sigT_fst in mapstoSing. symmetry; assumption. } subst. apply In_ctx_remove_iff in Inrem. destruct Inrem as (_ & contra); contradiction contra. reflexivity.
+  - right. apply nIn_iff_nMapsTo. assumption.
+Qed. 
+
+Lemma LinOnly_times_linone_forward : forall (m : mode) (D : ctx), LinOnly (m ᴳ· D) -> LinOnly ((¹↑ · m) ᴳ· D).
+Proof.
+  intros * LinOnlymD. rewrite <- stimes_is_action.
+  apply LinOnly_stimes_forward. constructor. assumption.
+Qed.
+
+Lemma FinAgeOnly_times_linone_forward : forall (m : mode) (D : ctx), FinAgeOnly (m ᴳ· D) -> FinAgeOnly ((¹↑ · m) ᴳ· D).
+Proof.
+  intros * FinAgeOnlymD. rewrite <- stimes_is_action.
+  apply FinAgeOnly_stimes_forward. constructor. assumption.
+Qed.
+
+Lemma LinOnly_times_linone_backward : forall (m : mode) (D : ctx), LinOnly ((¹↑ · m) ᴳ· D) -> LinOnly (m ᴳ· D).
+Proof.
+  intros * LinOnlymD. rewrite <- stimes_is_action in LinOnlymD.
+  apply LinOnly_stimes_backward in LinOnlymD. assumption.
+Qed.
+
+Lemma FinAgeOnly_times_linone_backward : forall (m : mode) (D : ctx), FinAgeOnly ((¹↑ · m) ᴳ· D) -> FinAgeOnly (m ᴳ· D).
+Proof.
+  intros * FinAgeOnlymD. rewrite <- stimes_is_action in FinAgeOnlymD.
+  apply FinAgeOnly_stimes_backward in FinAgeOnlymD. assumption.
+Qed.
 
 (* ========================================================================= *)
