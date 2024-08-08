@@ -19,6 +19,187 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Arith.
 Require Import Lia.
 
+Lemma DestOnly_VarOnly_contra : forall (D : ctx), DestOnly D -> VarOnly D -> D = ᴳ{}.
+Proof.
+  intros D DestOnlyD VarOnlyD.
+  apply DestOnly_wk_NoVar in DestOnlyD.
+  apply ext_eq. intros n. destruct (D n) eqn:mapsto.
+  specialize (DestOnlyD n b mapsto). specialize (VarOnlyD n b mapsto). congruence.
+  simpl. reflexivity.
+Qed.
+
+Lemma DisposableOnly_union_forward : forall (P1 P2 : ctx), DisposableOnly P1 -> DisposableOnly P2 -> P1 # P2 -> DisposableOnly (P1 ᴳ+ P2).
+Proof.
+  intros P1 P2 DisposP1 DisposP2 DisjointP12.
+  unfold DisposableOnly in *.
+  intros n b mapsto.
+  destruct (P1 n) as [b1|] eqn:mapstoP1, (P2 n) as [b2|] eqn:mapstoP2; unfold union in mapsto.
+  - exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+  - specialize (DisposP1 n b1 mapstoP1).
+    rewrite merge_with_Some_None_eq with (y1 := b1) in mapsto. inversion mapsto; subst. all:auto.
+  - specialize (DisposP2 n b2 mapstoP2).
+    rewrite merge_with_None_Some_eq with (y2 := b2) in mapsto. inversion mapsto; subst. all:auto.
+  - assert (merge_with (fsimple (fun t : Type => t -> t -> t) union_var union_dh) P1 P2 n = None). { rewrite merge_with_None_None_eq; auto. }
+    rewrite H in mapsto. congruence.
+Qed.
+
+Lemma DisposableOnly_union_backward : forall (P1 P2 : ctx), DisposableOnly (P1 ᴳ+ P2) -> P1 # P2 -> DisposableOnly P1 /\ DisposableOnly P2.
+Proof.
+  intros P1 P2 DisposP12 DisjointP12.
+  unfold DisposableOnly in *.
+  split.
+  - intros n b1 mapstoP1. destruct (P2 n) as [b2|] eqn:mapstoP2.
+    exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+    assert ((P1 ᴳ+ P2) n = Some b1). { unfold union. rewrite merge_with_Some_None_eq with (y1 := b1); auto. }
+    specialize (DisposP12 n b1 H). assumption.
+  - intros n b2 mapstoP2. destruct (P1 n) as [b1|] eqn:mapstoP1.
+    exfalso. apply Disjoint_MapsTo_contra with (2 := mapstoP1) (3:= mapstoP2); assumption.
+    assert ((P1 ᴳ+ P2) n = Some b2). { unfold union. rewrite merge_with_None_Some_eq with (y2 := b2); auto. }
+    specialize (DisposP12 n b2 H). assumption.
+Qed.
+
+Lemma DisposableOnly_singleton_var : forall (x : var) (m : mode) (T : type), DisposableOnly (ᴳ{ x : m ‗ T}) <-> IsUr m.
+Proof.
+  intros *.
+  unfold DisposableOnly.
+  split.
+  - intros * DisposSing.
+    specialize (DisposSing (ˣ x) (ₓ m ‗ T)). assert (ᴳ{ x : m ‗ T} (ˣ x) = Some (ₓ m ‗ T)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (DisposSing H). simpl in DisposSing. assumption.
+  - intros IsUrm * mapsto.
+    unfold ctx_singleton in mapsto. rewrite singleton_MapsTo_iff in mapsto.
+    assert ((ˣ x) = n). { apply eq_sigT_fst in mapsto. assumption. } subst. apply inj_pair2_eq_dec in mapsto. subst. simpl. assumption. exact name_eq_dec.
+Qed.
+
+Lemma DisposableOnly_stimes_DestOnly_forward : forall (D : ctx) (m : mode), IsUr m -> DestOnly D -> ValidOnly D -> DisposableOnly (m ᴳ· D).
+Proof.
+  intros D m IsUrm DestOnlyD ValidOnlyD.
+  unfold DisposableOnly.
+  intros n b mapsto. unfold stimes in mapsto.
+  apply map_MapsTo_iff in mapsto. destruct mapsto as (b' & mapstoD & beq).
+  rewrite beq in *. clear beq b. unfold IsDisposable. specialize (DestOnlyD n b' mapstoD). specialize (ValidOnlyD n b' mapstoD).
+  destruct n, b'; unfold stimes; simpl in *; unfold mode_times; inversion IsUrm; try congruence; destruct m0; try destruct p; try destruct m0; try destruct m1; simpl in *; try contradiction; try constructor; try inversion ValidOnlyD.
+Qed.
+
+Lemma DisposableOnly_wk_ValidOnly : forall (D : ctx), DisposableOnly D -> ValidOnly D.
+Proof.
+  intros D DisposD.
+  unfold DisposableOnly, ValidOnly in *.
+  intros n b mapsto.
+  specialize (DisposD n b mapsto).
+  destruct n, b; simpl in *; try destruct m; try contradiction; try constructor; try inversion DisposD.
+Qed.
+
+Lemma DisposableOnly_sub : forall (PtP : ctx) (x' : var) (m' : mode) (Tv' : type) (Dv' : ctx), ValidOnly Dv' -> DestOnly Dv' -> PtP # ᴳ{ x' : m' ‗ Tv'} -> PtP # Dv' -> DisposableOnly (PtP ᴳ+ ᴳ{ x' : m' ‗ Tv'}) -> DisposableOnly (PtP ᴳ+ m' ᴳ· Dv').
+Proof.
+  intros * ValidOnlyDv' DestOnlyDv' DisjointPtP DisjointDv' DisposPtP.
+  apply DisposableOnly_union_forward. apply DisposableOnly_union_backward with (P2 := ᴳ{ x' : m' ‗ Tv'}). assumption. assumption.
+  apply DisposableOnly_stimes_DestOnly_forward.
+  apply DisposableOnly_singleton_var with (x := x') (T := Tv').
+  apply DisposableOnly_union_backward with (P1 := PtP). assumption. assumption. assumption.
+  assert (ValidOnly (PtP ᴳ+ ᴳ{ x' : m' ‗ Tv'})). { apply DisposableOnly_wk_ValidOnly. assumption. } assumption.
+  crush.
+Qed.
+
+Lemma IsValid_in_sub_1 : forall (x x' : var) (m m' : mode) (P Pt : ctx) (T Tv' : type), IsValid m' -> ValidOnly Pt -> Pt # ᴳ{ x' : m' ‗ Tv' } -> P ᴳ+ ᴳ{ x : m ‗ T } = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} -> IsValid m.
+Proof.
+  intros * Validm' ValidOnlyPt DisjointPtP UnionEq.
+  assert (ValidOnly (Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'})). { apply ValidOnly_union_forward; trivial. apply ValidOnly_singleton_iff. simpl; assumption. }
+  assert (ValidOnly (P ᴳ+ ᴳ{ x : m ‗ T})). { rewrite UnionEq; assumption. }
+  apply ValidOnly_union_backward in H0. destruct H0 as (ValidP & ValidSing).
+  apply ValidOnly_singleton_iff in ValidSing. simpl in ValidSing; assumption.
+Qed.
+
+Lemma IsValid_in_sub_2 : forall (x1 x2 x' : var) (m m' : mode) (P Pt : ctx) (T1 T2 Tv' : type), IsValid m' -> ValidOnly Pt -> Pt # ᴳ{ x' : m' ‗ Tv' } -> P ᴳ+ ᴳ{ x1 : m ‗ T1 } ᴳ+ ᴳ{ x2 : m ‗ T2 } = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} -> IsValid m.
+Proof.
+  intros * Validm' ValidOnlyPt DisjointPtP UnionEq.
+  apply IsValid_in_sub_1 with (x := x2) (x' := x') (m' := m') (P := P ᴳ+ ᴳ{ x1 : m ‗ T1 }) (Pt := Pt) (T := T2) (Tv' := Tv'); trivial.
+Qed.
+
+Lemma singletons_var_eq_iff : forall (x1 x2 : var) (m1 m2 : mode) (T1 T2 : type), ᴳ{ x1 : m1 ‗ T1} = ᴳ{ x2 : m2 ‗ T2} <-> x1 = x2 /\ m1 = m2 /\ T1 = T2.
+Proof.
+  intros *.
+  split.
+  - intros H. assert (ᴳ{ x1 : m1 ‗ T1} (ˣ x1) = ᴳ{ x2 : m2 ‗ T2} (ˣ x1)). { rewrite H. reflexivity. } unfold ctx_singleton in H0. rewrite singleton_MapsTo_at_elt in H0. apply eq_sym in H0. apply singleton_MapsTo_iff in H0.
+  assert (x2 = x1). { apply eq_sigT_fst in H0. inversion H0. reflexivity. } subst. apply inj_pair2_eq_dec in H0. inversion H0; subst. auto. exact name_eq_dec.
+  - intros (-> & -> & ->). reflexivity.
+Qed.
+
+Lemma singletons_union_r_neq : forall (x1 x2 : var) (m1 m2 m3 : mode) (T1 T2 T3 : type), x1 <> x2 -> ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2} = ᴳ{ x2 : m3 ‗ T3} -> False.
+Proof.
+  intros * neq H.
+  assert ((ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2}) (ˣ x1) = ᴳ{ x2 : m3 ‗ T3} (ˣ x1)). { rewrite H. reflexivity. }
+  assert ((ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2}) (ˣ x1) = Some (ₓ m1 ‗ T1)). { unfold ctx_singleton, union. rewrite (@merge_with_Some_None_eq name binding_type_of) with (x := (ˣ x1)) (y1 := (ₓ m1 ‗ T1)); split. apply singleton_MapsTo_at_elt. apply singleton_nMapsTo_iff. injection. intros contra. congruence. } rewrite H1 in H0.
+  assert (ᴳ{ x2 : m3 ‗ T3} (ˣ x1) = None). { unfold ctx_singleton. apply singleton_nMapsTo_iff. injection. intros contra. congruence. } rewrite H2 in H0. congruence.
+Qed.
+
+Lemma singletons_union_l_neq : forall (x1 x2 : var) (m1 m2 m3 : mode) (T1 T2 T3 : type), x1 <> x2 -> ᴳ{ x1 : m1 ‗ T1} ᴳ+ ᴳ{ x2 : m2 ‗ T2} = ᴳ{ x1 : m3 ‗ T3} -> False.
+Proof.
+  intros * neq H. rewrite union_commutative in H. apply singletons_union_r_neq with (2 := H). symmetry. assumption.
+Qed.
+
+Lemma ModeSubtype_linnu_stimes : forall (m1 m2 : mode), ¹ν <: m1 -> ¹ν <: m2 -> ¹ν <: m1 · m2.
+Proof.
+  intros * Subtypem1 Subtypem2. destruct m1, m2; try destruct p; try destruct p0; try destruct m; try destruct m0; try destruct a; try destruct a0; try destruct n; try destruct a0; simpl in *; try constructor; try inversion Subtypem1; try inversion Subtypem2; try inversion H4; try congruence; try inversion H4.
+Qed.
+
+(* Lemma Ty_val_DestOnly_weakening : forall (D : ctx) (G : ctx) (m : mode) (T : type) (v : val), (¹ν <: m) -> DestOnly D -> D ᴳ+ G ⫦ v : T -> m ᴳ· D ᴳ+ G ⫦ v : T
+ with Ty_term_DestOnly_weakening : forall (D : ctx) (P : ctx) (m : mode) (T : type) (t : term), (¹ν <: m) -> DestOnly D -> D ᴳ+ P ⊢ t : T -> m ᴳ· D ᴳ+ P ⊢ t : T.
+Proof.
+  - intros * Subtypem DestOnlyD Tyv.
+    dependent induction Tyv; simpl.
+    + specialize (DestOnlyD (ʰ h) (₊ T ‗ ¹ν)). unfold ctx_singleton in DestOnlyD. rewrite singleton_MapsTo_at_elt in DestOnlyD. specialize (DestOnlyD eq_refl). inversion DestOnlyD.
+    + rewrite stimes_singleton_dest. constructor. apply ModeSubtype_linnu_stimes; assumption.
+    + rewrite stimes_empty_eq. constructor.
+    + assert (m ᴳ· D ᴳ+ ᴳ{ x : m0 ‗ T} ⊢ u : U). { apply Ty_term_DestOnly_weakening with (3 := Tyu); trivial. }
+      constructor; trivial. crush.
+    + constructor. apply Ty_val_DestOnly_weakening; trivial.
+    + constructor. apply Ty_val_DestOnly_weakening; trivial.
+    + rewrite stimes_distrib_on_union. constructor. apply Ty_val_DestOnly_weakening; trivial. crush. apply Ty_val_DestOnly_weakening; trivial. crush.
+    +  *)
+
+
+Lemma term_sub_spec_1' :
+  forall (Dv' : ctx) (Tv' : type) (x' : var) (v' : val),
+  ValidOnly Dv' ->
+  DestOnly Dv' ->
+  (Dv' ⊢ ᵥ₎ v' : Tv') ->
+  forall (Pt : ctx) (m' : mode) (t : term) (T : type),
+  IsValid m' ->
+  ValidOnly Pt ->
+  Pt # Dv' ->
+  Pt # ᴳ{ x' : m' ‗ Tv'} ->
+  (Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'} ⊢ t : T) ->
+  (Pt ᴳ+ m' ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : T).
+Proof.
+  intros * ValidOnlyDv' DestOnlyDv' Tyv' * Validm' ValidOnlyPt DisjointPtDv DisjointPtx Tyt.
+  dependent induction Tyt; simpl.
+  - assert (P ᴳ+ D = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
+      { hauto l: on use: ext_eq. } clear x.
+    destruct (ctx_split_union_union P D Pt (ᴳ{ x' : m' ‗ Tv'})) as (PtP & PtD & singP & singD & Pteq & singeq & Peq & Deq); trivial.
+    rewrite Peq, Deq, Pteq in *. clear Peq P Deq D Pteq Pt.
+    assert (singD = ᴳ{}). { assert (DestOnly singD) by crush. assert (VarOnly singD). { apply VarOnly_union_iff with (G1 := singP). rewrite <- singeq. apply VarOnly_singleton_var. } apply DestOnly_VarOnly_contra; assumption. } rewrite H0 in *. rewrite <- union_empty_r_eq in *.
+    clear H0 singD. rewrite <- singeq in *. clear singeq singP.
+    rewrite union_swap_2_3_l3.
+    assert (DisposableOnly (PtP ᴳ+ m' ᴳ· Dv')). { apply DisposableOnly_sub with (x' := x') (Tv' := Tv'); trivial. crush. crush. }
+    apply Ty_term_Val; trivial. supercrush.
+  - assert (P ᴳ+ ᴳ{ x0 : m ‗ T} = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
+      { hauto l: on use: ext_eq. } clear x. rename x0 into x.
+    destruct (ctx_split_union_union P (ᴳ{ x : m ‗ T}) Pt (ᴳ{ x' : m' ‗ Tv'})) as (PtP & PtD & singP & singD & Pteq & singeq & Peq & Deq); trivial.
+    assert (IsValid m) as Validm by (apply IsValid_in_sub_1 with (4 := UnionEq); trivial).
+    rewrite Peq, Pteq in *. clear Peq P Pteq Pt. apply eq_sym in singeq, Deq.
+    destruct (HNamesFacts.eq_dec x x'), (union_inv_singleton_var singP singD x' m' Tv') as [[(m1' & m2' & singPeq & singDeq & m'eq) | (singPeq & singDeq)] | (singPeq & singDeq)], (union_inv_singleton_var PtD singD x m T) as [[(m1 & m2 & PtDeq & singDeq' & meq) | (PtDeq & singDeq')] | (PtDeq & singDeq')]; trivial; subst;
+    try rewrite <- union_empty_l_eq in *; try rewrite <- union_empty_r_eq in *;
+    try (apply singletons_var_eq_iff in singDeq'; destruct singDeq' as (_ & -> & ->); subst);
+    try (solve [contradiction (singleton_eq_empty_contra _ _ singDeq')]);
+    try (solve [apply eq_sym in singDeq'; contradiction (singleton_eq_empty_contra _ _ singDeq')]);
+    try (solve [apply Disjoint_union_l_iff in DisjointPx; destruct DisjointPx as (_ & contra); apply Disjoint_singletons_iff in contra; congruence]);
+    try (solve [apply Disjoint_union_l_iff in DisjointPtx; destruct DisjointPtx as (_ & contra); apply Disjoint_singletons_iff in contra; congruence]);
+    try (solve [contradiction singletons_union_r_neq with (2 := Deq); auto]);
+    try (solve [contradiction singletons_union_l_neq with (2 := Deq); auto]);
+    try (solve [apply singletons_var_eq_iff in Deq; destruct Deq as (a & b & c); congruence]); admit.
+  - give_up.
+Admitted.
+
 Lemma term_sub_spec_1 :
   forall (D1 D2 : ctx) (m' : mode) (T' U' : type) (te : term) (x' : var) (v' : val),
   IsValid m' ->

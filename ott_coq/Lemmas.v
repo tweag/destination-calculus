@@ -2662,7 +2662,7 @@ Ltac crush :=
          something new after simplification. *)
       | saturate'; solve [ finisher | saturate'; finisher ]
       (* ⬇️ should really be the last case because it can be quite slow. *)
-      | timeout 30 hauto_ctx ]
+      | timeout 60 hauto_ctx ]
   in
   solve
     [ trivial
@@ -3421,6 +3421,47 @@ Proof.
       * assert (ᴳ{+ h : T ‗ n} n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
       rewrite H0, H1; reflexivity.
   - exfalso. assert (In (ʰ h) (G1 ᴳ+ G2)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_union_iff in H. destruct H as [H | H].
+    + unfold In, Fun.In in H. destruct H. congruence.
+    + unfold In, Fun.In in H. destruct H. congruence.
+Qed.
+
+Lemma union_inv_singleton_var : forall (G1 G2 : ctx) (x : var) (m : mode) (T : type), IsValid m -> G1 ᴳ+ G2 = ᴳ{ x : m ‗ T } -> {exists m1 m2, G1 = ᴳ{ x : m1 ‗ T } /\ G2 = ᴳ{ x : m2 ‗ T } /\ m = mode_plus m1 m2} + {G1 = ᴳ{ x : m ‗ T } /\ G2 = ᴳ{}} + {G1 = ᴳ{} /\ G2 = ᴳ{ x : m ‗ T }}.
+Proof.
+  intros * Validm Geq.
+  destruct (G1 (ˣ x)) eqn:G1mapstox, (G2 (ˣ x)) eqn:G2mapstox.
+  - left. left. exists (mode_of b), (mode_of b0). repeat split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b0) in H. 2:{ split; assumption. } destruct b, b0; simpl in *; inversion H; try destruct (type_eq_dec T0 T1); subst; try congruence; trivial. inversion H; subst; inversion Validm.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+        assert (ᴳ{ x : mode_of b ‗ T } n' = None). { unfold ctx_singleton. rewrite singleton_nMapsTo_iff. assumption. }
+      rewrite H1, H2; reflexivity.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b0) in H. 2:{ split; assumption. } destruct b, b0; simpl in *; inversion H; try destruct (type_eq_dec T0 T1); subst; try congruence; trivial. inversion H; subst; inversion Validm.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+        assert (ᴳ{ x : mode_of b0 ‗ T } n' = None). { unfold ctx_singleton. rewrite singleton_nMapsTo_iff. assumption. }
+      rewrite H1, H2; reflexivity.
+    + assert ((G1 ᴳ+ G2) (ˣ x) = ᴳ{ x : m ‗ T } (ˣ x)). { rewrite Geq. reflexivity. }
+      unfold union, merge_with, merge, Fun.merge, Fun.on_conflict_do, ctx_singleton in H. rewrite singleton_MapsTo_at_elt in H; simpl in H; rewrite G1mapstox, G2mapstox in H; unfold union_var in H.
+      destruct b, b0; simpl in *; try destruct (type_eq_dec T0 T1); try destruct (mode_eq_dec n n0); simpl in *; inversion H; subst;  try congruence; try inversion Validm; trivial.
+  - left. right. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_None_eq with (y1 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion Validm; trivial.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_Some_None_eq with (y1 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion Validm; trivial.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      simpl. assumption.
+  - right. split.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion Validm; trivial.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G1 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      simpl. assumption.
+    + apply ext_eq. intros n'. assert ((G1 ᴳ+ G2) n' = ᴳ{ x : m ‗ T } n'). { rewrite Geq. reflexivity. } destruct (name_eq_dec (ˣ x) n').
+      * subst. unfold ctx_singleton in *. rewrite singleton_MapsTo_at_elt in *. unfold union in H. rewrite merge_with_None_Some_eq with (y2 := b) in H. 2:{ split; assumption. } destruct b; simpl in *; inversion H; subst; try congruence; try inversion Validm; trivial.
+      * assert (ᴳ{ x : m ‗ T } n' = None). { apply singleton_nMapsTo_iff. assumption. } rewrite H0 in H. assert (G2 n' = None). { apply nIn_iff_nMapsTo. intros contra. apply nIn_iff_nMapsTo in H. apply nIn_union_iff in H. destruct H as (nInG1 & nInG2). congruence. }
+      rewrite H0, H1; reflexivity.
+  - exfalso. assert (In (ˣ x) (G1 ᴳ+ G2)). { rewrite Geq. apply In_singleton_iff; reflexivity. } rewrite In_union_iff in H. destruct H as [H | H].
     + unfold In, Fun.In in H. destruct H. congruence.
     + unfold In, Fun.In in H. destruct H. congruence.
 Qed.
