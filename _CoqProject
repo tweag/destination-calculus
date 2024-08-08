@@ -17,3 +17,4 @@ ott_coq/EctxsFillCompSpec.v
 ott_coq/TermSubSpec1.v
 ott_coq/TermSubSpec2.v
 ott_coq/Preservation.v
+ott_coq/Check.v
