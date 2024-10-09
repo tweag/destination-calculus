@@ -7,7 +7,6 @@ Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
-(* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
@@ -137,7 +136,7 @@ Proof.
     * exists (C ∘ ⬜⨞· t'), t. constructor; tauto.
   - rename Tyt into TyFillLeft, Tyt0 into Tyt, t0 into t. destruct (NotVal_dec t).
     * destruct e; subst. rename x into v. destruct (NotVal_dec t').
-      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ T ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⌋ n); tauto. } rename H1 into DestOnlyD'. rewrite <- union_associative in *. rewrite (nDisposable_in_LinOnly P (ᴳ{- h : m ⌊ T ⌋ n} ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2) DisposP LinOnlyD) in *.
+      + destruct e; subst. rename x into v'. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ⌊ T ⌋ n ‗ ¹ν}) (h := h) (T := ⌊ T ⌋ n); tauto. } rename H1 into DestOnlyD'. rewrite <- union_associative in *. rewrite (nDisposable_in_LinOnly P (ᴳ{- h : m ⌊ T ⌋ n} ᴳ+ mode_times' ((cons ¹↑ nil) ++ (cons n nil) ++ nil) ᴳ· P2) DisposP LinOnlyD) in *.
       exists
         ( C ©️[ h ≔ HNames.empty ‗  v' ] ),
         (ᵥ₎ ᵛ() ).

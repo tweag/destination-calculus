@@ -1,7 +1,7 @@
-# Research on destination bndrsing style and linear types
+# Destination calculus: A linear λ−calculus for purely functional memory writes
 
-To regenerate the Coq files, run the following command:
+To build the Coq files, run the following command:
 
 ```
-make coq
+make -j coq
 ```

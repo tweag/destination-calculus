@@ -4,7 +4,6 @@ Ty :: '' ::=
 defn
 G ⫦ v : T :: :: Ty_val :: Ty_val_ {{ com Typing judgment for values }} by
 
-% We must track linearity precisely, but age for received value is arbitrary
 --------------------- :: Hole
 { +h : T ¹ν } ⫦ +h : T
 
@@ -16,8 +15,6 @@ G ⫦ v : T :: :: Ty_val :: Ty_val_ {{ com Typing judgment for values }} by
 {} ⫦ () :①
 
 {{ IsValid [[m]] }} [[:Validm]]
-% {{ [[D]] # [[{ x : m T }]] }} : _Redundant because DestOnly D => D # { x : m T1 }
-% other rules don't need NoVar D as they cannot syntactically accept vars
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Only says that we cannot have holes inside, as well as t cannot capture extra variables 
 D + { x : m T } ⊢ u : U [[:Tyu]]
 ----------------- :: Fun
@@ -36,14 +33,11 @@ G2 ⫦ v2 : T2 [[:Tyv2]]
 ------------------------- :: Prod
 G1 + G2 ⫦ (v1, v2) : T1 ⨂ T2
 
-% we should augment age of holes which are below an exponential
 G ⫦ v' : T [[:Tyvp]]
 {{ IsValid [[n]] }} [[:Validn]]
 --------------------- :: Exp
 n·G ⫦ ᴇ n v' : ! n T
 
-% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhiD3]]
-% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhiD3]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
@@ -62,7 +56,6 @@ P ⊢ t : T :: :: Ty_term :: Ty_term_ {{ com Typing judgment for terms }} by
 {{ DestOnly [[D]] }} [[:DestOnlyD]] % Functionnally equivalent as ctx_NoHole P as values cannot syntactically contains free variables
 {{ [[P]] # [[D]] }} [[:DisjointPD]]
 {{ DisposableOnly [[P]] }} [[:DisposP]]
-% {{ [[D]] # [[P]] }} for free
 D ⫦ v : T [[:Tyv]]
 -------------------- :: Val
 P + D ⊢ v : T
@@ -218,9 +211,6 @@ P21 + P22 ˢ⊢ ˢ(t1, t2) : T1 ⨂ T2
 defn
 D ⊣ C : T ↣ U0 :: :: Ty_ectxs :: Ty_ectxs_ {{ com Typing judgment for evaluation contexts }} {{ tex [[D]][[⊣]][[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]] }} by
 
-% Idea : remove MultCond, but have a failable multiplication through good intercalation of hminus_inv and mult. This would work without fancy things with having dual modes for holes I think. Because hminus_inv will enforce linearity, so hole ctx multiplied by non-linear n could never be compensated (which is a good thing). But that would remove the ability to have 2 holes compensated by 1 omega dest.
-% If we go with "product mode" solution then we cannot multiply by n blindly as it would contaminate  ; we need to ??
-
 -------------------- :: Id
 {} ⊣ ⬜ : U0 ↣ U0
 
@@ -253,8 +243,6 @@ D2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatU
 D1 ⊣ C ∘ (⬜ ; u) : ① ↣ U0
 
-% {{ [[D2]] # [[{ x1 : m T1 }]] }} useless with DestOnly
-% {{ [[D2]] # [[{ x2 : m T2 }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -266,8 +254,6 @@ D2 + { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatS
 D1 ⊣ C ∘ (⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
-% {{ [[D2]] # [[{ x1 : m T1 }]] }} useless with DestOnly
-% {{ [[D2]] # [[{ x2 : m T2 }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -279,7 +265,6 @@ D2 + { x1 : m T1 } + { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatP
 D1 ⊣ C ∘ (⬜ ►case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
-% {{ [[D2]] # [[{ x : m·m' T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -291,7 +276,6 @@ D2 + { x : m·m' T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatE
 D1 ⊣ C ∘ (⬜ ►case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
-% {{ [[D2]] # [[{ x : ¹ν T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -335,7 +319,6 @@ D ⊣ C : ⌊T⌋m·n ↣ U0 [[:TyC]]
 ------------------------------ :: FillE
 D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
-% {{ [[D2]] # [[{ x : m T }]] }} useless with DestOnly
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -385,11 +368,6 @@ D1 ⊢ v : ⌊T⌋n [[:Tyt]]
 ----------------------------- :: FillLeaf2
 D2 ⊣ C ∘ (v ◀ ⬜) : T ↣ U0
 
-% TODO: check that hminus_inv enforces linearity+now
-
-% {{ LinOnly [[-⁻¹D3]] }} [[:LinOnlyhiD3]]
-% {{ FinAgeOnly [[-⁻¹D3]] }} [[:FinAgeOnlyhiD3]]
-
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ [[D1]] # [[D3]] }} [[:DisjointD1D3]]
 {{ [[D2]] # [[D3]] }} [[:DisjointD2D3]]
@@ -397,7 +375,7 @@ D2 ⊣ C ∘ (v ◀ ⬜) : T ↣ U0
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
 {{ DestOnly [[D3]] }} [[:DestOnlyD3]]
 {{ ValidOnly [[-⁻¹D3]] }} [[:ValidOnlyhiD3]]
-{{ [[hnames(C)]] ## [[hnames(D3)]] }} [[:HDisjointCD3]] % No shadowing for hole bindings, even already compensated ones (which wouldn't be assured by D2 # D3). In particular, that predicate implies D2 # D3
+{{ [[hnames(C)]] ## [[hnames(D3)]] }} [[:HDisjointCD3]] % that predicate implies D2 # D3
 D1 + D2 ⊣ C : (U ⧔ T') ↣ U0 [[:TyC]]
 D2 + -⁻¹D3 ⫦ v2 : U [[:Tyv2]]
 ---------------- :: OpenAmpar
@@ -415,11 +393,6 @@ D ⊢ t : T [[:Tyt]]
 
 defns
 Sem :: '' ::=
-
-% If ectx composition is not a meta instruction but a syntactic rule for context formation, then all unfoc rules can be merged as a single "pop & reform term" instruction ?
-% Not really for Close_Ampar because it is transformed back to a closed ampar instead of just being ectx substitution.
-
-% We want theorem that C[t] -->* C[v] where englobing context doesn't change?
 
 defn
 C [ t ] ⟶ C' [ t' ] :: :: Sem :: '' {{ com Small-step evaluation of commands }} {{ tex [[C]]\biggerbrackl [[t]] \biggerbrackr[[⟶]][[C']]\biggerbrackl [[t']] \biggerbrackr }} by
@@ -498,14 +471,10 @@ C[ H ⟨ v2 ❟ v1 ⟩ ►map x ⟼ t'] ⟶ (C ∘ (H⩲h''' ᵒᵖ⟨ v2[H⩲h'
 ---------------------------------- :: Close_Ampar
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜⟩)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
-% -------------------------- :: Red_Alloc
-% C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
-
 {{ NotVal [[u]] }} [[:NotValu]]
 -------------------------- :: Focus_ToA
 C[to⧔ u] ⟶ (C ∘ (to⧔ ⬜))[u]
 
-% No shape control here, so could be totally merged with Red_ToA
 -------------------------- :: Unfocus_ToA
 (C ∘ (to⧔ ⬜))[v2] ⟶ C[to⧔ v2]
 

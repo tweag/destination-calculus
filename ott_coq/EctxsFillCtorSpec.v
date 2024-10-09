@@ -8,7 +8,6 @@ Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
-(* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
@@ -201,7 +200,7 @@ Proof.
       rewrite stimes_distrib_on_union, stimes_is_action, union_associative, union_swap_1_2_l3.
       rewrite stimes_distrib_on_union, stimes_is_action, union_associative, union_swap_1_2_l3 in TyC.
       apply IHC; first last. all: trivial.
-      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: replace (mode_times' ((cons ¹↑ nil) ++ (cons n0 nil) ++ nil)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
       all: supercrush.
 Qed.
 

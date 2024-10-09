@@ -14,8 +14,7 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
-(* Grumble, grumble: we shouldn't need to Import Dest.Finitely, but if
-   we don't we can't use the coercions. *)
+
 Require Import Dest.Finitely.
 Require Dest.Permutation.
 
@@ -745,18 +744,6 @@ Notation "G '#' H" := (Disjoint G H) (at level 50, no associativity).
 
 Definition DisposableOnly (G: ctx) : Prop :=
   forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsDisposable n binding.
-
-(*
-Inductive CompatibleVar : ctx -> var -> mode -> type -> Prop :=
-  | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
-    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
-
-(* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
-Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
-  forall (n : name) (binding: binding_type_of n), P n = Some binding -> (
-    (n = (name_Var x) -> exists m', binding = binding_Var m' T /\ ModeSubtype m' m)
- /\ (n <> (name_Var x) -> IsDisposable binding)).
-*)
 
 (******************************************************************************
  * EVALUATION CONTEXTS

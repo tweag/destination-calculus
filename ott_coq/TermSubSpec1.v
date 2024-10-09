@@ -8,7 +8,6 @@ Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
-(* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
@@ -207,7 +206,7 @@ Proof.
         rewrite <- stimes_mode_plus_eq; repeat rewrite union_associative; rewrite union_swap_2_3_l4. rewrite <- union_associative. rewrite <- stimes_is_action. rewrite <- stimes_distrib_on_union.
         assert (Pt1 ᴳ+ m1 ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : ! n ⁔ T) as Tytsub1. {
           apply IHTyt1 with (Tv' := Tv'); trivial. apply LinOnly_mode_times_backward with (m1 := m). apply LinOnly_mode_plus_backward with (m2 := m2). assumption. apply FinAgeOnly_mode_times_backward with (m1 := m). apply FinAgeOnly_mode_plus_backward with (m2 := m2). assumption. apply IsValid_times_backward with (m1 := m). apply IsValid_plus_backward with (m2 := m2). assumption. crush. crush. Disjoint_singleton_using DisjointPtx. }
-        assert (Pt2 ᴳ+ m2 ᴳ· Dv' ᴳ+ ᴳ{ x : mode_times' ((©️⬜ ∘ m) ++ (©️⬜ ∘ n) ++ ©️⬜) ‗ T}  ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2. {
+        assert (Pt2 ᴳ+ m2 ᴳ· Dv' ᴳ+ ᴳ{ x : mode_times' ((cons m nil) ++ (cons n nil) ++ nil) ‗ T}  ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2. {
           rewrite union_swap_2_3_l3.
           apply IHTyt2 with (Tv' := Tv'); trivial. apply LinOnly_mode_plus_backward with (m1 := (m · m1)). assumption. apply FinAgeOnly_mode_plus_backward with (m1 := (m · m1)). assumption. apply IsValid_plus_backward with (m1 := (m · m1)). assumption.
           apply ValidOnly_union_forward. crush. apply ValidOnly_singleton_iff. simpl. rewrite mode_times_linnu_r_eq. crush. Disjoint_singleton_using DisjointP2x. apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. apply DestOnly_Disjoint_singleton_var; crush. apply Disjoint_union_l_iff; split. Disjoint_singleton_using DisjointPtx. apply Disjoint_singletons_iff; injection; intros ->; congruence. rewrite union_swap_2_3_l3. reflexivity. }
@@ -217,14 +216,14 @@ Proof.
           apply IHTyt1 with (Tv' := Tv'); trivial. crush. crush. crush. crush. crush. Disjoint_singleton_using DisjointPtx. }
         destruct (HNamesFacts.eq_dec x x'); subst.
         + apply Ty_term_PatE with (4 := Tytsub1) (5 := Tyt2); trivial.
-        + assert (P2 ᴳ+ ᴳ{ x : mode_times' ((©️⬜ ∘ m) ++ (©️⬜ ∘ n) ++ ©️⬜) ‗ T} ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2.
+        + assert (P2 ᴳ+ ᴳ{ x : mode_times' ((cons m nil) ++ (cons n nil) ++ nil) ‗ T} ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2.
           { replace (u ᵗ[ x' ≔ v']) with u. assumption. symmetry. apply term_sub_nIn_no_effect with (2 := Tyt2). apply nIn_union_iff; split. assumption. apply nIn_iff_Disjoint_singleton with (n := (ˣ x')) (binding := ₓ m · m1 ‗ Tv'). apply Disjoint_singletons_iff. injection. intros ->. congruence. }
           apply Ty_term_PatE with (4 := Tytsub1) (5 := Tytsub2); trivial.
       * assert (x <> x'). { symmetry. apply Disjoint_union_l_iff in DisjointP2x. rewrite Disjoint_singletons_iff in DisjointP2x. crush. }
         destruct (HNamesFacts.eq_dec x x'); subst; try congruence. clear n0.
         rewrite <- union_associative.
         assert (P1 ⊢ t ᵗ[ x' ≔ v'] : ! n ⁔ T) as Tytsub1. { replace (t ᵗ[ x' ≔ v']) with t. assumption. symmetry. apply term_sub_nIn_no_effect with (2 := Tyt1). assumption. }
-        assert (Pt2 ᴳ+ m2 ᴳ· Dv' ᴳ+ ᴳ{ x : mode_times' ((©️⬜ ∘ m) ++ (©️⬜ ∘ n) ++ ©️⬜) ‗ T} ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2. {
+        assert (Pt2 ᴳ+ m2 ᴳ· Dv' ᴳ+ ᴳ{ x : mode_times' ((cons m nil) ++ (cons n nil) ++ nil) ‗ T} ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub2. {
           rewrite union_swap_2_3_l3.
           apply IHTyt2 with (Tv' := Tv'); trivial.
           apply ValidOnly_union_forward. crush. apply ValidOnly_singleton_iff. simpl. rewrite mode_times_linnu_r_eq. crush. Disjoint_singleton_using DisjointP2x. apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. apply DestOnly_Disjoint_singleton_var; crush. apply Disjoint_union_l_iff; split. Disjoint_singleton_using DisjointPtx. apply Disjoint_singletons_iff; injection; intros ->; congruence. rewrite union_swap_2_3_l3. reflexivity. }
@@ -278,9 +277,9 @@ Proof.
       apply Ty_term_FillP with (2 := Tytsub); trivial.
     - assert (Pt ᴳ+ m' ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : ⌊ ! n' ⁔ T ⌋ n) as Tytsub. { apply IHTyt with (Tv' := Tv'); trivial. }
       apply Ty_term_FillE with (3 := Tytsub); trivial.
-    - assert (P1 ᴳ+ (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜)) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
+    - assert (P1 ᴳ+ (mode_times' ((cons ¹↑ nil) ++ (cons n nil) ++ nil)) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
       { hauto l: on use: ext_eq. } clear x.
-      assert (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) = (¹↑ · n)) as modeeq. { simpl. rewrite mode_times_linnu_r_eq. reflexivity. }
+      assert (mode_times' ((cons ¹↑ nil) ++ (cons n nil) ++ nil) = (¹↑ · n)) as modeeq. { simpl. rewrite mode_times_linnu_r_eq. reflexivity. }
       rewrite modeeq in *.
       rewrite stimes_linnu_eq with (G := P1) in UnionEq.
       destruct ctx_split_stimes_union_union with (3 := UnionEq) as [(m1 & m2 & Pt1 & Pt2 & meq & Pteq & P1eq & P2eq) | [(m1 & Pt1 & meq & Pteq & P1eq & nInxpP2) | (m2 & Pt2 & meq & Pteq & P2eq & nInxpP1)]]. { crush. } { crush. }
@@ -316,9 +315,9 @@ Proof.
           apply LinOnly_mode_times_backward with (m1 := (¹↑ · n)). assumption. apply FinAgeOnly_mode_times_backward with (m1 := (¹↑ · n)). assumption. apply IsValid_times_backward with (m1 := (¹↑ · n)). assumption. crush. apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. apply DestOnly_Disjoint_singleton_var; crush. apply Disjoint_union_l_iff; split. Disjoint_singleton_using DisjointPtx. apply Disjoint_singletons_iff; injection; intros ->; congruence. rewrite union_swap_2_3_l3. reflexivity. }
         rewrite <- modeeq in *. rewrite <- stimes_is_action. rewrite <- stimes_distrib_on_union.
         apply Ty_term_FillF with (4 := Tytsub1) (5 := Tytsub2); trivial. { apply Disjoint_union_l_iff; split. crush. apply DestOnly_Disjoint_singleton_var; crush. }
-  - assert (P1 ᴳ+ (mode_times' ((©️⬜ ∘ ¹↑) ++ ©️⬜)) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
+  - assert (P1 ᴳ+ (mode_times' ((cons ¹↑ nil) ++ nil)) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
       { hauto l: on use: ext_eq. } clear x.
-      assert (mode_times' ((©️⬜ ∘ ¹↑) ++ ©️⬜) = ¹↑) as modeeq. { simpl. reflexivity. }
+      assert (mode_times' ((cons ¹↑ nil) ++ nil) = ¹↑) as modeeq. { simpl. reflexivity. }
       rewrite modeeq in *.
       rewrite stimes_linnu_eq with (G := P1) in UnionEq.
       destruct ctx_split_stimes_union_union with (3 := UnionEq) as [(m1 & m2 & Pt1 & Pt2 & meq & Pteq & P1eq & P2eq) | [(m1 & Pt1 & meq & Pteq & P1eq & nInxpP2) | (m2 & Pt2 & meq & Pteq & P2eq & nInxpP1)]]. { crush. } { crush. }
@@ -342,9 +341,9 @@ Proof.
           apply IHTyt2 with (Tv' := Tv'); trivial.
           apply LinOnly_mode_times_backward with (m1 := ¹↑). assumption. apply FinAgeOnly_mode_times_backward with (m1 := ¹↑). assumption. apply IsValid_times_backward with (m1 := ¹↑). assumption. crush. crush. Disjoint_singleton_using DisjointPtx. }
         apply Ty_term_FillComp with (1 := Tytsub1) (2 := Tytsub2); trivial.
-  - assert (P1 ᴳ+ mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
+  - assert (P1 ᴳ+ mode_times' ((cons ¹↑ nil) ++ (cons n nil) ++ nil) ᴳ· P2 = Pt ᴳ+ ᴳ{ x' : m' ‗ Tv'}) as UnionEq.
       { hauto l: on use: ext_eq. } clear x.
-      assert (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n) ++ ©️⬜) = (¹↑ · n)) as modeeq. { simpl. rewrite mode_times_linnu_r_eq. reflexivity. }
+      assert (mode_times' ((cons ¹↑ nil) ++ (cons n nil) ++ nil) = (¹↑ · n)) as modeeq. { simpl. rewrite mode_times_linnu_r_eq. reflexivity. }
       rewrite modeeq in *.
       rewrite stimes_linnu_eq with (G := P1) in UnionEq.
       destruct ctx_split_stimes_union_union with (3 := UnionEq) as [(m1 & m2 & Pt1 & Pt2 & meq & Pteq & P1eq & P2eq) | [(m1 & Pt1 & meq & Pteq & P1eq & nInxpP2) | (m2 & Pt2 & meq & Pteq & P2eq & nInxpP1)]]. { crush. } { crush. }

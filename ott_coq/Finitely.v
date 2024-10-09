@@ -5,8 +5,6 @@ Require Import Psatz.
 Require Import Coq.Structures.OrderedType.
 From Hammer Require Import Tactics.
 From Hammer Require Import Hammer.
-From SMTCoq Require Import SMTCoq.
-Require MMaps.OrdList.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
@@ -18,7 +16,7 @@ Set Primitive Projections.
    maps. For extensibility purposes, we're not going to assume that
    the type of names is the same in each variant.
 
-   I [aspiwack] am a little worried about changing our minds about
+   I am a little worried about changing our minds about
    details later. This is why I'm organising proofs in reference to a
    functional semantics. The interface to reprove will be smaller. *)
 
@@ -578,7 +576,7 @@ Next Obligation.
   scongruence.
 Qed.
 
-(* Maybe this lemma is somewhere in the standard library. I[aspiwack] couldn't find it.
+(* Maybe this lemma is somewhere in the standard library. I couldn't find it.
    `in_nil: forall [A : Type] [a : A], ~ List.In a nil` is the converse. *)
 Lemma forall_NotIn_eq_nil : forall A (l : list A), (forall x, ~List.In x l) -> l = nil.
 Proof.

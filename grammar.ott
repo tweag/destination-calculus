@@ -8,8 +8,7 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
-(* Grumble, grumble: we shouldn't need to Import Dest.Finitely, but if
-   we don't we can't use the coercions. *)
+
 Require Import Dest.Finitely.
 Require Dest.Permutation.
 
@@ -878,18 +877,6 @@ Notation "G '#' H" := (Disjoint G H) (at level 50, no associativity).
 Definition DisposableOnly (G: ctx) : Prop :=
   forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsDisposable n binding.
 
-(*
-Inductive CompatibleVar : ctx -> var -> mode -> type -> Prop :=
-  | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
-    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
-
-(* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
-Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
-  forall (n : name) (binding: binding_type_of n), P n = Some binding -> (
-    (n = (name_Var x) -> exists m', binding = binding_Var m' T /\ ModeSubtype m' m)
- /\ (n <> (name_Var x) -> IsDisposable binding)).
-*)
-
 (******************************************************************************
  * EVALUATION CONTEXTS
  *****************************************************************************)
@@ -916,14 +903,6 @@ spacing, sp :: 'sp_' ::= {{ tex \ottssp{[[spacing]]} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space8 {{ tex \myspace{8} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space9 {{ tex \myspace{9} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space10 {{ tex \myspace{10} }}
-
-% spacing_end, spe :: 'spe_' ::= {{ tex \ottssp{[[spacing_end]]} }}
-%   | …… :: :: space1e {{ tex \myspace{1} }}
-%   | ………… :: :: space2e {{ tex \myspace{2} }}
-%   | ……………… :: :: space3e {{ tex \myspace{3} }}
-%   | …………………… :: :: space4e {{ tex \myspace{4} }}
-%   | ………………………… :: :: space5e {{ tex \myspace{5} }}
-%   | ……………………………… :: :: space6e {{ tex \myspace{6} }}
 
 line_break, b :: 'b_' ::= {{ tex \ottssp{[[line_break]]} }}
   | ⮒ :: :: break {{ tex \mynewline }}

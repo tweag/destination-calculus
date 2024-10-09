@@ -761,7 +761,7 @@ As destinations always exist in the context of a structure with holes, and must 
 \Cref{fig:scope-rules} illustrates scopes introduced by $\ottkw{map}$, and how the typing rules for $\ottkw{map}$ and $\blacktriangleleft$ interact.
 
 \begin{figure}[t]
-  \scalebox{1.0}{\tikzfig{mapscopes}}
+  \scalebox{1.0}{\tikzfig{schemas/mapscopes}}
   \caption{Scope rules for $\ottkw{map}$ in \destcalculus{}}
   \label{fig:scope-rules}
 \end{figure}
@@ -1185,6 +1185,9 @@ We don't anticipate that a system of ages like \destcalculus{} will actually be 
 In fact, we plan to use this very strategy to design an API for destination passing in Haskell, leveraging only the existing linear types, but retaining the possibility of storing destinations in data structures with holes.
 
 \clearpage{}
+
+\TODO{Cite Vardoulakis and Shivers, "Ordering Multiple Continuations on the Stack", PEPM '11}
+
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
 

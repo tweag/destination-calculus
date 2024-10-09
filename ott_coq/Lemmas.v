@@ -7,7 +7,6 @@ Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
-(* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
@@ -1073,7 +1072,7 @@ Hint Rewrite <- FinAgeOnly_stimes_forward' : suffices.
 Lemma Disjoint_stimes_l_iff : forall (m : mode) (D D' : ctx), (m ᴳ· D) # D' <-> D # D'.
 Proof.
   (* This proof, and the similar ones below are more complicated than
-    they ought to because we can't rewrite under foralls. I [aspiwack]
+    they ought to because we can't rewrite under foralls. I
     am however unwilling to spend the time and find a better way,
     copy-paste will do. *)
   intros *. unfold Disjoint, stimes.
@@ -1612,9 +1611,9 @@ Proof.
     * inversion Hin.
     * rename a into n, l into ns.
       rewrite ListSubset_cons_iff in H; destruct H; rewrite dom_spec in H; rewrite In_iff_exists_Some in H. destruct ((fix hnames_dom (dom : list name) : HNames.t := match dom with
-| ©️⬜ => HNames.empty
-| xs ∘ ˣ _ => hnames_dom xs
-| xs ∘ ʰ h => HNames.add h (hnames_dom xs)
+| nil => HNames.empty
+| cons (ˣ _) xs => hnames_dom xs
+| cons (ʰ h) xs => HNames.add h (hnames_dom xs)
 end) ns).
       destruct n.
       + specialize (IHl Hin H0). assumption.
@@ -4056,21 +4055,6 @@ Lemma ModeSubtype_linnu_stimes : forall (m1 m2 : mode), ¹ν <: m1 -> ¹ν <: m2
 Proof.
   intros * Subtypem1 Subtypem2. destruct m1, m2; try destruct p; try destruct p0; try destruct m; try destruct m0; try destruct a; try destruct a0; try destruct n; try destruct a0; simpl in *; try constructor; try inversion Subtypem1; try inversion Subtypem2; try inversion H4; try congruence; try inversion H4.
 Qed.
-
-(* Lemma Ty_val_DestOnly_weakening : forall (D : ctx) (G : ctx) (m : mode) (T : type) (v : val), (¹ν <: m) -> DestOnly D -> D ᴳ+ G ⫦ v : T -> m ᴳ· D ᴳ+ G ⫦ v : T
- with Ty_term_DestOnly_weakening : forall (D : ctx) (P : ctx) (m : mode) (T : type) (t : term), (¹ν <: m) -> DestOnly D -> D ᴳ+ P ⊢ t : T -> m ᴳ· D ᴳ+ P ⊢ t : T.
-Proof.
-  - intros * Subtypem DestOnlyD Tyv.
-    dependent induction Tyv; simpl.
-    + specialize (DestOnlyD (ʰ h) (₊ T ‗ ¹ν)). unfold ctx_singleton in DestOnlyD. rewrite singleton_MapsTo_at_elt in DestOnlyD. specialize (DestOnlyD eq_refl). inversion DestOnlyD.
-    + rewrite stimes_singleton_dest. constructor. apply ModeSubtype_linnu_stimes; assumption.
-    + rewrite stimes_empty_eq. constructor.
-    + assert (m ᴳ· D ᴳ+ ᴳ{ x : m0 ‗ T} ⊢ u : U). { apply Ty_term_DestOnly_weakening with (3 := Tyu); trivial. }
-      constructor; trivial. crush.
-    + constructor. apply Ty_val_DestOnly_weakening; trivial.
-    + constructor. apply Ty_val_DestOnly_weakening; trivial.
-    + rewrite stimes_distrib_on_union. constructor. apply Ty_val_DestOnly_weakening; trivial. crush. apply Ty_val_DestOnly_weakening; trivial. crush.
-    +  *)
 
 Lemma LinOnly_FinAgeOnly_stimes_compatible_linnu_impl_eq : forall (D : ctx) (m : mode), ¹ν <: m -> LinOnly (m ᴳ· D) -> FinAgeOnly (m ᴳ· D) -> m ᴳ· D = D.
 Proof.

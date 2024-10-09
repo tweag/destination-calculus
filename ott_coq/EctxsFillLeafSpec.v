@@ -8,7 +8,6 @@ Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
 From Hammer Require Import Hammer.
 From Hammer Require Import Tactics.
-(* ⬇️ for the `impl` relation. *)
 Require Coq.Program.Basics.
 Require Import Coq.Logic.Eqdep_dec.
 Require Import Coq.Logic.EqdepFacts.
@@ -162,7 +161,7 @@ Proof.
       constructor 16 with (8 := Tyu); first last.
       rewrite union_swap_2_3_l3 in TyC.
       apply IHC with (5 := TyC); first last. all: trivial.
-      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: replace (mode_times' ((cons ¹↑ nil) ++ (cons n0 nil) ++ nil)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
       all: autorewrite with propagate_down in *; try repeat split.
       all: supercrush.
     * (* Ty-ectxs-FillComp1 *)
@@ -177,13 +176,13 @@ Proof.
       constructor 19 with (7 := Tytp); first last.
       rewrite union_swap_2_3_l3 in TyC.
       apply IHC with (5 := TyC); first last. all: trivial.
-      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: replace (mode_times' ((cons ¹↑ nil) ++ (cons n0 nil) ++ nil)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
       all: supercrush.
     * (* Ty-ectxs-FillLeaf2 *)
       constructor 20 with (7 := Tyt); first last.
       rewrite stimes_distrib_on_union, stimes_is_action, union_associative in TyC.
       apply IHC with (5 := TyC); first last. all: trivial.
-      all: replace (mode_times' ((©️⬜ ∘ ¹↑) ++ (©️⬜ ∘ n0) ++ ©️⬜)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
+      all: replace (mode_times' ((cons ¹↑ nil) ++ (cons n0 nil) ++ nil)) with (¹↑ · n0) in * by ( cbn; rewrite mode_times_linnu_r_eq; reflexivity).
       all: supercrush.
 Qed.
 
