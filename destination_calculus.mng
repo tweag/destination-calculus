@@ -461,9 +461,7 @@ q ►case ¹ν {⮒
 ‥‥ˢ((x ˢ:: xs), ys) ⟼ ˢInr ˢ(x, ˢ(xs, ys)),⮒
 ‥‥ˢ(ˢ[], ys) ⟼ (toList ys) ►case ¹ν {⮒
 ‥‥‥‥ˢ[] ⟼ Inl (),⮒
-‥‥‥‥x ˢ:: xs ⟼ ˢInr ˢ(x, ˢ(xs, alloc))⮒
-‥‥}⮒
-}]]\end{array}}
+‥‥‥‥x ˢ:: xs ⟼ ˢInr ˢ(x, ˢ(xs, alloc))}}]]\end{array}}
 }
 
 \paragraph{Efficient queue using previously defined structures}
