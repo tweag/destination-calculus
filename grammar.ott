@@ -86,7 +86,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ►map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex \ottkw{map}~[[t]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
-  | alloc :: :: Alloc {{ tex \ottsctor{alloc} }}
+  | alloc :: :: Alloc {{ tex \ottkw{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
   | t ⨞ Inr :: :: FillR {{ com Fill destination with right variant }}
@@ -148,7 +148,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | dup t :: S :: Dup {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dup}~[[t]] }}
   | drop t :: S :: Drop {{ coq (term_Val val_Unit) }} {{ tex \ottkw{drop}~[[t]] }}
   | allocIP :: S :: SugarAllocIP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc}_{\ottkw{ip} } }}
-  | allocCoW :: S :: SugarAllocCoW {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{alloc}_{\ottsctor{cow} } }}
+  | allocCoW :: S :: SugarAllocCoW {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc}_{\ottkw{cow} } }}
   | alloc' t :: S :: SugarAllocP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc'}~[[t]] }}
   | deref t :: S :: SugarDeref {{ coq (term_Val val_Unit) }} {{ tex \ottkw{deref}~[[t]] }}
   | let x ≔ t in u :: S :: SugarLet {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]]~\ottkw{in}~[[u]] }}
@@ -166,7 +166,7 @@ sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for
   | ˢᴇ m t :: M :: SugarExp {{ com Allocate exponential }} {{ coq (sterm_Exp [[m]] [[t]]) }}
   | ˢ( t1 , t2 ) :: M :: SugarProd {{ com Allocate product }} {{ coq (sterm_Prod [[t1]] [[t2]]) }}
 
-val, v :: 'val_' ::= {{ com Value }}
+val, v, vd :: 'val_' ::= {{ com Value }}
   | + h :: :: Hole {{ com Hole }} {{ tex \ottshname{\hboxed{[[h]]} } }}
   | - h :: :: Dest {{ tex \ottshname{\destminus}[[h]] }} {{ com Destination }}
   | () :: :: Unit {{ com Unit }}
@@ -935,12 +935,11 @@ terminals :: 'terminals_' ::=
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-heap_assign, w :: 'heapa_' ::=
-  | h ≔ ⬜ :: :: Empty {{ tex [[h]]\assigneq\holesq }}
-  | h ≔ v :: :: Val {{ tex [[h]]\assigneq[[v]] }}
+store_assign, w :: 'storea_' ::=
+  | v ≔ t :: :: Val {{ tex [[v]]\assigneq[[t]] }}
   | ul< w > :: S :: Underline {{ tex \uwave{[[w]]} }} {{ coq ([[w]]) }}
 
-heap, Z {{ tex \mathcal{S} }} :: 'heap_' ::=
+store, Z {{ tex \mathcal{S} }} :: 'store_' ::=
   | { w1 , .. , wk } :: :: List
   | Z1 ⨆ Z2 :: :: Union {{ tex [[Z1]] \sqcup [[Z2]] }}
 

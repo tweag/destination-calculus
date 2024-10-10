@@ -28,7 +28,7 @@ clean: Makefile.coq
 	rm -f *.log *.bcf *.fdb_latexmk *.fls *.blg
 	rm -f destination_calculus.tex
 	rm -f destination_calculus_ott.tex
-	rm -f destination_calculus.pdf
+	rm -f destination_calculus*.pdf
 	rm -f destination_calculus.tar.gz
 	rm -f no-editing-marks
 
