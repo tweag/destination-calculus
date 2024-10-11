@@ -389,6 +389,7 @@ TSWLatexianTemp*
 **/.directory
 destination_calculus.tex
 destination_calculus*.pdf
+ott/destination_calculus_ott.v
 .direnv
 *_ott.tex
 
@@ -405,4 +406,5 @@ Makefile.coq.conf
 .Makefile.coq.d
 .coqdeps.d
 rules_mod.ott
-
+no-editing-marks
+temp.pdf

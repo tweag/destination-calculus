@@ -31,6 +31,7 @@ clean: Makefile.coq
 	rm -f destination_calculus*.pdf
 	rm -f destination_calculus.tar.gz
 	rm -f no-editing-marks
+	rm -f temp.pdf
 
 rules_mod.ott: patch_rules.py rules.ott
 	python patch_rules.py rules.ott rules_mod.ott
