@@ -492,7 +492,7 @@ To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of
 
 Should we count $[[d]]$ as linearly used here? Probably, because alternatives don't seem promising:
 \begin{itemize}
-  \item if we count this as a non-linear use of $[[d]]$, then the expression breaks the linear discipline for destinations and should be rejected. This is a rough limitation: we wouldn't be able to store destinations in data structures with holes such as the efficient queues of \cref{ssec:efficient-queue};
+  \item if we count this as a non-linear use of $[[d]]$, then the expression breaks the linear discipline for destinations and should be rejected. This is a blunt limitation, and it would prevent us from storing destinations in structures with holes, as we do in \cref{sec:bft};
   \item if we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; dd' ◀ d]]$ so to write to the hole $[[+h]]$ twice, which is also unsound.
 \end{itemize}
 So linear use it is. However as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and we track their use through the linear type system to know when the structure can be read safely. Here it doesn't work though: $[[d]]$ has been linearly used but hasn't been filled \emph{yet}, so the hole $[[+h]]$ still exists in $[[v]]$. Depending on the nesting of $[[v]]$ and $[[vd]]$, this may allow us to read uninitialized memory $[[+h]]$, and we cannot address that with linearity alone.
@@ -522,7 +522,7 @@ However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly t
 
 Again, using purely a linear type system, we can only reject this example if we also reject the first, sound example. This is the design decision made in~\cite{bagrel_destination-passing_2024}, because they use the stock linear type system of Haskell: in their version of $[[d ◀ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. The type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ becomes practically useless: such destinations can never be filled. Only regular, constructor-based structures --- that we don't even have in our system --- can store destinations.
 
-This isn't the direction we want to take: we really want to be able to store destinations in data structures with holes. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. In fact, we'll use this capability to our advantage in \cref{sec:bft}. Without further restrictions, it wouldn't be sound, so to address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
+This isn't the direction we want to take: we really want to be able to store destinations in data structures with holes. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. Without further restrictions, it wouldn't be sound, so to address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
