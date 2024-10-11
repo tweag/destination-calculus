@@ -291,7 +291,7 @@
 
 
 \begin{abstract}
-  Destination passing ---aka. out parameters--- is taking a parameter to fill rather than returning a result from a function. Due to its apparent imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure core calculus with destinations. Our calculus subsumes all the existing systems, and can be used to reason about their correctness or extension. In addition, our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to represent both linear types and a system of ages to manage scopes. Type safety of our core calculus was largely proved formally with the Coq proof assistant.
+  Destination passing ---aka. out parameters--- is taking a parameter to fill rather than returning a result from a function. Due to its apparent imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure core calculus with destinations. Our calculus subsumes all the existing systems, and can be used to reason about their correctness or extension. In addition, our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to represent both linear types and a system of ages to manage scopes. Type safety of our core calculus was proved formally with the Coq proof assistant.
 \end{abstract}
 
 \maketitle
@@ -323,7 +323,7 @@ Our contributions are as follows:
 \item \destcalculus{}, a linear and modal simply typed $\lambda$-calculus with destinations (\cref{sec:syntax-type-system,sec:ectxs-sem}). \destcalculus{} is expressive enough so that previous calculi for destinations can be encoded in \destcalculus{} (see~\cref{sec:related-work});
 \item a demonstration that \destcalculus{} is more expressive than previous calculi with destinations (\cref{sec:scope-escape-dests,sec:bft}), namely that destinations can be stored in structures with holes. We show how we can improve, in particular, on the breadth-first traversal example of~\cite{bagrel_destination-passing_2024};
 \item an implementation strategy for \destcalculus{} which uses mutation without compromising the purity of \destcalculus{} (\cref{sec:implementation});
-\item formally-verified proofs, with the Coq proof assistant, of the main safety lemmas (\cref{sec:formal-proof}).
+\item formally-verified proofs, with the Coq proof assistant, of type safety (\cref{sec:formal-proof}).
 \end{itemize}
 
 \section{Working with destinations}\label{sec:working-with-dests}
@@ -415,11 +415,11 @@ At this point, the reader may be forgiven for feeling distressed at all the talk
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
-Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For that section, we suppose that \destcalculus{} is equipped with equirecursive types and a fixed-point operator, that isn't part of our formally proven fragment.
+Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For this section, we suppose that \destcalculus{} is equipped with equirecursive types and a fixed-point operator. Those aren't part of the formal system of \cref{sec:syntax-type-system} but don't add any complication.
 
 \paragraph{Linked lists}
 
-We define lists as a fixpoint, as often: $[[List T]] \btriangleqrec [[① ⨁ (T ⨂ (List T))]]$. For convenience, we also define filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
+We define lists as a fixpoint, as usual: $[[List T]] \btriangleqrec [[① ⨁ (T ⨂ (List T))]]$. For convenience, we also define filling operators $\triangleleft\ottsctor{[]}$ and $\triangleleft\ottsctor{(::)}$:
 
 \sidebysidecodehere{b}{0.50}{
 \newoperator
@@ -441,7 +441,7 @@ Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constr
 \newcommand{\lstcat}{\mathop{+\!+}}
 Just like in any language, iterated concatenation of lists
 $(([[xs1]] \lstcat [[xs2]])\lstcat \ldots)\lstcat [[xs]]_n$
-is quadratic in \destcalculus{}. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function~\cite{hughes_dlist_1986}. A singleton difference list is $\lamnt{[[ys]]}{[[¹ν]]}{[[x ˢ:: ys]]}$, and concatenation of difference lists is function composition. Difference lists are turned into a list by applying it to the empty list. The consequence is that no matter how many compositions we have, each cons cell will be allocated a single time, making the iterated concatenation linear indeed.
+is quadratic in \destcalculus{}. The usual solution to this is difference lists. The name difference lists covers many related implementation, but in pure functional languages, a difference list is usually represented as a function~\cite{hughes_dlist_1986}. A singleton difference list is $\lamnt{[[ys]]}{[[¹ν]]}{[[x ˢ:: ys]]}$, and concatenation of difference lists is function composition. A difference list is turned into a list by applying it to the empty list. The consequence is that no matter how many compositions we have, each cons cell will be allocated a single time, making the iterated concatenation linear indeed.
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per cons cell, so iterated composition effectively performs two traversals of the list. In \destcalculus{}, we can do better by representing a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$. Concatenation is filling the hole with another difference list, using operator $\mathop{\triangleleft\mycirc}$. The details are on the left of~\cref{fig:impl-dlist-queue}. The \destcalculus{} encoding for difference lists makes no superfluous traversal: concatenation is just an $O(1)$ in-place update.
 
@@ -490,11 +490,11 @@ In \cref{sec:working-with-dests}, we've been making an implicit assumption: esta
 
 To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T\,*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their places in the structure. For instance, if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ pointing to hole $[[+h]]$ in structure $[[v]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ pointing to hole $[[+hd]]$ in structure $[[vd]]$, we can form $[[dd ◀ d]]$: destination $[[d]]$ will be stored inside $[[vd]]$.
 
-Is $[[d]]$ linearly used here? For sure, because if we don't count this use of $[[d]]$, we could write $[[dd ◀ d ; dd' ◀ d]]$ and use that later to write to the hole $[[+h]]$ twice.
+Is $[[d]]$ linearly used here? Certainly! Because if we don't count this use of $[[d]]$, we could write $[[dd ◀ d ; dd' ◀ d]]$ and use that later to write to the hole $[[+h]]$ twice.\unsure{What this paragraph fails to acknowledge is the option for $[[d]]$ to be consumed many times. I feel it may be confusing to most readers}
 
-However as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and we track their use through the linear type system to know when the structure can be read safely. Here it doesn't work though: $[[d]]$ has been linearly used but hasn't appeared \emph{yet} on the left of an operator $\blacktriangleleft$ or $\triangleleft$ so hole $[[+h]]$ still exists for the moment. Only when $[[vd]]$ has been completed and consumed can we read $[[v]]$ safely! This depends on the order in which building scopes for $[[v]]$ and $[[vd]]$ are nested, and linearity cannot help here, as we'll see in the two following examples.
+However as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and we track their use through the linear type system to know when the structure can be read safely. Here it doesn't work though: $[[d]]$ has been linearly used but hasn't been filled, so the hole $[[+h]]$ still exists in $[[v]]$. Depending on the nesting of $[[v]]$ and $[[vd]]$, this may allow us to read $[[+h]]$, and linearity cannot help, as we'll see in the two following examples.
 
-Let's suppose we have a simple store semantic where structure with holes stay in the store until they are completed. We'll need the $\ottkw{alloc'} \pmb{:} [[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]$ operator too. The semantics of $\ottkw{alloc'}$ is\footnote{The semantics that we'll develop in \cref{sec:ectxs-sem} are actually quite different to make it easier to prove linearity invariants.}: allocate a structure with a single root hole in the store, call the user-supplied function with the concrete destination to the root hole as an argument; when the function has consumed all destinations (so only unit remains), pop the structure from the store to obtain a complete $[[T]]$.
+Let's assume a simple store semantic\footnote{Our actual semantics (\cref{sec:ectxs-sem}) isn't a store semantics. It enforces invariants syntactically, making the proofs much easier.} where structure with holes stay in the store until they are completed. We'll need the $\ottkw{alloc'} \pmb{:} [[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]$ operator. The semantics of $\ottkw{alloc'}$ is: allocate a structure with a single root hole in the store, call the user-supplied function with the concrete destination to the root hole as an argument; when the function has consumed all destinations (so only unit remains), pop the structure from the store to obtain a complete $[[T]]$.
 
 When the building scope of $[[v]]$ is parent to the one of $[[vd]]$, everything works well because $[[vd]]$, that contains destination pointing to $[[+h]]$, has to be consumed before $[[v]]$ can be read:
 \bgroup\setlength{\arraycolsep}{0.5ex}
@@ -508,7 +508,7 @@ When the building scope of $[[v]]$ is parent to the one of $[[vd]]$, everything 
 [[⟶]] & $\{ \}$ &|& [[ true ]]
 \end{array}}
 
-However, when $[[vd]]$ scope is parent to $[[v]]$ one, we can write a well-typed yet unsound program:
+However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program:
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d)) ►case ¹ν { true ⟼ (), false ⟼ () }) ]] \\
 [[⟶]] & [[ { vd ≔ +hd } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ◀ d)) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]] \\
@@ -517,9 +517,9 @@ However, when $[[vd]]$ scope is parent to $[[v]]$ one, we can write a well-typed
 \end{array}}\egroup
 \noindent{}Here the expression $[[dd ◀ d]]$ results in $[[d]]$ escaping its scope for the parent one, so $[[v]]$ is just uninitialized memory (the hole $[[+h]]$) when we dereference it. This example must be rejected by our type system.
 
-As demonstrated by~\cite{bagrel_destination-passing_2024}, it's possible to reject this example using purely a linear type system: they make it so that, in $[[d ◀ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. This is a rather blunt restriction, as it also rejects the first example! The type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ becomes practically useless: such destinations can never be filled, or in other terms, destinations can never be stored in data structures with holes such as the queues of \cref{ssec:efficient-queue}.
+As demonstrated by~\cite{bagrel_destination-passing_2024}, it's possible to reject this example using purely a linear type system\unsure{we say that just after saying that linearity doesn't help. We really want to make this section less confusing. Not obvious how, though.}: they make it so that, in $[[d ◀ t]]$, $[[t]]$ can't be linear. Since all destinations are linear, $[[t]]$ can't be, or contain, a destination. This is a rather blunt restriction, as it also rejects the first example! The type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ becomes practically useless: such destinations can never be filled, or in other terms, destinations can never be stored in data structures with holes such as the queues of \cref{ssec:efficient-queue}.
 
-But we really want to be able to store destinations in data structures with holes. In fact, we'll use this capability to our advantage in \cref{fig:impl-bfs}. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. Without further restrictions, the counterexample would be well-typed, so to address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
+But we really want to be able to store destinations in data structures with holes. In fact, we'll use this capability to our advantage in \cref{sec:bft}. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. Without further restrictions, the counterexample would be well-typed, so to address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
@@ -1020,11 +1020,12 @@ A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only conta
 
 \section{Formal proof of type safety}\label{sec:formal-proof}
 
-We've proved type preservation and progress theorems with the Coq proof assistant. At time of writing, we have assumed, rather than proved, the substitution lemmas. Turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
+We've proved type preservation and progress theorems with the Coq proof assistant. Turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
 
-Most of the proof was done by an author with little prior experience with Coq. This goes to show that Coq is reasonably approachable even for non-trivial development. The proof is about 6000 lines long, and contains nearly 350 lemmas. Many of the cases of the type preservation and progress lemmas are similar. To handle such repetitive cases, the use of a large-language-model based autocompletion system has proven quite effective.
+Most of the proof was done by an author with little prior experience with Coq. This goes to show that Coq is reasonably approachable even for non-trivial development. The proof is about 7000 lines long, and contains nearly 500 lemmas. Many of the cases of the type preservation and progress lemmas are similar. To handle such repetitive cases, the use of a large-language-model based autocompletion system has proven quite effective.
 
-Binders are the biggest problem. We've largely managed to make the proof to be only about closed terms, to avoid any complication with binders. This worked up until the substitution lemmas, which is the reason why we haven't proved them in Coq yet (that and the fact that it's much easier to be confident in our pen-and-paper proofs for those).
+\unsure{There was a comment on binders here. But I don't think we've had much problem with them, should we say something?}
+% Binders are the biggest problem. We've largely managed to make the proof to be only about closed terms, to avoid any complication with binders. This worked up until the substitution lemmas, which is the reason why we haven't proved them in Coq yet (that and the fact that it's much easier to be confident in our pen-and-paper proofs for those).
 
 The proofs aren't particularly elegant. For instance, we don't have any abstract formalization of semirings: it was more expedient to brute-force the properties we needed by hand. We've observed up to 232 simultaneous goals, but a computer makes short work of this: it was solved by a single call to the \verb|congruence| tactic. Nevertheless there are a few points of interest:
 \begin{itemize}
@@ -1038,7 +1039,7 @@ Mostly to simplify equalities, we assumed a few axioms: functional extensionalit
 Axiom constructive_indefinite_description :
     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
 \end{verbatim}
-This isn't particularly elegant: we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
+This isn't particularly elegant: we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.\unsure{We got a reviewer question about what we used the axioms for, is it worth trying to answer here? I don't really think we have room for it.}
 
 % The inference rules produced by Ott aren't conducive to using setoid equality. This turned out to be a problem with our type for finite function:
 
