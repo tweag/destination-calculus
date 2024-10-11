@@ -497,7 +497,7 @@ Should we count $[[d]]$ as linearly used here? Probably, because alternatives do
 \end{itemize}
 So linear use it is. However as we explained in \cref{ssec:build-up-vocab}, destinations always exist within the scope of a structure with holes, and we track their use through the linear type system to know when the structure can be read safely. Here it doesn't work though: $[[d]]$ has been linearly used but hasn't been filled \emph{yet}, so the hole $[[+h]]$ still exists in $[[v]]$. Depending on the nesting of $[[v]]$ and $[[vd]]$, this may allow us to read uninitialized memory $[[+h]]$, and we cannot address that with linearity alone.
 
-Let's see that on two examples. We assume a simple store semantic\footnote{Our actual semantics (\cref{sec:ectxs-sem}) isn't a store semantics. It enforces invariants syntactically, making the proofs much easier.} where structure with holes stay in the store until they are completed. We'll need the $\ottkw{alloc'} \pmb{:} [[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]$ operator. The semantics of $\ottkw{alloc'}$ is: allocate a structure with a single root hole in the store, call the user-supplied function with the destination to the root hole as an argument; when the function has consumed all destinations (so only unit remains), pop the structure from the store to obtain a complete $[[T]]$.
+Let's see that on two examples. We assume a simple store semantic\footnote{Our actual semantic (\cref{sec:ectxs-sem}) isn't a store semantic. It enforces invariants syntactically, making the proofs much easier.} where structure with holes stay in the store until they are completed. We'll need the $\ottkw{alloc'} \pmb{:} [[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]$ operator. The semantics of $\ottkw{alloc'}$ is: allocate a structure with a single root hole in the store, call the user-supplied function with the destination to the root hole as an argument; when the function has consumed all destinations (so only unit remains), pop the structure from the store to obtain a complete $[[T]]$.
 
 When the building scope of $[[v]]$ is parent to the one of $[[vd]]$, everything works well because $[[vd]]$, that contains destination pointing to $[[+h]]$, has to be consumed before $[[v]]$ can be read:
 \bgroup\setlength{\arraycolsep}{0.5ex}
@@ -588,7 +588,7 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 &&\\
         [[m]], [[n]] &::=& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\
                [[p]] &::=& [[¹]] \grammsep [[ω]] \\
-               [[a]] &::=& [[↑]]^{n} \grammsep [[∞]] \\
+               [[a]] &::=& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]] \\
 &&\\
 [[P]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
 \end{array}
@@ -637,9 +637,9 @@ We usually omit mode annotations when the mode is the unit element $[[¹ν]]$. I
 
 \subsection{The age semiring}\label{ssec:age-control}
 
-In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^2$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
+In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{map}$ separates the definition and use site of $[[x1]]$.
 
-We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑]]^0$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^1$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by $1$.
+We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑]]^{\ottsmodee{0}}$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^{\ottsmodee{1}}$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by one.
 
 This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be read as giving the variable the same age on both sides.
 Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
@@ -647,18 +647,18 @@ Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented i
 \begin{figure}[t]
 \bgroup\setlength{\tabcolsep}{0.2ex}
 \begin{tabular}[c]{rcl}
-  $[[ν]]$ &$\btriangleq$& $[[↑]]^0$ \\
-  $[[↑]]$ &$\btriangleq$& $[[↑]]^1$
+  $[[ν]]$ &$\btriangleq$& $[[↑]]^{\ottsmodee{0}}$ \\
+  $[[↑]]$ &$\btriangleq$& $[[↑]]^{\ottsmodee{1}}$
 \end{tabular}\egroup\hfill
 \begin{tabular}{|c|c|c|}\hline
-$\ottsmode{+}$ & $[[↑]]^{n}$               & $[[∞]]$ \\\hline
-$[[↑]]^{m}$    & $\text{if }n = m\text{ then }[[↑]]^{n}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
+$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline
+$[[↑]]^{\ottsmodee{j}}$    & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑]]^{\ottsmodee{k}}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \hfill
 \begin{tabular}{|c|c|c|}\hline
-$[[·]]$        & $[[↑]]^{n}$               & $[[∞]]$ \\\hline
-$[[↑]]^{m}$    & $[[↑]]^{n+m}$ & $[[∞]]$ \\\hline
+$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline
+$[[↑]]^{\ottsmodee{j}}$    & $[[↑]]^{\ottsmodee{k+j}}$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \hfill
@@ -692,7 +692,7 @@ Transforming the hole abstraction from its original implication form to a \emph{
 
 \paragraph{From par $\ottstype{\parr}$ to ampar $\ottstype{\ltimes}$}
 
-In CLL any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the dual type $\ottstype{\smallbullet^{\perp}}$, which then frees up the other side. But in \destcalculus{}, we have two types of interaction to consider: interaction between $[[T]]$ and functions $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and $[[T]]\ottstype{\to\smallbullet}$. The structure containing holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into another structure with holes), but not with $[[T]]\ottstype{\to\smallbullet}$, as it would let us read an incomplete structure!
+In CLL any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the dual type $\ottstype{\smallbullet^{\perp}}$, which then frees up the other side. But in \destcalculus{}, we have two types of interaction to consider: interaction between $[[T]]$ and destination $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and functions $[[T]]\,\ottstype{\to\smallbullet}$. The structure containing holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into another structure with holes), but not with $[[S]]\,\ottstype{\to\smallbullet}$, as it would let us read an incomplete structure!
 
 On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[f]] \pmb{:} [[T ¹ν → ①]]$: in particular, $[[f]]$ can pattern-match on the value of type $[[T]]$ to access destination $\ottstype{\lfloor[[T']]\rfloor}$. However, it might not be safe to fill the $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of the destination $\ottstype{\lfloor[[T']]\rfloor}$ as we've just seen in~\cref{sec:scope-escape-dests}.
 
@@ -700,7 +700,7 @@ As a result, we cannot adopt rules from CLL blindly. We must be even more cautio
 
 To recover sensible rules for the connective, we decided to make it asymmetric, hence \emph{ampar} ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
 \begin{itemize}
-\item the left side $[[S]]$ can contain holes, and can be only be eliminated by interaction with $\ottstype{\lfloor[[S]]\rfloor}$ using operator $\triangleleft\mycirc$ to free up the right side $[[T]]$;
+\item the left side $[[S]]$ can contain holes, and can be only be eliminated by composition with another structure having a destination $\ottstype{\lfloor[[S]]\rfloor}$ using operator $\triangleleft\mycirc$ (the right side $[[T]]$ is then returned);
 \item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. This is done using $\ottkw{from}_{\ottkw{\ltimes}}'$ and $\ottkw{map}$.
 
 \end{itemize}
@@ -736,7 +736,7 @@ Rule \rref*{Ty-term-Var}, in addition to weakening, allows for dereliction of th
 $[[¹]] \pleq [[¹]]$ \hfill
 $[[p]] \pleq [[ω]]$ \hfill
 $[[a]] \aleq [[∞]]$ \hfill
-$[[↑]]^{m} \aleq [[↑]]^{n} \Longleftrightarrow m = n\quad\text{\small(no finite age dereliction)}$ \hfill\hbox{}
+$[[↑]]^{\ottsmodee{k}} \aleq [[↑]]^{\ottsmodee{j}} \Longleftrightarrow \ottsmodee{k} = \ottsmodee{j}\quad\text{\small(no finite age dereliction)}$ \hfill\hbox{}
 
 Rule \rref*{Ty-term-PatU} is elimination for unit, and is also used to chain fill operations.
 
