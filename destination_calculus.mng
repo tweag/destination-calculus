@@ -394,14 +394,14 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language? The answer is that it wouldn't be if we'd allow unrestricted use of destination. Instead \destcalculus{} uses a linear type system to ensure that:
 
 \begin{itemize}
-\item destination are written at least once, preventing examples like:
+\item destinations are written at least once, preventing examples like:
 
   \codehere{\newoperator
   {\ottkw{forget}}{[[T]]}
   {\ottkw{forget}}{[[from⧔' (alloc ►map d ⟼ ())]]}}
 
   where reading the result of $\ottkw{forget}$ would result in reading the location pointed to by a destination that we never used, in other words, reading uninitialized memory;
-\item destination are written at most once, preventing examples like:
+\item destinations are written at most once, preventing examples like:
 
   \codehere{\newoperator
   {\ottkw{ambiguous1}}{[[Bool]]}
@@ -572,26 +572,26 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 
 \section{Type system}\label{sec:syntax-type-system}
 
-\newcommand{\grammsep}{\hspace*{2ex}|\hspace*{2ex}}
-\newcommand{\grammdef}{:\hspace*{-0.3ex}:\hspace*{-0.3ex}=}
+\newcommand{\grammsep}{\hspace*{1.8ex}|\hspace*{1.8ex}}
+\newcommand{\grammdef}{\mathrel{\raisebox{0.09ex}{$\mathop{:}$\hspace*{-0.1ex}$\mathop{:}$\hspace*{-0.1ex}}\shorteq}}
 
-\begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{1ex}
-\!\!\!\begin{array}{rrl}
-[[t]], [[u]] &::=& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
+\begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{0.6ex}
+\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+[[t]], [[u]] &\grammdef& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
              &|\,& [[ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[t ►case m ᴇ n x ⟼ u]] \\
              &|\,& [[t ►map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
              &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \grammsep [[t ◀ t']] \\
 &&\\
-[[T]], [[U]], [[S]] &::=& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
+[[T]], [[U]], [[S]] &\grammdef& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
                     &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
                     &|\,& [[①]] \grammsep [[T1 ⨁ T2]] \grammsep [[T1 ⨂ T2]] \grammsep [[! m T]] \grammsep [[T m → U]] \\
 &&\\
-        [[m]], [[n]] &::=& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\
-               [[p]] &::=& [[¹]] \grammsep [[ω]] \\
-               [[a]] &::=& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]] \\
+        [[m]], [[n]] &\grammdef& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\
+               [[p]] &\grammdef& [[¹]] \grammsep [[ω]] \\
+               [[a]] &\grammdef& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]] \\
 &&\\
-[[P]] &::=& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
-\end{array}
+[[P]] &\grammdef& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
+\end{array}$\end{minipage}
 }\end{codefig}
 
 \sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
@@ -770,20 +770,20 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
 
 \subsection{Runtime values and extended terms}\label{ssec:runtime-values}
 
-\begin{codefig}{\caption{Extended terms and runtime values}\label{fig:grammar-val}}{\setlength{\arraycolsep}{1ex}
-\!\!\!\begin{array}{rrl}
-[[t]], [[u]] &::=& \ldots \grammsep [[v]] \\
+\begin{codefig}{\caption{Extended terms and runtime values}\label{fig:grammar-val}}{\setlength{\arraycolsep}{1ex}\newlength\myskip\setlength{\myskip}{2.38ex}
+\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+[[t]], [[u]] &\grammdef& \ldots \grammsep [[v]] \\
 &&\\
-       [[v]] &::=& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
+       [[v]] &\grammdef& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
              &|\,& [[- h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[- h]]$}}\quad\quad\textit{(destination)} \\
              &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
              &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
              &&\\
 \end{array}\\\hspace*{-0.5em}\begin{array}{rrlcccccc}
-[[D]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] &|& [[D1 + D2]] &|& [[m · D]] \\
-[[P]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] &|& [[P1 + P2]] &|& [[m · P]] \\
-\hspace*{\widthof{$[[t]], [[u]]$}-\widthof{$[[G]]$}}[[G]] &::=& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] &|& [[G1 + G2]] &|& [[m · G]]
-\end{array}
+[[D]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] &|& [[D1 + D2]] &|& [[m · D]] \\
+[[P]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] &|& [[P1 + P2]] &|& [[m · P]] \\
+\hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] &|& [[G1 + G2]] &|& [[m · G]]
+\end{array}$\end{minipage}
 }\end{codefig}
 
 \begin{ottfig}{\caption{Typing rules for extended terms and runtime values}\label{fig:ty-val}}
@@ -813,18 +813,20 @@ $\begin{array}{rcl}
 % [[({ - h : m ⌊ T ⌋ n })]]+\Omega &=& [[{ - h : m ⌊ T ⌋ n }]],\Omega\quad\textit{if}~[[h]] \notin \Omega
   (\ottnt{name}:\!_{\![[m]]}[[T]]) + \Omega &=& \ottnt{name}:\!_{\![[m]]}[[T]],\Omega~\textit{~if}~\ottnt{name} \notin \Omega
 \end{array}$\egroup\\[\interdefskip]
-The last definition ranges over\hspace*{0.6em}$\ottnt{name} ::= [[x]]~|~[[+h]]~|~[[-h]]$\hspace*{0.6em}and\hspace*{0.6em}$\Omega ::= [[P]]~|~[[G]]~|~[[D]]$.
+The last definition ranges over\hspace*{0.6em}$\ottnt{name} \grammdef [[x]]~|~[[+h]]~|~[[-h]]$\hspace*{0.6em}and\hspace*{0.6em}$\Omega \grammdef [[P]]~|~[[G]]~|~[[D]]$.
 
 Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
 
 One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref{Ty-val-Ampar}.
 
 Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$ defined as:\quad$[[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] = [[{ + h : T n }]]$.
-Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined if any  binding has a mode other than $[[¹ν]]$.
+Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined if any binding has a mode other than $[[¹ν]]$.
 
-Furthermore, in \rref{Ty-val-Ampar}, the holes and the corresponding destination are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination.
+Furthermore, in \rref{Ty-val-Ampar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
 
-On the other hand, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$\unsure{Not sure whether we should explain why $[[D1]]$ is offset by $[[¹↑]]$ in the premise but not in conclusion. It's hard to come up with an intuitive narrative.}.
+Rule \rref*{Ty-val-Hole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ ων +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
+
+Surprisingly, in \rref*{Ty-val-Dest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{Ty-term-Var} and make the general modal substitution lemma true for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode subtyping is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{Ty-val-Dest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no subtyping can take place.
 
 \paragraph{Other salient points}
 We don't distinguish values with holes from fully-defined values at the syntactic level: instead types prevent holes from being read. In particular, while values are typed in contexts $[[G]]$ allowing both destination and hole bindings, when using a value as a term in \rref{Ty-term-Val}, it's only allowed to have free destinations, but no free holes.
@@ -833,30 +835,22 @@ Notice, also, that values can't have free variables, since contexts $[[G]]$ only
 
 One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
 
-\TODO{Revisit this paragraph}
-
-Rules \rref*{Ty-val-Hole} and \rref*{Ty-val-Dest} are interesting. The mode must be exactly $[[¹ν]]$: there is no mode weakening for hole or destinations. Typing of value keeps track precisely of holes and destinations during evaluation. Which is what we need to make sure that holes are written before they are read.
-
-Consequently the mode $[[n]]$ of a hole binding $[[{ + h : T n }]]$ arises precisely when a structure with holes has exponentials e.g. $[[ᴇ ων +h]]$. It means that only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
-
-Destination bindings $[[{ - h : m ⌊ T ⌋ n }]]$, on the other hand, mentions two modes: $[[m]]$ and $[[n]]$; $[[m]]$ is the mode of the destination as a value: it tracks on the age of $[[-h]]$. Whereas $[[n]]$ is part of the destination's type $[[⌊ T ⌋ n]]$\improvement{(Yann) I know it's just a phrasing, but as it is it sounds to naively contradict the intro of the section which says explicitly that modes aren't part of types, which got me a bit surprised in the first read. (Arnaud) I don't think we're saying this anymore} and means that only values with mode $[[n]]$ can fill $[[-h]]$. In a well-typed closed program the $[[m]]$ can never be of multiplicity $[[ω]]$ or age $[[∞]]$; a destination is always linear and of finite age.
-
 \subsection{Evaluation contexts and commands}\label{ssec:ectxs}\label{ssec:ty-ectxs-cmd}
 
 The semantics of \destcalculus{} is given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$, and an (extended) term $[[t]]$ under focus. We call such a pair $[[ C[t] ]]$ a \emph{command}, borrowing the terminology from~\cite{herbelin_curien_2000}. We use the notation usually reserved for one-hole contexts because it makes most reduction rules familiar, but it's important to keep in mind that $[[ C[t] ]]$ is formally a pair, which won't always have a clear corresponding term.
 
 The intuition behind using such commands instead of a store is that destination filling actually require a very tame notion of state. So tame, in fact, that we can simply represent writing to a hole by a mere substitution in the evaluation context.
 
-\begin{codefig}{\caption{Grammar for evaluation contexts \TODO{Fix overflowing figure}}\label{fig:grammar-ectxs}}{\setlength{\arraycolsep}{1ex}
-\!\!\!\begin{array}{rrl}
-[[c]] &::=& [[t' ⬜]] \grammsep [[⬜ v]] \grammsep [[⬜ ; u]] \\
+\begin{codefig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}{\setlength{\arraycolsep}{1ex}
+\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+[[c]] &\grammdef& [[t' ⬜]] \grammsep [[⬜ v]] \grammsep [[⬜ ; u]] \\
       &|\,& [[ ⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[⬜ ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[⬜ ►case m ᴇ n x ⟼ u]] \\
-      &|\,& [[⬜ ►map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \\
-      &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \grammsep [[⬜ ◀ t']] \grammsep [[v ◀ ⬜]]\\
+      &|\,& [[⬜ ►map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \grammsep [[⬜ ◀ t']] \grammsep [[v ◀ ⬜]] \\
+      &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \\
       &|\,& [[ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ ]] \quad\quad\textit{(open ampar focusing component)} \\
 &&\\
-[[C]] &::=& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
-\end{array}
+[[C]] &\grammdef& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
+\end{array}$\end{minipage}
 }\end{codefig}
 
 The grammar of evaluation contexts is given in~\cref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c]]$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to build a stack-based interpreter for the language.
@@ -1157,7 +1151,7 @@ The cost of this elegance is that computations may try to pattern-match on a hol
 
 Using a system of ages in addition to linearity, \destcalculus{} is a purely functional calculus which supports destinations in a very flexible way. It subsumes existing calculi from the literature for destination passing, allowing both composition of data structures with holes and storing destinations in data structures. Data structures are allowed to have multiple holes, and destinations can be stored in data structures that, themselves, have holes. The latter is the main reason to introduce ages and is key to \destcalculus{}'s flexibility.
 
-We don't anticipate that a system of ages like \destcalculus{} will actually be used in a programming language: it's unlikely that destination are so central to the design of a programming language that it's worth baking them so deeply in the type system. Perhaps a compiler that makes heavy use of destinations in its optimizer could use \destcalculus{} as a typed intermediate representation. But, more realistically, our expectation is that \destcalculus{} can be used as a theoretical framework to analyze destination-passing systems: if an API can be defined in \destcalculus{} then it's sound.
+We don't anticipate that a system of ages like \destcalculus{} will actually be used in a programming language: it's unlikely that destinations are so central to the design of a programming language that it's worth baking them so deeply in the type system. Perhaps a compiler that makes heavy use of destinations in its optimizer could use \destcalculus{} as a typed intermediate representation. But, more realistically, our expectation is that \destcalculus{} can be used as a theoretical framework to analyze destination-passing systems: if an API can be defined in \destcalculus{} then it's sound.
 
 In fact, we plan to use this very strategy to design an API for destination passing in Haskell, leveraging only the existing linear types, but retaining the possibility of storing destinations in data structures with holes.
 
