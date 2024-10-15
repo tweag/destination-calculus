@@ -386,7 +386,7 @@ Destinations always exist within the context of a structure with holes. A destin
   {\ottkw{fillWithPairCtor'}~[[x]]}{[[x ►map d ⟼ fillWithPairCtor d]]}
 }
 
-To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Memory-wise, it is an uninitialized block large enough to host a value of type $[[T]]$, and a destination pointing to it. Conversely, structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in~\cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then $[[S]]$ no longer has holes and thus is just a normal, complete structure.
+To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$\footnote{Despite its name, $[[alloc]]$ isn't the only source of memory allocations in the language: filling primitives like $[[⨞]][[Inl]]$ also have to allocate space for the corresponding hollow constructor.} which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Memory-wise, it is an uninitialized block large enough to host a value of type $[[T]]$, and a destination pointing to it. Conversely, structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in~\cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then $[[S]]$ no longer has holes and thus is just a normal, complete structure.
 
 Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus{} doesn't have primitive constructor forms, constructors in \destcalculus{} are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.
 
@@ -423,7 +423,7 @@ At this point, the reader may be forgiven for feeling distressed at all the talk
 
 \subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
 
-Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For this section, we suppose that \destcalculus{} is equipped with equirecursive types and a fixed-point operator. These aren't part of the formal system of \cref{sec:syntax-type-system} but don't add any complication.
+Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For this section, we suppose that \destcalculus{} has equirecursive types and a fixed-point operator. These aren't part of the formal system of \cref{sec:syntax-type-system} but don't add any complication.
 
 \paragraph{Linked lists}
 
@@ -499,10 +499,10 @@ In \cref{sec:working-with-dests}, we've been making an implicit assumption: esta
 To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their place in the structure. For instance, if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ pointing to hole $[[+h]]$ in structure $[[v]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ pointing to hole $[[+hd]]$ in structure $[[vd]]$, we can form $[[dd ◀ d]]$: destination $[[d]]$ will be stored inside $[[vd]]$.
 
 Should we count $[[d]]$ as linearly used here? The alternatives don't seem promising:
-\begin{itemize}
-\item If we count this as a non-linear use of $[[d]]$, then the $[[dd ◀ d]]$ is rejected since destinations (here $[[d]]$) can only be used linearly. This is certainly possible, and this is, in fact what~\cite{bagrel_destination-passing_2024} does. However, this is a blunt limitation, and it would prevent us from storing destinations in structures with holes, as we do, crucially, in \cref{sec:bft}.
+\vspace{-0.04cm}\begin{itemize}
+\item If we count this as a non-linear use of $[[d]]$, then $[[dd ◀ d]]$ is rejected since destinations (here $[[d]]$) can only be used linearly. This is certainly possible, and this is, in fact what~\cite{bagrel_destination-passing_2024} does. However, this is a blunt limitation, and it would prevent us from storing destinations in structures with holes, as we do, crucially, in \cref{sec:bft}.
 \item If we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; d ◀ v]]$ in order to write to the hole $[[+h]]$ twice, which is unsound, as discussed in \cref{ssec:build-up-vocab}.
-\end{itemize}
+\end{itemize}\vspace{-0.04cm}
 So linear use it is. But it creates a problem: there's no way, within the linear type system, to distinguish between ``the hole $[[+h]]$ has been filled'' and ``$[[d]]$ has been stored (and $[[+h]]$ still exists)''. Depending on the nesting of $[[v]]$ and $[[vd]]$, this may allow us to read uninitialized memory $[[+h]]$.
 
 Let's compare two examples. We assume a simple store semantics\footnote{Our actual semantics (\cref{sec:ectxs-sem}) isn't a store semantics. It enforces invariants syntactically, making the proofs much easier.} where structures with holes stay in the store until they are completed. We'll need the $\ottkw{alloc'} \pmb{:} [[(⌊ T ⌋ ¹ν ¹ν → ①) ¹ν → T]]$ operator. The semantics of $\ottkw{alloc'}$ is: allocate a structure with a single root hole in the store, call the user-supplied function with the destination to the root hole as an argument; when the function has consumed all destinations (so only unit remains), pop the structure from the store to obtain a complete $[[T]]$.
@@ -528,7 +528,7 @@ However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly t
 \end{array}}\egroup
 \noindent{}Here the expression $[[dd ◀ d]]$ results in $[[d]]$ escaping its scope for the parent one, so $[[v]]$ is just uninitialized memory (the hole $[[+h]]$) when we dereference it. This example must be rejected by our type system.
 
-Again, using purely a linear type system, we can only reject this example if we also reject the first, sound example, as in~\cite{bagrel_destination-passing_2024}. In this case, the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ becomes practically useless: such destinations can never be filled.\unsure{I removed the sentence about regular constructors which don't exist in our system, because I felt it was very difficult to convey in one sentence. So better not say anything here. Maybe we could add a remark on this in the related work, though?}
+Again, using purely a linear type system, we can only reject this example if we also reject the first, sound example, as in~\cite{bagrel_destination-passing_2024}. In this case, the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ becomes practically useless: such destinations can never be filled.
 
 This isn't the direction we want to take: we really want to be able to store destinations in data structures with holes. So we want $[[t]]$ in $[[d ◀ t]]$ to be allowed to be linear. Without further restrictions, it wouldn't be sound, so to address this, \destcalculus{} uses a system of ages to represent scopes. Ages are described in \cref{sec:syntax-type-system}.
 
@@ -643,7 +643,7 @@ The grammar of \destcalculus{} is presented in~\cref{fig:grammar}. Some of the c
 
 Following a common trend (e.g.~\cite{bernardy_linear_2018,qtt_2018,granule_2019,bernardy_modality_2020}), our modes form a semiring\footnote{Technically, our semirings are commutative but don't have a zero. The terminology “ringoid” has been sometimes used for semiring without neutral elements (neither zero nor unit), for instance~\cite{bernardy_modality_2020}.}. In \destcalculus{} the mode semiring is the product of a \emph{multiplicity} semiring for linearity, as in~\cite{bernardy_linear_2018}, and of an \emph{age} semiring (see \cref{ssec:age-control}) to prevent the scoping issues discussed in \cref{sec:scope-escape-dests}.
 
-We usually omit mode annotations when the mode is the unit element $[[¹ν]]$. In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
+We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring. In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
 
 \subsection{The age semiring}\label{ssec:age-control}
 
@@ -870,7 +870,7 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
   [[ (C ∘ c) [h ≔ H' v'] ]] &=& [[ C[h ≔ H' v'] ∘ c ]]&\textit{otherwise}
 \end{array}\]
 
-Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. The typing rules for evaluation contexts $[[C]]$ and commands $[[ C[t] ]]$ are presented in~\cref{fig:ty-ectxs-cmd}.
+Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts and commands are given in~\cref{fig:ty-ectxs-cmd}.
 
 \begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}\begin{augmentwidth}{0.9cm}
 \ottdefnTyXXectxs{}
@@ -1020,12 +1020,9 @@ A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only conta
 
 \section{Formal proof of type safety}\label{sec:formal-proof}
 
-We've proved type preservation and progress theorems with the Coq proof assistant. Turning to a proof assistant was a pragmatic choice: the context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
+We've proved type preservation and progress theorems with the Coq proof assistant. Turning to a proof assistant was a pragmatic choice: typing context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
 
 Most of the proof was done by an author with little prior experience with Coq. This goes to show that Coq is reasonably approachable even for non-trivial development. The proof is about 7000 lines long, and contains nearly 500 lemmas. Many of the cases of the type preservation and progress lemmas are similar. To handle such repetitive cases, the use of a large-language-model based autocompletion system has proven quite effective.
-
-\unsure{There was a comment on binders here. But I don't think we've had much problem with them, should we say something?}
-% Binders are the biggest problem. We've largely managed to make the proof to be only about closed terms, to avoid any complication with binders. This worked up until the substitution lemmas, which is the reason why we haven't proved them in Coq yet (that and the fact that it's much easier to be confident in our pen-and-paper proofs for those).
 
 The proofs aren't particularly elegant. For instance, we don't have any abstract formalization of semirings: it was more expedient to brute-force the properties we needed by hand. We've observed up to 232 simultaneous goals, but a computer makes short work of this: it was solved by a single call to the \verb|congruence| tactic. Nevertheless there are a few points of interest:
 \begin{itemize}
@@ -1039,7 +1036,7 @@ Mostly to simplify equalities, we assumed a few axioms: functional extensionalit
 Axiom constructive_indefinite_description :
     forall (A : Type) (P : A->Prop), (exists x, P x) -> { x : A | P x }.
 \end{verbatim}
-This isn't particularly elegant: we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.\unsure{We got a reviewer question about what we used the axioms for, is it worth trying to answer here? I don't really think we have room for it.}
+This isn't particularly elegant: we could have avoided some of these axioms at the price of more complex development. But for the sake of this article, we decided to favor expediency over elegance.
 
 % The inference rules produced by Ott aren't conducive to using setoid equality. This turned out to be a problem with our type for finite function:
 
@@ -1077,10 +1074,12 @@ It may seem counter-intuitive at first, but this program is valid and safe in \d
 
 However, this is a long way from the efficient implementation promised in \cref{sec:working-with-dests}. Copy-on-write can be optimized using fully-in-place functional programming ~\cite{lorenzen_fp_2023}, where, thanks to reference counting, we don't need to perform a copy when the difference list isn't aliased.
 
-An alternative is to refine the linear type system further in order to guarantee that ampars are unique and avoid copy-on-write altogether. For that we follow a recipe proposed by~\cite{spiwack_linearly_2022} and introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$. We also switch $[[alloc]]$ for $[[allocIP]]$ (remember that unqualified arrows have mode $[[¹ν]]$, so are linear):
+An alternative is to refine the linear type system further in order to guarantee that ampars are unique and avoid copy-on-write altogether. We held back from doing that in formalization of \destcalculus{} as it obfuscates the presentation of the system without adding much to the understanding of the latter.
+
+To make ampars linear, we follow a recipe proposed by~\cite{spiwack_linearly_2022} and introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$. We also switch $[[alloc]]$ for $[[allocIP]]$:% :
 
 \codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
-\ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
+\ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\qquad\text{\small (remember that unqualified arrows $\ottstype{\to}$ have mode $[[¹ν]]$, so are linear)}\\[\interdefskip]
 \ottkw{drop} ~\pmb{:}~ [[Token ¹ν → ①]]\\[\interdefskip]
 [[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]
 \end{array}}
@@ -1089,26 +1088,24 @@ For the in-place system to work, we consider that a linear root token variable, 
 
 Ampar produced by $[[allocIP]]$ have a linear dependency on a variable $[[tokk]]$. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
 
-An alternative to having a linear root token variable is to add a primitive function\\$\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ that fulfill the same goal, as it is done in~\cite{bagrel_destination-passing_2024}.
+An alternative to having a linear root token variable is to add a primitive function\\$\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ that fulfill the same goal.
 
-In \destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$, as ampars are managed linearly, we can change the allocation and renaming mechanisms:
+Now that ampars are managed linearly, we can change the allocation and renaming mechanisms:
 \begin{itemize}
   \item the hole name for a new ampar is chosen fresh right from the start (this corresponds to a new heap allocation);
   \item adding a new hollow constructor still require freshness for its hole names (this corresponds to a new heap allocation too);
   \item $\ottkw{map}$ping over an ampar and filling destinations or composing two ampars using $\triangleleft\mycirc$ no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
 \end{itemize}
 
-We decided to omit the linearity aspect of ampars in \destcalculus{} as it obfuscates the presentation of the system without adding much to the understanding of the latter.
+\destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$ is in fact very close to the implementation described in~\cite{bagrel_destination-passing_2024}. Our claim of efficiency is thus based on the results published in the latter and also \cite{lorenzen_searchtree_2024,bour_tmc_2021}, as an hypothetical implementation of \destcalculus{} would mostly resort to the same memory operations -- that is, in-place updates in recursive functional settings.
 
 \section{Related work}\label{sec:related-work}
-
-\unsure{Subsection for each work seems a little heavyweight. On the other hand the italic paragraphs seem too lightweight. I'm longing for the days of paragraph heading in bold.}
 
 \subsection{Destination-passing style for efficient memory management}\label{ssec:shaikhha-dps}
 
 In~\cite{shaikhha_destination-passing_2017}, the authors present a destination-based intermediate language for a functional array programming language. They develop a system of destination-specific optimizations and boast near-C performance.
 
-This is the most comprehensive evidence to date of the benefit of destination-passing style for performance in functional languages, although their work is on array programming, while this article focuses on linked data structures. They can therefore benefit of optimizations that are perhaps less valuable for us, such as allocating one contiguous memory chunk for several arrays.\info{(Yann) This could be nuanced: allocating deeply nested trees like ASTs with a bump allocator so that they are packed in memory can also be beneficial, even if they are "linked" data structures, because of cache-friendlyness, I suppose}
+This is the most comprehensive evidence to date of the benefit of destination-passing style for performance in functional languages, although their work is on array programming, while this article focuses on linked data structures. They can therefore benefit of optimizations that are perhaps less valuable for us, such as allocating one contiguous memory chunk for several arrays.
 
 The main difference between their work and ours is that their language is solely an intermediate language: it would be unsound to program in it manually. We, on the other hand, are proposing a type system to make it sound for the programmer to program directly with destinations.
 
@@ -1140,9 +1137,9 @@ This ability to store destination does come at a cost though: the system needs t
 
 In~\cite{bagrel_destination-passing_2024}, the author proposes a system much like ours: it has a destination type, and a \emph{par}-like construct (that they call $\ottstype{Incomplete}$), where only the right-hand side can be modified; together these elements give extra expressiveness to the language compared to~\cite{minamide_functional_1998}.
 
-In their system, $[[d ◀ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. One consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in order to do a breadth-first search algorithm like in~\cref{sec:bft}, they can't use improved queues like we do. The other consequence is that their system require both primitive constructors and destination-filling primitives; it cannot be bootstrapped with the later alone, as we do in \destcalculus{}.
+In their system, $[[d ◀ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in a breadth-first search algorithm like in~\cref{sec:bft}, they have to build the queue using normal constructors, and cannot use destination-filling primitives. Therefore both normal constructors and DPS primitives must coexist in their work, while in \destcalculus{}, only DPS primitives are required to bootstrap the system, as we later derive normal constructors from them.
 
-However, \cite{bagrel_destination-passing_2024} is implemented in Haskell, which just features linear types. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.
+However, \cite{bagrel_destination-passing_2024} only requires a linear type system such as the one of Haskell to work. Our system subsumes theirs; but it requires the age system that is more than what Haskell provides. Encoding their system in ours will unfortunately make ages appear in the typing rules.
 
 \subsection{Semi-axiomatic sequent calculus}\label{ssec:sax}
 
