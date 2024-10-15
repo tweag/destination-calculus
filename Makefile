@@ -1,7 +1,7 @@
 OTT_OPTS = -tex_show_meta true -tex_wrap false -picky_multiple_parses false -tex_suppress_ntr Q
 PDF_ARXIV_DEPENDENCIES = *.sty *.tikzstyles schemas/*
 PDF_OTHER_DEPENDENCIES = *.bib *.py flake.nix
-MAIN_END_PAGE = 24
+MAIN_END_PAGE = 25
 APPENDIX_FIRST_PAGE = $(shell echo $$(($(MAIN_END_PAGE) + 1)))
 
 all: destination_calculus.pdf

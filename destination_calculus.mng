@@ -1160,6 +1160,12 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 \clearpage{}
 
+\section*{Data-Availability Statement}
+
+In \cref{sec:formal-proof}, we mentioned that we've proved type preservation and progress theorems with the \href{https://coq.inria.fr/}{Coq proof assistant}. The Coq code is available at \url{https://doi.org/10.5281/zenodo.13933661}, bundled with a \href{https://nixos.wiki/wiki/Development_environment_with_nix-shell#nix_develop}{Nix flake} file to set up the environment to run the proof.
+
+\clearpage{}
+
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
 
