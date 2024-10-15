@@ -94,6 +94,7 @@
       \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
       \newenvironment{alt}{\color{red}}{}
 
+      \newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
       \newcommandx{\unsure}[2][1=]{\todo[linecolor=orange,backgroundcolor=orange!25,bordercolor=orange,#1]{#2}}
       \newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
       \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
@@ -102,6 +103,7 @@
       \newcommand{\improvement}[1]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink]{#1}}
       \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
   \else
+      \newcommand{\TODO}[1]{}
   %    \newcommand{\Red}[1]{#1}
       \newcommand{\Red}[1]{{\color{red}{#1}}}
       \newcommand{\newaudit}[1]{#1}
@@ -120,7 +122,6 @@
 
 %%%%%%%%%%%%%%%%% /Editing marks %%%%%%%%%%%%%%%%%
 
-\newcommand{\TODO}[1]{\textnormal{\textcolor{red}{TODO: #1} } }
 \newcommand\sepimp{\mathrel{-\mkern-6mu*}}
 \newcommand{\textopname}[1]{``#1''}
 \newcommand{\parr}{\rotatebox[origin=c]{180}{\&}}
@@ -154,7 +155,7 @@
 \newcommand\btriangleq{\pmb{\triangleq}}
 \newcommand\btriangleqrec{\oset{\mathsf{rec}}{\pmb{\triangleq}}}
 \newlength{\interdefskip}
-\setlength{\interdefskip}{0.05cm}
+\setlength{\interdefskip}{0.07cm}
 \newcommand{\newtype}[3][]{#2~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~#3\\[\interdefskip]}
 \newcommand{\newoperator}[5][]{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
 #2 ~\pmb{:}~ #3 \\
@@ -192,6 +193,13 @@
 \newenvironment{stretchedarray}[2][1]
   {\bgroup\renewcommand*{\arraystretch}{#1}\begin{array}{#2}}
   {\end{array}\egroup}
+
+\newlength{\widthaugment}
+\NewEnviron{augmentwidth}[1]
+  {\setlength{\widthaugment}{#1}
+   \pgfmathsetmacro{\myratio}{\linewidth / (\widthaugment + \linewidth)}
+   \scalebox{\myratio}{\begin{minipage}{\linewidth+\widthaugment}\BODY
+   \end{minipage}}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Journal's boilerplate
@@ -803,19 +811,16 @@ Destinations and holes are two faces of the same coin, as seen in~\cref{ssec:bui
 We need to extend our previous context operations to act on the new binding forms:\\[\interdefskip]
 \bgroup\setlength{\arraycolsep}{0.5ex}
 $\begin{array}{rcl}
-  [[n'·({ x : m T })]] &=& [[{ x : n' · m T }]] \\
   [[n'·({ + h : T n })]] &=& [[{ + h : T n' · n }]] \\
   [[n'·({ - h : m ⌊ T ⌋ n })]] &=& [[{ - h : n' · m ⌊ T ⌋ n }]]
 \end{array}$ \hfill \vrule width 0.5pt \hfill $\begin{array}{rcl}
-  [[({ x : m T }) + ({ x : m' T })]] &=& [[x]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[T]] \\
-%  [[({ x : m T }) + P]] &=& [[{ x : m T },P]]\quad\textit{if}~[[x]] \notin [[P]]\\
   [[({ + h : T n }) + ({ + h : T n' })]] &=& [[+h]]:\!_{\![[n]]\ottsmode{+}[[n']]}[[T]] \\
 %  [[({ + h : T n }) + G]] &=& [[{ + h : T n },P]]\quad\textit{if}~[[h]] \notin [[G]]\\
-  [[({ - h : m ⌊ T ⌋ n }) + ({ - h : m' ⌊ T ⌋ n })]] &=& [[-h]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[ ⌊ T ⌋ n ]]\\%\quad&\textit{(note that $[[n]]$ is the same in both)}\\
+  [[({ - h : m ⌊ T ⌋ n }) + ({ - h : m' ⌊ T ⌋ n })]] &=& [[-h]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[ ⌊ T ⌋ n ]]\\[\interdefskip]%\quad&\textit{(note that $[[n]]$ is the same in both)}\\
 % [[({ - h : m ⌊ T ⌋ n })]]+\Omega &=& [[{ - h : m ⌊ T ⌋ n }]],\Omega\quad\textit{if}~[[h]] \notin \Omega
-  (\ottnt{name}:\!_{\![[m]]}[[T]]) + \Omega &=& \ottnt{name}:\!_{\![[m]]}[[T]],\Omega~\textit{~if}~\ottnt{name} \notin \Omega
+  [[({ + h : T n })+ G]] &=& [[({ + h : T n }),G]]~\textit{~if}~[[h]] \notin [[G]] \\
+  [[({ - h : m ⌊ T ⌋ n })+ P]] &=& [[({ - h : m ⌊ T ⌋ n }),P]]~\textit{~if}~[[h]] \notin [[P]]
 \end{array}$\egroup\\[\interdefskip]
-The last definition ranges over\hspace*{0.6em}$\ottnt{name} \grammdef [[x]]~|~[[+h]]~|~[[-h]]$\hspace*{0.6em}and\hspace*{0.6em}$\Omega \grammdef [[P]]~|~[[G]]~|~[[D]]$.
 
 Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
 
@@ -867,11 +872,9 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
 
 Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. The typing rules for evaluation contexts $[[C]]$ and commands $[[ C[t] ]]$ are presented in~\cref{fig:ty-ectxs-cmd}.
 
-\TODO{Fix overflowing figure}
-
-\begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}
+\begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}\begin{augmentwidth}{0.9cm}
 \ottdefnTyXXectxs{}
-\ottdefnTy{}
+\ottdefnTy{}\end{augmentwidth}
 \end{ottfig}
 
 An evaluation context has a context type $[[T]]\ottstype{\rightarrowtail}[[U0]]$. The meaning of $[[C]][[:]] [[T]]\ottstype{\rightarrowtail}[[U0]]$ is that given $[[t]][[:]][[T]]$, $[[ C[t] ]]$ returns a value of type $[[U0]]$. Composing an evaluation context $[[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focusing component never affects the type $[[U0]]$ of the future command; only the type $[[T]]$ of the focus is altered.
@@ -994,14 +997,12 @@ All reduction rules for destination-filling primitives trigger a memory write on
 
 The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{Ty-ectxs-OpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{map}$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
 
-\TODO{Fix renaming with new defs for $[[h']]$, $[[h'']]$...}
-
-To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ to find the next unused name. Then we use either the \emph{shifted set}\\ $[[H ⩲ h']] \btriangleq \{ [[h+h']]~|~[[h]]\in [[H]] \}$ or the \emph{conditional shift operator}:\\[\interdefskip]\hbox{}\hfill
+To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{ssec:sem}) to find the next unused name. Then we use either the \emph{shifted set}\\ $[[H ⩲ h']] \btriangleq \{ [[h+h']]~|~[[h]]\in [[H]] \}$ or the \emph{conditional shift operator}:\\[\interdefskip]\hbox{}\hfill
 $[[h [H ⩲ h'] ]] \btriangleq \left\{\begin{array}{ll}[[h+h']] & \textit{if}~[[h]]\in[[H]]\\[[h]] & \textit{otherwise}\end{array}\right.$\hfill\hbox{}\\[\interdefskip]
 We extend $\smallbullet\ottshname{[}[[H ⩲ h']]\ottshname{]}$ to arbitrary values, extended terms, and typing contexts in the obvious way (keeping in mind that $[[H' ⟨ v2 ❟ v1 ⟩]]$ binds the names in $[[H']]$).
 
 
-Rules \rref*{Open-Ampar} and \rref*{Close-Ampar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{Open-Ampar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{map}$ statement (which becomes the new term under focus). The rule \rref*{Close-Ampar} triggers when the body of a $\ottkw{map}$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
+Rules \rref*{Open-Ampar} and \rref*{Close-Ampar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{Open-Ampar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{map}$ statement (which becomes the new term under focus). The rule \rref*{Close-Ampar} triggers when the body of a $\ottkw{map}$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
 
 In rule \rref*{Red-FillComp}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of a structure with holes somewhere inside $[[C]]$. This results in the composition of two structures with holes. Because we dissociate $[[v2]]$ and $[[v1]]$ that were previously bound together by the ampar connective ($[[v2]]$ is merged with another structure, while $[[v1]]$ becomes the new focus), their hole names are no longer bound, so we need to make them globally unique, as we do when an ampar is opened with $\ottkw{map}$. This renaming is carried out by the conditional shift $[[v2[H ⩲ h''] ]]$ and $[[v1[H ⩲ h''] ]]$.
 
@@ -1159,8 +1160,6 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 \clearpage{}
 
-\TODO{Cite Vardoulakis and Shivers, "Ordering Multiple Continuations on the Stack", PEPM '11}
-
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
 
@@ -1168,13 +1167,6 @@ In fact, we plan to use this very strategy to design an API for destination pass
 \appendix
 
 \section{Full reduction rules for \destcalculus{}}\label{apx:full-reduction-rules}
-
-\newlength{\widthaugment}
-\NewEnviron{augmentwidth}[1]
-  {\setlength{\widthaugment}{#1}
-   \pgfmathsetmacro{\myratio}{\linewidth / (\widthaugment + \linewidth)}
-   \scalebox{\myratio}{\begin{minipage}{\linewidth+\widthaugment}\BODY
-   \end{minipage}}}
 
 \renewenvironment{rulesection}[3][\relax]
   {\trivlist\item
@@ -1189,7 +1181,7 @@ In fact, we plan to use this very strategy to design an API for destination pass
     {#4}
 }
 
-\begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 1)}\label{fig:sem-full1}}\begin{augmentwidth}{1.7cm}
+\begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 1)}\label{fig:sem-full1}}\begin{augmentwidth}{2.4cm}
 \drules{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
 Focus-AppOne,
 Unfocus-AppOne,
@@ -1217,22 +1209,19 @@ Red-PatE,
 Focus-Map,
 Unfocus-Map,
 Open-Ampar,
-Close-Ampar
+Close-Ampar,
+%
+Focus-ToA,
+Unfocus-ToA,
+Red-ToA
 }
 \end{augmentwidth}\end{ottfig}
 
-\TODO{Fix overflowing figure}
-
-\begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 2)}\label{fig:sem-full2}}\begin{augmentwidth}{1.7cm}
+\begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 2)}\label{fig:sem-full2}}\begin{augmentwidth}{2.4cm}
 \drules{}{}{%
-Focus-ToA,
-Unfocus-ToA,
-Red-ToA,
-%
 Focus-FromA,
 Unfocus-FromA,
 Red-FromA,
-%
 Red-Alloc,
 %
 Focus-FillU,
