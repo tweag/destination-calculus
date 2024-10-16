@@ -389,6 +389,7 @@ TSWLatexianTemp*
 **/.directory
 destination_calculus.tex
 destination_calculus*.pdf
+!submitted_pdfs/*.pdf
 ott/destination_calculus_ott.v
 .direnv
 *_ott.tex
