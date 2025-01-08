@@ -1,0 +1,4 @@
+- alloc -> new⧔ : as alloc is not really the place where allocation happens in a linked data structure setting
+- alloc' -> alloc
+- map -> onR
+- function arrow -> \multimap symbol

@@ -1,7 +1,7 @@
 \begin{tikzpicture}
 	\begin{pgfonlayer}{nodelayer}
 		\node [style=code] (0) at (-15, 9) {\scz{$\lamnt{\mathit{x_0}}{\mathsf{\omega\hspace{-0.15ex}\nu}}$}};
-		\node [style=code] (1) at (-14, 7.5) {\scz{$\mathsfbf{map}$}};
+		\node [style=code] (1) at (-14.25, 7.5) {\scz{$\mathsfbf{onR_{\ltimes}}$}};
 		\node [style=none] (2) at (-12, 8) {};
 		\node [style=none] (3) at (-12.25, 7.5) {};
 		\node [style=none] (4) at (-12, 7) {};
@@ -17,8 +17,8 @@
 		\node [style=none] (14) at (-9.5, 8) {};
 		\node [style=none] (15) at (-9.25, 7.5) {};
 		\node [style=none] (16) at (-9.5, 7) {};
-		\node [style=code] (17) at (-9, 7.5) {\scz{$\mathsfbf{with}$}};
-		\node [style=code] (18) at (-7.25, 7.5) {\sci{$\mathit{x_1}\,\mapsto$}};
+		\node [style=code] (17) at (-9, 7.5) {\scz{$\mathsfbf{as}$}};
+		\node [style=code] (18) at (-7.25, 7.5) {\sci{$\mathit{x_1}\,\pmb{\mapsto}$}};
 		\node [style=none] (19) at (-7.25, 8.25) {};
 		\node [style=none] (20) at (-7.25, 6.75) {};
 		\node [style=none] (21) at (-13.25, 6.75) {};
@@ -38,16 +38,16 @@
 		\node [style=none] (35) at (-8.5, 5) {};
 		\node [style=none] (36) at (-8.25, 4.5) {};
 		\node [style=none] (37) at (-8.5, 4) {};
-		\node [style=code] (38) at (-13, 4.5) {\sci{$\mathsfbf{map}$}};
-		\node [style=code] (39) at (-8, 4.5) {\sci{$\mathsfbf{with}$}};
-		\node [style=code] (40) at (-6.25, 4.5) {\scii{$\mathit{x_2}\,\mapsto$}};
+		\node [style=code] (38) at (-13.25, 4.5) {\sci{$\mathsfbf{onR_{\ltimes}}$}};
+		\node [style=code] (39) at (-8, 4.5) {\sci{$\mathsfbf{as}$}};
+		\node [style=code] (40) at (-6.25, 4.5) {\scii{$\mathit{x_2}\,\pmb{\mapsto}$}};
 		\node [style=none] (41) at (-6.25, 5.25) {};
 		\node [style=none] (42) at (-6.25, 3.75) {};
 		\node [style=none] (43) at (-12.25, 3.75) {};
 		\node [style=code] (44) at (-12, 3) {\scii{$\mathsfbf{case}$}};
 		\node [style=code] (45) at (-10.5, 3) {\scii{$\mathit{x_2}\!\triangleleft\!\mathsf{(,)}$}};
 		\node [style=code] (46) at (-8.5, 3) {\scii{$\mathsfbf{of}$}};
-		\node [style=code] (47) at (-7.75, 3) {\scii{$\mathsf{(}\mathit{x_{21}}\mathsf{,}\,\mathit{x_{22}}\mathsf{)}\,\mapsto$}};
+		\node [style=code] (47) at (-7.75, 3) {\scii{$\mathsf{(}\mathit{x_{21}}\mathsf{,}\,\mathit{x_{22}}\mathsf{)}\,\pmb{\mapsto}$}};
 		\node [style=code] (48) at (-11, 1.5) {\scii{$\mathit{x_{21}}\!\blacktriangleleft$}};
 		\node [style=none] (49) at (-9.125, 1.875) {};
 		\node [style=none] (50) at (-8.25, 1.875) {};
@@ -76,9 +76,9 @@
 		\node [style=none] (73) at (-3.75, 0.5) {};
 		\node [style=none] (74) at (-3.5, 0) {};
 		\node [style=none] (75) at (-3.75, -0.5) {};
-		\node [style=code] (76) at (-8.25, 0) {\scii{$\mathsfbf{map}$}};
-		\node [style=code] (77) at (-3.25, 0) {\scii{$\mathsfbf{with}$}};
-		\node [style=code] (78) at (-1.5, 0) {\sciii{$\mathit{x_3}\,\mapsto$}};
+		\node [style=code] (76) at (-8.5, 0) {\scii{$\mathsfbf{onR_{\ltimes}}$}};
+		\node [style=code] (77) at (-3.25, 0) {\scii{$\mathsfbf{as}$}};
+		\node [style=code] (78) at (-1.5, 0) {\sciii{$\mathit{x_3}\,\pmb{\mapsto}$}};
 		\node [style=none] (79) at (-1.5, 0.75) {};
 		\node [style=none] (80) at (-1.5, -0.75) {};
 		\node [style=none] (81) at (-7.5, -0.75) {};
