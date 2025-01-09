@@ -1979,17 +1979,17 @@ Proof.
   intros * H. unfold DisposableOnly in H. unfold VarOnly. intros nam b mapstoP. specialize (H nam b mapstoP). unfold IsDisposable in H. destruct nam. 2:{ contradiction. } unfold IsVar. tauto.
 Qed. *)
 
-Lemma IsSubtype_mode_plus: forall (m m' : mode), m <: mode_plus m m'.
+Lemma IsSubtype_mode_plus: forall (m m' : mode), m ⥶ mode_plus m m'.
 Proof.
   intros *. destruct m, m'; unfold mode_plus; try destruct p; try destruct p0; try destruct m; try destruct a; try destruct m0; try destruct a0; unfold mul_plus, age_plus; try destruct (age_eq_dec (Fin n) (Fin n0)); try destruct (age_eq_dec (Fin n) Inf); try destruct (age_eq_dec Inf (Fin n)); try congruence; try repeat constructor.
 Qed.
 
-Lemma IsSubtype_refl : forall (m : mode), m <: m.
+Lemma IsSubtype_refl : forall (m : mode), m ⥶ m.
 Proof.
   intros m. destruct m. destruct p, m, a; try destruct n. all: try repeat constructor.
 Qed.
 
-Lemma IsSubtype_union : forall (P D : ctx) (n : name) (b b' : binding_type_of n), P n = Some b -> (P ᴳ+ D) n = Some b' -> (mode_of b) <: (mode_of b').
+Lemma IsSubtype_union : forall (P D : ctx) (n : name) (b b' : binding_type_of n), P n = Some b -> (P ᴳ+ D) n = Some b' -> (mode_of b) ⥶ (mode_of b').
 Proof.
   intros * mapstoP mapstoPuD. unfold union in mapstoPuD. destruct (In_dec n D).
   - rewrite In_iff_exists_Some in H. destruct H as (b'' & mapstoD). rewrite merge_with_Some_Some_eq with (y1 := b) (y2 := b'') in mapstoPuD. destruct n, b, b', b''; unfold union_var in *; unfold union_dh in *; cbn in *; try destruct (type_eq_dec T T1); try destruct (mode_eq_dec n n1); inversion mapstoPuD; subst; try apply IsSubtype_mode_plus; try constructor. tauto.
@@ -2004,7 +2004,7 @@ Proof.
     - unfold DisposableOnly in DisposP. specialize (DisposP n y h_inP). unfold IsDisposable in DisposP.
       unfold LinOnly in LinOnlyPuD. assert (In n P) as inP. { exists y. assumption. } assert (In n (P ᴳ+ D)) as InPuD. { apply In_union_forward_l. assumption. } destruct InPuD as (y' & mapstoPuD). specialize (
       LinOnlyPuD n y' mapstoPuD). inversion LinOnlyPuD.
-      assert (mode_of y <: mode_of y'). { apply IsSubtype_union with (P := P) (D := D). all:assumption. } destruct n, y; try destruct n; inversion DisposP; rewrite <- H0, <- H1 in H; inversion H; inversion H5.
+      assert (mode_of y ⥶ mode_of y'). { apply IsSubtype_union with (P := P) (D := D). all:assumption. } destruct n, y; try destruct n; inversion DisposP; rewrite <- H0, <- H1 in H; inversion H; inversion H5.
     - apply nIn_iff_nMapsTo. assumption.
   }
   rewrite Pempty. symmetry. apply union_empty_l_eq.
@@ -2747,7 +2747,7 @@ Proof.
     * apply FinAgeOnly_union_forward; repeat split. apply FinAgeOnly_stimes_forward. constructor. assumption. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & ValidOnlyhiD3). apply LinNuOnly_wk_FinAgeOnly in ValidOnlyhiD3; tauto. } apply Disjoint_stimes_l_iff. assumption.
 Qed.
 
-Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 <: m -> m0 = m.
+Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 ⥶ m -> m0 = m.
 Proof.
   intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
 Qed.
@@ -4051,12 +4051,12 @@ Proof.
   intros * neq H. rewrite union_commutative in H. apply singletons_union_r_neq with (2 := H). symmetry. assumption.
 Qed.
 
-Lemma ModeSubtype_linnu_stimes : forall (m1 m2 : mode), ¹ν <: m1 -> ¹ν <: m2 -> ¹ν <: m1 · m2.
+Lemma ModeSubtype_linnu_stimes : forall (m1 m2 : mode), ¹ν ⥶ m1 -> ¹ν ⥶ m2 -> ¹ν ⥶ m1 · m2.
 Proof.
   intros * Subtypem1 Subtypem2. destruct m1, m2; try destruct p; try destruct p0; try destruct m; try destruct m0; try destruct a; try destruct a0; try destruct n; try destruct a0; simpl in *; try constructor; try inversion Subtypem1; try inversion Subtypem2; try inversion H4; try congruence; try inversion H4.
 Qed.
 
-Lemma LinOnly_FinAgeOnly_stimes_compatible_linnu_impl_eq : forall (D : ctx) (m : mode), ¹ν <: m -> LinOnly (m ᴳ· D) -> FinAgeOnly (m ᴳ· D) -> m ᴳ· D = D.
+Lemma LinOnly_FinAgeOnly_stimes_compatible_linnu_impl_eq : forall (D : ctx) (m : mode), ¹ν ⥶ m -> LinOnly (m ᴳ· D) -> FinAgeOnly (m ᴳ· D) -> m ᴳ· D = D.
 Proof.
   intros * Subtypem LinOnlymD FinAgeOnlymD.
   apply ext_eq. intros n.

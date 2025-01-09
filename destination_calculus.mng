@@ -11,6 +11,7 @@
 \usepackage{xifthen}
 \usepackage{expl3}
 \usepackage{xparse}
+\usepackage{newunicodechar}
 \citestyle{acmauthoryear}
 
 % For faulty code
@@ -21,6 +22,7 @@
 \makeatother
 
 % For OTT rendering
+\newunicodechar{⥶}{\ensuremath{\raisebox{0.2em}{$\scriptstyle<$}\hspace*{-0.55em}\raisebox{-0.12em}{$\scriptscriptstyle\leftarrow$}}}
 \usepackage[supertabular]{ottalt}
 \inputott{destination_calculus_ott.tex}
 \usepackage{ottstyling}
@@ -310,7 +312,7 @@
 
 \section{Introduction}\label{sec:intro}
 
-In destination-passing style, a function doesn't return a value: it takes as an argument a location where the output of the function ought to be written. A function of type $[[T ¹ν → U]]$ would, in destination-passing style, have type $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$ instead, where $[[⌊U⌋ ¹ν]]$ denotes a destination for value of type $[[U]]$. This style is common in system programming, where destinations $[[⌊ U ⌋ ¹ν]]$ are more commonly known as “out parameters” (in C, $[[⌊ U ⌋ ¹ν]]$ would typically be a pointer of type $\ottstype{U*}$).
+In destination-passing style, a function doesn't return a value: it takes as an argument a location where the output of the function ought to be written. A function of type $[[T → U]]$ would, in destination-passing style, have type $[[T → ⌊ U ⌋ ¹ν → ①]]$ instead, where $[[⌊U⌋ ¹ν]]$ denotes a destination for value of type $[[U]]$. This style is common in system programming, where destinations $[[⌊ U ⌋ ¹ν]]$ are more commonly known as “out parameters” (in C, $[[⌊ U ⌋ ¹ν]]$ would typically be a pointer of type $\ottstype{U*}$).
 
 The reason why system programs rely on destinations so much is that using destinations can save calls to the memory allocator. If a function returns a $[[U]]$, it has to allocate the space for a $[[U]]$. But with destinations, the caller is responsible for finding space for a $[[U]]$. The caller may simply ask for the space to the memory allocator, in which case we've saved nothing; but it can also reuse the space of an existing $[[U]]$ which it doesn't need anymore, or it could use a space in an array, or it could allocate the space in a region of memory that the memory allocator doesn't have access to, like a memory-mapped file.
 
@@ -336,13 +338,13 @@ Our contributions are as follows:
 
 \section{Working with destinations}\label{sec:working-with-dests}
 
-Let's introduce and get familiar with \destcalculus{}, our simply typed $\lambda$-calculus with destination. The syntax is standard, except that we use linear logic's $[[T⨁U]]$ and $[[T⨂U]]$ for sums and products, since \destcalculus{} is linearly typed, even though it isn't a focus in this section.
+Let's introduce and get familiar with \destcalculus{}, our simply typed $\lambda$-calculus with destination. The syntax is standard, except that we use linear logic's $[[T⨁U]]$ and $[[T⨂U]]$ for sums and products, and linear function arrow $\ottstype{\multimap}$, since \destcalculus{} is linearly typed, even though it isn't a focus in this section.
 
 \subsection{Building up a vocabulary}\label{ssec:build-up-vocab}
 
 \activespaces
 
-In its simplest form, destination passing, much like continuation passing, is using a location, received as an argument, to return a value. Instead of a function with signature $[[T ¹ν → U]]$, in \destcalculus{} you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination for type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
+In its simplest form, destination passing, much like continuation passing, is using a location, received as an argument, to return a value. Instead of a linear function with signature $[[T ¹ν → U]]$, in \destcalculus{} you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination for type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
 
 \codehere{\newoperator
 {\ottkw{dId}}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
@@ -443,8 +445,8 @@ Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constr
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
-{[[x ˢ:: xs]]}{[[from⧔' ((alloc @ (List T) ⧔ ⌊ List T ⌋ ¹ν) ►map d ⟼ (d ⨞ (::)) ►case ¹ν (dx, dxs) ⟼ dx ◀ x ; dxs ◀ xs)]]}}
-
+{[[x ˢ:: xs]]}{\!\!\!\begin{array}[t]{l}[[from⧔' ((alloc @ (List T) ⧔ ⌊ List T ⌋ ¹ν) ►map d ⟼⮒
+‥‥‥‥‥‥༼(d ⨞ (::)) ►case ¹ν (dx, dxs) ⟼ dx ◀ x ; dxs ◀ xs༽)]]\end{array}}}
 \paragraph{Difference lists}
 \newcommand{\lstcat}{\mathop{+\!+}}
 Just like in any language, iterated concatenation of lists
@@ -496,18 +498,18 @@ So we can give an improved version of the simple functional queue using destinat
 
 Using the fact that (incomplete) lists in \destcalculus{} can be extended by their end in $O(1)$, instead of $O(n)$ in other languages, we can write a map function on lists that is tail recursive and also run in a single pass (no reverse operation is needed).
 
-For that, we define in \cref{fig:impl-map-tr} a helper function $\ottkw{map'}$, with signature $[[(T ¹ν → U) ων → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]$, that uses destination-filling primitives to extend the incomplete list represented by destination $[[⌊ List U ⌋ ¹ν]]$ as it processes nodes of the input $[[List T]]$. To go from $\ottkw{map'}$ to the usual $\ottkw{map}~\pmb{:}~[[(T ¹ν → U) ων → List T ¹ν → List U]]$, we just need to create an initial destination $[[⌊ List U ⌋ ¹ν]]$ using $[[alloc]]$, then call $\ottkw{map'}$ on that root destination, and get the completed structure using $\ottkw{from}_{\ottkw{\ltimes} }'$. 
+For that, we define in \cref{fig:impl-map-tr} a helper function $\ottkw{map'}$, with signature $[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]$, that uses destination-filling primitives to extend the incomplete list represented by destination $[[⌊ List U ⌋ ¹ν]]$ as it processes nodes of the input $[[List T]]$. To go from $\ottkw{map'}$ to the usual $\ottkw{map}~\pmb{:}~[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]$, we just need to create an initial destination $[[⌊ List U ⌋ ¹ν]]$ using $[[alloc]]$, then call $\ottkw{map'}$ on that root destination, and get the completed structure using $\ottkw{from}_{\ottkw{\ltimes} }'$. 
 
 \begin{codefig}{\caption{Tail-recursive map function on lists}\label{fig:impl-map-tr}}
 \newoperatorb
-  {\ottkw{map'}}{[[(T ¹ν → U) ων → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]}
+  {\ottkw{map'}}{[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]}
   {[[map' f l dl]]}{\!\!\!\begin{array}[t]{l}[[
 l ►case ¹ν {⮒
 ‥‥ˢ[] ⟼ dl⨞[],⮒
 ‥‥x ˢ:: xs ⟼ (dl⨞(::)) ►case ¹ν⮒
 ‥‥‥‥(dx, dxs) ⟼ dx ◀ f x ; map' f xs dxs}]]\end{array}}
 \newoperator
-  {\ottkw{map}}{[[(T ¹ν → U) ων → List T ¹ν → List U]]}
+  {\ottkw{map}}{[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]}
   {[[map f l]]}{[[from⧔' ((alloc @ (List U) ⧔ ⌊ List U ⌋ ¹ν) ►map dl ⟼ map' f l dl)]]}
 \end{codefig}
 
@@ -517,7 +519,7 @@ A similar implementation for tail-recursive $\ottkw{map}$ is present in most rel
 
 In \cref{sec:working-with-dests}, we've been making an implicit assumption: establishing a linear discipline on destinations ensures that all destinations will eventually find their way to the left of a fill operator $\blacktriangleleft$ or $\triangleleft$, so that the associated holes get written to. This turns out to be slightly incomplete.
 
-To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their place in the structure. For instance, if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ pointing to hole $[[+h]]$ in structure $[[v]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ pointing to hole $[[+hd]]$ in structure $[[vd]]$, we can form $[[dd ◀ d]]$: destination $[[d]]$ will be stored inside $[[vd]]$.
+To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of a destination pointing to a hole where a destination is expected. Think of it as an equivalent of the pointer type $\ottstype{T*\!*}$ in the C language. Destinations are indeed ordinary values, so they can be stored in data structures, and before they get effectively stored, holes stand in their place in the structure. For instance, if we have $[[d]]\pmb{:}[[⌊ T⌋ ¹ν]]$ pointing to a hole $[[+h]]$ in structure $[[v]]$ and $[[dd]]\pmb{:}[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$ pointing to hole $[[+hd]]$ in structure $[[vd]]$\footnote{$[[h]]$ and $[[hd]]$ are \emph{hole names} used to refer to specific holes in incomplete data structures.}, we can form $[[dd ◀ d]]$: destination $[[d]]$ will be stored somewhere inside $[[vd]]$.
 
 Should we count $[[d]]$ as linearly used here? The alternatives don't seem promising:
 \vspace{-0.04cm}\begin{itemize}
@@ -531,7 +533,7 @@ Let's compare two examples. We assume a simple store semantics\footnote{Our actu
 When the building scope of $[[v]]$ is parent to the one of $[[vd]]$, everything works well because $[[vd]]$, that contains destination pointing to $[[+h]]$, has to be consumed before $[[v]]$ can be read:
 \bgroup\setlength{\arraycolsep}{0.5ex}
 \codehere{\!\!\!\begin{array}{crcl}
-       & $\{ \}$ &|& [[ alloc' (ˢλ d ¹ν ⟼ (alloc' (ˢλ dd ¹ν ⟼ dd ◀ d) @ ⌊ Bool ⌋ ¹ν) ◀ true) @ Bool ]] \\
+       & $\{ \}$ &|& [[ alloc' (ˢλ d ¹ν ⟼ (alloc' (ˢλ dd ¹ν ⟼ dd ◀ d) @ ⌊ Bool ⌋ ¹ν) ◀ true)]] \\
 [[⟶]] & [[ { v ≔ +h } ]] &|& [[ (alloc' (ˢλ dd ¹ν ⟼ dd ◀ -h) @ ⌊ Bool ⌋ ¹ν) ◀ true ; deref v ]] \\
 [[⟶]] & [[ { v ≔ +h, vd ≔ +hd } ]] &|& [[ (-hd ◀ -h ; deref vd) ◀ true ; deref v ]] \\
 [[⟶]] & [[ { v ≔ +h, vd ≔ -h } ]] &|& [[ deref vd ◀ true ; deref v ]] \\
@@ -542,7 +544,7 @@ When the building scope of $[[v]]$ is parent to the one of $[[vd]]$, everything 
 
 However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program:
 \codehere{\!\!\!\begin{array}{crcl}
-       & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d) @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () })  @ ⌊ Bool ⌋ ¹ν ]] \\
+       & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d) @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () })]] \\
 [[⟶]] & [[ { vd ≔ +hd } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ◀ d)  @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]] \\
 [[⟶]] & [[ { vd ≔ +hd , v ≔ +h } ]] &|& [[(-hd ◀ -h ; deref v) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]] \\
 [[⟶]] & [[ { vd ≔ -h , ul< v ≔ +h > } ]] &|& [[ ul< (deref v) > ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]]
@@ -592,7 +594,8 @@ However this improvement comes at a cost: we a introduce \emph{mode} system that
 \newoperator
 {\ottkw{mapAccumBFS}}{[[(S ω∞ → T1 ¹ν → (! ω∞ S) ⨂ T2) ω∞→ S ω∞ → Tree T1 ¹∞ → Tree T2]]}
 {[[mapAccumBFS f st tree]]}{\!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (Tree T2) ⧔ ⌊ Tree T2 ⌋ ¹ν) ►map dtree ⟼ go f st (singleton ˢ(tree, dtree)))
+from⧔' ((alloc @ (Tree T2) ⧔ ⌊ Tree T2 ⌋ ¹ν) ►map dtree ⟼⮒
+‥‥‥‥‥‥༼go f st (singleton ˢ(tree, dtree))༽)
 ]]\end{array}}
 \newoperator
 {\ottkw{relabelDPS}}{[[Tree ① ¹∞ → Tree Nat]]}
@@ -627,19 +630,19 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 
 \sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (T ⨁ U)⧔ ⌊ T ⨁ U ⌋ ¹ν) ►map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ Inl ◀ t)
 ]]\end{array}\\[\interdefskip]
 [[ˢInr t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (T ⨁ U)⧔ ⌊ T ⨁ U ⌋ ¹ν) ►map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ Inr ◀ t)
 ]]\end{array}\\[\interdefskip]
 [[ˢᴇ m t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (! m T)⧔ ⌊ ! m T ⌋ ¹ν) ►map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ ᴇ m ◀ t)
 ]]\end{array}\\[\interdefskip]
 [[ˢλ x m ⟼ u]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (T m → U)⧔ ⌊ T m → U ⌋ ¹ν) ►map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ ( λ x m ⟼ u ))
 ]]\end{array}
 }{
@@ -650,10 +653,10 @@ from⧔' ((alloc @ (T m → U)⧔ ⌊ T m → U ⌋ ¹ν) ►map d ⟼⮒
 ‥‥‥‥ᴇ ¹∞ un ⟼ un ; st༽
 ]]\end{array}\\[\interdefskip]
 [[ˢ()]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ ① ⧔ ⌊ ① ⌋ ¹ν) ►map d ⟼ d ⨞ () )
+from⧔' (alloc ►map d ⟼ d ⨞ () )
 ]]\end{array}\\[\interdefskip]
 [[ˢ( t1 , t2 )]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' ((alloc @ (T ⨂ U)⧔ ⌊ T ⨂ U ⌋ ¹ν) ►map d ⟼⮒
+from⧔' (alloc ►map d ⟼⮒
 ‥‥(d ⨞ (,)) ►case ¹ν⮒
 ‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2)
 ]]\end{array}
@@ -664,7 +667,7 @@ The grammar of \destcalculus{} is presented in~\cref{fig:grammar}. Some of the c
 
 Following a common trend (e.g.~\cite{bernardy_linear_2018,qtt_2018,granule_2019,bernardy_modality_2020}), our modes form a semiring\footnote{Technically, our semirings are commutative but don't have a zero. The terminology “ringoid” has been sometimes used for semiring without neutral elements (neither zero nor unit), for instance~\cite{bernardy_modality_2020}.}. In \destcalculus{} the mode semiring is the product of a \emph{multiplicity} semiring for linearity, as in~\cite{bernardy_linear_2018}, and of an \emph{age} semiring (see \cref{ssec:age-control}) to prevent the scoping issues discussed in \cref{sec:scope-escape-dests}.
 
-We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring. In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
+We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring. % In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
 
 \subsection{The age semiring}\label{ssec:age-control}
 
@@ -711,31 +714,6 @@ $[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
 \caption{Operation tables for age and multiplicity semirings}\label{fig:mul-age-tables}
 \end{figure}
 
-\subsection{Design motivation behind the ampar and destination types}\label{ssec:ampar-motivation}
-
-Minamide's work~\cite{minamide_functional_1998} is the earliest record we could find of a functional calculus in which incomplete data structures can exists as first class values, and be composed. Crucially, such structures don't have to be completed immediately, and can act as actual containers, e.g. to implement different lists as in~\cref{ssec:efficient-queue}. In~\cite{minamide_functional_1998}, a structure with a hole is named \emph{hole abstraction}. In the body of a hole abstraction, the bound \emph{hole variable} should be used linearly (exactly once), and must only be used as a parameter of a data constructor (it cannot be pattern-matched on). A hole abstraction of type $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear lambda abstraction $\ottstype{[[T]] \multimap [[S]]}$, which just moves a piece of data into a bigger data structure.
-
-% In fact, the type of hole abstraction $\ottstype{([[T1]], [[T2]]) hfun}$ in Minamine's work shares a lot of similarity with the separating implication or \emph{magic wand} $\ottstype{[[T1]] \sepimp [[T2]]}$ from separation logic: given a piece of memory matching description $[[T1]]$, we obtain a (complete) piece of memory matching description $[[T2]]$.
-
-Now, in classical linear logic (CLL), we can transform linear implication $\ottstype{[[T]] \multimap [[S]]}$ into $\ottstype{[[S]]~\parr~[[T]]^{\perp}}$. Doing so for the type $\ottstype{([[T]], [[S]]) hfun}$ gives $\ottstype{[[S]] ~\parr~ \lfloor[[T]]\rfloor}$, where $\ottstype{\lfloor\smallbullet\rfloor}$ is a form of dualisation. Notation is slightly abusive here; this isn't exactly the same $\ottstype{\parr}$ as in CLL, because $\ottstype{hfun}$ is not as powerful as $\ottstype{\multimap}$.
-
-Transforming the hole abstraction from its original implication form to a \emph{par} form lets us consider the dualized type $\ottstype{\lfloor[[T]]\rfloor}$ --- that we call \emph{destination} type --- as a first-class component of our calculus. We also get to see the hole abstraction as a pair-like structure (like it is implemented in practice), where the two sides might be coupled together in a way that prevent using both of them simultaneously.
-
-\paragraph{From par $\ottstype{\parr}$ to ampar $\ottstype{\ltimes}$}
-
-In CLL any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the dual type $\ottstype{\smallbullet^{\perp}}$, which then frees up the other side. But in \destcalculus{}, we have two types of interaction to consider: interaction between $[[T]]$ and destination $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and functions $[[T]]\,\ottstype{\to\smallbullet}$. The structure containing holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into another structure with holes), but not with $[[S]]\,\ottstype{\to\smallbullet}$, as it would let us read an incomplete structure!
-
-On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[f]] \pmb{:} [[T ¹ν → ①]]$: in particular, $[[f]]$ can pattern-match on the value of type $[[T]]$ to access destination $\ottstype{\lfloor[[T']]\rfloor}$. However, it might not be safe to fill the $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of the destination $\ottstype{\lfloor[[T']]\rfloor}$ as we've just seen in~\cref{sec:scope-escape-dests}.
-
-As a result, we cannot adopt rules from CLL blindly. We must be even more cautious since the destination type is not an involutive dualisation, unlike CLL one.
-
-To recover sensible rules for the connective, we decided to make it asymmetric, hence \emph{ampar} ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
-\begin{itemize}
-\item the left side $[[S]]$ can contain holes, and can be only be eliminated by composition with another structure having a destination $\ottstype{\lfloor[[S]]\rfloor}$ using operator $\triangleleft\mycirc$ (the right side $[[T]]$ is then returned);
-\item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. This is done using $\ottkw{from}_{\ottkw{\ltimes} }'$ and $\ottkw{onR}_{\ottkw{\ltimes} }$.
-
-\end{itemize}
-
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
 The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. For that we need two operations:
@@ -760,10 +738,10 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 
 The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \rref*{Ty-term-Var}, \rref*{Ty-term-Alloc} and \rref*{Ty-sterm-Unit} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, \emph{i.e.} in the three aforementioned rules.
 
-\newcommand{\pleq}{\mathop{\mathtt{<:}^{\scriptscriptstyle{\pmb{\mathsf{p}}}}}}
-\newcommand{\aleq}{\mathop{\mathtt{<:}^{\scriptscriptstyle{\pmb{\mathsf{a}}}}}}
+\newcommand{\pleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{p}}}}}}
+\newcommand{\aleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{a}}}}}}
 
-Rule \rref*{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν <: m]]$ defined as~~$[[p a <: p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\\[\interdefskip]\hbox{}\hfill
+Rule \rref*{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν ⥶ m]]$ defined as~~$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\\[\interdefskip]\hbox{}\hfill
 $[[¹]] \pleq [[¹]]$ \hfill
 $[[p]] \pleq [[ω]]$ \hfill
 $[[a]] \aleq [[∞]]$ \hfill
@@ -852,7 +830,7 @@ Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined i
 
 Furthermore, in \rref{Ty-val-Ampar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
 
-Rule \rref*{Ty-val-Hole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ ων +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
+Rule \rref*{Ty-val-Hole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ n +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
 
 Surprisingly, in \rref*{Ty-val-Dest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{Ty-term-Var} and make the general modal substitution lemma true for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode subtyping is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{Ty-val-Dest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no subtyping can take place.
 
@@ -883,7 +861,7 @@ The intuition behind using such commands instead of a store is that destination 
 
 The grammar of evaluation contexts is given in~\cref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c]]$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to build a stack-based interpreter for the language.
 
-Focusing components are all directly derived from the term syntax, except for the \emph{open ampar} component $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focusing component indicates that an ampar is currently being $\ottkw{onR}_{\ottkw{\ltimes} }$ped on, with its left-hand side $[[v2]]$ (the structure being built) being attached to the open ampar focusing component, while its right-hand side (containing destinations) is either in subsequent focusing components, or in the term under focus. Ampars being open during the evaluation of $\ottkw{onR}_{\ottkw{\ltimes} }$'s body and closed back afterwards is the counterpart to the notion of scopes in the typing rules.
+Focusing components are all directly derived from the term syntax, except for the \emph{open ampar} component $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focusing component indicates that an ampar is currently being processed by $\ottkw{onR}_{\ottkw{\ltimes} }$, with its left-hand side $[[v2]]$ (the structure being built) being attached to the open ampar focusing component, while its right-hand side (containing destinations) is either in subsequent focusing components, or in the term under focus. Ampars being open during the evaluation of $\ottkw{onR}_{\ottkw{\ltimes} }$'s body and closed back afterwards is the counterpart to the notion of scopes in the typing rules.
 
 We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update structures under construction that are attached to open ampar focusing components in the stack. Such a substitution is triggered when a destination $[[-h]]$ is filled in the term under focus, and results in the value $[[v]]$ (that may contain holes itself, e.g. if it is a hollow constructor $[[( +h1, +h2 )]]$) being written to the hole $[[+h]]$ (that must appear somewhere on an open ampar focusing component). The set $[[H]]$ tracks the potential hole names introduced by value $[[v]]$, and is used to update the hole name set of the ampar:
 \[\begin{array}{rcll}
@@ -1082,16 +1060,16 @@ The formal language presented in~\cref{sec:syntax-type-system,sec:ectxs-sem} is 
 
 First, \destcalculus{} doesn't have recursion, this would have obscured the presentation of the system. However, adding a standard form of recursion doesn't create any complication.
 
-Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a non-linear difference list $0 \ottsctor{::} \holesq$), and then used twice, each time in a different way:
+Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a difference list $0 \ottsctor{::} \holesq$ that can be used non-linearly), and then used twice, each time in a different way:
 
-\begin{minipage}{0.42\linewidth}\codehere{[[
+\begin{minipage}{0.45\linewidth}\codehere{[[
 ༼ˢᴇ ων {h} ˢ⟨ ˢ0 ˢ:: +h ❟ -h ⟩༽ ►case ¹ν ᴇ ων x ⟼⮒
 ‥‥let x1 ≔ x append ˢ1 in⮒
 ‥‥let x2 ≔ x append ˢ2 in⮒
 ‥‥‥‥toList (x1 concat x2)
 ]]}\end{minipage}$[[⟶*]]\quad[[༼ˢ0 ˢ:: ༼ˢ1 ˢ:: ༼ˢ0 ˢ:: ༼ˢ2 ˢ:: ˢ[]༽༽༽༽ ]]$\\[\interdefskip]
 
-It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus{}. Thanks to the renaming discipline we detailed in~\cref{ssec:sem}, every time an ampar is $\ottkw{onR}_{\ottkw{\ltimes} }$ped over, its hole names are renamed to fresh ones. One way we can support this is to allocate a fresh copy of $[[x]]$ every time we call $\ottkw{append}$ (which is implemented in terms of $\ottkw{onR}_{\ottkw{\ltimes} }$), in a copy-on-write fashion. This way filling destinations is still implemented as mutation.
+It may seem counter-intuitive at first, but this program is valid and safe in \destcalculus{}. Thanks to the renaming discipline we detailed in~\cref{ssec:sem}, every time an ampar is operated over with $\ottkw{onR}_{\ottkw{\ltimes} }$, its hole names are renamed to fresh ones. One way we can support this is to allocate a fresh copy of $[[x]]$ every time we call $\ottkw{append}$ (which is implemented in terms of $\ottkw{onR}_{\ottkw{\ltimes} }$), in a copy-on-write fashion. This way filling destinations is still implemented as mutation.
 
 However, this is a long way from the efficient implementation promised in \cref{sec:working-with-dests}. Copy-on-write can be optimized using fully-in-place functional programming ~\cite{lorenzen_fp_2023}, where, thanks to reference counting, we don't need to perform a copy when the difference list isn't aliased.
 
@@ -1100,14 +1078,14 @@ An alternative is to refine the linear type system further in order to guarantee
 To make ampars linear, we follow a recipe proposed by~\cite{spiwack_linearly_2022} and introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$. We also switch $[[alloc]]$ for $[[allocIP]]$:% :
 
 \codehere{\phantom{a}\!\!\!\!\!\!\begin{array}[t]{l}%
-\ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\qquad\text{\small (remember that unqualified arrows $\ottstype{\to}$ have mode $[[¹ν]]$, so are linear)}\\[\interdefskip]
+\ottkw{dup} ~\pmb{:}~ [[Token ¹ν → Token ⨂ Token]]\\[\interdefskip]
 \ottkw{drop} ~\pmb{:}~ [[Token ¹ν → ①]]\\[\interdefskip]
 [[allocIP]] ~\pmb{:}~ [[Token ¹ν → T ⧔ ⌊ T ⌋ ¹ν]]
 \end{array}}
 
 For the in-place system to work, we consider that a linear root token variable, $[[tok0]]$, is available to a program. ``Closed'' programs can now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$. $[[tok0]]$ can be used to create new tokens $[[tokk]]$ via $\ottkw{dup}$, but each of these tokens still has to be used linearly.
 
-Ampar produced by $[[allocIP]]$ have a linear dependency on a variable $[[tokk]]$. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
+Ampar produced by $[[allocIP]]$ have a linear dependency on a variable $[[tokk]]$. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ω∞ Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
 
 An alternative to having a linear root token variable is to add a primitive function\\$\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ that fulfill the same goal.
 
@@ -1167,6 +1145,31 @@ However, \cite{bagrel_destination-passing_2024} only requires a linear type syst
 In~\cite{deyoung_sax_2020}, the author develop a system where constructors return to a destination rather than allocating memory. It is very unlike the other systems described in this section in that it's completely founded in the Curry-Howard isomorphism. Specifically it gives an interpretation of a sequent calculus which mixes Gentzen-style deduction rules and Hilbert-style axioms. As a consequence, the \emph{par} connective is completely symmetric, and, unlike our $[[⌊ T ⌋ ¹ν]]$ type, their dualization connective is involutive.
 
 The cost of this elegance is that computations may try to pattern-match on a hole, in which case they must wait for the hole to be filled. So the semantics of holes is that of a future or a promise. In turns this requires the semantics of their calculus to be fully concurrent. Which is a very different point in the design space.
+
+\subsection{Design motivation behind the ampar and destination types}\label{ssec:ampar-motivation}
+
+Minamide's work~\cite{minamide_functional_1998} is the earliest record we could find of a functional calculus in which incomplete data structures can exists as first class values, and be composed. Crucially, such structures don't have to be completed immediately, and can act as actual containers, e.g. to implement different lists as in~\cref{ssec:efficient-queue}. In~\cite{minamide_functional_1998}, a structure with a hole is named \emph{hole abstraction}. In the body of a hole abstraction, the bound \emph{hole variable} should be used linearly (exactly once), and must only be used as a parameter of a data constructor (it cannot be pattern-matched on). A hole abstraction of type $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear lambda abstraction $\ottstype{[[T]] \multimap [[S]]}$, which just moves a piece of data into a bigger data structure.
+
+% In fact, the type of hole abstraction $\ottstype{([[T1]], [[T2]]) hfun}$ in Minamine's work shares a lot of similarity with the separating implication or \emph{magic wand} $\ottstype{[[T1]] \sepimp [[T2]]}$ from separation logic: given a piece of memory matching description $[[T1]]$, we obtain a (complete) piece of memory matching description $[[T2]]$.
+
+Now, in classical linear logic (CLL), we can transform linear implication $\ottstype{[[T]] \multimap [[S]]}$ into $\ottstype{[[S]]~\parr~[[T]]^{\perp}}$. Doing so for the type $\ottstype{([[T]], [[S]]) hfun}$ gives $\ottstype{[[S]] ~\parr~ \lfloor[[T]]\rfloor}$, where $\ottstype{\lfloor\smallbullet\rfloor}$ is a form of dualisation. Notation is slightly abusive here; this isn't exactly the same $\ottstype{\parr}$ as in CLL, because $\ottstype{hfun}$ is not as powerful as $\ottstype{\multimap}$.
+
+Transforming the hole abstraction from its original implication form to a \emph{par} form lets us consider the dualized type $\ottstype{\lfloor[[T]]\rfloor}$ --- that we call \emph{destination} type --- as a first-class component of our calculus. We also get to see the hole abstraction as a pair-like structure (like it is implemented in practice), where the two sides might be coupled together in a way that prevent using both of them simultaneously.
+
+\paragraph{From par $\ottstype{\parr}$ to ampar $\ottstype{\ltimes}$}
+
+In CLL any of the sides $[[S]]$ or $[[T]]$ of a par $\ottstype{[[S]]~\parr~[[T]]}$ can be eliminated, by interaction with the dual type $\ottstype{\smallbullet^{\perp}}$, which then frees up the other side. But in \destcalculus{}, we have two types of interaction to consider: interaction between $[[T]]$ and destination $\ottstype{\lfloor[[T]]\rfloor}$, and interaction between $[[T]]$ and functions $[[T]]\,\ottstype{\multimap\smallbullet}$. The structure containing holes, $[[S]]$, can safely interact with $\ottstype{\lfloor[[S]]\rfloor}$ (merge it into another structure with holes), but not with $[[S]]\,\ottstype{\multimap\smallbullet}$, as it would let us read an incomplete structure!
+
+On the other hand, a complete value of type $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ containing destinations (but no holes) can safely interact with a function $[[f]] \pmb{:} [[T ¹ν → ①]]$: in particular, $[[f]]$ can pattern-match on the value of type $[[T]]$ to access destination $\ottstype{\lfloor[[T']]\rfloor}$. However, it might not be safe to fill the $[[T]] = \ottstype{(\ldots\lfloor[[T']]\rfloor\ldots)}$ into a $\ottstype{\lfloor[[T]]\rfloor}$ as that might allow scope escape of the destination $\ottstype{\lfloor[[T']]\rfloor}$ as we've just seen in~\cref{sec:scope-escape-dests}.
+
+As a result, we cannot adopt rules from CLL blindly. We must be even more cautious since the destination type is not an involutive dualisation, unlike CLL one.
+
+To recover sensible rules for the connective, we decided to make it asymmetric, hence \emph{ampar} ($[[S ⧔ T]]$) for \emph{asymmetrical memory par}:
+\begin{itemize}
+\item the left side $[[S]]$ can contain holes, and can be only be eliminated by composition with another structure having a destination $\ottstype{\lfloor[[S]]\rfloor}$ using operator $\triangleleft\mycirc$ (the right side $[[T]]$ is then returned);
+\item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. This is done using $\ottkw{from}_{\ottkw{\ltimes} }'$ and $\ottkw{onR}_{\ottkw{\ltimes} }$.
+
+\end{itemize}
 
 \section{Conclusion and future work}\label{sec:conclusion}
 

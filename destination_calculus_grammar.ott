@@ -8,7 +8,8 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Coq.MSets.MSetList.
 Require Import Coq.MSets.MSetFacts.
 Require Import Coq.Logic.FunctionalExtensionality.
-
+(* Grumble, grumble: we shouldn't need to Import Dest.Finitely, but if
+   we don't we can't use the coercions. *)
 Require Import Dest.Finitely.
 Require Dest.Permutation.
 
@@ -45,7 +46,7 @@ Defined.
 % NAMES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar var, x, y, d, dd, un, xs, ys, ex, st, tree, tl, tr, dtree, f, dh, dt, dx, dy, dxs, dys, dv, dtlr, dtl, dtr, q, tok, z, front, back, l, dl ::= {{ com Variable names }}
+metavar var, x, y, d, dd, un, ux, xs, ys, ex, st, tree, tl, tr, dtree, f, dh, dt, dx, dy, dxs, dys, dv, dtlr, dtl, dtr, q, tok, z, front, back ::= {{ com Variable names }}
  {{ tex \ottmv{[[var]]} }} {{ coq nat }}
 
 indexvar k ::= {{ coq nat }} {{ com Index for ranges }}
@@ -57,7 +58,7 @@ hname, h, hd :: 'hname_' ::= {{ com Hole (or destination) name, represented by a
   | 2 :: S :: 2 {{ coq 2 }} {{ tex \textcolor{hnamecolor}{\mathtt{2} } }}
   | h + h' :: M :: Add {{ coq ([[h]] + [[h']]) }} {{ tex [[h]]\hspace*{-.2ex}\ottshname{+}\hspace*{-.2ex}[[h']] }}
   | h [ H ⩲ h' ] :: M :: Cshift {{ com Shift by $[[h']]$ if $[[h]] \in [[H]]$ }} {{ coq (hname_cshift [[h]] [[H]] [[h']]) }} {{ tex [[h]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
-  | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hname_max [[H]]) }} {{ tex \ottshname{\mathsfbf{max}(}[[H]]\ottshname{)} }}
+  | max ( H ) :: M :: Max {{ com Maximum of a set of hole names }} {{ coq (hname_max [[H]]) }} {{ tex \ottshname{\mathbf{max}(}[[H]]\ottshname{)} }}
   | ( h ) :: S :: InvisibleParen {{ coq [[h]] }} {{ tex [[h]] }}
 
 hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex \ottshname{[[hnames]]} }}
@@ -65,8 +66,8 @@ hnames, H :: 'hnames_' ::= {{ com Set of hole names }} {{ coq HNames.t }} {{ tex
   | H1 ∪ H2 :: M :: Union {{ com Union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\cup}\,[[H2]] }}
   | H1 ⨆ H2 :: M :: DisjointUnion {{ com Disjoint union of sets }} {{ coq (HNames.union [[H1]] [[H2]]) }} {{ tex [[H1]]\ottshname{\sqcup}\,[[H2]] }}
   | H ⩲ h' :: M :: Shift {{ com Shift all names from $[[H]]$ by $[[h']]$. }} {{ coq (hnames_shift [[H]] [[h']]) }}
-  | 'hnames(' O ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[O]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[O]]\ottshname{)} }} {{ coq (hnames_ctx [[O]]) }}
-  | 'hnames(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshname{\mathsfbf{hnames}(}[[C]]\ottshname{)} }} {{ coq (hnames_ectxs [[C]]) }}
+  | 'hnames(' O ) :: M :: FromCtx {{ com Hole names bound by the typing context $[[O]]$ }} {{ tex \ottshname{\mathbf{hnames}(}[[O]]\ottshname{)} }} {{ coq (hnames_ctx [[O]]) }}
+  | 'hnames(' C ) :: M :: FromEctx {{ com Hole names bound by the evaluation context $[[C]]$ }} {{ tex \ottshname{\mathbf{hnames}(}[[C]]\ottshname{)} }} {{ coq (hnames_ectxs [[C]]) }}
   | ( H ) :: S :: Paren {{ coq [[H]] }} {{ tex \ottshname{(}[[H]]\ottshname{)} }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -78,15 +79,15 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | x :: :: Var {{ com Variable }}
   | t' t :: :: App {{ com Application }} {{ tex [[t']]~[[t]] }}
   | t ; u :: :: PatU {{ com Pattern-match on unit }} {{ tex [[t]]\patu[[u]] }}
-  | t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t ►case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
-  | t ►case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\expcons{[[n]]}[[x]]\,[[⟼]][[u]] }} % (+ bind x in u +)
-  | t ►case m t' ⟼ u :: S :: SugarPatNested {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~[[t']][[⟼]][[u]] }} % Coq translation is a placeholder
-  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 } :: S :: SugarPatNestedS {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]]\} }} % Coq translation is a placeholder
-  | t ►map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex \ottkw{onR}_{\ottkw{\ltimes} }\,[[t]]~\ottkw{as}~[[x]]\,[[⟼]][[t']] }} % (+ bind x in u +
+  | t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ com Pattern-match on sum }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t ►case m ( x1 , x2 ) ⟼ u :: :: PatP {{ com Pattern-match on product }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t ►case m ᴇ n x ⟼ u :: :: PatE {{ com Pattern-match on exponential }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
+  | t ►case m t' ⟼ u :: S :: SugarPatNested {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,[[t']][[⟼]][[u]] }} % Coq translation is a placeholder
+  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 } :: S :: SugarPatNestedS {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]]\} }} % Coq translation is a placeholder
+  | t ►map x ⟼ t' :: :: Map {{ com Map over the right side of ampar }} {{ tex \ottkw{map}~[[t]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +
   | to⧔ u :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[u]] }} {{ com Wrap into a trivial ampar }}
   | from⧔ t :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[t]] }} {{ com Convert ampar to a pair }}
-  | alloc :: :: Alloc {{ tex \ottkw{new}_{\ottkw{\ltimes} } }}
+  | alloc :: :: Alloc {{ tex \ottsctor{alloc} }}
   | t ⨞ () :: :: FillU {{ com Fill destination with unit }}
   | t ⨞ Inl :: :: FillL {{ com Fill destination with left variant }}
   | t ⨞ Inr :: :: FillR {{ com Fill destination with right variant }}
@@ -94,7 +95,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ (,) :: :: FillP {{ com Fill destination with product constructor }}
   | t ⨞ ( λ x m ⟼ u ) :: :: FillF {{ com Fill destination with function }} {{ tex [[t]][[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]}) }} % (+ bind x in u +)
   | t ⨞· t' :: :: FillComp {{ com Fill destination with root of other ampar }} {{ tex [[t]]\mathop{\triangleleft\mycirc}[[t']] }}
-  | t ◀ t' :: :: FillLeaf {{ com Fill destination with supplied term }} {{ tex [[t]][[◀]][[t']] }}
+  | t ◀ t' :: :: FillLeaf {{ com Fill destination with supplied term }} {{ tex [[t]]\blacktriangleleft[[t']] }}
 
   | t [ x ≔ v ] :: M :: Sub {{ coq (term_sub [[t]] [[x]] [[v]]) }} {{ tex [[t]][ [[x]] \assigneq [[v]] ] }} {{ com Variable subsitution in term }}
   | ( t ) :: S :: Paren {{ coq [[t]] }} {{ tex ([[t]]) }}
@@ -102,12 +103,12 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | b1 sp1 t b2 :: S :: BreakSpacing2 {{ coq [[t]] }} {{ tex [[b1]][[sp1]][[t]][[b2]] }}
   | b sp t :: S :: BreakSpaacing3 {{ coq [[t]] }} {{ tex [[b]][[sp]][[t]] }}
   % | t b spe :: S :: BreakSpacing3 {{ coq [[t]] }}
-  | t ►case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 } :: S :: PatSsp1 {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t ►case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
-  | t ►case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
-  | t ►case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
-  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 b sp } :: S :: SugarPatNestedSsp2 {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]][[b]][[sp]]\} }} % Coq translation is a placeholder
-  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 b } :: S :: SugarPatNestedSsp1 {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }\,[[t]]~\ottkw{of}~\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]][[b]]\} }} % Coq translation is a placeholder
+  | t ►case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 } :: S :: PatSsp1 {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t ►case m { b1 sp1 Inl x1 ⟼ u1 , b2 sp2 Inr x2 ⟼ u2 b3 sp3 } :: S :: PatSsp2 {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\{[[b1]][[sp1]]\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,[[b2]][[sp2]]\ottsctor{Inr}\,[[x2]][[⟼]][[u2]][[b3]][[sp3]]\} }} {{ coq (term_PatS [[t]] [[m]] [[x1]] [[u1]] [[x2]] [[u2]]) }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
+  | t ►case m b sp ( x1 , x2 ) ⟼ u :: S :: PatPsp {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,[[b]][[sp]]\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}\![[⟼]][[u]] }} {{ coq (term_PatP [[t]] [[m]] [[x1]] [[x2]] [[u]]) }} % (+ bind x1 in u +) (+ bind x2 in u +)
+  | t ►case m b sp ᴇ n x ⟼ u :: S :: PatEsp {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,[[b]][[sp]]\expcons{[[n]]}[[x]][[⟼]][[u]] }} {{ coq (term_PatE [[t]] [[m]] [[n]] [[x]] [[u]]) }} % (+ bind x in u +)
+  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 b sp } :: S :: SugarPatNestedSsp2 {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]][[b]][[sp]]\} }} % Coq translation is a placeholder
+  | t ►case m { t1 ⟼ u1 , t2 ⟼ u2 b } :: S :: SugarPatNestedSsp1 {{ com Pattern-match on nested structure }} {{ coq (term_Val val_Unit) }} {{ tex \ottkw{case}_{\mycasem{[[m]]} }~[[t]]~\ottkw{of}~\,\{[[t1]][[⟼]][[u1]]\,,~[[t2]][[⟼]][[u2]][[b]]\} }} % Coq translation is a placeholder
 
   % Here we have to redefined all sugar construct in the same way as in sterm
   | from⧔' t :: S :: SugarFromA' {{ coq (sterm_FromA' [[t]]) }} {{ tex \ottkw{from}_{\ottkw{\ltimes} }' [[t]] }}
@@ -135,7 +136,7 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | t ⨞ (::) :: S :: SugarFillCons {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{(::)} }}
   | t append t' :: S :: SugarSnoc {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{append}~[[t']] }}
   | t concat t' :: S :: SugarConcat {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{concat}~[[t']] }}
-  | toList t :: S :: SugarToList {{ coq (term_Val val_Unit) }} {{ tex \ottkw{toList}~[[t]] }}
+  | toList t :: S :: SugarToList {{ coq (term_Val val_Unit) }} {{ tex \ottkw{to}_{\ottkw{List} }~[[t]] }}
   | singleton t :: S :: SugarSingleton {{ coq (term_Val val_Unit) }} {{ tex \ottkw{singleton}~[[t]] }}
   | t enqueue t' :: S :: SugarEnqueue {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{enqueue}~[[t']] }}
   | dequeue t :: S :: SugarDequeue {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dequeue}~[[t]] }}
@@ -147,9 +148,9 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | relabelDPS t :: S :: SugarRelabelDPS {{ coq (term_Val val_Unit) }} {{ tex \ottkw{relabelDPS}~[[t]] }}
   | dup t :: S :: Dup {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dup}~[[t]] }}
   | drop t :: S :: Drop {{ coq (term_Val val_Unit) }} {{ tex \ottkw{drop}~[[t]] }}
-  | allocIP :: S :: SugarAllocIP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{new}_{\ottkw{\ltimes IP} } }}
-  | allocCoW :: S :: SugarAllocCoW {{ coq (term_Val val_Unit) }} {{ tex \ottkw{new}_{\ottkw{\ltimes COW} } }}
-  | alloc' t :: S :: SugarAllocP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc}~[[t]] }}
+  | allocIP :: S :: SugarAllocIP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc}_{\ottkw{ip} } }}
+  | allocCoW :: S :: SugarAllocCoW {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{alloc}_{\ottsctor{cow} } }}
+  | alloc' t :: S :: SugarAllocP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{alloc'}~[[t]] }}
   | deref t :: S :: SugarDeref {{ coq (term_Val val_Unit) }} {{ tex \ottkw{deref}~[[t]] }}
   | let x ≔ t in u :: S :: SugarLet {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]]~\ottkw{in}~[[u]] }}
   | let x ≔ t in b u :: S :: SugarLetSp1 {{ coq (term_App (sterm_Fun [[x]] (Some (pair Lin (Fin 0))) [[u]]) ([[t]])) }} {{ tex \ottkw{let}~[[x]]\assigneq[[t]]~\ottkw{in}[[b]][[u]] }}
@@ -161,10 +162,6 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | dup t as x , y in t' :: S :: SugarDup {{ coq (term_Val val_Unit) }} {{ tex \ottkw{dup}~[[t]]~\ottkw{as}~[[x]]\,,~[[y]]~\ottkw{in}~[[t']] }}
   | drop t in t' :: S :: SugarDrop {{ coq (term_Val val_Unit) }} {{ tex \ottkw{drop}~[[t]]~\ottkw{in}~[[t']] }}
   | derelict t :: S :: SugarDerelict {{ coq (term_Val val_Unit) }} {{ tex \ottkw{derelict}~[[t]] }}
-  | t @ T :: S :: TypeAnnot {{ coq [[t]] }} {{ tex [[t]]\pmb{:}{\scriptstyle [[T]]} }}
-  | … :: S :: Placeholder {{ coq (term_Val val_Unit) }} {{ tex \ldots }}
-  | map t u :: S :: SugarMap {{ coq (term_Val val_Unit) }} {{ tex \ottkw{map}~[[t]]~[[u]] }}
-  | map' t u1 u2 :: S :: SugarMapP {{ coq (term_Val val_Unit) }} {{ tex \ottkw{map'}~[[t]]~[[u1]]~[[u2]] }}
 
 sterm, s {{ tex \ottnt{\tilde{t} } }} :: 'sterm_' ::= {{ com Syntactic sugar for terms }}
   | from⧔' t :: M :: SugarFromA' {{ com Extract left side of ampar when right side is unit }}  {{ coq (sterm_FromA' [[t]]) }}
@@ -200,14 +197,14 @@ ectxs, C {{ tex \ottnt{E} }} :: 'ectxs_' ::= {{ com Evaluation context stack }} 
   | C [ h ≔ H v ] :: M :: Fill {{ tex [[C]]\hspace*{0.11em}\llparenthesis [[h]]\assigneq_{[[H]]}\,[[v]]\hspace*{0.11em}\rrparenthesis }} {{ com Fill $[[h]]$ in $[[C]]$ with value $[[v]]$ (that may contain holes) }} {{ coq (ectxs_fill [[C]] [[h]] [[H]] [[v]]) }}
   | ( C ) :: S :: Paren {{ coq [[C]] }} {{ tex \biggerparenl[[C]]\biggerparenr }}
 
-ectx, c {{ tex \ottnt{e} }} :: 'ectx_' ::= {{ com Evaluation context component }}
+ectx, c {{ tex \ottnt{\scriptstyle E} }} :: 'ectx_' ::= {{ com Evaluation context component }}
   | t' ⬜ :: :: App1 {{ tex [[t']]~[[⬜]] }}
   | ⬜ v :: :: App2  {{ tex [[⬜]]~[[v]] }}
   | ⬜ ; u :: :: PatU {{ tex [[⬜]]\patu[[u]] }}
   | ⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } :: :: PatS {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\{\ottsctor{Inl}\,[[x1]][[⟼]][[u1]]\,,~\ottsctor{Inr}\,[[x2]][[⟼]][[u2]]\} }} % (+ bind x1 in u1 +) (+ bind x2 in u2 +)
   | ⬜ ►case m ( x1 , x2 ) ⟼ u :: :: PatP {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\ottsctor{(}[[x1]]\,\ottsctor{,}~[[x2]]\ottsctor{)}[[⟼]][[u]] }}  % (+ bind x1 in u +) (+ bind x2 in u +)
   | ⬜ ►case m ᴇ n x ⟼ u :: :: PatE {{ tex \ottkw{case}_{[[m]]}~[[⬜]]~\ottkw{of}~\expcons{[[n]]}[[x]][[⟼]][[u]] }} % (+ bind x in u +)
-  | ⬜ ►map x ⟼ t' :: :: Map {{ tex \ottkw{onR}_{\ottkw{\ltimes} }\,[[⬜]]~\ottkw{as}~[[x]]\,[[⟼]][[t']] }} % (+ bind x in u +)
+  | ⬜ ►map x ⟼ t' :: :: Map {{ tex \ottkw{map}~[[⬜]]~\ottkw{with}~[[x]][[⟼]][[t']] }} % (+ bind x in u +)
 
   | to⧔ ⬜ :: :: ToA {{ tex \ottkw{to}_{\ottkw{\ltimes} }\,[[⬜]] }}
   | from⧔ ⬜ :: :: FromA {{ tex \ottkw{from}_{\ottkw{\ltimes} }\,[[⬜]] }}
@@ -223,11 +220,11 @@ ectx, c {{ tex \ottnt{e} }} :: 'ectx_' ::= {{ com Evaluation context component }
   | v ◀ ⬜ :: :: FillLeaf2 {{ tex [[v]][[◀]][[⬜]] }}
   | H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ :: :: OpenAmpar {{ tex ^{\text{op}\!}_{[[H]]\!}\ottsctor{\langle}[[v2]]\,\ottsctor{\bbcomma}~[[⬜]]\ottsctor{\rangle} }} {{ com Open ampar, binding hole names in the next components }}
   | ( c ) :: S :: Paren {{ coq [[c]] }} {{ tex [[c]] }} % {{ tex \biggerparenl[[c]]\biggerparenr }}
-  | ˢInl ⬜ :: S :: SugarLeft {{ tex \ottsctor{Inl}\,[[⬜]] }} {{ coq ectx_FillU }}
-  | ˢInr ⬜ :: S :: SugarRight {{ tex \ottsctor{Inr}\,[[⬜]] }} {{ coq ectx_FillU }}
-  | ˢ( ⬜ , t2 ) :: S :: SugarProd1 {{ tex \ottsctor{(}[[⬜]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }} {{ coq ectx_FillU }}
-  | ˢ( v1 , ⬜ ) :: S :: SugarProd2 {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[⬜]]\ottsctor{)} }} {{ coq ectx_FillU }}
-  | ˢᴇ m ⬜ :: S :: SugarExp {{ tex \expcons{[[m]]}[[⬜]] }} {{ coq ectx_FillU }}
+  | ˢInl ⬜ :: S :: SugarLeft {{ tex \ottsctor{Inl}\,[[⬜]] }}
+  | ˢInr ⬜ :: S :: SugarRight {{ tex \ottsctor{Inr}\,[[⬜]] }}
+  | ˢ( ⬜ , t2 ) :: S :: SugarProd1 {{ tex \ottsctor{(}[[⬜]]\,\ottsctor{,}~[[t2]]\ottsctor{)} }}
+  | ˢ( v1 , ⬜ ) :: S :: SugarProd2 {{ tex \ottsctor{(}[[v1]]\,\ottsctor{,}~[[⬜]]\ottsctor{)} }}
+  | ˢᴇ m ⬜ :: S :: SugarExp {{ tex \expcons{[[m]]}[[⬜]] }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TYPING SYNTAX
@@ -253,7 +250,6 @@ type, T, U, S :: 'type_' ::= {{ com Type }} {{ tex \ottstype{[[type]]} }} {{ coq
   % | E :: S :: SugarEffect {{ tex \ottstype{E} }} {{ coq type_Unit }}
   | Token :: S :: SugarToken {{ tex \ottstype{Token} }} {{ coq type_Unit }}
   | T ⊸ U :: S :: SugarLinFun {{ tex [[T]]\,\ottstype{\multimap}\,[[U]] }} {{ coq type_Unit }}
-  | T → U :: S :: SugarUrFun {{ tex [[T]]\,\ottstype{\to}\,[[U]] }} {{ coq type_Unit }}
   | ! T :: S :: SugarLinBang {{ tex \ottstype{!}[[T]] }} {{ coq type_Unit }}
   | ? T :: S :: SugarLinQ {{ tex \ottstype{?}[[T]] }} {{ coq type_Unit }}
 
@@ -333,9 +329,9 @@ ctx, O {{ tex \Omega }}, G {{ tex \Theta }}, D {{ tex \Delta }}, P {{ tex \Gamma
   | O [ H ⩲ h' ] :: M :: Cshift {{ com Shift hole/dest names by $[[h']]$ if they belong to $[[H]]$ }} {{ coq (ctx_cshift [[O]] [[H]] [[h']]) }} {{ tex [[O]]\ottshname{[}[[H]][[⩲]][[h']]\ottshname{]} }}
   | ( O ) :: S :: Paren {{ coq [[O]] }} {{ tex ([[O]]) }}
   | O1 ∪ O2 :: M :: NonDisjointUnion {{ coq (union [[O1]] [[O2]]) }} {{ com Union of contexts }} {{ tex [[O1]]\cup[[O2]] }}
-  | { x ⫶ T } :: S :: VarSingSimpl {{ tex [[x]]:[[T]] }} {{ com Variable typing binding with linear mode }} {{ coq ctx_empty }}
-  | ! P :: S :: Bang {{ tex ![[P]] }} {{ com Unrestricted context }} {{ coq ctx_empty }}
-  | _ T :: S :: TypeAsHyp {{ tex [[T]] }} {{ coq ctx_empty }}
+  | { x ⫶ T } :: S :: VarSingSimpl {{ tex [[x]]:[[T]] }} {{ com Variable typing binding with linear mode }}
+  | ! P :: S :: Bang {{ tex ![[P]] }} {{ com Unrestricted context }}
+  | _ T :: S :: TypeAsHyp {{ tex [[T]] }}
 
 embed
 {{ coq
@@ -901,6 +897,18 @@ Notation "G '#' H" := (Disjoint G H) (at level 50, no associativity).
 Definition DisposableOnly (G: ctx) : Prop :=
   forall (n : name) (binding: binding_type_of n), G n = Some binding -> IsDisposable n binding.
 
+(*
+Inductive CompatibleVar : ctx -> var -> mode -> type -> Prop :=
+  | ctx_CompatibleProof : forall (P : ctx) (x : var) (m m': mode) (T : type),
+    DisposableOnly P -> P # (ctx_singleton (name_Var x) (binding_Var m' T)) -> ModeSubtype m' m -> CompatibleVar (union P (ctx_singleton (name_Var x) (binding_Var m' T))) x m T.
+
+(* Alternative definition for CompatibleVar, we might want to prove that it is equivalent to the inductive definition *)
+Definition CompatibleVar' (P: ctx) (x: var) (m : mode) (T: type) : Prop :=
+  forall (n : name) (binding: binding_type_of n), P n = Some binding -> (
+    (n = (name_Var x) -> exists m', binding = binding_Var m' T /\ ModeSubtype m' m)
+ /\ (n <> (name_Var x) -> IsDisposable binding)).
+*)
+
 (******************************************************************************
  * EVALUATION CONTEXTS
  *****************************************************************************)
@@ -928,13 +936,21 @@ spacing, sp :: 'sp_' ::= {{ tex \ottssp{[[spacing]]} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space9 {{ tex \myspace{9} }}
   | ‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥‥ :: :: space10 {{ tex \myspace{10} }}
 
+% spacing_end, spe :: 'spe_' ::= {{ tex \ottssp{[[spacing_end]]} }}
+%   | …… :: :: space1e {{ tex \myspace{1} }}
+%   | ………… :: :: space2e {{ tex \myspace{2} }}
+%   | ……………… :: :: space3e {{ tex \myspace{3} }}
+%   | …………………… :: :: space4e {{ tex \myspace{4} }}
+%   | ………………………… :: :: space5e {{ tex \myspace{5} }}
+%   | ……………………………… :: :: space6e {{ tex \myspace{6} }}
+
 line_break, b :: 'b_' ::= {{ tex \ottssp{[[line_break]]} }}
   | ⮒ :: :: break {{ tex \mynewline }}
 
 terminals :: 'terminals_' ::=
 
 % === Term syntax ===
-  | ⬜ :: :: idectx {{ tex \raisebox{0.075em}{$\scriptstyle []$} }}
+  | ⬜ :: :: idectx {{ tex \vrectangle }}
   | ⟼ :: :: mapsto {{ tex \pmb{\mapsto} }}
   | () :: :: unit {{ tex \ottsctor{()} }}
   | Inl :: :: inl {{ tex \ottsctor{Inl} }}
@@ -956,16 +972,22 @@ terminals :: 'terminals_' ::=
   | ˢ⊢ :: :: svdash {{ tex \,\pmb{\vdash}\, }}
   | ⊣ :: :: dashv {{ tex \,\pmb{\dashv}\, }}
   | ⫦ :: :: dvdash {{ tex \!\!\pmb{\phantom{a}^{\scriptscriptstyle \mathrm{v} }\!\!\vdash}\, }}
+  | ⊫ :: :: lindash1 {{ tex \,\pmb{\vdash}\, }}
+  | ⫢ :: :: lindash2 {{ tex \,\pmb{\vdash}\, }}
+  | ⊪ :: :: lindash3 {{ tex \,\pmb{\vdash}\, }}
+  | ╟ :: :: lindash4 {{ tex \,\pmb{\vdash}\, }}
+  | ⟚ :: :: lindash5 {{ tex \,\pmb{\vdash}\, }}
   | : :: :: colon {{ tex \pmb{:} }}
   | ; :: :: semicolon {{ tex ~\pmb{;}~ }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-store_assign, w :: 'storea_' ::=
-  | v ≔ t :: :: Val {{ tex [[v]]\assigneq[[t]] }}
+heap_assign, w :: 'heapa_' ::=
+  | h ≔ ⬜ :: :: Empty {{ tex [[h]]\assigneq\holesq }}
+  | h ≔ v :: :: Val {{ tex [[h]]\assigneq[[v]] }}
   | ul< w > :: S :: Underline {{ tex \uwave{[[w]]} }} {{ coq ([[w]]) }}
 
-store, Z {{ tex \mathcal{S} }} :: 'store_' ::=
+heap, Z {{ tex \mathcal{S} }} :: 'heap_' ::=
   | { w1 , .. , wk } :: :: List
   | Z1 ⨆ Z2 :: :: Union {{ tex [[Z1]] \sqcup [[Z2]] }}
 

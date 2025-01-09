@@ -104,6 +104,7 @@
                 mweights
                 natbib
                 ncctools
+                newunicodechar
                 newtx
                 oberdiek
                 # supplies pdftex-def:
