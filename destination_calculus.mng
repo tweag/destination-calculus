@@ -12,6 +12,7 @@
 \usepackage{expl3}
 \usepackage{xparse}
 \usepackage{newunicodechar}
+\usepackage{hhline}
 \citestyle{acmauthoryear}
 
 % For faulty code
@@ -685,6 +686,12 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 
 \begin{ottfig}[p]{\caption{Type system of \destcalculus{}}\label{fig:ty-term-sterm}\label{fig:mul-age-tables}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 
+\renewcommand\ottaltinferrule[4]{
+  \inferrule*[narrower=0.3,lab=#1,#2]
+    {#3}
+    {#4}
+}
+
 \hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.58}{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
 [[T]], [[U]], [[S]] &\grammdef& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
                     &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
@@ -705,13 +712,13 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 \smallskip
 
 \hfill\begin{tabular}{|c||c|c|}\hline
-$\ottsmode{+}$ & $[[¹]]$ & $[[ω]]$ \\\hline\hline
+$\ottsmode{+}$ & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
 $[[¹]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
 $[[ω]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
 \end{tabular}
 \hfill
 \begin{tabular}{|c||c|c|}\hline
-$[[·]]$        & $[[¹]]$ & $[[ω]]$ \\\hline\hline
+$[[·]]$        & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
 $[[¹]]$        & $[[¹]]$ & $[[∞]]$ \\\hline
 $[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
 \end{tabular}
@@ -719,13 +726,13 @@ $[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
 \vrule width 0.5pt % Vertical rule of 1pt width
 \hfill
 \begin{tabular}{|c||c|c|}\hline
-$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline\hline
+$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hhline{|=#=|=|}
 $[[↑]]^{\ottsmodee{j}}$    & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑]]^{\ottsmodee{k}}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \hfill
 \begin{tabular}{|c||c|c|}\hline
-$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline\hline
+$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hhline{|=#=|=|}
 $[[↑]]^{\ottsmodee{j}}$    & $[[↑]]^{\ottsmodee{k+j}}$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}\hfill
@@ -734,8 +741,12 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \hrule
 \bigskip
 
+\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]$/}
 \ottdefnTyXXterm{}
+\egroup
 
+\bigskip
+\hrule
 \bigskip
 
 \renewcommand\ottaltinferrule[4]{
@@ -743,7 +754,8 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
     {#3}
     {#4}
 }
-\ottdefnTyXXsterm{}
+\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]{\scriptstyle^{s}}$/}
+\ottdefnTyXXsterm{}\egroup
 \egroup
 \end{ottfig}
 
@@ -809,11 +821,11 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
 }\end{codefig}
 
 \begin{ottfig}{\caption{Typing rules for extended terms and runtime values}\label{fig:ty-val}}
-  \drules[Ty-term]{$[[P ⊢ t : T]]$}{Extended terms}{Val}
+  \bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]$/}\drule{Ty-term-Val}\egroup
 
   \hfill
-
-  \ottdefnTyXXval{}
+  \bgroup\renewcommand{\ottdrulename}[1]{ty-$[[v]]$/}
+  \ottdefnTyXXval{}\egroup
 \end{ottfig}
 
 The syntax of runtime values is given in \cref{fig:grammar-val}. It features constructors for all of our basic types, as well as functions (note that in $[[ᵛλ x m ⟼ u]]$, $[[u]]$ is a term, not a value). The more interesting values are holes $[[+ h]]$, destinations $[[- h]]$, and ampars $[[H ⟨ v2 ❟ v1 ⟩]]$, which we'll describe in the rest of the section. In order for the operational semantics to use substitution, which requires substituting variables with values, we also extend the syntax of terms to include values.
@@ -885,8 +897,11 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
 Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts and commands are given in~\cref{fig:ty-ectxs-cmd}.
 
 \begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}\begin{augmentwidth}{0.9cm}
-\ottdefnTyXXectxs{}
-\ottdefnTy{}\end{augmentwidth}
+\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[C]]$/}
+\ottdefnTyXXectxs{}\egroup
+
+\bgroup\renewcommand{\ottdrulename}[1]{ty-cmd}
+\ottdefnTy{}\egroup\end{augmentwidth}
 \end{ottfig}
 
 An evaluation context has a context type $[[T]]\ottstype{\rightarrowtail}[[U0]]$. The meaning of $[[C]][[:]] [[T]]\ottstype{\rightarrowtail}[[U0]]$ is that given $[[t]][[:]][[T]]$, $[[ C[t] ]]$ returns a value of type $[[U0]]$. Composing an evaluation context $[[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focusing component never affects the type $[[U0]]$ of the future command; only the type $[[T]]$ of the focus is altered.
@@ -948,12 +963,13 @@ We equip \destcalculus{} with small-step semantics. There are three sorts of sem
   %  & \text{#1}
   \ensuremath{#4} \ifnonempty{\ensuremath{#3}}{\quad\textit{when}\quad\ensuremath{#3}} \\
 }
+\bgroup\renewcommand{\ottdrulename}[1]{red/}
 Here the focus, unfocus, and reduction rules for \textsc{PatP}:
 {\small\[\begin{array}{ll}\drule{Focus-PatP}
 \drule{Unfocus-PatP}
 \drule{Red-PatP}
 \end{array}\]}
-\egroup
+\egroup\egroup
 
 Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused on again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focusing component on the stack), we only present the set of reduction rules for the system in~\cref{fig:sem}, but the whole system is included in the annex (\cref{fig:sem-full1,fig:sem-full2}).
 
@@ -973,6 +989,7 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
   \drulesectionhead{#2}{#3}$\!\!\!\array{ll}}
   {\endarray$}
 \makeatother
+\bgroup\renewcommand{\ottdrulename}[1]{red/}
 \drules{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
 Red-App,
 Red-PatU,
@@ -993,7 +1010,7 @@ Red-FillComp,
 Red-FillLeaf,
 Open-Ampar,
 Close-Ampar}
-\egroup
+\egroup\egroup
 \vspace*{-0.5cm}
 \[
 \text{\textit{where}}\quad\left\{\begin{array}{rcl}
@@ -1224,7 +1241,7 @@ The preliminary, anonymous version was available at \url{https://doi.org/10.5281
     {#3}
     {#4}
 }
-
+\bgroup\renewcommand{\ottdrulename}[1]{red/}
 \begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 1)}\label{fig:sem-full1}}\begin{augmentwidth}{2.4cm}
 \drules{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
 Focus-AppOne,
@@ -1305,6 +1322,7 @@ Unfocus-FillLeafTwo,
 Red-FillLeaf
 }
 \end{augmentwidth}\end{ottfig}
+\egroup
 
 \end{document}
 
