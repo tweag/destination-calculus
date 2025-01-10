@@ -169,7 +169,7 @@
 #4 ~\ifthenelse{\equal{#1}{}}{\btriangleq}{\btriangleqrec}~\\\myspace{1}#5
 \end{array}\\[\interdefskip]}
 \newcommand{\figureratio}{0.9}
-\newcommand{\codehere}[2][t]{\vspace{-0.05cm}\begin{center}\begin{minipage}[#1]{\figureratio\linewidth}{\small$#2$}\end{minipage}\end{center}\vspace{-0.05cm}}
+\newcommand{\codehere}[2][t]{\vspace{-0.05cm}\begin{center}\begin{minipage}[#1]{\figureratio\linewidth}{\small\ensuremath{#2}}\end{minipage}\end{center}\vspace{-0.05cm}}
 \NewEnviron{codefig}[2][t]{\begin{figure}[#1]
 \codehere{\BODY}#2
 \end{figure}}
@@ -177,11 +177,11 @@
 \small\BODY\activespaces #2
 \end{figure}}
 \newcommand{\sidebysidecodehere}[4]{\begin{center}\begin{minipage}[#1]{\figureratio\linewidth}
-\noindent\begin{minipage}[#1]{#2\linewidth-0.02\linewidth}{\small$#3$}\end{minipage}
+\noindent\begin{minipage}[#1]{#2\linewidth-0.02\linewidth}{\small\ensuremath{#3}}\end{minipage}
 \hfill
 \vrule width 0.5pt % Vertical rule of 1pt width
 \hfill
-\begin{minipage}[#1]{\linewidth-#2\linewidth-0.02\linewidth}{\small$#4$}\end{minipage}
+\begin{minipage}[#1]{\linewidth-#2\linewidth-0.02\linewidth}{\small\ensuremath{#4}}\end{minipage}
 \end{minipage}\end{center}
 }
 
@@ -297,7 +297,7 @@
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{destination, functional programming, linear types, pure language}
+\keywords{destination passing, functional programming, linear types, pure language}
 
 
 \begin{abstract}
@@ -494,9 +494,9 @@ For their simple implementation, Hood-Melville queues are surprisingly efficient
 
 So we can give an improved version of the simple functional queue using destinations. This implementation is presented on the right-hand side of~\cref{fig:impl-dlist-queue}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: our type system prevents us from reading the front elements of difference lists. Just like for the simple functional queue, we need a pair of one list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus{} type system, and nearly as efficient as what an imperative programming language would afford.
 
-\paragraph{Tail-recursive map function on lists}
+\subsection{Tail-recursive map function on lists}\label{ssec:map-tr}
 
-Using the fact that (incomplete) lists in \destcalculus{} can be extended by their end in $O(1)$, instead of $O(n)$ in other languages, we can write a map function on lists that is tail recursive and also run in a single pass (no reverse operation is needed).
+Using the fact that (incomplete) lists in \destcalculus{} can be extended by their end in $O(1)$, instead of $O(n)$ in other languages, we can also write a map function on lists that is tail recursive and run in a single pass (no reverse operation is needed compared to usual functional languages).
 
 For that, we define in \cref{fig:impl-map-tr} a helper function $\ottkw{map'}$, with signature $[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]$, that uses destination-filling primitives to extend the incomplete list represented by destination $[[⌊ List U ⌋ ¹ν]]$ as it processes nodes of the input $[[List T]]$. To go from $\ottkw{map'}$ to the usual $\ottkw{map}~\pmb{:}~[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]$, we just need to create an initial destination $[[⌊ List U ⌋ ¹ν]]$ using $[[alloc]]$, then call $\ottkw{map'}$ on that root destination, and get the completed structure using $\ottkw{from}_{\ottkw{\ltimes} }'$. 
 
@@ -513,7 +513,7 @@ l ►case ¹ν {⮒
   {[[map f l]]}{[[from⧔' ((alloc @ (List U) ⧔ ⌊ List U ⌋ ¹ν) ►map dl ⟼ map' f l dl)]]}
 \end{codefig}
 
-A similar implementation for tail-recursive $\ottkw{map}$ is present in most related works, starting from~\cite{minamide_functional_1998}, and including \cite{bour_tmc_2021,leijen_trmc_2023,bagrel_destination-passing_2024}. In such an example we don't need the full power of \destcalculus{}: second-class destinations would suffice, and we don't need support for incomplete structures with multiple holes either.
+Similar implementations for tail-recursive, DPS variants of common list functions are present in most related works, starting from~\cite{minamide_functional_1998}, and including \cite{bour_tmc_2021,leijen_trmc_2023,bagrel_destination-passing_2024}. In such examples we don't need the full power of \destcalculus{}: second-class destinations would suffice, and we don't need support for incomplete structures with multiple holes either.
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dests}
 
@@ -524,7 +524,7 @@ To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of
 Should we count $[[d]]$ as linearly used here? The alternatives don't seem promising:
 \vspace{-0.04cm}\begin{itemize}
 \item If we count this as a non-linear use of $[[d]]$, then $[[dd ◀ d]]$ is rejected since destinations (here $[[d]]$) can only be used linearly. This is certainly possible, and this is, in fact what~\cite{bagrel_destination-passing_2024} does. However, this is a blunt limitation, and it would prevent us from storing destinations in structures with holes, as we do, crucially, in \cref{sec:bft}.
-\item If we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; d ◀ v]]$ in order to write to the hole $[[+h]]$ twice, which is unsound, as discussed in \cref{ssec:build-up-vocab}.
+\item If we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; d ◀ v]]$ so that $[[d]]$ is both stored for later use \emph{and} used immediately (resulting in $[[+h]]$ being potentially written to twice), which is unsound, as discussed in \cref{ssec:build-up-vocab}.
 \end{itemize}\vspace{-0.04cm}
 So linear use it is. But it creates a problem: there's no way, within the linear type system, to distinguish between ``the hole $[[+h]]$ has been filled'' and ``$[[d]]$ has been stored (and $[[+h]]$ still exists)''. Depending on the nesting of $[[v]]$ and $[[vd]]$, this may allow us to read uninitialized memory $[[+h]]$.
 
@@ -609,26 +609,21 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 \newcommand{\grammsep}{\hspace*{1.8ex}|\hspace*{1.8ex}}
 \newcommand{\grammdef}{\mathrel{\raisebox{0.09ex}{$\mathop{:}$\hspace*{-0.1ex}$\mathop{:}$\hspace*{-0.1ex}}\shorteq}}
 
-\begin{codefig}{\caption{Grammar of \destcalculus{}}\label{fig:grammar}}{\setlength{\arraycolsep}{0.6ex}
-\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+\begin{figure}[t]
+\codehere{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
 [[t]], [[u]] &\grammdef& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
              &|\,& [[ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[t ►case m ᴇ n x ⟼ u]] \\
              &|\,& [[t ►map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
-             &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \grammsep [[t ◀ t']] \\
-&&\\
-[[T]], [[U]], [[S]] &\grammdef& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
-                    &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
-                    &|\,& [[①]] \grammsep [[T1 ⨁ T2]] \grammsep [[T1 ⨂ T2]] \grammsep [[! m T]] \grammsep [[T m → U]] \\
-&&\\
-        [[m]], [[n]] &\grammdef& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\quad\textit{(pair of multiplicity and age)} \\
-               [[p]] &\grammdef& [[¹]] \grammsep [[ω]] \\
-               [[a]] &\grammdef& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]] \\
-&&\\
-[[P]] &\grammdef& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]] \grammsep [[P1 + P2]] \grammsep [[m · P]]
-\end{array}$\end{minipage}
-}\end{codefig}
+             &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \grammsep [[t ◀ t']]
+\end{array}}
 
-\sidebysidecodefig{\caption{Syntactic sugar for terms}\label{fig:sterm}}{t}{0.46}{
+\bigskip
+
+\begin{minipage}{\linewidth}\hspace*{0.05\linewidth}\small\textit{Syntactic sugar forms:}\end{minipage}
+
+\smallskip
+
+\sidebysidecodehere{t}{0.46}{
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ Inl ◀ t)
@@ -661,13 +656,15 @@ from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2)
 ]]\end{array}
 }
+\caption{Syntax of \destcalculus{}}\label{fig:grammar}\label{fig:sterm}
+\end{figure}
 
-\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ n]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}. Just as important are \emph{modes} and the associated exponential modality $\ottstype{!}_{[[m]]}$.
-The grammar of \destcalculus{} is presented in~\cref{fig:grammar}. Some of the constructions that we've been using in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft} are syntactic sugar for more fundamental forms, we give their definitions in \cref{fig:sterm}.
+\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ n]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}. Just as important are \emph{modes} and the associated exponential modality $\ottstype{!}_{[[m]]}$\critical{move that later?}.
+The syntax of \destcalculus{} terms is presented in~\cref{fig:grammar}. Some of the constructions that we've been using in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft} are syntactic sugar for more fundamental forms, we give their definitions in \cref{fig:sterm} too.
 
 Following a common trend (e.g.~\cite{bernardy_linear_2018,qtt_2018,granule_2019,bernardy_modality_2020}), our modes form a semiring\footnote{Technically, our semirings are commutative but don't have a zero. The terminology “ringoid” has been sometimes used for semiring without neutral elements (neither zero nor unit), for instance~\cite{bernardy_modality_2020}.}. In \destcalculus{} the mode semiring is the product of a \emph{multiplicity} semiring for linearity, as in~\cite{bernardy_linear_2018}, and of an \emph{age} semiring (see \cref{ssec:age-control}) to prevent the scoping issues discussed in \cref{sec:scope-escape-dests}.
 
-We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring. % In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
+We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring.\critical{move that later?} % In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
 
 \subsection{The age semiring}\label{ssec:age-control}
 
@@ -678,42 +675,6 @@ We also have an age $[[∞]]$ for values which don't originate from the scope of
 This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be thought of as giving the variable the same age on both sides.
 Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
 
-\begin{figure}[t]
-\bgroup\setlength{\tabcolsep}{0.2ex}
-\begin{tabular}[c]{rcl}
-  $[[ν]]$ &$\btriangleq$& $[[↑]]^{\ottsmodee{0}}$ \\
-  $[[↑]]$ &$\btriangleq$& $[[↑]]^{\ottsmodee{1}}$
-\end{tabular}\egroup\hfill
-\begin{tabular}{|c|c|c|}\hline
-$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline
-$[[↑]]^{\ottsmodee{j}}$    & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑]]^{\ottsmodee{k}}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
-$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
-\end{tabular}
-\hfill
-\begin{tabular}{|c|c|c|}\hline
-$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline
-$[[↑]]^{\ottsmodee{j}}$    & $[[↑]]^{\ottsmodee{k+j}}$ & $[[∞]]$ \\\hline
-$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
-\end{tabular}
-\hfill
-\vrule width 0.5pt % Vertical rule of 1pt width
-\hfill
-\begin{tabular}{|c|c|c|}\hline
-$\ottsmode{+}$ & $[[¹]]$ & $[[ω]]$ \\\hline
-$[[¹]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
-$[[ω]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
-\end{tabular}
-\hfill
-\begin{tabular}{|c|c|c|}\hline
-$[[·]]$        & $[[¹]]$ & $[[ω]]$ \\\hline
-$[[¹]]$        & $[[¹]]$ & $[[∞]]$ \\\hline
-$[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
-\end{tabular}
-
-
-\caption{Operation tables for age and multiplicity semirings}\label{fig:mul-age-tables}
-\end{figure}
-
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
 The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. For that we need two operations:
@@ -722,8 +683,60 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
   \item We define context addition as a partial operation where $[[({ x : m T }) + P]] = [[{ x : m T },P]]$\hspace*{0.6em}if $[[x]] \notin [[P]]$ and $[[({ x : m T }) + ({ x : m' T })]] = [[x]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[T]]$.
 \end{itemize}
 
-\begin{ottfig}[b]{\caption{Typing rules for terms and syntactic sugar}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
+\begin{ottfig}[p]{\caption{Type system of \destcalculus{}}\label{fig:ty-term-sterm}\label{fig:mul-age-tables}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
+
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.58}{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
+[[T]], [[U]], [[S]] &\grammdef& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
+                    &|\,& [[S ⧔ T]] \hspace*{\widthof{$[[⌊ T ⌋ n]]$}-\widthof{$[[U ⧔ T]]$}}\quad\quad\textit{(ampar)} \\
+                    &|\,& [[①]] \grammsep [[T1 ⨁ T2]] \grammsep [[T1 ⨂ T2]] \grammsep [[! m T]] \grammsep [[T m → U]] \\
+&&\\
+[[P]] &\grammdef& [[{ }]] \grammsep [[{ x : m T }]] \grammsep [[P1 , P2]]% \grammsep [[P1 + P2]] \grammsep [[m · P]]
+\end{array}}{\setlength{\arraycolsep}{0.6ex}\!\begin{array}[b]{rrl}
+[[m]], [[n]] &\grammdef& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\textit{(pair of multiplicity and age)} \\
+  [[p]] &\grammdef& [[¹]] \grammsep [[ω]] \\
+  [[a]] &\grammdef& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]]
+\end{array}\\[\interdefskip]
+[[ν]] \btriangleq [[↑]]^{\ottsmodee{0}} \quad [[↑]] \btriangleq [[↑]]^{\ottsmodee{1}}}\end{minipage}
+
+\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Operations on modes:}\end{minipage}
+
+\smallskip
+
+\hfill\begin{tabular}{|c||c|c|}\hline
+$\ottsmode{+}$ & $[[¹]]$ & $[[ω]]$ \\\hline\hline
+$[[¹]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
+$[[ω]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
+\end{tabular}
+\hfill
+\begin{tabular}{|c||c|c|}\hline
+$[[·]]$        & $[[¹]]$ & $[[ω]]$ \\\hline\hline
+$[[¹]]$        & $[[¹]]$ & $[[∞]]$ \\\hline
+$[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
+\end{tabular}
+\hfill
+\vrule width 0.5pt % Vertical rule of 1pt width
+\hfill
+\begin{tabular}{|c||c|c|}\hline
+$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline\hline
+$[[↑]]^{\ottsmodee{j}}$    & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑]]^{\ottsmodee{k}}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
+$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
+\end{tabular}
+\hfill
+\begin{tabular}{|c||c|c|}\hline
+$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hline\hline
+$[[↑]]^{\ottsmodee{j}}$    & $[[↑]]^{\ottsmodee{k+j}}$ & $[[∞]]$ \\\hline
+$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
+\end{tabular}\hfill
+
+\bigskip
+\hrule
+\bigskip
+
 \ottdefnTyXXterm{}
+
+\bigskip
 
 \renewcommand\ottaltinferrule[4]{
   \inferrule*[fraction={===},narrower=0.3,lab=#1,#2]
@@ -788,10 +801,10 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
              &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
              &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
              &&\\
-\end{array}\\\hspace*{-0.5em}\begin{array}{rrlcccccc}
-[[D]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] &|& [[D1 + D2]] &|& [[m · D]] \\
-[[P]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] &|& [[P1 + P2]] &|& [[m · P]] \\
-\hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] &|& [[G1 + G2]] &|& [[m · G]]
+\end{array}\\\hspace*{-0.5em}\begin{array}{rrlcccc}
+[[D]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] \\% &|& [[D1 + D2]] &|& [[m · D]] \\
+[[P]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] \\% &|& [[P1 + P2]] &|& [[m · P]] \\
+\hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] % &|& [[G1 + G2]] &|& [[m · G]]
 \end{array}$\end{minipage}
 }\end{codefig}
 
@@ -1085,7 +1098,7 @@ To make ampars linear, we follow a recipe proposed by~\cite{spiwack_linearly_202
 
 For the in-place system to work, we consider that a linear root token variable, $[[tok0]]$, is available to a program. ``Closed'' programs can now typecheck in the non-empty context $\{[[{tok0 : ¹∞ Token}]]\}$. $[[tok0]]$ can be used to create new tokens $[[tokk]]$ via $\ottkw{dup}$, but each of these tokens still has to be used linearly.
 
-Ampar produced by $[[allocIP]]$ have a linear dependency on a variable $[[tokk]]$. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ω∞ Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
+Ampar produced by $[[allocIP]]$ have a linear dependency on a variable $[[tokk]]$. If an ampar produced by $[[allocIP tokk]]$ were to be used twice in a block $[[t]]$, then $[[t]]$ would require a typing context $\{[[{tokk : ων Token}]]\}$, that itself would require $[[tok0]]$ to have multiplicity $[[ω]]$ too. Thus the program would be rejected.
 
 An alternative to having a linear root token variable is to add a primitive function\\$\ottkw{withToken} ~\pmb{:}~ [[(Token ¹∞ → !ω∞ T) ¹ν → !ω∞ T]]$ that fulfill the same goal.
 
@@ -1096,7 +1109,7 @@ Now that ampars are managed linearly, we can change the allocation and renaming 
   \item $\ottkw{onR}_{\ottkw{\ltimes} }$ping over an ampar and filling destinations or composing two ampars using $\triangleleft\mycirc$ no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
 \end{itemize}
 
-\destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$ is in fact very close to the implementation described in~\cite{bagrel_destination-passing_2024}. Our claim of efficiency is thus based on the results published in the latter and also \cite{lorenzen_searchtree_2024,bour_tmc_2021}, as an hypothetical implementation of \destcalculus{} would mostly resort to the same memory operations -- that is, in-place updates in recursive functional settings.
+\destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$ is in fact very close to the implementation described in~\cite{bagrel_destination-passing_2024}. Our claim of efficiency is thus based on the results published in the latter and also \cite{lorenzen_searchtree_2024,bour_tmc_2021}, as an hypothetical implementation of \destcalculus{} would mostly resort to the same memory operations -- that is, in-place updates in functional settings.
 
 \section{Related work}\label{sec:related-work}
 
