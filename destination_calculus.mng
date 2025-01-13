@@ -204,6 +204,100 @@
    \scalebox{\myratio}{\begin{minipage}{\linewidth+\widthaugment}\BODY
    \end{minipage}}}
 
+\newcommand{\IfFancyRuleNames}[2]{#1}
+
+\newcommand{\SetPrefix}[1]{\IfFancyRuleNames{\renewcommand{\ottdrulename}[1]{#1}}{}}
+
+\makeatletter
+
+\IfFancyRuleNames{
+  \def\CHole{id\textsubscript{h}}
+  \def\CDest{id\textsubscript{d}}
+  \def\CUnit{$\ottstype{1}$I}
+  \def\CFun{$\ottstype{\multimap}$I}
+  \def\CLeft{$\ottstype{\oplus}$I\textsubscript{1}}
+  \def\CRight{$\ottstype{\oplus}$I\textsubscript{2}}
+  \def\CProd{$\ottstype{\otimes}$I}
+  \def\CExp{$\ottstype{!}$I}
+  \def\CAmpar{$\ottstype{\ltimes}$I}
+  \def\CVal{fromVal}
+  \def\CVar{id\textsubscript{v}}
+  \def\CApp{$\ottstype{\multimap}$E}
+  \def\CPatU{$\ottstype{1}$E}
+  \def\CPatS{$\ottstype{\oplus}$E}
+  \def\CPatP{$\ottstype{\otimes}$E}
+  \def\CPatE{$\ottstype{!}$E}
+  \def\CMap{$\ottstype{\ltimes}$on}
+  \def\CToA{$\ottstype{\ltimes}$I\textsubscript{t}}
+  \def\CFromA{$\ottstype{\ltimes}$E}
+  \def\CAlloc{$\ottstype{\ltimes}$I\textsubscript{n}}
+  \def\CFillU{$\ottstype{\lfloor 1\rfloor}$E}
+  \def\CFillL{$\ottstype{\lfloor \oplus\rfloor}$E\textsubscript{1}}
+  \def\CFillR{$\ottstype{\lfloor \oplus\rfloor}$E\textsubscript{2}}
+  \def\CFillP{$\ottstype{\lfloor \otimes\rfloor}$E}
+  \def\CFillE{$\ottstype{\lfloor !\rfloor}$E}
+  \def\CFillF{$\ottstype{\lfloor \multimap\rfloor}$E}
+  \def\CFillComp{$\ottstype{\lfloor\smallbullet\rfloor}$E\textsubscript{c}}
+  \def\CFillLeaf{$\ottstype{\lfloor\smallbullet\rfloor}$E\textsubscript{l}}
+  \def\CId{id}
+  \def\COpenAmpar{$\ottstype{\ltimes}$op}
+  \def\CCloseAmpar{$\ottstype{\ltimes}$cl}
+  \def\CFocus{F}
+  \def\CUnfocus{U}
+  \def\CRed{C}
+  \def\CTyTerm{ty-$[[t]]$}
+  \def\CTySTerm{ty-$[[t]]{\scriptstyle^{s}}$}
+  \def\CTyVal{ty-$[[v]]$}
+  \def\CTyEctxs{ty-$[[C]]$}
+  \def\CTyCmd{ty-cmd}
+  \def\CRed{red}
+  \def\CSep{/}
+  \def\rref*#1{\textsc{#1}}
+}{
+  \renewcommand{\ottdrulename}[1]{\ottalt@replace@cs\ranchor\_-{}#1\\}\renewcommand{\maybecomm}[1]{\bgroup\def\text##1{}#1\egroup}
+  \def\CHole{Hole}
+  \def\CDest{Dest}
+  \def\CUnit{Unit}
+  \def\CFun{Fun}
+  \def\CLeft{Left}
+  \def\CRight{Right}
+  \def\CProd{Prod}
+  \def\CExp{Exp}
+  \def\CAmpar{Ampar}
+  \def\CVal{Val}
+  \def\CVar{Var}
+  \def\CApp{App}
+  \def\CPatU{PatU}
+  \def\CPatS{PatS}
+  \def\CPatP{PatP}
+  \def\CPatE{PatE}
+  \def\CMap{Map}
+  \def\CToA{ToA}
+  \def\CFromA{FromA}
+  \def\CAlloc{Alloc}
+  \def\CFillU{FillU}
+  \def\CFillL{FillL}
+  \def\CFillR{FillR}
+  \def\CFillP{FillP}
+  \def\CFillE{FillE}
+  \def\CFillF{FillF}
+  \def\CFillComp{FillComp}
+  \def\CFillLeaf{FillLeaf}
+  \def\CId{Id}
+  \def\COpenAmpar{OpenAmpar}
+  \def\CCloseAmpar{CloseAmpar}
+  \def\CFocus{Focus}
+  \def\CUnfocus{Unfocus}
+  \def\CRed{Red}
+  \def\CTyTerm{Ty-term}
+  \def\CTySTerm{Ty-sterm}
+  \def\CTyVal{Ty-val}
+  \def\CTyEctxs{Ty-ectxs}
+  \def\CTyCmd{Ty-cmd}
+  \def\CSep{-}
+}
+\makeatother
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Journal's boilerplate
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -652,9 +746,8 @@ from⧔' (alloc ►map d ⟼⮒
 from⧔' (alloc ►map d ⟼ d ⨞ () )
 ]]\end{array}\\[\interdefskip]
 [[ˢ( t1 , t2 )]] \btriangleq \!\!\!\begin{array}[t]{l}[[
-from⧔' (alloc ►map d ⟼⮒
-‥‥(d ⨞ (,)) ►case ¹ν⮒
-‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2)
+from⧔' (alloc ►map d ⟼ (d ⨞ (,)) ►case ¹ν⮒
+‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2)
 ]]\end{array}
 }
 \caption{Syntax of \destcalculus{}}\label{fig:grammar}\label{fig:sterm}
@@ -741,7 +834,7 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \hrule
 \bigskip
 
-\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]$/}
+\bgroup\SetPrefix{\CTyTerm\CSep}
 \ottdefnTyXXterm{}
 \egroup
 
@@ -754,31 +847,31 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
     {#3}
     {#4}
 }
-\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]{\scriptstyle^{s}}$/}
+\bgroup\SetPrefix{\CTySTerm\CSep}  
 \ottdefnTyXXsterm{}\egroup
 \egroup
 \end{ottfig}
 
 \cref{fig:ty-term-sterm} presents the typing rules for terms, and rules for syntactic sugar forms that have been derived from term rules and proven formally too. \cref{fig:ty-val} presents the typing rules for values of the language. We'll now walk through the few peculiarities of the type system for terms.
 
-The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \rref*{Ty-term-Var}, \rref*{Ty-term-Alloc} and \rref*{Ty-sterm-Unit} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, \emph{i.e.} in the three aforementioned rules.
+The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \rref*{\CTyTerm\CSep\CVar}, \rref*{\CTyTerm\CSep\CAlloc} and \rref*{\CTySTerm\CSep\CUnit} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, \emph{i.e.} in the three aforementioned rules.
 
 \newcommand{\pleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{p}}}}}}
 \newcommand{\aleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{a}}}}}}
 
-Rule \rref*{Ty-term-Var}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν ⥶ m]]$ defined as~~$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\\[\interdefskip]\hbox{}\hfill
+Rule \rref*{\CTyTerm\CSep\CVar}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν ⥶ m]]$ defined as~~$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\\[\interdefskip]\hbox{}\hfill
 $[[¹]] \pleq [[¹]]$ \hfill
 $[[p]] \pleq [[ω]]$ \hfill
 $[[a]] \aleq [[∞]]$ \hfill
 $[[↑]]^{\ottsmodee{k}} \aleq [[↑]]^{\ottsmodee{j}} \Longleftrightarrow \ottsmodee{k} = \ottsmodee{j}\quad\text{\small(no finite age dereliction)}$ \hfill\hbox{}
 
-Rule \rref*{Ty-term-PatU} is elimination for unit, and is also used to chain fill operations.
+Rule \rref*{\CTyTerm\CSep\CPatU} is elimination for unit, and is also used to chain fill operations.
 
-Pattern-matching with rules \rref*{Ty-term-App}, \rref*{Ty-term-PatS}, \rref*{Ty-term-PatP} and \rref*{Ty-term-PatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice enforces the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
+Pattern-matching with rules \rref*{\CTyTerm\CSep\CApp}, \rref*{\CTyTerm\CSep\CPatS}, \rref*{\CTyTerm\CSep\CPatP} and \rref*{\CTyTerm\CSep\CPatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this choice enforces the equivalence $[[! ωa (T1 ⨂ T2)]] \simeq [[(! ωa T1) ⨂ (! ωa T2)]]$, which is not part of intuitionistic linear logic, but valid in Linear Haskell~\cite{bernardy_linear_2018}.
 
 \paragraph{Rules for scoping}
 
-As destinations always exist in the context of a structure with holes, and must stay in that context, we need a formal notion of \emph{destination scope}. Destination scopes (we’ll usually just say \emph{scopes}) are created by \rref{Ty-term-Map}, as destinations are only ever accessed through $\ottkw{onR}_{\ottkw{\ltimes} }$. More precisely, $[[t ►map x ⟼ t']]$ creates a new scope for $[[x]]$ which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (``now''), and the age of the other bindings in the context is scaled by $[[↑]]$. We see that $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t ►map x ⟼ t']]$ mentions unscaled context $[[P2]]$. The notion of age, that we attach on bindings, lets us distinguish $[[x]]$ --- introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$ to bind the right-hand side of the ampar, containing destinations --- from anything else that was previously bound, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing filling primitives to avoid pitfalls of \cref{sec:scope-escape-dests}.
+As destinations always exist in the context of a structure with holes, and must stay in that context, we need a formal notion of \emph{destination scope}. Destination scopes (we’ll usually just say \emph{scopes}) are created by \rref*{\CTyTerm\CSep\CMap}, as destinations are only ever accessed through $\ottkw{onR}_{\ottkw{\ltimes} }$. More precisely, $[[t ►map x ⟼ t']]$ creates a new scope for $[[x]]$ which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (``now''), and the age of the other bindings in the context is scaled by $[[↑]]$. We see that $[[t']]$ types in $[[¹↑·P2,{ x : ¹ν T }]]$ while the global term $[[t ►map x ⟼ t']]$ mentions unscaled context $[[P2]]$. The notion of age, that we attach on bindings, lets us distinguish $[[x]]$ --- introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$ to bind the right-hand side of the ampar, containing destinations --- from anything else that was previously bound, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing filling primitives to avoid pitfalls of \cref{sec:scope-escape-dests}.
 
 \Cref{fig:scope-rules} illustrates scopes introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$, and how the typing rules for $\ottkw{onR}_{\ottkw{\ltimes} }$ and $\blacktriangleleft$ interact.
 
@@ -788,15 +881,15 @@ As destinations always exist in the context of a structure with holes, and must 
   \label{fig:scope-rules}
 \end{figure}
 
-Anticipating \cref{ssec:runtime-values}, ampar values are pairs with a structure with holes on the left, and destinations on the right. With $\ottkw{onR}_{\ottkw{\ltimes} }$ we enter a new scope where the destinations are accessible, but the structure with holes remains in the outer scope. As a result, when filling a destination with \rref{Ty-term-FillLeaf}, for instance $[[x1 ◀ x0]]$ in the figure, we type $[[x1]]$ in the new scope, while we type $[[x0]]$ in the outer scope, as it’s being moved to the structure with holes on the left of the ampar, which lives in the outer scope too. This is, in fact the opposite of the scaling that $\ottkw{onR}_{\ottkw{\ltimes} }$ does: while $\ottkw{onR}_{\ottkw{\ltimes} }$ creates a new scope for its body, operator $\blacktriangleleft$, and similarly, $\triangleleft\mycirc$ and $[[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$, transfer their right operand to the outer scope. We chose this destination-filling form for function creation because of that similarity, and so that any data can be built through piecemeal destination filling.
+Anticipating \cref{ssec:runtime-values}, ampar values are pairs with a structure with holes on the left, and destinations on the right. With $\ottkw{onR}_{\ottkw{\ltimes} }$ we enter a new scope where the destinations are accessible, but the structure with holes remains in the outer scope. As a result, when filling a destination with \rref*{\CTyTerm\CSep\CFillLeaf}, for instance $[[x1 ◀ x0]]$ in the figure, we type $[[x1]]$ in the new scope, while we type $[[x0]]$ in the outer scope, as it’s being moved to the structure with holes on the left of the ampar, which lives in the outer scope too. This is, in fact the opposite of the scaling that $\ottkw{onR}_{\ottkw{\ltimes} }$ does: while $\ottkw{onR}_{\ottkw{\ltimes} }$ creates a new scope for its body, operator $\blacktriangleleft$, and similarly, $\triangleleft\mycirc$ and $[[⨞]](\lamnt{[[x]]}{[[m]]}{[[u]]})$, transfer their right operand to the outer scope. We chose this destination-filling form for function creation because of that similarity, and so that any data can be built through piecemeal destination filling.
 
-When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \rref*{Ty-sterm-FromA'}), the left of an ampar is extracted to the current scope (as seen at the bottom of~\cref{fig:scope-rules} with $[[x22]]$): this is the fundamental reason why the left of an ampar has to ``take place'' in the current scope. We know the structure is complete and can be extracted because the right side is of type unit ($[[①]]$), and thus no destination on the right side means no hole can remain on the left. $\ottkw{from}_{\ottkw{\ltimes} }'$ is implemented in terms of $\ottkw{from}_{\ottkw{\ltimes} }$ in~\cref{fig:sterm} to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
+When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \rref*{\CTySTerm\CSep\CFromA'}), the left of an ampar is extracted to the current scope (as seen at the bottom of~\cref{fig:scope-rules} with $[[x22]]$): this is the fundamental reason why the left of an ampar has to ``take place'' in the current scope. We know the structure is complete and can be extracted because the right side is of type unit ($[[①]]$), and thus no destination on the right side means no hole can remain on the left. $\ottkw{from}_{\ottkw{\ltimes} }'$ is implemented in terms of $\ottkw{from}_{\ottkw{\ltimes} }$ in~\cref{fig:sterm} to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
-When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \rref*{Ty-term-FromA} however, we extract both sides of the ampar to the current scope, even though the right side is normally in a different scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive: it can't contain any scope-controlled resource. This also ensures that the right side cannot contain destinations, so the structure is ready to be read.
+When an ampar is complete and disposed of with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \rref*{\CTyTerm\CSep\CFromA} however, we extract both sides of the ampar to the current scope, even though the right side is normally in a different scope. This is only safe to do because the right side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive: it can't contain any scope-controlled resource. This also ensures that the right side cannot contain destinations, so the structure is ready to be read.
 
-In \rref*{Ty-term-ToA}, on the other hand, there is no need to bother with scopes: the operator $\ottkw{to}_{\ottkw{\ltimes} }$ embeds an already completed structure in an ampar whose left side is the structure (that continues to type in the current scope), and right side is unit.
+In \rref*{\CTyTerm\CSep\CToA}, on the other hand, there is no need to bother with scopes: the operator $\ottkw{to}_{\ottkw{\ltimes} }$ embeds an already completed structure in an ampar whose left side is the structure (that continues to type in the current scope), and right side is unit.
 
-The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \textsc{Ty-term-Fill$*$} are the other destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \IfFancyRuleNames{of the form \textsc{\CTyTerm\CSep$\ottstype{\lfloor}~\ottstype{\rfloor}$E}}{\textsc{Ty-term-Fill$*$}} are the other destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
 
 \section{Operational semantics}\label{sec:ectxs-sem}
 
@@ -804,8 +897,8 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
 
 \subsection{Runtime values and extended terms}\label{ssec:runtime-values}
 
-\begin{codefig}{\caption{Extended terms and runtime values}\label{fig:grammar-val}}{\setlength{\arraycolsep}{1ex}\newlength\myskip\setlength{\myskip}{2.38ex}
-\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+\begin{ottfig}{\caption{Runtime values and their typing rules}\label{fig:grammar-val}\label{fig:ty-val}}
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{c}{0.75}{\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\begin{array}{rrl}
 [[t]], [[u]] &\grammdef& \ldots \grammsep [[v]] \\
 &&\\
        [[v]] &\grammdef& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
@@ -817,14 +910,15 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
 [[D]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] \\% &|& [[D1 + D2]] &|& [[m · D]] \\
 [[P]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] \\% &|& [[P1 + P2]] &|& [[m · P]] \\
 \hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] % &|& [[G1 + G2]] &|& [[m · G]]
-\end{array}$\end{minipage}
-}\end{codefig}
+\end{array}}{\hspace*{0.5cm}
+  \bgroup\SetPrefix{\CTyTerm\CSep}
+  \drule{Ty-term-Val}\egroup}\end{minipage}
 
-\begin{ottfig}{\caption{Typing rules for extended terms and runtime values}\label{fig:ty-val}}
-  \bgroup\renewcommand{\ottdrulename}[1]{ty-$[[t]]$/}\drule{Ty-term-Val}\egroup
+\bigskip
+\hrule
+\bigskip
 
-  \hfill
-  \bgroup\renewcommand{\ottdrulename}[1]{ty-$[[v]]$/}
+  \bgroup\SetPrefix{\CTyVal\CSep}
   \ottdefnTyXXval{}\egroup
 \end{ottfig}
 
@@ -848,21 +942,21 @@ $\begin{array}{rcl}
 
 Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
 
-One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref{Ty-val-Ampar}.
+One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref*{\CTyVal\CSep\CAmpar}.
 
 Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$ defined as:\quad$[[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] = [[{ + h : T n }]]$.
 Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined if any binding has a mode other than $[[¹ν]]$.
 
-Furthermore, in \rref{Ty-val-Ampar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
+Furthermore, in \rref*{\CTyVal\CSep\CAmpar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
 
-Rule \rref*{Ty-val-Hole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ n +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
+Rule \rref*{\CTyVal\CSep\CHole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ n +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
 
-Surprisingly, in \rref*{Ty-val-Dest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{Ty-term-Var} and make the general modal substitution lemma true for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode subtyping is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{Ty-val-Dest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no subtyping can take place.
+Surprisingly, in \rref*{\CTyVal\CSep\CDest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{\CTyTerm\CSep\CVar} and make the general modal substitution lemma true for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode subtyping is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{\CTyVal\CSep\CDest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no subtyping can take place.
 
 \paragraph{Other salient points}
-We don't distinguish values with holes from fully-defined values at the syntactic level: instead types prevent holes from being read. In particular, while values are typed in contexts $[[G]]$ allowing both destination and hole bindings, when using a value as a term in \rref{Ty-term-Val}, it's only allowed to have free destinations, but no free holes.
+We don't distinguish values with holes from fully-defined values at the syntactic level: instead types prevent holes from being read. In particular, while values are typed in contexts $[[G]]$ allowing both destination and hole bindings, when using a value as a term in \rref*{\CTyTerm\CSep\CVal}, it's only allowed to have free destinations, but no free holes.
 
-Notice, also, that values can't have free variables, since contexts $[[G]]$ only contain hole and destination bindings, no variable binding. That values are closed is a standard feature of denotational semantics or abstract machine semantics. This is true even for function values (\rref{Ty-val-Fun}), which, also is prevented from containing free holes. Since a function's body is unevaluated, it's unclear what it'd mean for a function to contain holes; at the very least it'd complicate our system a lot, and we are unaware of any benefit supporting free holes in function could bring.
+Notice, also, that values can't have free variables, since contexts $[[G]]$ only contain hole and destination bindings, no variable binding. That values are closed is a standard feature of denotational semantics or abstract machine semantics. This is true even for function values (\rref*{\CTyVal\CSep\CFun}), which, also is prevented from containing free holes. Since a function's body is unevaluated, it's unclear what it'd mean for a function to contain holes; at the very least it'd complicate our system a lot, and we are unaware of any benefit supporting free holes in function could bring.
 
 One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
 
@@ -894,19 +988,22 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
   [[ (C ∘ c) [h ≔ H' v'] ]] &=& [[ C[h ≔ H' v'] ∘ c ]]&\textit{otherwise}
 \end{array}\]
 
-Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref{Ty-cmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts and commands are given in~\cref{fig:ty-ectxs-cmd}.
+Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref*{\CTyCmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts and commands are given in~\cref{fig:ty-ectxs-cmd}.
+
+\critical{For some reason renaming doesn't work here}
 
 \begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}\begin{augmentwidth}{0.9cm}
-\bgroup\renewcommand{\ottdrulename}[1]{ty-$[[C]]$/}
+
+\bgroup\SetPrefix{\CTyEctxs\CSep}
 \ottdefnTyXXectxs{}\egroup
 
-\bgroup\renewcommand{\ottdrulename}[1]{ty-cmd}
+\bgroup\SetPrefix{\CTyCmd}
 \ottdefnTy{}\egroup\end{augmentwidth}
 \end{ottfig}
 
 An evaluation context has a context type $[[T]]\ottstype{\rightarrowtail}[[U0]]$. The meaning of $[[C]][[:]] [[T]]\ottstype{\rightarrowtail}[[U0]]$ is that given $[[t]][[:]][[T]]$, $[[ C[t] ]]$ returns a value of type $[[U0]]$. Composing an evaluation context $[[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focusing component never affects the type $[[U0]]$ of the future command; only the type $[[T]]$ of the focus is altered.
 
-All typing rules for evaluation contexts can be derived systematically from the ones for the corresponding term (except for the rule \rref*{Ty-ectxs-OpenAmpar} that is a truly new form). Let's take the rule \rref*{Ty-ectxs-PatP} as an example:
+All typing rules for evaluation contexts can be derived systematically from the ones for the corresponding term (except for the rule \rref*{\CTyEctxs\CSep\COpenAmpar} that is a truly new form). Let's take the rule \rref*{\CTyEctxs\CSep\CPatP} as an example:
 
 \medskip
 
@@ -919,9 +1016,9 @@ All typing rules for evaluation contexts can be derived systematically from the 
 \medskip
 
 \begin{itemize}
-  \item the typing context $[[m·D1,D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \rref*{Ty-term-PatP};
-  \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \rref*{Ty-term-PatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{Ty-term-PatP} (the term $[[t]]$ is located where the focus $[]$ is in \rref*{Ty-ectxs-OpenAmpar}).
+  \item the typing context $[[m·D1,D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \rref*{\CTyTerm\CSep\CPatP};
+  \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \rref*{\CTyTerm\CSep\CPatP};
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{\CTyTerm\CSep\CPatP} (the term $[[t]]$ is located where the focus $[]$ is in \rref*{\CTyEctxs\CSep\COpenAmpar}).
 \end{itemize}
 
 We think of the typing rule for an evaluation context as a rotation of the typing rule for the associated term, where the typing contexts of one subterm and the conclusion are swapped, an the typing contexts of the other potential subterms are kept unchanged (with the difference that typing contexts for evaluation contexts are of shape $[[D]]$ instead of $[[P]]$).
@@ -963,11 +1060,11 @@ We equip \destcalculus{} with small-step semantics. There are three sorts of sem
   %  & \text{#1}
   \ensuremath{#4} \ifnonempty{\ensuremath{#3}}{\quad\textit{when}\quad\ensuremath{#3}} \\
 }
-\bgroup\renewcommand{\ottdrulename}[1]{red/}
+\bgroup\SetPrefix{\CRed\CSep}
 Here the focus, unfocus, and reduction rules for \textsc{PatP}:
-{\small\[\begin{array}{ll}\drule{Focus-PatP}
-\drule{Unfocus-PatP}
-\drule{Red-PatP}
+{\small\[\begin{array}{ll}\drule{PatP-Focus}
+\drule{PatP-Unfocus}
+\drule{PatP-Red}
 \end{array}\]}
 \egroup\egroup
 
@@ -989,27 +1086,27 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
   \drulesectionhead{#2}{#3}$\!\!\!\array{ll}}
   {\endarray$}
 \makeatother
-\bgroup\renewcommand{\ottdrulename}[1]{red/}
+\bgroup\SetPrefix{\CRed\CSep}
 \drules{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
-Red-App,
-Red-PatU,
-Red-PatL,
-Red-PatR,
-Red-PatP,
-Red-PatE,
-Red-ToA,
-Red-FromA,
-Red-Alloc,
-Red-FillU,
-Red-FillF,
-Red-FillL,
-Red-FillR,
-Red-FillE,
-Red-FillP,
-Red-FillComp,
-Red-FillLeaf,
-Open-Ampar,
-Close-Ampar}
+App-Red,
+PatU-Red,
+PatL-Red,
+PatR-Red,
+PatP-Red,
+PatE-Red,
+ToA-Red,
+FromA-Red,
+Alloc-Red,
+FillU-Red,
+FillF-Red,
+FillL-Red,
+FillR-Red,
+FillE-Red,
+FillP-Red,
+FillComp-Red,
+FillLeaf-Red,
+OpenAmpar,
+CloseAmpar}
 \egroup\egroup
 \vspace*{-0.5cm}
 \[
@@ -1022,18 +1119,18 @@ Close-Ampar}
 
 Reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottkw{\ltimes} }$ and $\ottkw{from}_{\ottkw{\ltimes} }$ are straightforward.
 
-All reduction rules for destination-filling primitives trigger a memory write on hole $[[+h]]$; we model this as a special substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$. \rref*{Red-FillU} and \rref*{Red-FillF} do not create any new hole; they only write a value to an existing one. On the other hand, rules \rref*{Red-FillL}, \rref*{Red-FillR}, \rref*{Red-FillE} and \rref*{Red-FillP} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
+All reduction rules for destination-filling primitives trigger a memory write on hole $[[+h]]$; we model this as a special substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$. \rref*{\CFillU\CSep\CRed} and \rref*{\CFillF\CSep\CRed} do not create any new hole; they only write a value to an existing one. On the other hand, rules \rref*{\CFillL\CSep\CRed}, \rref*{\CFillR\CSep\CRed}, \rref*{\CFillE\CSep\CRed} and \rref*{\CFillP\CSep\CRed} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
-The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{Ty-ectxs-OpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{onR}_{\ottkw{\ltimes} }$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
+The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{\CTyEctxs\CSep\COpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{onR}_{\ottkw{\ltimes} }$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
 
 To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{ssec:sem}) to find the next unused name. Then we use either the \emph{shifted set}\\ $[[H ⩲ h']] \btriangleq \{ [[h+h']]~|~[[h]]\in [[H]] \}$ or the \emph{conditional shift operator}:\\[\interdefskip]\hbox{}\hfill
 $[[h [H ⩲ h'] ]] \btriangleq \left\{\begin{array}{ll}[[h+h']] & \textit{if}~[[h]]\in[[H]]\\[[h]] & \textit{otherwise}\end{array}\right.$\hfill\hbox{}\\[\interdefskip]
 We extend $\smallbullet\ottshname{[}[[H ⩲ h']]\ottshname{]}$ to arbitrary values, extended terms, and typing contexts in the obvious way (keeping in mind that $[[H' ⟨ v2 ❟ v1 ⟩]]$ binds the names in $[[H']]$).
 
 
-Rules \rref*{Open-Ampar} and \rref*{Close-Ampar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{Open-Ampar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{onR}_{\ottkw{\ltimes} }$ statement (which becomes the new term under focus). The rule \rref*{Close-Ampar} triggers when the body of a $\ottkw{onR}_{\ottkw{\ltimes} }$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
+Rules \rref*{\COpenAmpar} and \rref*{\CCloseAmpar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{\COpenAmpar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{onR}_{\ottkw{\ltimes} }$ statement (which becomes the new term under focus). The rule \rref*{\CCloseAmpar} triggers when the body of a $\ottkw{onR}_{\ottkw{\ltimes} }$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
 
-In rule \rref*{Red-FillComp}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of a structure with holes somewhere inside $[[C]]$. This results in the composition of two structures with holes. Because we dissociate $[[v2]]$ and $[[v1]]$ that were previously bound together by the ampar connective ($[[v2]]$ is merged with another structure, while $[[v1]]$ becomes the new focus), their hole names are no longer bound, so we need to make them globally unique, as we do when an ampar is opened with $\ottkw{onR}_{\ottkw{\ltimes} }$. This renaming is carried out by the conditional shift $[[v2[H ⩲ h''] ]]$ and $[[v1[H ⩲ h''] ]]$.
+In rule \rref*{\CFillComp\CSep\CRed}, we write the left-hand side $[[v2]]$ of a closed ampar $[[H ⟨ v2 ❟ v1 ⟩]]$ to a hole $[[+h]]$ that is part of a structure with holes somewhere inside $[[C]]$. This results in the composition of two structures with holes. Because we dissociate $[[v2]]$ and $[[v1]]$ that were previously bound together by the ampar connective ($[[v2]]$ is merged with another structure, while $[[v1]]$ becomes the new focus), their hole names are no longer bound, so we need to make them globally unique, as we do when an ampar is opened with $\ottkw{onR}_{\ottkw{\ltimes} }$. This renaming is carried out by the conditional shift $[[v2[H ⩲ h''] ]]$ and $[[v1[H ⩲ h''] ]]$.
 
 \paragraph{Type safety} With the semantics now defined, we can state the usual type safety theorems:
 
@@ -1241,85 +1338,85 @@ The preliminary, anonymous version was available at \url{https://doi.org/10.5281
     {#3}
     {#4}
 }
-\bgroup\renewcommand{\ottdrulename}[1]{red/}
+\bgroup\SetPrefix{\CRed\CSep}
 \begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 1)}\label{fig:sem-full1}}\begin{augmentwidth}{2.4cm}
 \drules{$[[C [ t ] ⟶ C' [ t' ] ]]$}{Small-step evaluation of commands}{%
-Focus-AppOne,
-Unfocus-AppOne,
-Focus-AppTwo,
-Unfocus-AppTwo,
-Red-App,
+AppOne-Focus,
+AppOne-Unfocus,
+AppTwo-Focus,
+AppTwo-Unfocus,
+App-Red,
 %
-Focus-PatU,
-Unfocus-PatU,
-Red-PatU,
+PatU-Focus,
+PatU-Unfocus,
+PatU-Red,
 %
-Focus-PatS,
-Unfocus-PatS,
-Red-PatL,
-Red-PatR,
+PatS-Focus,
+PatS-Unfocus,
+PatL-Red,
+PatR-Red,
 %
-Focus-PatP,
-Unfocus-PatP,
-Red-PatP,
+PatP-Focus,
+PatP-Unfocus,
+PatP-Red,
 %
-Focus-PatE,
-Unfocus-PatE,
-Red-PatE,
+PatE-Focus,
+PatE-Unfocus,
+PatE-Red,
 %
-Focus-Map,
-Unfocus-Map,
-Open-Ampar,
-Close-Ampar,
+Map-Focus,
+Map-Unfocus,
+OpenAmpar,
+CloseAmpar,
 %
-Focus-ToA,
-Unfocus-ToA,
-Red-ToA
+ToA-Focus,
+ToA-Unfocus,
+ToA-Red
 }
 \end{augmentwidth}\end{ottfig}
 
 \begin{ottfig}[h]{\caption{Full reduction rules for \destcalculus{} (part 2)}\label{fig:sem-full2}}\begin{augmentwidth}{2.4cm}
 \drules{}{}{%
-Focus-FromA,
-Unfocus-FromA,
-Red-FromA,
-Red-Alloc,
+FromA-Focus,
+FromA-Unfocus,
+FromA-Red,
+Alloc-Red,
 %
-Focus-FillU,
-Unfocus-FillU,
-Red-FillU,
+FillU-Focus,
+FillU-Unfocus,
+FillU-Red,
 %
-Focus-FillL,
-Unfocus-FillL,
-Red-FillL,
+FillL-Focus,
+FillL-Unfocus,
+FillL-Red,
 %
-Focus-FillR,
-Unfocus-FillR,
-Red-FillR,
+FillR-Focus,
+FillR-Unfocus,
+FillR-Red,
 %
-Focus-FillE,
-Unfocus-FillE,
-Red-FillE,
+FillE-Focus,
+FillE-Unfocus,
+FillE-Red,
 %
-Focus-FillP,
-Unfocus-FillP,
-Red-FillP,
+FillP-Focus,
+FillP-Unfocus,
+FillP-Red,
 %
-Focus-FillF,
-Unfocus-FillF,
-Red-FillF,
+FillF-Focus,
+FillF-Unfocus,
+FillF-Red,
 %
-Focus-FillCompOne,
-Unfocus-FillCompOne,
-Focus-FillCompTwo,
-Unfocus-FillCompTwo,
-Red-FillComp,
+FillCompOne-Focus,
+FillCompOne-Unfocus,
+FillCompTwo-Focus,
+FillCompTwo-Unfocus,
+FillComp-Red,
 %
-Focus-FillLeafOne,
-Unfocus-FillLeafOne,
-Focus-FillLeafTwo,
-Unfocus-FillLeafTwo,
-Red-FillLeaf
+FillLeafOne-Focus,
+FillLeafOne-Unfocus,
+FillLeafTwo-Focus,
+FillLeafTwo-Unfocus,
+FillLeaf-Red
 }
 \end{augmentwidth}\end{ottfig}
 \egroup

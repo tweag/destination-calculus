@@ -56,6 +56,7 @@
   \renewottcommands[#1]
 }
 \newcommand\ottaltcurrentprefix{ott}
+\newcommand{\maybecomm}[1]{#1}
 \newcommand\renewottcommands[1][ott]{
   \renewcommand\ottaltcurrentprefix{#1}
   \def\renewottcomm@nd##1{
@@ -66,7 +67,7 @@
     \ottalt@premisetoks={ }
     ##2
     \expandafter\ottalt@inferrule\expandafter
-      {\the\ottalt@premisetoks}{##3}{##4}{##1}
+      {\the\ottalt@premisetoks}{##3}{\maybecomm{##4}}{##1}
   }
   \renewottcomm@nd{premise}[1]{%
     \ottalt@premisetoks=
