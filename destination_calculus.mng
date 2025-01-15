@@ -1327,7 +1327,16 @@ In the case of an assignment of the form $*d = t$ which corresponds to $[[d ◀ 
 
 Two major differences:
 - self-referencing structs (when lifetime of t is same as d) can be created in rust, although we can do nothing with them after creation, while forbidden from the start in our system
-- Rust uses symbolic lifetimes, and then add a set of inequality constraints over them, and find the minimal solution for the inequation, while we have purely fixed ages with no transitivity
+- Rust uses symbolic lifetimes, and then add a set of inequality constraints over them, and find the minimal solution for the inequation, while we have purely fixed ages with no transitivity.
+- Thanks to our fixed age, a structure has always a single coherent lifetime for its parts, with explicit Modn 
+
+\subsection{Oxidizing OCaml}
+
+We need at least 3 scope levels while oxidizing ocaml only offers two.
+
+Modal ocaml allows weakening for linear variable (so their "linear" is in fact affine).
+
+If we count the 3rd level mentioned in the paper but not formalized ("regional"), we might be able to simulate a less flexible version of \destcalculus{}.
 
 \section{Conclusion and future work}\label{sec:conclusion}
 
