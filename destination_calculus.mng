@@ -298,6 +298,10 @@
 }
 \makeatother
 
+% A priori notre système est très proche de chez rust
+% notre contrainte de lifetime stricte empêche les self reference
+% en Rust, on peut créer des self referential struct mais elles s'auto-bloquent: impossible de les lire, écrire, ou move out/retourner
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Journal's boilerplate
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1297,6 +1301,33 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 \item the right side $[[T]]$ cannot contain holes (it might contain destinations), and can be eliminated by interaction with $[[T ¹ν → ①]]$ to free up the left side $[[S]]$. This is done using $\ottkw{from}_{\ottkw{\ltimes} }'$ and $\ottkw{onR}_{\ottkw{\ltimes} }$.
 
 \end{itemize}
+
+\subsection{Rust lifetimes vs our age system}
+
+
+Rust has developed a system of lifetime that is used to ensure that borrows don't live longer than what they reference, and that write borrows/uses of a same resource don't overlap. There is a parallel to be drawn with our system of ages, that control how destinations (that we can see as write-once borrows) are allowed to be used.
+
+Based on \cite{pearce_lifetime_2021}, they have two notions of lifetime for references (the lifetime of the reference itself, and the lifetime of the object being referenced by the reference) as we have for our destinations, and they also have rules that prevent scope escape. Notably:
+
+\[
+  \inferrule*[narrower=0.3,right=\textsc{T-Assign},]
+    {
+      \Gamma_1 \vdash w : \langle \tilde{T_1} \rangle^m \quad
+      \Gamma_1 \vdash \langle t : T_2 \rangle_\sigma^l \dashv \Gamma_2 \quad
+      \Gamma_2 \vdash T_2 \succeq m \\
+      \Gamma_3 = \text{write}^0(\Gamma_2, w, T_2) \quad
+      \lnot\text{writeProhibited}(\Gamma_3, w)
+    }
+    {
+      \Gamma_1 \vdash \langle w = t : \epsilon \rangle_\sigma^l \dashv \Gamma_3
+    }
+\]
+
+In the case of an assignment of the form $*d = t$ which corresponds to $[[d ◀ t]]$ in our system, the constraint $\Gamma_2 \vdash T_2 \succeq m$ (where $m$ is the lifetime of $[[d]]$ itself) ensures that all the parts forming $t$ (havign type $T_2$) will live at least as long as $d$, effectively preventing the faulty example presented in \cref{sec:scope-escape-dests}.
+
+Two major differences:
+- self-referencing structs (when lifetime of t is same as d) can be created in rust, although we can do nothing with them after creation, while forbidden from the start in our system
+- Rust uses symbolic lifetimes, and then add a set of inequality constraints over them, and find the minimal solution for the inequation, while we have purely fixed ages with no transitivity
 
 \section{Conclusion and future work}\label{sec:conclusion}
 
