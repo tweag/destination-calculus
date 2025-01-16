@@ -63,6 +63,7 @@
               inherit (pkgs.texlive)
                 scheme-basic
                 latexmk
+                latexdiff
                 acmart
                 cleveref
                 xargs

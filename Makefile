@@ -42,8 +42,14 @@ destination_calculus_ott.tex: grammar.ott rules_mod.ott
 %.tex: %.mng grammar.ott rules_mod.ott
 	ott $(OTT_OPTS) -tex_filter $< $@ grammar.ott rules_mod.ott
 
-destination_calculus.pdf destination_calculus.bbl : destination_calculus.tex destination_calculus_ott.tex $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES)
-	latexmk destination_calculus.tex
+# Create compare-to/%.tex to hold this command. Typically create a
+# copy of this repository at the right commit with git worktree and
+# use `make` there.
+%.diff.tex: compare-to/%.tex %.tex
+	latexdiff $^ > $@
+
+%.pdf %.bbl : %.tex destination_calculus_ott.tex $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES)
+	latexmk $<
 
 submission:
 	$(MAKE) clean
