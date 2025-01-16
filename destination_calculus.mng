@@ -768,20 +768,19 @@ We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of
 
 In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separates the definition and use site of $[[x1]]$.
 
-We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑]]^{\ottsmodee{0}}$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑]]^{\ottsmodee{1}}$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by one.
+We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑^0]]$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑^1]]$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by one.
 
 This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be thought of as giving the variable the same age on both sides.
 Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
 
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement. For that we need two operations:
-\begin{itemize}
-  \item We lift mode multiplication to typing contexts as a pointwise operation on bindings;\\ we pose $[[n'·({ x : m T })]] \btriangleq [[{ x : n' · m T }]]$.
-  \item We define context addition as a partial operation where $[[({ x : m T }) + P]] = [[{ x : m T },P]]$\hspace*{0.6em}if $[[x]] \notin [[P]]$ and $[[({ x : m T }) + ({ x : m' T })]] = [[x]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[T]]$.
-\end{itemize}
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement.\improvement{Describe the algebraic operations on contexts. Presumably in the age/mode section above}
 
-\begin{ottfig}[p]{\caption{Type system of \destcalculus{}}\label{fig:ty-term-sterm}\label{fig:mul-age-tables}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
+\newcommand{\pleq}{[[⥶]]^{\,\scriptscriptstyle{\pmb{\mathsf{p}}}}}
+\newcommand{\aleq}{[[⥶]]^{\,\scriptscriptstyle{\pmb{\mathsf{a}}}}}
+
+\begin{ottfig}{\caption{Types and modes of \destcalculus{}}\label{fig:mul-age-tables}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 
 \renewcommand\ottaltinferrule[4]{
   \inferrule*[narrower=0.3,lab=#1,#2]
@@ -801,6 +800,32 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
   [[a]] &\grammdef& [[↑^ka]] \grammsep [[∞]]
 \end{array}\\[\interdefskip]
 [[ν]] \btriangleq [[↑^0]] \quad [[↑]] \btriangleq [[↑^1]]}\end{minipage}
+
+\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Ordering on modes:}\end{minipage}
+
+\smallskip
+
+\hfill
+$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$
+\hfill
+\vrule width 0.5pt % Vertical rule of 1pt width
+\hfill
+\begin{tabular}{|c||c|c|}\hline
+$\pleq$ & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
+$[[¹]]$ & $\top$  & $\top$ \\\hline
+$[[ω]]$ & $\bot$  & $\top$ \\\hline
+\end{tabular}
+\hfill
+\vrule width 0.5pt % Vertical rule of 1pt width
+\hfill
+\begin{tabular}{|c||c|c|}\hline
+$\aleq$    & $[[↑^ka]]$      & $[[∞]]$ \\\hhline{|=#=|=|}
+$[[↑^ja]]$ & $[[ja]]=[[ka]]$ & $\top$ \\\hline
+$[[∞]]$    & $\bot$          & $\top$ \\\hline
+\end{tabular}
+\hfill\phantom{.}
 
 \bigskip
 
@@ -833,10 +858,35 @@ $[[·]]$        & $[[↑^ka]]$    & $[[∞]]$ \\\hhline{|=#=|=|}
 $[[↑^ja]]$     & $[[↑^ka+ja]]$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$       & $[[∞]]$ \\\hline
 \end{tabular}\hfill
+\smallskip
+
+\hfill
+$[[(p a) · (p' a')]] \btriangleq [[(p . p') (a · a')]]$
+\hfill
+$[[(p a) + (p' a')]] \btriangleq [[(p + p') (a + a')]]$
+\hfill\phantom{.}
 
 \bigskip
-\hrule
-\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Operations on Contexts:}\end{minipage}
+
+\smallskip
+
+\begin{tabular}{lcl@{\qquad}l}
+  $[[n'· {}]]$ & $\btriangleq$ & $[[{}]]$\\
+  $[[n'·({ x : m T })]]$ & $\btriangleq$ & $[[{ x : n' · m T }]]$\\
+\end{tabular}
+\hfill
+\begin{tabular}{lcl@{\qquad}l}
+  $[[{} + P]]$ & $\btriangleq$ & $[[P]]$\\
+  $[[({ x : m T }, P1) + P2]]$ & $\btriangleq$ & $[[{ x : m T },(P1+P2)]]$ & \textrm{if $[[x]]\notin[[P2]]$}\\
+  $[[({ x : m T }, P1) + ({ x : m' T }, P2)]]$ & $\btriangleq$ & $[[{x : m+m' T}, (P1+P2)]]$
+\end{tabular}
+
+\egroup
+\end{ottfig}
+
+\begin{ottfig}{\caption{Typing rules of \destcalculus{}}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 
 \bgroup\SetPrefix{\CTyTerm\CSep}
 \ottdefnTyXXterm{}
@@ -860,14 +910,7 @@ $[[∞]]$        & $[[∞]]$       & $[[∞]]$ \\\hline
 
 The predicate $\mathtt{DisposableOnly}~[[P]]$ in rules \rref*{\CTyTerm\CSep\CVar}, \rref*{\CTyTerm\CSep\CAlloc} and \rref*{\CTySTerm\CSep\CUnit} says that $[[P]]$ can only contain bindings with multiplicity $[[ω]]$, for which weakening is allowed in linear logic. It is enough to allow weakening at the leaves of the typing tree, \emph{i.e.} in the three aforementioned rules.
 
-\newcommand{\pleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{p}}}}}}
-\newcommand{\aleq}{\mathop{\mathtt{⥶}^{\,\scriptscriptstyle{\pmb{\mathsf{a}}}}}}
-
-Rule \rref*{\CTyTerm\CSep\CVar}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν ⥶ m]]$ defined as~~$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\\[\interdefskip]\hbox{}\hfill
-$[[¹]] \pleq [[¹]]$ \hfill
-$[[p]] \pleq [[ω]]$ \hfill
-$[[a]] \aleq [[∞]]$ \hfill
-$[[↑]]^{\ottsmodee{k}} \aleq [[↑]]^{\ottsmodee{j}} \Longleftrightarrow \ottsmodee{k} = \ottsmodee{j}\quad\text{\small(no finite age dereliction)}$ \hfill\hbox{}
+Rule \rref*{\CTyTerm\CSep\CVar}, in addition to weakening, allows for dereliction of the mode for the variable used, with subtyping constraint $[[¹ν ⥶ m]]$ defined as~~$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ where:\improvement{All the bit about mode ordering should move in the section about modes}\improvement{Draw the attention, probably in the previous section on ages, on the fact that submoding on finite age is equality.}
 
 Rule \rref*{\CTyTerm\CSep\CPatU} is elimination for unit, and is also used to chain fill operations.
 

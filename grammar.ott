@@ -261,6 +261,7 @@ mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }
   | p a :: :: Pair {{ com Pair of a multiplicity and age }} {{ tex [[p]]\hspace{-0.15ex}[[a]] }} {{ coq (Some (pair [[p]] [[a]])) }}
   | ☠ :: :: Err {{ tex \ottsmode{\skull} }} {{ coq None }} {{ com Error case (incompatible types, multiplicities, or ages) }}
   | m1 · ... · mk :: S :: Times {{ com Semiring product }} {{ coq (mode_times' [[m1...mk]]) }}
+  | m1 + m2 :: M :: Plus {{ com Semiring sum }} {{ tex \ottsmode{[[m1]]+[[m2]]} }}
   | ( m ) :: S :: Paren {{ tex \ottsmode{(}[[m]]\ottsmode{)} }} {{ coq [[m]] }}
   | ɷ :: S :: Urr {{ tex \ottsmode{\omega} }} {{ coq (Some (pair Ur (Fin 0))) }}
   | ˥ :: S :: Linn {{ tex \ottsmode{1} }} {{ coq (Some (pair Lin (Fin 0))) }}
@@ -269,6 +270,7 @@ mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring,
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear use }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear use }} {{ coq Ur }}
   | p1 . ... . pk :: S :: Times {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
+  | p1 + p2 :: M :: Plus {{ com Semiring sum }} {{ tex \ottsmode{[[p1]]+[[p2]]} }}
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
 age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second component of mode) }} {{ coq ext_nat }}
@@ -277,6 +279,7 @@ age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second c
   | ↑^ age_nat :: :: Fin {{ tex \ottsmode{\uparrow}^{[[age_nat]]} }} {{ com k scopes older }} {{ coq (Fin [[age_nat]]) }}
   | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static }} {{ coq Inf }}
   | a1 · ... · ak :: S :: Times {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
+  | a1 + a2 :: M :: Plus {{ com Semiring sum }} {{ tex \ottsmode{[[a1]]+[[a2]]} }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
 
 age_nat, ka {{ tex \ottsmodee{k} }}, ja {{ tex \ottsmodee{j} }} :: 'age_nat_' ::=
@@ -951,6 +954,7 @@ terminals :: 'terminals_' ::=
   | ◀ :: :: fillL {{ tex \blacktriangleleft }}
   | · :: :: semiring {{ tex \ottsmode{\hspace{-0.1ex}\cdot\hspace{-0.1ex} } }}
   | ⩲ :: :: rename {{ tex \pluseq }}
+  | ⥶ :: :: submode {{ tex \mathrel{\texttt{⥶} } }}
 
 % === Contexts ===
   | + :: :: union {{ tex + }}
@@ -985,7 +989,7 @@ pred :: '_' ::= {{ com Serves for the .mng file. Isn't used in the actual rules 
   | G1 # G2 :: :: Disjoint {{ tex [[G1]]\texttt{\#}[[G2]] }}
   | H1 ## H2 :: :: HDisjoint {{ tex [[H1]]\texttt{\#\#}[[H2]] }}
   | IsValid m :: :: IsValid {{ tex \texttt{IsValid}~[[m]] }}
-  | m1 ⥶ m2 :: :: ModeSubtype {{ tex [[m1]]~\texttt{⥶}~[[m2]] }}
+  | m1 ⥶ m2 :: :: ModeSubtype
   | NotVal t :: :: NotVal {{ tex \texttt{NotVal}~[[t]] }}
   | h1 = h2 :: :: hname_eq {{ tex [[h1]] \texttt{=} [[h2]] }}
 
