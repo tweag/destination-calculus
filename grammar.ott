@@ -272,11 +272,18 @@ mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring,
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 
 age, a :: 'age_' ::= {{ tex \ottsmode{[[age]]} }} {{ com Age (Semiring, second component of mode) }} {{ coq ext_nat }}
-  | ν :: :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now }} {{ coq (Fin 0) }}
-  | ↑ :: :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
+  | ν :: M :: 0 {{ tex \ottsmode{\nu} }} {{ com Born now }} {{ coq (Fin 0) }}
+  | ↑ :: M :: 1 {{ tex \ottsmode{\uparrow} }} {{ com One scope older }} {{ coq (Fin 1) }}
+  | ↑^ age_nat :: :: Fin {{ tex \ottsmode{\uparrow}^{[[age_nat]]} }} {{ com k scopes older }} {{ coq (Fin [[age_nat]]) }}
   | ∞ :: :: Inf {{ tex \ottsmode{\infty} }} {{ com Infinitely old / static }} {{ coq Inf }}
   | a1 · ... · ak :: S :: Times {{ com Semiring product }} {{ coq (age_times' [[a1...ak]]) }}
   | ( a ) :: S :: Paren {{ tex \ottsmode{(}[[a]]\ottsmode{)} }} {{ coq [[a]] }}
+
+age_nat, ka {{ tex \ottsmodee{k} }}, ja {{ tex \ottsmodee{j} }} :: 'age_nat_' ::=
+  | 0 :: :: 0 {{ tex \ottsmodee{0} }} {{ coq 0 }}
+  | 1 :: :: 1 {{ tex \ottsmodee{1} }} {{ coq 1 }}
+  | 2 :: :: 2 {{ tex \ottsmodee{2} }} {{ coq 2 }}
+  | ka + ja :: M :: sum {{ tex \ottsmodee{[[ka]]+[[ja]]} }}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

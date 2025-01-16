@@ -798,9 +798,9 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 \end{array}}{\setlength{\arraycolsep}{0.6ex}\!\begin{array}[b]{rrl}
 [[m]], [[n]] &\grammdef& [[p a]] \hspace*{\widthof{$[[⌊ T ⌋ m]]$}-\widthof{$[[p a]]$}}\quad\textit{(pair of multiplicity and age)} \\
   [[p]] &\grammdef& [[¹]] \grammsep [[ω]] \\
-  [[a]] &\grammdef& [[↑]]^{\ottsmodee{k}} \grammsep [[∞]]
+  [[a]] &\grammdef& [[↑^ka]] \grammsep [[∞]]
 \end{array}\\[\interdefskip]
-[[ν]] \btriangleq [[↑]]^{\ottsmodee{0}} \quad [[↑]] \btriangleq [[↑]]^{\ottsmodee{1}}}\end{minipage}
+[[ν]] \btriangleq [[↑^0]] \quad [[↑]] \btriangleq [[↑^1]]}\end{minipage}
 
 \bigskip
 
@@ -823,15 +823,15 @@ $[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
 \vrule width 0.5pt % Vertical rule of 1pt width
 \hfill
 \begin{tabular}{|c||c|c|}\hline
-$\ottsmode{+}$ & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hhline{|=#=|=|}
-$[[↑]]^{\ottsmodee{j}}$    & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑]]^{\ottsmodee{k}}\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
+$\ottsmode{+}$ & $[[↑^ka]]$               & $[[∞]]$ \\\hhline{|=#=|=|}
+$[[↑^ja]]$     & $\text{if }\ottsmodee{k} = \ottsmodee{j}\text{ then }[[↑^ka]]\text{ else }[[∞]]$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 \end{tabular}
 \hfill
 \begin{tabular}{|c||c|c|}\hline
-$[[·]]$        & $[[↑]]^{\ottsmodee{k}}$               & $[[∞]]$ \\\hhline{|=#=|=|}
-$[[↑]]^{\ottsmodee{j}}$    & $[[↑]]^{\ottsmodee{k+j}}$ & $[[∞]]$ \\\hline
-$[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
+$[[·]]$        & $[[↑^ka]]$    & $[[∞]]$ \\\hhline{|=#=|=|}
+$[[↑^ja]]$     & $[[↑^ka+ja]]$ & $[[∞]]$ \\\hline
+$[[∞]]$        & $[[∞]]$       & $[[∞]]$ \\\hline
 \end{tabular}\hfill
 
 \bigskip
