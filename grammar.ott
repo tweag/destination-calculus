@@ -269,7 +269,7 @@ mode, m, n :: 'mode_' ::= {{ tex \ottsmode{[[mode]]} }} {{ com Mode (Semiring) }
 mul, p :: 'mul_' ::= {{ tex \ottsmode{[[mul]]} }} {{ com Multiplicity (Semiring, first component of mode) }} {{ coq _mul }}
   | ¹ :: :: Lin {{ tex \ottsmode{1} }} {{ com Linear use }} {{ coq Lin }}
   | ω :: :: Ur {{ tex \ottsmode{\omega} }} {{ com Non-linear use }} {{ coq Ur }}
-  | p1 . ... . pk :: S :: Times {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
+  | p1 · ... · pk :: S :: Times {{ com Semiring product }} {{ coq (mul_times' [[p1...pk]]) }}
   | p1 + p2 :: M :: Plus {{ com Semiring sum }} {{ tex \ottsmode{[[p1]]+[[p2]]} }}
   | ( p ) :: S :: Paren {{ tex \ottsmode{(}[[p]]\ottsmode{)} }} {{ coq [[p]] }}
 

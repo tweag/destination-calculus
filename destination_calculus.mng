@@ -204,7 +204,7 @@
    \scalebox{\myratio}{\begin{minipage}{\linewidth+\widthaugment}\BODY
    \end{minipage}}}
 
-\newcommand{\IfFancyRuleNames}[2]{#1}
+\newcommand{\IfFancyRuleNames}[2]{#2}
 
 \newcommand{\SetPrefix}[1]{\IfFancyRuleNames{\renewcommand{\ottdrulename}[1]{#1}}{}}
 
@@ -707,22 +707,29 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 
 \newcommand{\grammsep}{\hspace*{1.8ex}|\hspace*{1.8ex}}
 \newcommand{\grammdef}{\mathrel{\raisebox{0.09ex}{$\mathop{:}$\hspace*{-0.1ex}$\mathop{:}$\hspace*{-0.1ex}}\shorteq}}
+\newcommand{\pleq}{[[⥶]]^{\scriptscriptstyle{\pmb{\mathsf{p}}}}}
+\newcommand{\aleq}{[[⥶]]^{\scriptscriptstyle{\pmb{\mathsf{a}}}}}
 
 \begin{figure}[t]
-\codehere{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
+
+\begin{minipage}{\linewidth}\small\textit{Core grammar of terms:}\end{minipage}
+
+\smallskip
+
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\codehere{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
 [[t]], [[u]] &\grammdef& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
              &|\,& [[ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[t ►case m ᴇ n x ⟼ u]] \\
              &|\,& [[t ►map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
              &|\,& [[ t ⨞ () ]] \grammsep [[ t ⨞ Inl ]] \grammsep [[t ⨞ Inr]] \grammsep [[t ⨞ (,)]] \grammsep [[t ⨞ ᴇ m]] \grammsep [[t ⨞ ( λ x m ⟼ u )]] \grammsep [[t ⨞· t']] \grammsep [[t ◀ t']]
-\end{array}}
+\end{array}}\end{minipage}
 
 \bigskip
 
-\begin{minipage}{\linewidth}\hspace*{0.05\linewidth}\small\textit{Syntactic sugar forms:}\end{minipage}
+\begin{minipage}{\linewidth}\small\textit{Syntactic sugar for terms:}\end{minipage}
 
 \smallskip
 
-\sidebysidecodehere{t}{0.46}{
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.46}{
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ Inl ◀ t)
@@ -753,40 +760,23 @@ from⧔' (alloc ►map d ⟼ d ⨞ () )
 from⧔' (alloc ►map d ⟼ (d ⨞ (,)) ►case ¹ν⮒
 ‥‥‥‥‥‥( d1 , d2 ) ⟼ d1 ◀ t1 ; d2 ◀ t2)
 ]]\end{array}
-}
-\caption{Syntax of \destcalculus{}}\label{fig:grammar}\label{fig:sterm}
-\end{figure}
+}\end{minipage}
 
-\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ n]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}. Just as important are \emph{modes} and the associated exponential modality $\ottstype{!}_{[[m]]}$\critical{move that later?}.
-The syntax of \destcalculus{} terms is presented in~\cref{fig:grammar}. Some of the constructions that we've been using in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft} are syntactic sugar for more fundamental forms, we give their definitions in \cref{fig:sterm} too.
-
-Following a common trend (e.g.~\cite{bernardy_linear_2018,qtt_2018,granule_2019,bernardy_modality_2020}), our modes form a semiring\footnote{Technically, our semirings are commutative but don't have a zero. The terminology “ringoid” has been sometimes used for semiring without neutral elements (neither zero nor unit), for instance~\cite{bernardy_modality_2020}.}. In \destcalculus{} the mode semiring is the product of a \emph{multiplicity} semiring for linearity, as in~\cite{bernardy_linear_2018}, and of an \emph{age} semiring (see \cref{ssec:age-control}) to prevent the scoping issues discussed in \cref{sec:scope-escape-dests}.
-
-We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring.\critical{move that later?} % In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
-
-\subsection{The age semiring}\label{ssec:age-control}
-
-In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separates the definition and use site of $[[x1]]$.
-
-We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑^0]]$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑^1]]$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by one.
-
-This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be thought of as giving the variable the same age on both sides.
-Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
-
-\subsection{Typing rules}\label{ssec:ty-term-val}
-
-The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement.\improvement{Describe the algebraic operations on contexts. Presumably in the age/mode section above}
-
-\newcommand{\pleq}{[[⥶]]^{\,\scriptscriptstyle{\pmb{\mathsf{p}}}}}
-\newcommand{\aleq}{[[⥶]]^{\,\scriptscriptstyle{\pmb{\mathsf{a}}}}}
-
-\begin{ottfig}{\caption{Types and modes of \destcalculus{}}\label{fig:mul-age-tables}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
+\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 
 \renewcommand\ottaltinferrule[4]{
   \inferrule*[narrower=0.3,lab=#1,#2]
     {#3}
     {#4}
 }
+
+\bigskip
+\hrule
+\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Grammar of types, modes and contexts:}\end{minipage}
+
+\smallskip
 
 \hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.58}{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
 [[T]], [[U]], [[S]] &\grammdef& [[⌊ T ⌋ n]] \quad\quad\textit{(destination)} \\
@@ -805,34 +795,38 @@ The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_moda
 
 \begin{minipage}{\linewidth}\small\textit{Ordering on modes:}\end{minipage}
 
-\smallskip
+{\small
+\vspace*{-0.3cm}
 
-\hfill
-$[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$
-\hfill
-\vrule width 0.5pt % Vertical rule of 1pt width
-\hfill
-\begin{tabular}{|c||c|c|}\hline
-$\pleq$ & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
-$[[¹]]$ & $\top$  & $\top$ \\\hline
-$[[ω]]$ & $\bot$  & $\top$ \\\hline
-\end{tabular}
-\hfill
-\vrule width 0.5pt % Vertical rule of 1pt width
-\hfill
-\begin{tabular}{|c||c|c|}\hline
-$\aleq$    & $[[↑^ka]]$      & $[[∞]]$ \\\hhline{|=#=|=|}
-$[[↑^ja]]$ & $[[ja]]=[[ka]]$ & $\top$ \\\hline
-$[[∞]]$    & $\bot$          & $\top$ \\\hline
-\end{tabular}
-\hfill\phantom{.}
+\hfill $[[p a ⥶ p' a']] \Longleftrightarrow [[p]] \pleq [[p']] \land~[[a]] \aleq [[a']]$ \hfill \begin{tikzpicture}[baseline=(current bounding box.center), clip]
+% Define nodes
+\node (omega) at (0,1) {$[[ω]]$};
+\node (oneA) at (0,0) {$[[¹]]$};
 
-\bigskip
+% Draw edge with label
+\draw (omega) -- node[midway, below, rotate=90] {$\pleq$} (oneA);
+
+\node (inf) at (4,1) {$[[∞]]$};
+\node (zero) at (2,0) {$[[↑^0]]$};
+\node (oneB) at (3,0) {$[[↑^1]]$};
+\node (dots1) at (4,0) {\ldots};
+\node (k) at (5,0) {$[[↑^ka]]$};
+\node (dots2) at (6,0) {\ldots};
+
+% Draw edges with labels
+\draw (inf) -- node[midway, above, rotate=30, inner sep=1pt] {$\aleq$} (zero);
+\draw (inf) -- node[midway, below, rotate=45, inner sep=1pt] {$\aleq$} (oneB);
+\draw (inf) -- node[midway, above, rotate=135, yscale=-1, inner sep=1pt] {$[[⥶]]^{\reflectbox{$\scriptscriptstyle{\pmb{\mathsf{a}}}$}}$} (k);
+\end{tikzpicture}\hfill\phantom{.}
+}
+
+\vspace*{-0.2cm}
 
 \begin{minipage}{\linewidth}\small\textit{Operations on modes:}\end{minipage}
 
 \smallskip
 
+{\small
 \hfill\begin{tabular}{|c||c|c|}\hline
 $\ottsmode{+}$ & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
 $[[¹]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
@@ -857,34 +851,61 @@ $[[∞]]$        & $[[∞]]$                   & $[[∞]]$ \\\hline
 $[[·]]$        & $[[↑^ka]]$    & $[[∞]]$ \\\hhline{|=#=|=|}
 $[[↑^ja]]$     & $[[↑^ka+ja]]$ & $[[∞]]$ \\\hline
 $[[∞]]$        & $[[∞]]$       & $[[∞]]$ \\\hline
-\end{tabular}\hfill
+\end{tabular}\hfill\phantom{.}
 \smallskip
 
-\hfill
-$[[(p a) · (p' a')]] \btriangleq [[(p . p') (a · a')]]$
-\hfill
+\hfill\hspace*{-1.5cm}
+$[[(p a) · (p' a')]] \btriangleq [[(p · p') (a · a')]]$
+\hfill\hspace*{0.5cm}
 $[[(p a) + (p' a')]] \btriangleq [[(p + p') (a + a')]]$
-\hfill\phantom{.}
+\hfill\phantom{.}}
 
 \bigskip
 
-\begin{minipage}{\linewidth}\small\textit{Operations on Contexts:}\end{minipage}
+\begin{minipage}{\linewidth}\small\textit{Operations on typing contexts:}\end{minipage}
 
 \smallskip
 
-\begin{tabular}{lcl@{\qquad}l}
-  $[[n'· {}]]$ & $\btriangleq$ & $[[{}]]$\\
-  $[[n'·({ x : m T })]]$ & $\btriangleq$ & $[[{ x : n' · m T }]]$\\
+{\small
+\bgroup
+\renewcommand\tabcolsep{2pt}
+\hfill\begin{tabular}[c]{rclcc@{\qquad}l}
+  $[[n]]$ &$\cdot$& $[[{}]]$ & $\btriangleq$ & $[[{}]]$\\
+  $[[n]]$ &$\cdot$& $[[({ x : m T },P)]]$ & $\btriangleq$ & $[[({ x : n · m T }),n·P]]$\\
 \end{tabular}
 \hfill
-\begin{tabular}{lcl@{\qquad}l}
-  $[[{} + P]]$ & $\btriangleq$ & $[[P]]$\\
-  $[[({ x : m T }, P1) + P2]]$ & $\btriangleq$ & $[[{ x : m T },(P1+P2)]]$ & \textrm{if $[[x]]\notin[[P2]]$}\\
-  $[[({ x : m T }, P1) + ({ x : m' T }, P2)]]$ & $\btriangleq$ & $[[{x : m+m' T}, (P1+P2)]]$
-\end{tabular}
+\begin{tabular}[c]{rclcc@{\qquad}l}
+  $[[{}]]$ &$+$& $[[P]]$ & $\btriangleq$ & $[[P]]$\\
+  $[[({ x : m T }, P1)]]$ &$+$& $[[P2]]$ & $\btriangleq$ & $[[{ x : m T },(P1+P2)]]$ & \textrm{if $[[x]]\notin[[P2]]$}\\
+  $[[({ x : m T }, P1)]]$ &$+$& $[[({ x : m' T }, P2)]]$ & $\btriangleq$ & $[[{x : m+m' T}, (P1+P2)]]$
+\end{tabular}\hfill\phantom{.}
+\egroup
+}
 
 \egroup
-\end{ottfig}
+
+\caption{Terms, types and modes of \destcalculus{}}\label{fig:grammar}\label{fig:sterm}\label{fig:mul-age-tables}
+\end{figure}
+
+\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ n]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}. Just as important are \emph{modes} and the associated exponential modality $\ottstype{!}_{[[m]]}$\critical{move that later?}.
+The syntax of \destcalculus{} terms is presented in~\cref{fig:grammar}. Some of the constructions that we've been using in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft} are syntactic sugar for more fundamental forms, we give their definitions in \cref{fig:sterm} too.
+
+Following a common trend (e.g.~\cite{bernardy_linear_2018,qtt_2018,granule_2019,bernardy_modality_2020}), our modes form a semiring\footnote{Technically, our semirings are commutative but don't have a zero. The terminology “ringoid” has been sometimes used for semiring without neutral elements (neither zero nor unit), for instance~\cite{bernardy_modality_2020}.}. In \destcalculus{} the mode semiring is the product of a \emph{multiplicity} semiring for linearity, as in~\cite{bernardy_linear_2018}, and of an \emph{age} semiring (see \cref{ssec:age-control}) to prevent the scoping issues discussed in \cref{sec:scope-escape-dests}.
+
+We usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring.\critical{move that later?} % In particular, a function arrow without annotation, or with multiplicity $[[¹]]$, is linear; it is equivalent to $\ottstype{\multimap}$ from linear logic~\cite{girard_linear_1995}.
+
+\subsection{The age semiring}\label{ssec:age-control}
+
+In order to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}, we track the \emph{age} of destinations. Specifically we track, with a de-Bruijn-index-like discipline, what scope a destination originates from. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. If we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separates the definition and use site of $[[x1]]$.
+
+We also have an age $[[∞]]$ for values which don't originate from the scope of a $[[t ►map x ⟼ t']]$ and can be freely used in and returned by any scope. In particular, destinations can never have age $[[∞]]$; the main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑^0]]$ for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑^1]]$ as we will frequently multiply ages by $[[↑]]$, when entering a scope, to mean that in the scope, all the free variables have their age increased by one.
+
+This description is reflected by the semiring operations. Multiplication $[[·]]$ is used when nesting a term inside another: then ages, as indices, are summed. Addition $\ottsmode{+}$ is used to share a variable between two subterms, it ought to be thought of as giving the variable the same age on both sides.
+Tables for the $\ottsmode{+}$ and $\ottsmode{[[·]]}$ operations are presented in~\cref{fig:mul-age-tables}.
+
+\subsection{Typing rules}\label{ssec:ty-term-val}
+
+The typing rules for \destcalculus{} are highly inspired from\cite{bernardy_modality_2020} and Linear Haskell~\cite{bernardy_linear_2018}, and are detailed in~\cref{fig:ty-term-sterm}. In particular, we use the same additive/multiplicative approach on contexts for linearity and age enforcement.\improvement{Describe the algebraic operations on contexts. Presumably in the age/mode section above}
 
 \begin{ottfig}{\caption{Typing rules of \destcalculus{}}\label{fig:ty-term-sterm}}\bgroup\renewcommand{\ottdruleTyXXtermXXVal}{}
 
@@ -942,24 +963,89 @@ The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\
 
 Before we define the operational semantics of \destcalculus{} we need to introduce a few more concepts. We'll need commands $[[ C[t] ]]$, they're described in \cref{ssec:ty-ectxs-cmd}; and we'll need values, described in \cref{fig:grammar-val}. Indeed, the terms of \destcalculus{} lack any way to represent destinations or holes, or really any kind of value (for instance $[[Inl ()]]$ has been, so far, just syntactic sugar for a term $[[from⧔' (alloc ►map d ⟼ …)]]$). It's a peculiarity of \destcalculus{} that values only exist during the reduction, in this aspect our operational semantics resembles a denotational semantics. We sometimes call values \emph{runtime values} to emphasize this aspect. In order to express type safety with respect to our operational semantics, we'll need to extend the type system to cover commands and values, but these new typing rules are better thought of as technical device for the proofs than as part of the type system proper.
 
-\subsection{Runtime values and extended terms}\label{ssec:runtime-values}
+\subsection{Runtime values and new typing context forms}\label{ssec:runtime-values}
 
-\begin{ottfig}{\caption{Runtime values and their typing rules}\label{fig:grammar-val}\label{fig:ty-val}}
-\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{c}{0.75}{\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\begin{array}{rrl}
-[[t]], [[u]] &\grammdef& \ldots \grammsep [[v]] \\
-&&\\
+\begin{ottfig}{\caption{Runtime values and new typing context forms}\label{fig:grammar-val}\label{fig:ty-val}}
+\hspace*{-0.1\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{c}{0.39}{\begin{minipage}{\linewidth}
+\begin{minipage}{\linewidth}\small\textit{Grammar extended with values:}\end{minipage}
+
+\smallskip
+
+$\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\begin{array}{rrl}
+  [[t]], [[u]] &\grammdef& \ldots \grammsep [[v]] \\
+  \\
        [[v]] &\grammdef& [[+ h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[+ h]]$}}\quad\quad\textit{(hole)} \\
              &|\,& [[- h]] \hspace*{\widthof{$[[H ⟨ v2 ❟ v1 ⟩]]$}-\widthof{$[[- h]]$}}\quad\quad\textit{(destination)} \\
-             &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value form)} \\
-             &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \grammsep [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
-             &&\\
-\end{array}\\\hspace*{-0.5em}\begin{array}{rrlcccc}
+             &|\,& [[H ⟨ v2 ❟ v1 ⟩]] \quad\quad\textit{(ampar value)} \\
+             &|\,& [[()]] \grammsep [[ᵛλ x m ⟼ u]] \grammsep [[Inl v]] \\
+             &|\,& [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
+\end{array}$
+
+\bigskip\bigskip\bigskip
+\hrule
+\bigskip\bigskip\bigskip
+
+\[\bgroup\SetPrefix{\CTyTerm\CSep}
+  \drule{Ty-term-Val}\egroup
+\]\end{minipage}}{\begin{minipage}{\linewidth}
+
+\begin{minipage}{\linewidth}\small\textit{Extended grammar of typing contexts:}\end{minipage}
+
+\smallskip
+
+$\setlength{\myskip}{2.38ex}\!\begin{array}{rrlcccc}
 [[D]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] &|& [[D1 , D2]] \\% &|& [[D1 + D2]] &|& [[m · D]] \\
 [[P]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ x : m T }]] &|& [[P1 , P2]] \\% &|& [[P1 + P2]] &|& [[m · P]] \\
-\hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] \grammsep [[-⁻¹ D]] &|& [[G1 , G2]] % &|& [[G1 + G2]] &|& [[m · G]]
-\end{array}}{\hspace*{0.5cm}
-  \bgroup\SetPrefix{\CTyTerm\CSep}
-  \drule{Ty-term-Val}\egroup}\end{minipage}
+\hskip \myskip [[G]] &\grammdef& [[{ }]] \grammsep [[{ - h : m ⌊ T ⌋ n }]] \grammsep [[{ + h : T n }]] &|& [[G1 , G2]] % &|& [[G1 + G2]] &|& [[m · G]]
+\end{array}$
+
+\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Operations extended to new typing context forms:}\end{minipage}
+
+\smallskip
+
+{\small
+\bgroup
+\renewcommand\tabcolsep{2pt}
+%\hfill
+% \begin{tabular}[c]{rclcc@{\quad}l}
+%   $[[n']]$ &$\cdot$& $[[({ + h : T n },G)]]$ & $\btriangleq$ & $[[({ + h : T n' · n }),n'·G]]$\\
+%   $[[n']]$ &$\cdot$& $[[({ - h : m ⌊ T ⌋ n },P)]]$ & $\btriangleq$ & $[[({ - h : n' · m ⌊ T ⌋ n }),n'·P]]$& $\phantom{.}^{\dagger}$\\
+%   \\
+%   $[[({ + h : T n }, G1)]]$ &$+$& $[[G2]]$ & $\btriangleq$ & $[[{ + h : T n },(G1+G2)]]$ & \textrm{if $[[h]]\notin[[G2]]$}\\
+%   $[[({ + h : T n }, G1)]]$ &$+$& $[[({ + h : T n' }, G2)]]$ & $\btriangleq$ & $[[{ + h : T n+n' }, (G1+G2)]]$\\
+%   $[[({ - h : m ⌊ T ⌋ n }, P1)]]$ &$+$& $[[P2]]$ & $\btriangleq$ & $[[{ - h : m ⌊ T ⌋ n },(P1+P2)]]$ & \textrm{if $[[h]]\notin[[P2]]$}~~$\phantom{.}^{\dagger}$\\
+%   $[[({ - h : m ⌊ T ⌋ n }, P1)]]$ &$+$& $[[({ - h : m' ⌊ T ⌋ n }, P2)]]$ & $\btriangleq$ & $[[{ - h : m+m' ⌊ T ⌋ n }, (P1+P2)]]$ &$\phantom{.}^{\dagger}$\\
+% \end{tabular}
+\begin{tabular}[c]{rclcc@{\quad}l}
+  $[[n']]$ &$\cdot$& $[[({ + h : T n },G)]]$ & $\btriangleq$ & $[[({ + h : T n' · n }),n'·G]]$\\
+  $[[n']]$ &$\cdot$& $[[({ - h : m ⌊ T ⌋ n },P)]]$ & $\btriangleq$ & $[[({ - h : n' · m ⌊ T ⌋ n }),n'·P]]$& $\phantom{.}^{\dagger}$\\
+\end{tabular}
+
+\bigskip
+
+\begin{tabular}[c]{rclcc@{\quad}l}
+  $[[({ + h : T n }, G1)]]$ &$+$& $[[G2]]$ & $\btriangleq$ & $[[{ + h : T n },(G1+G2)]]$ & \textrm{if $[[h]]\notin[[G2]]$}\\
+  $[[({ + h : T n }, G1)]]$ &$+$& $[[({ + h : T n' }, G2)]]$ & $\btriangleq$ & $[[{ + h : T n+n' }, (G1+G2)]]$\\
+\end{tabular}
+
+\smallskip % N.B.: alignment is not pretty for this last tabular, but we cannot afford more space
+
+\begin{tabular}[c]{rcl}
+  $[[({ - h : m ⌊ T ⌋ n }, P1)]]$ &$+$& $[[P2]]$  $\btriangleq$  $[[{ - h : m ⌊ T ⌋ n },(P1+P2)]]$  \quad\textrm{if $[[h]]\notin[[P2]]$}~~$\phantom{.}^{\dagger}$\\
+  $[[({ - h : m ⌊ T ⌋ n }, P1)]]$ &$+$& $[[({ - h : m' ⌊ T ⌋ n }, P2)]]$  $\btriangleq$  $[[{ - h : m+m' ⌊ T ⌋ n }, (P1+P2)]]$ ~~$\phantom{.}^{\dagger}$\\
+\end{tabular}
+\egroup
+
+\smallskip
+
+\begin{center}$\phantom{.}^{\dagger}$ : \textit{same rule is also true for $[[G]]$ or $[[D]]$ replacing $[[P]]$}\end{center}
+
+\TODO{need op ->-1 Delta}
+
+}\end{minipage}}
+\end{minipage}
 
 \bigskip
 \hrule
@@ -969,25 +1055,11 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
   \ottdefnTyXXval{}\egroup
 \end{ottfig}
 
-The syntax of runtime values is given in \cref{fig:grammar-val}. It features constructors for all of our basic types, as well as functions (note that in $[[ᵛλ x m ⟼ u]]$, $[[u]]$ is a term, not a value). The more interesting values are holes $[[+ h]]$, destinations $[[- h]]$, and ampars $[[H ⟨ v2 ❟ v1 ⟩]]$, which we'll describe in the rest of the section. In order for the operational semantics to use substitution, which requires substituting variables with values, we also extend the syntax of terms to include values.
+The syntax of runtime values is given in \cref{fig:grammar-val}. It features constructors for all of our basic types, as well as functions (note that in $[[ᵛλ x m ⟼ u]]$, $[[u]]$ is a term, not a value). The more interesting values are holes $[[+ h]]$, destinations $[[- h]]$, and ampars $[[H ⟨ v2 ❟ v1 ⟩]]$, which we'll describe in the rest of the section. In order for the operational semantics to use substitution, which requires substituting variables with values, we also extend the syntax of terms to include values through rule \rref*{\CTyTerm\CSep\CVal}.
 
 Destinations and holes are two faces of the same coin, as seen in~\cref{ssec:build-up-vocab}, and we must ensure that throughout the reduction, a destination always points to a hole, and a hole is always the target of exactly one destination. Thus, the new idea of our system is to feature \emph{hole bindings} $[[{ + h : T n }]]$ and \emph{destination bindings} $[[{ - h : m ⌊ T ⌋ n }]]$ in typing contexts in addition to the usual variable bindings $[[{ x : m T}]]$. In both cases, we call $[[h]]$ a \emph{hole name}. By definition, a context $[[G]]$ can contain both destination bindings and hole bindings, but \emph{not a destination binding and a hole binding for the same hole name}.
 
-We need to extend our previous context operations to act on the new binding forms:\\[\interdefskip]
-\bgroup\setlength{\arraycolsep}{0.5ex}
-$\begin{array}{rcl}
-  [[n'·({ + h : T n })]] &=& [[{ + h : T n' · n }]] \\
-  [[n'·({ - h : m ⌊ T ⌋ n })]] &=& [[{ - h : n' · m ⌊ T ⌋ n }]]
-\end{array}$ \hfill \vrule width 0.5pt \hfill $\begin{array}{rcl}
-  [[({ + h : T n }) + ({ + h : T n' })]] &=& [[+h]]:\!_{\![[n]]\ottsmode{+}[[n']]}[[T]] \\
-%  [[({ + h : T n }) + G]] &=& [[{ + h : T n },P]]\quad\textit{if}~[[h]] \notin [[G]]\\
-  [[({ - h : m ⌊ T ⌋ n }) + ({ - h : m' ⌊ T ⌋ n })]] &=& [[-h]]:\!_{\![[m]]\ottsmode{+}[[m']]}[[ ⌊ T ⌋ n ]]\\[\interdefskip]%\quad&\textit{(note that $[[n]]$ is the same in both)}\\
-% [[({ - h : m ⌊ T ⌋ n })]]+\Omega &=& [[{ - h : m ⌊ T ⌋ n }]],\Omega\quad\textit{if}~[[h]] \notin \Omega
-  [[({ + h : T n })+ G]] &=& [[({ + h : T n }),G]]~\textit{~if}~[[h]] \notin [[G]] \\
-  [[({ - h : m ⌊ T ⌋ n })+ P]] &=& [[({ - h : m ⌊ T ⌋ n }),P]]~\textit{~if}~[[h]] \notin [[P]]
-\end{array}$\egroup\\[\interdefskip]
-
-Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
+We extend our previous context operations $+$ and $\cdot$ to act on the new binding forms, as described in \cref{fig:grammar-val}. Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
 
 One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref*{\CTyVal\CSep\CAmpar}.
 
