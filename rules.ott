@@ -244,6 +244,8 @@ D2 ⊢ u : U [[:Tyu]]
 ----------------- :: PatU {{ com \CPatU }}
 D1 ⊣ C ∘ (⬜ ; u) : ① ↣ U0
 
+% {{ [[D2]] # [[{ x1 : m T1 }]] }} [[:DisjointD2x1]]
+% {{ [[D2]] # [[{ x2 : m T2 }]] }} [[:DisjointD2x2]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -255,6 +257,8 @@ D2 + { x2 : m T2 } ⊢ u2 : U [[:Tyu2]]
 ----------------- :: PatS {{ com \CPatS }}
 D1 ⊣ C ∘ (⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 }) : (T1 ⨁ T2) ↣ U0
 
+% {{ [[D2]] # [[{ x1 : m T1 }]] }} [[:DisjointD2x1]]
+% {{ [[D2]] # [[{ x2 : m T2 }]] }} [[:DisjointD2x2]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -266,6 +270,7 @@ D2 + { x1 : m T1 } + { x2 : m T2 } ⊢ u : U [[:Tyu]]
 ----------------- :: PatP {{ com \CPatP }}
 D1 ⊣ C ∘ (⬜ ►case m (x1 , x2) ⟼ u) : (T1 ⨂ T2) ↣ U0
 
+% {{ [[D2]] # [[{ x : m·m' T }]] }} [[:DisjointD2x]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -277,6 +282,7 @@ D2 + { x : m·m' T } ⊢ u : U [[:Tyu]]
 ----------------- :: PatE {{ com \CPatE }}
 D1 ⊣ C ∘ (⬜ ►case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 
+% {{ [[¹↑·D2]] # [[{ x : ¹ν T }]] }} [[:DisjointD2x]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
@@ -320,6 +326,7 @@ D ⊣ C : ⌊T⌋m·n ↣ U0 [[:TyC]]
 ------------------------------ :: FillE {{ com \CFillE }}
 D ⊣ C ∘ (⬜ ⨞ ᴇ m) : ⌊!m T⌋n ↣ U0
 
+% {{ [[D2]] # [[{ x : m T }]] }} [[:DisjointD2x]]
 {{ [[D1]] # [[D2]] }} [[:DisjointD1D2]]
 {{ DestOnly [[D1]] }} [[:DestOnlyD1]]
 {{ DestOnly [[D2]] }} [[:DestOnlyD2]]
