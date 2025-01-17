@@ -875,6 +875,8 @@ $[[(p a) + (p' a')]] \btriangleq [[(p + p') (a + a')]]$
   $[[n]]$ &$\cdot$& $[[{}]]$ & $\btriangleq$ & $[[{}]]$\\
   $[[n]]$ &$\cdot$& $[[({ x : m T },P)]]$ & $\btriangleq$ & $[[({ x : n · m T }),n·P]]$\\
 \end{tabular}
+\hfill\hspace*{0.02cm}
+\vrule width 0.5pt % Vertical rule of 1pt width
 \hfill
 \begin{tabular}[c]{rclcc@{\qquad}l}
   $[[{}]]$ &$+$& $[[P]]$ & $\btriangleq$ & $[[P]]$\\
@@ -1004,7 +1006,7 @@ Before we define the operational semantics of \destcalculus{} we need to introdu
 \hspace*{-0.1\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{c}{0.39}{\begin{minipage}{\linewidth}
 \begin{minipage}{\linewidth}\small\textit{Grammar extended with values:}\end{minipage}
 
-\smallskip
+\bigskip
 
 $\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\begin{array}{rrl}
   [[t]], [[u]] &\grammdef& \ldots \grammsep [[v]] \\
@@ -1018,11 +1020,15 @@ $\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\b
 
 \bigskip\bigskip\bigskip
 \hrule
-\bigskip\bigskip\bigskip
+\bigskip\bigskip
 
 \[\bgroup\SetPrefix{\CTyTerm\CSep}
   \drule{Ty-term-Val}\egroup
-\]\end{minipage}}{\begin{minipage}{\linewidth}
+\]
+
+\bigskip
+
+\end{minipage}}{\begin{minipage}{\linewidth}
 
 \begin{minipage}{\linewidth}\small\textit{Extended grammar of typing contexts:}\end{minipage}
 
@@ -1075,9 +1081,14 @@ $\setlength{\myskip}{2.38ex}\!\begin{array}{rrlcccc}
 
 \smallskip
 
-\begin{center}$\phantom{.}^{\dagger}$ : \textit{same rule is also true for $[[G]]$ or $[[D]]$ replacing $[[P]]$}\end{center}
+\smallskip
 
-\TODO{need op ->-1 Delta}
+\begin{tabular}[c]{rcl}
+  $[[-⁻¹({})]]$ &$\btriangleq$&  $[[{}]]$\\
+  $[[-⁻¹({ - h : ¹ν ⌊ T ⌋ n }, D)]]$ &$\btriangleq$& $[[({ + h : T n }), -⁻¹(D)]]$ \\
+\end{tabular}
+
+\begin{center}$\phantom{.}^{\dagger}$ : \textit{same rule is also true for $[[G]]$ or $[[D]]$ replacing $[[P]]$}\end{center}
 
 }\end{minipage}}
 \end{minipage}
@@ -1098,8 +1109,8 @@ We extend our previous context operations $+$ and $\cdot$ to act on the new bind
 
 One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref*{\CTyVal\CSep\CAmpar}.
 
-Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$ defined as:\quad$[[-⁻¹ ({ - h : ¹ν ⌊ T ⌋ n })]] = [[{ + h : T n }]]$.
-Note that $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$ is undefined if any binding has a mode other than $[[¹ν]]$.
+Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$, as defined in \cref{fig:grammar-val}.
+Note that $[[-⁻¹D]]$ is undefined if any destination binding in $[[D]]$ has a mode other than $[[¹ν]]$.
 
 Furthermore, in \rref*{\CTyVal\CSep\CAmpar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
 
@@ -1120,40 +1131,37 @@ The semantics of \destcalculus{} is given using small-step reductions on a pair 
 
 The intuition behind using such commands instead of a store is that destination filling actually require a very tame notion of state. So tame, in fact, that we can simply represent writing to a hole by a mere substitution in the evaluation context.
 
-\begin{codefig}{\caption{Grammar for evaluation contexts}\label{fig:grammar-ectxs}}{\setlength{\arraycolsep}{1ex}
-\hspace*{-0.3cm}\!\!\!\begin{minipage}{\linewidth}$\begin{array}{rrl}
+\begin{ottfig}[p]{\caption{Evaluation contexts and their typing rules}\label{fig:grammar-ty-ectxs}}{\setlength{\arraycolsep}{1ex}
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\codehere{\hspace*{-0.3cm}\begin{minipage}{\linewidth}
+\begin{minipage}{\linewidth}\small\textit{Grammar of evaluation contexts:}\end{minipage}
+
+\smallskip
+
+$\!\begin{array}{rrl}
 [[c]] &\grammdef& [[t' ⬜]] \grammsep [[⬜ v]] \grammsep [[⬜ ; u]] \\
       &|\,& [[ ⬜ ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[⬜ ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[⬜ ►case m ᴇ n x ⟼ u]] \\
       &|\,& [[⬜ ►map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \grammsep [[⬜ ◀ t']] \grammsep [[v ◀ ⬜]] \\
       &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \\
       &|\,& [[ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ ]] \quad\quad\textit{(open ampar focusing component)} \\
-&&\\
 [[C]] &\grammdef& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
-\end{array}$\end{minipage}
-}\end{codefig}
+\end{array}$\end{minipage}}\end{minipage}
 
-The grammar of evaluation contexts is given in~\cref{fig:grammar-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c]]$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to build a stack-based interpreter for the language.
+\bigskip
+\hrule
+\bigskip
 
-Focusing components are all directly derived from the term syntax, except for the \emph{open ampar} component $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focusing component indicates that an ampar is currently being processed by $\ottkw{onR}_{\ottkw{\ltimes} }$, with its left-hand side $[[v2]]$ (the structure being built) being attached to the open ampar focusing component, while its right-hand side (containing destinations) is either in subsequent focusing components, or in the term under focus. Ampars being open during the evaluation of $\ottkw{onR}_{\ottkw{\ltimes} }$'s body and closed back afterwards is the counterpart to the notion of scopes in the typing rules.
-
-We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update structures under construction that are attached to open ampar focusing components in the stack. Such a substitution is triggered when a destination $[[-h]]$ is filled in the term under focus, and results in the value $[[v]]$ (that may contain holes itself, e.g. if it is a hollow constructor $[[( +h1, +h2 )]]$) being written to the hole $[[+h]]$ (that must appear somewhere on an open ampar focusing component). The set $[[H]]$ tracks the potential hole names introduced by value $[[v]]$, and is used to update the hole name set of the ampar:
-\[\begin{array}{rcll}
-  [[ (C ∘ {h} ⨆ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩) [h ≔ H' v'] ]] &=& [[C ∘ H ⨆ H' ᵒᵖ⟨ v2[ h ≔ H' v' ] ❟ ⬜ ⟩ ]] &\\
-  [[ (C ∘ c) [h ≔ H' v'] ]] &=& [[ C[h ≔ H' v'] ∘ c ]]&\textit{otherwise}
-\end{array}\]
-
-Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we can see in \rref*{\CTyCmd}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts and commands are given in~\cref{fig:ty-ectxs-cmd}.
-
-\critical{For some reason renaming doesn't work here}
-
-\begin{ottfig}[p]{\caption{Typing rules for evaluation contexts and commands}\label{fig:ty-ectxs-cmd}}\begin{augmentwidth}{0.9cm}
-
+\begin{augmentwidth}{1.2cm}
 \bgroup\SetPrefix{\CTyEctxs\CSep}
 \ottdefnTyXXectxs{}\egroup
+\end{augmentwidth}
 
-\bgroup\SetPrefix{\CTyCmd}
-\ottdefnTy{}\egroup\end{augmentwidth}
-\end{ottfig}
+}\end{ottfig}
+
+The grammar of evaluation contexts is given in~\cref{fig:grammar-ty-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c]]$. We chose to represent this composition explicitly using a stack, instead of a meta-operation that would only let us access its final result. As a result, focusing and defocusing operations are made explicit in the semantics, resulting in a more verbose but simpler proof. It is also easier to build a stack-based interpreter for the language.
+
+Focusing components are all directly derived from the term syntax, except for the \emph{open ampar} component $[[H ᵒᵖ⟨ v2 ❟ ⬜ ⟩]]$. This focusing component indicates that an ampar is currently being processed by $\ottkw{onR}_{\ottkw{\ltimes} }$, with its left-hand side $[[v2]]$ (the structure being built) being attached to the open ampar focusing component, while its right-hand side (containing destinations) is either in subsequent focusing components, or in the term under focus. Ampars being open during the evaluation of $\ottkw{onR}_{\ottkw{\ltimes} }$'s body and closed back afterwards is counterpart to the notion of scopes in typing rules.
+
+Evaluation contexts $[[C]]$ are typed in a context $[[D]]$ that can only contains destination bindings. As we will later see in rule \rref*{\CTyCmd} of \cref{fig:sem}, $[[D]]$ is exactly the typing context that the term $[[t]]$ has to use to form the command $[[ C[t] ]]$. In other words, while $[[P ⊢ t : T]]$ \emph{requires} the bindings of $[[P]]$, judgment $[[D ⊣ C : T ↣ U0]]$ \emph{provides} the bindings of $[[D]]$. Typing rules for evaluation contexts are given in~\cref{fig:grammar-ty-ectxs}.
 
 An evaluation context has a context type $[[T]]\ottstype{\rightarrowtail}[[U0]]$. The meaning of $[[C]][[:]] [[T]]\ottstype{\rightarrowtail}[[U0]]$ is that given $[[t]][[:]][[T]]$, $[[ C[t] ]]$ returns a value of type $[[U0]]$. Composing an evaluation context $[[C]][[:]][[T]]\ottstype{\rightarrowtail}[[U0]]$ with a new focusing component never affects the type $[[U0]]$ of the future command; only the type $[[T]]$ of the focus is altered.
 
@@ -1225,6 +1233,37 @@ Here the focus, unfocus, and reduction rules for \textsc{PatP}:
 Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused on again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focusing component on the stack), we only present the set of reduction rules for the system in~\cref{fig:sem}, but the whole system is included in the annex (\cref{fig:sem-full1,fig:sem-full2}).
 
 \begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
+
+\begin{minipage}{\linewidth}\small\textit{Special substitution for open ampars:}\end{minipage}
+
+\smallskip
+
+\hfill$\!\begin{array}{rcll}
+  [[ (C ∘ {h} ⨆ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩) [h ≔ H' v'] ]] &=& [[C ∘ H ⨆ H' ᵒᵖ⟨ v2[ h ≔ H' v' ] ❟ ⬜ ⟩ ]] &\\
+  [[ (C ∘ c) [h ≔ H' v'] ]] &=& [[ C[h ≔ H' v'] ∘ c ]]&\text{if $[[h]] \notin [[c]]$}
+\end{array}$\hfill\phantom{.}
+
+\bigskip
+\hrule
+\bigskip
+
+\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.45}{\begin{minipage}{\linewidth}
+\begin{minipage}{\linewidth}\small\textit{Name set shift and conditional name shift:}\end{minipage}
+
+\bigskip\bigskip
+
+$\!\begin{array}{rcl}
+[[H ⩲ h']] &\btriangleq& \{ [[h+h']]~|~[[h]]\in [[H]] \}\\
+[[h [H ⩲ h'] ]] &\btriangleq& \left\{\begin{array}{ll}[[h+h']] & \text{if}~[[h]]\in[[H]]\\[[h]] & \text{otherwise}\end{array}\right.\end{array}$
+\end{minipage}}{\hspace*{0.5cm}\begin{minipage}{1.078\linewidth}
+\bgroup\SetPrefix{\CTyCmd}
+\ottdefnTy{}\egroup
+\end{minipage}}\end{minipage}
+
+\bigskip
+\hrule
+\bigskip
+
 \bgroup
 \renewcommand\arraystretch{1.4}
 \renewcommand\ottaltinferrule[4]{
@@ -1273,14 +1312,14 @@ CloseAmpar}
 
 Reduction rules for function application, pattern-matching, $\ottkw{to}_{\ottkw{\ltimes} }$ and $\ottkw{from}_{\ottkw{\ltimes} }$ are straightforward.
 
-All reduction rules for destination-filling primitives trigger a memory write on hole $[[+h]]$; we model this as a special substitution $[[ C[h ≔ H v] ]]$ on the evaluation context $[[C]]$. \rref*{\CFillU\CSep\CRed} and \rref*{\CFillF\CSep\CRed} do not create any new hole; they only write a value to an existing one. On the other hand, rules \rref*{\CFillL\CSep\CRed}, \rref*{\CFillR\CSep\CRed}, \rref*{\CFillE\CSep\CRed} and \rref*{\CFillP\CSep\CRed} all write a hollow constructor to the hole $[[h]]$, that is to say a value containing holes itself. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
+We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update structures under construction, that are attached to open ampar focusing components in the stack. Such a substitution is triggered when a destination $[[-h]]$ is filled in the term under focus, typically in destination-filling primitives reductions, and results in the value $[[v]]$ being written to hole $[[+h]]$. The value $[[v]]$ may contain holes itself (e.g. when the hollow constructor $[[Inl +h'+1]]$ is being written to the hole $[[+h]]$ in \rref*{\CFillL\CSep\CRed}), hence the set $[[H]]$ tracks the potential hole names introduced by value $[[v]]$, and is used to update the hole name set of the corresponding (open) ampar. Proper definition of $[[ C[h ≔ H v] ]]$ is given in \cref{fig:sem}.
+
+\rref*{\CFillU\CSep\CRed} and \rref*{\CFillF\CSep\CRed} do not create any new hole; they only write a value to an existing one. On the other hand, rules \rref*{\CFillL\CSep\CRed}, \rref*{\CFillR\CSep\CRed}, \rref*{\CFillE\CSep\CRed} and \rref*{\CFillP\CSep\CRed} all write a hollow constructor to the hole $[[+h]]$ that contains new holes. Thus, we need to generate fresh names for these new holes, and also return a destination for each new hole with a matching name.
 
 The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{\CTyEctxs\CSep\COpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{onR}_{\ottkw{\ltimes} }$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
 
-To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{ssec:sem}) to find the next unused name. Then we use either the \emph{shifted set}\\ $[[H ⩲ h']] \btriangleq \{ [[h+h']]~|~[[h]]\in [[H]] \}$ or the \emph{conditional shift operator}:\\[\interdefskip]\hbox{}\hfill
-$[[h [H ⩲ h'] ]] \btriangleq \left\{\begin{array}{ll}[[h+h']] & \textit{if}~[[h]]\in[[H]]\\[[h]] & \textit{otherwise}\end{array}\right.$\hfill\hbox{}\\[\interdefskip]
-We extend $\smallbullet\ottshname{[}[[H ⩲ h']]\ottshname{]}$ to arbitrary values, extended terms, and typing contexts in the obvious way (keeping in mind that $[[H' ⟨ v2 ❟ v1 ⟩]]$ binds the names in $[[H']]$).
-
+To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{ssec:sem}) to find the next unused name. Then we use either the \emph{shifted set} $[[H ⩲ h']]$ or the \emph{conditional shift operator} $[[h [H ⩲ h'] ]]$ as defined in \cref{fig:sem} to replace all names or just specific one with fresh, names.
+We extend  \emph{conditional shift} $\smallbullet\ottshname{[}[[H ⩲ h']]\ottshname{]}$ to arbitrary values, terms, and typing contexts in the obvious way (keeping in mind that $[[H' ⟨ v2 ❟ v1 ⟩]]$ binds the names in $[[H']]$).
 
 Rules \rref*{\COpenAmpar} and \rref*{\CCloseAmpar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{\COpenAmpar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{onR}_{\ottkw{\ltimes} }$ statement (which becomes the new term under focus). The rule \rref*{\CCloseAmpar} triggers when the body of a $\ottkw{onR}_{\ottkw{\ltimes} }$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
 
