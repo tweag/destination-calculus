@@ -1503,31 +1503,15 @@ To recover sensible rules for the connective, we decided to make it asymmetric, 
 
 \subsection{Rust lifetimes vs our age system}
 
+Rust is based on a system of lifetime to ensure that borrows don't live longer than what they reference. There is a parallel to be drawn with our system of ages, that control how destinations (that we can see as write-once borrows) are allowed to be used.
 
-Rust has developed a system of lifetime that is used to ensure that borrows don't live longer than what they reference, and that write borrows/uses of a same resource don't overlap. There is a parallel to be drawn with our system of ages, that control how destinations (that we can see as write-once borrows) are allowed to be used.
+Rust lifetimes on borrows are initially purely symbolic. The use of borrows (either read or write) or moving variables in/out of functions then establishes a set of constraints on the symbolic lifetimes. In particular, lifetime constraints ensure that a short-lived borrow doesn't get stored in a data structure referenced by a long-term borrow, as that would lead exactly to the same issues as detailed in \cref{sec:scope-escape-dests}. The borrow checker then checks that there exists a solution that satisfies the set of inequalities (lifetimes are kept as short as allowed). It's not all though: lifetimes on borrows alone are not enough to ensure that a resource is not used or moved while a borrow on it is active; for that Rust has to resort to other statical analysis techniques. That's why \cite{pearce_lifetime_2021} has both (1) rules to control that lifetimes are ordered well (to prevent scope escape, among other things) but also (2) rules to ensure mutual exclusion (in our system it corresponds to not using an ampar while it is being operated on with $\ottkw{onR}_{\ottkw{\ltimes} }$). These two types of predicates (lifetime constraints and mutual exclusion) are defined fairly differently in the paper.
 
-Based on \cite{pearce_lifetime_2021}, they have two notions of lifetime for references (the lifetime of the reference itself, and the lifetime of the object being referenced by the reference) as we have for our destinations, and they also have rules that prevent scope escape. Notably:
+Our system contrasts with Rust in two major ways. First and foremost, our \emph{ages} are fixed numbers based purely on lexical scopes, with no subtyping/age coercion like Rust's lifetimes have. Having purely fixed and inalterable ages throughout the whole program means we always have the exact information about ages at hand, and can compute the age of a variable in the parent scope if we know its age in the inner scope: information loss/weakening is not permitted, making the system much more simple. In particular, heterogeneous ages of resources inside a same structure must be signaled with explicit use of the modality $\ottstype{!}_{[[m]]}$, while Rust will take the lowest lifetime as the lifetime for the aggregate; but will need to recompute the ages of each part when the structure is dismantled. Having fixed ages instead of (large) inequalities on lifetimes also means we can easily ask for something to be strictly older than something else without needing other type-system predicates; this is particularly useful to prevent self-referencing structures.
 
-\[
-  \inferrule*[narrower=0.3,right=\textsc{T-Assign},]
-    {
-      \Gamma_1 \vdash w : \langle \tilde{T_1} \rangle^m \quad
-      \Gamma_1 \vdash \langle t : T_2 \rangle_\sigma^l \dashv \Gamma_2 \quad
-      \Gamma_2 \vdash T_2 \succeq m \\
-      \Gamma_3 = \text{write}^0(\Gamma_2, w, T_2) \quad
-      \lnot\text{writeProhibited}(\Gamma_3, w)
-    }
-    {
-      \Gamma_1 \vdash \langle w = t : \epsilon \rangle_\sigma^l \dashv \Gamma_3
-    }
-\]
+Secondly, thanks to either the copy-on-write discipline on ampars, or alternatively, the linear discipline for ampars developed in \cref{sec:implementation}, mutual exclusion is not a problem for us. In the copy-on-write case, we don't have to manage mutual exclusion at all: as soon as we enter the body of $[[x ►map d ⟼ …]]$, the ampar being operated on will be a copy of the original value of $[[x]]$. So $[[x ►map d ⟼ (x ►map d ⟼ …)]]$ is perfectly fine. In the linear case, we get mutual exclusion through the linear type system: because $[[x ►map d ⟼ …]]$ is linear on its argument $[[x]]$, $[[x]]$ cannot be further used while it is being modified.
 
-In the case of an assignment of the form $*d = t$ which corresponds to $[[d ◀ t]]$ in our system, the constraint $\Gamma_2 \vdash T_2 \succeq m$ (where $m$ is the lifetime of $[[d]]$ itself) ensures that all the parts forming $t$ (havign type $T_2$) will live at least as long as $d$, effectively preventing the faulty example presented in \cref{sec:scope-escape-dests}.
-
-Two major differences:
-- self-referencing structs (when lifetime of t is same as d) can be created in rust, although we can do nothing with them after creation, while forbidden from the start in our system
-- Rust uses symbolic lifetimes, and then add a set of inequality constraints over them, and find the minimal solution for the inequation, while we have purely fixed ages with no transitivity.
-- Thanks to our fixed age, a structure has always a single coherent lifetime for its parts, with explicit Modn
+I'm wondering whether our system of ages could serve as a simpler borrow-checking mechanism for more imperative languages, though purely lexical lifetimes would be an initial requirement (while Rust departed from that idea in favor of non-lexical lifetimes some time ago).
 
 \subsection{Oxidizing OCaml}
 
