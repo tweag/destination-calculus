@@ -896,9 +896,11 @@ $[[(p a) + (p' a')]] \btriangleq [[(p + p') (a + a')]]$
 
 In order for the type system to ensure that destinations are sound, \destcalculus{} need both to enforce the linearity of destination but also to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}. To that effect, \destcalculus{} tracks the \emph{age} of destinations, that is how many nested scope have been open between the current expression and the scope from which a destination originates. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. For instance, we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then wil will say that the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separates the definition and use site of $[[x1]]$.
 
-A natural idea, to track ages, is to introduce a modality $\ottstype{\uparrow}[[T]]$ to mean ``a $[[T]]$ in the previous scope'', this isn't quite going to work for us, we'll need something a bit more general. Let's explore why.
+A natural idea, to track ages, is to introduce a modality $\ottstype{\uparrow}[[T]]$ to mean ``a $[[T]]$ in the previous scope''. Let's explore why this isn't quite going to work for us, hence why we need something more general.
 
 A typical presentation of modal type theories is with a pair of context $[[P]]_{\uparrow}$, $[[P]]$ of bindings from the current scope and the previous scope respectively~\cite{pfenning_modal_1995}, and rules such as
+
+\vspace*{-0.3cm}
 
 $$
 \begin{array}{cc}
@@ -934,7 +936,7 @@ The syntax of \destcalculus{} terms is presented in~\cref{fig:grammar}, includin
 
 \subsection{Modes and the age semiring}\label{ssec:age-control}
 
-The precise algebraic structure that we'll be needing on modes is both a commutative additive semigroup $+$ and a commutative multiplative monoid $(·, 1)$, with the usual distributivity law $a·(b+c) = a·b + a·c$. In addition we require a partial order, such that $+$ and $·$ are order-preserving. In other words, we'll be dealing with ordered commutative semirings, except we don't need a $0$. In the rest of the article, we'll just say ``semiring''\critical{We promised we'd stop using the name semiring, as much as it pains my soul we will have to replace it. Careful, not the previous occurrence!}\improvement{Explain what we need these operations for?}.
+The precise algebraic structure that we'll be needing on modes is both a commutative additive semigroup $\ottsmode{+}$ and a commutative multiplicative monoid $(\ottsmode{[[·]]}\,, \ottsmode{1})$, with the usual distributivity law $[[n·(m1+m2)]] = [[n·m1 + n·m2]]$. In addition we require a partial order $⥶$, such that $\ottsmode{+}$ and $\ottsmode{[[·]]}$ are order-preserving. In other words, we'll be dealing with ordered commutative semirings, except we don't need a $\ottsmode{0}$. In the rest of the article, we'll just say ``semiring''\critical{We promised we'd stop using the name semiring, as much as it pains my soul we will have to replace it. Careful, not the previous occurrence!}\improvement{Explain what we need these operations for?}.
 
 Our mode semiring is, as promised, the product of a multiplicity semiring, to track linearity, and an age semiring, to prevent scope escape. The multiplicity semiring has elements $[[¹]]$ (linear) and $[[ω]]$ (unrestricted), it's the same semiring as in~\cite{qtt_2018} or~\cite{bernardy_linear_2018}. It's mostly unsurprising, the key is that that $[[¹+¹]]=[[ω]]$ will enforce that a linear variable can only be used once, the full description of the multiplicity semiring is given in~\cref{fig:mul-age-tables}.
 
@@ -945,7 +947,7 @@ The operations or order aren't the usual ones on natural numbers though. It is c
 
 Bindings in the context are annotated by a mode. The insight of~\cite{ghica_bounded_2014}, is that mode addition and multiplication by a mode (aka \emph{scaling}) lift to contexts pointwise, we have all the tools we need to define a modal type system, including a sub-structural one like linear logic.
 
-The operations and preorders on mode, contexts, etc… are presented in~\cref{fig:mul-age-tables}.
+The operations and preorders on mode, contexts, etc. are presented in~\cref{fig:mul-age-tables}.
 We will usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring.
 
 \subsection{Typing rules}\label{ssec:ty-term-val}
@@ -980,7 +982,7 @@ Rule \rref*{\CTyTerm\CSep\CVar}, in addition to weakening, allows for coercion o
 
 Rule \rref*{\CTyTerm\CSep\CPatU} is the elimination for unit, and is also used to chain fill operations.
 
-Pattern-matching with rules \rref*{\CTyTerm\CSep\CApp}, \rref*{\CTyTerm\CSep\CPatS}, \rref*{\CTyTerm\CSep\CPatP} and \rref*{\CTyTerm\CSep\CPatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this allows distributing the $\ottstype{!}_{[[m]]}$ modality over $\ottstype{\otimes}$, which is not included in Girard's intuitionistic linear logic, but is included in \cite{bernardy_linear_2018} and referred to as \emph{deep} modes in \cite{lorenzen_oxidizing_2024}.
+Pattern-matching with rules \rref*{\CTyTerm\CSep\CApp}, \rref*{\CTyTerm\CSep\CPatS}, \rref*{\CTyTerm\CSep\CPatP} and \rref*{\CTyTerm\CSep\CPatE} is parametrized by a mode $[[m]]$ by which the typing context $[[P1]]$ of the scrutinee is multiplied. The variables which bind the subcomponents of the scrutinee then inherit this mode. In particular, this allows distributing the $\ottstype{!}_{[[m]]}$ modality over $\ottstype{\otimes}$, which is not part of Girard's intuitionistic linear logic, but is included in \cite{bernardy_linear_2018} and referred to as \emph{deep} modes in \cite{lorenzen_oxidizing_2024}.
 
 \paragraph{Rules for scoping}
 
@@ -998,11 +1000,11 @@ Anticipating \cref{ssec:runtime-values}, ampar values are pairs with a structure
 
 When using $\ottkw{from}_{\ottkw{\ltimes} }'$ (rule \rref*{\CTySTerm\CSep\CFromA'}), the left of an ampar is extracted to the current scope (as seen at the bottom of~\cref{fig:scope-rules} with $[[x22]]$): this is the fundamental reason why the left of an ampar has to ``take place'' in the current scope. We know the structure is complete and can be extracted because the right-hand side is of type unit ($[[①]]$), and thus no destination on the right-hand side means no hole can remain on the left. $\ottkw{from}_{\ottkw{\ltimes} }'$ is implemented in terms of $\ottkw{from}_{\ottkw{\ltimes} }$ in~\cref{fig:sterm} to keep the core calculus tidier (and limit the number of typing rules, evaluation contexts, etc), but it can be implemented much more efficiently in a real-world implementation.
 
-When an ampar is complete and eliminated with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \rref*{\CTyTerm\CSep\CFromA} however, we extract both sides of the ampar to the current scope, even though the right-hand side is normally in a different scope. This is only safe to do because the right-hand side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive: it can't contain any scope-controlled resource. This also ensures that the right-hand side cannot contain destinations, so the structure is ready to be read.
+When an ampar is eliminated with the more general $\ottkw{from}_{\ottkw{\ltimes} }$ in rule \rref*{\CTyTerm\CSep\CFromA} however, we extract both sides of the ampar to the current scope, even though the right-hand side is normally in a different scope. This is only safe to do because the right-hand side is required to have type $[[! ¹∞ T]]$, which means it is scope-insensitive: it can't contain any scope-controlled resource. This also ensures that the right-hand side cannot contain destinations, so the structure is ready to be read.
 
 In \rref*{\CTyTerm\CSep\CToA}, on the other hand, there is no need to bother with scopes: the operator $\ottkw{to}_{\ottkw{\ltimes} }$ embeds an already completed structure in an ampar whose left side is the structure (that continues to type in the current scope), and right-hand side is unit.
 
-The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \IfFancyRuleNames{of the form \textsc{\CTyTerm\CSep$\ottstype{\lfloor}~\ottstype{\rfloor}$E}}{\textsc{Ty-term-Fill$*$}} are the other destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created in the process (or unit if there is none).
+The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\,\expcons{[[m]]}, [[⨞]][[(,)]]$ from rules \IfFancyRuleNames{of the form \textsc{\CTyTerm\CSep$\ottstype{\lfloor}~\ottstype{\rfloor}$E}}{\textsc{Ty-term-Fill$*$}} are the other destination-filling primitives. They write a hollow constructor to the hole pointed by the destination operand, and return the potential new destinations that are created for new holes in the hollow constructor (or unit if there is none).
 
 \section{Operational semantics}\label{sec:ectxs-sem}
 
@@ -1120,11 +1122,11 @@ One of the main goals of \destcalculus{} is to ensure that a hole value is never
 Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$, as defined in \cref{fig:grammar-val}.
 Note that $[[-⁻¹D]]$ is undefined if any destination binding in $[[D]]$ has a mode other than $[[¹ν]]$.
 
-Furthermore, in \rref*{\CTyVal\CSep\CAmpar}, the holes and the corresponding destinations are bound: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
+Furthermore, in \rref*{\CTyVal\CSep\CAmpar}, the holes $[[-⁻¹D3]]$ and the corresponding destinations $[[D3]]$ are bound together and consequently removed from the ampar's typing context: this is how we ensure that, indeed, there's one destination per hole and one hole per destination. That being said, both sides of the ampar may also contain stored destinations from other scopes, represented by $[[¹↑·D1]]$ and $[[D2]]$ in the respective typing contexts of $[[v1]]$ and $[[v2]]$.
 
 Rule \rref*{\CTyVal\CSep\CHole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular weakening and dereliction are not allowed. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole restraints which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ n +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
 
-Surprisingly, in \rref*{\CTyVal\CSep\CDest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{\CTyTerm\CSep\CVar} and make the general modal substitution lemma true for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode coercion is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{\CTyVal\CSep\CDest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no coercion can take place.
+Surprisingly, in \rref*{\CTyVal\CSep\CDest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{\CTyTerm\CSep\CVar} and make the general modal substitution lemma expressible for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode coercion is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{\CTyVal\CSep\CDest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no coercion can take place.
 
 \paragraph{Other salient points}
 We don't distinguish values with holes from fully-defined values at the syntactic level: instead types prevent holes from being read. In particular, while values are typed in contexts $[[G]]$ allowing both destination and hole bindings, when using a value as a term in \rref*{\CTyTerm\CSep\CVal}, it's only allowed to have free destinations, but no free holes.
@@ -1151,7 +1153,7 @@ $\!\begin{array}{rrl}
       &|\,& [[⬜ ►map x ⟼ t']] \grammsep [[ to⧔ ⬜ ]] \grammsep [[ from⧔ ⬜ ]] \grammsep [[⬜ ⨞· t']] \grammsep [[v ⨞· ⬜]] \grammsep [[⬜ ◀ t']] \grammsep [[v ◀ ⬜]] \\
       &|\,& [[ ⬜ ⨞ () ]] \grammsep [[ ⬜ ⨞ Inl ]] \grammsep [[⬜ ⨞ Inr]] \grammsep [[⬜ ⨞ (,)]] \grammsep [[⬜ ⨞ ᴇ m]] \grammsep [[⬜ ⨞ ( λ x m ⟼ u )]] \\
       &|\,& [[ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩ ]] \quad\quad\textit{(open ampar focusing component)} \\
-[[C]] &\grammdef& [[ ⬜ ]] \grammsep [[C ∘ c]] \grammsep [[C [ h ≔ H v ] ]]
+[[C]] &\grammdef& [[ ⬜ ]] \grammsep [[C ∘ c]] % \grammsep [[C [ h ≔ H v ] ]]
 \end{array}$\end{minipage}}\end{minipage}
 
 \bigskip
@@ -1255,7 +1257,7 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
 \hrule
 \bigskip
 
-\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.45}{\begin{minipage}{\linewidth}
+\hspace*{-0.1\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.48}{\begin{minipage}{\linewidth}
 \begin{minipage}{\linewidth}\small\textit{Name set shift and conditional name shift:}\end{minipage}
 
 \bigskip\bigskip
@@ -1263,7 +1265,7 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
 $\!\begin{array}{rcl}
 [[H ⩲ h']] &\btriangleq& \{ [[h+h']]~|~[[h]]\in [[H]] \}\\
 [[h [H ⩲ h'] ]] &\btriangleq& \left\{\begin{array}{ll}[[h+h']] & \text{if}~[[h]]\in[[H]]\\[[h]] & \text{otherwise}\end{array}\right.\end{array}$
-\end{minipage}}{\hspace*{0.5cm}\begin{minipage}{1.078\linewidth}
+\end{minipage}}{\hspace*{0.5cm}\begin{minipage}{1.135\linewidth}
 \bgroup\SetPrefix{\CTyCmd}
 \ottdefnTy{}\egroup
 \end{minipage}}\end{minipage}
@@ -1326,7 +1328,7 @@ We introduce a special substitution $[[ C[h ≔ H v] ]]$ that is used to update 
 
 The substitution $[[ C[h ≔ H v] ]]$ should only be performed if $[[h]]$ is a globally unique name; otherwise we break the promise of a write-once memory model. To this effect, we allow name shadowing while an ampar is closed, but as soon as an ampar is open, it should have globally unique hole names. This restriction is enforced by premise $[[hnames(C)]] ~\mathtt{\#\#}~ [[hnames(D3)]]$ in rule \rref*{\CTyEctxs\CSep\COpenAmpar} for the open ampar focusing component that is created during reduction of $\ottkw{onR}_{\ottkw{\ltimes} }$. Likewise, any hollow constructor written to a hole should also have globally unique hole names. For simplicity's sake, we assume that hole names are natural numbers.
 
-To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{ssec:sem}) to find the next unused name. Then we use either the \emph{shifted set} $[[H ⩲ h']]$ or the \emph{conditional shift operator} $[[h [H ⩲ h'] ]]$ as defined in \cref{fig:sem} to replace all names or just specific one with fresh, names.
+To obtain globally fresh names, in the premises of the corresponding rules, we first pose\\ $[[h']] = [[max(hnames(C) ∪ {h}) + 1]]$ or similar definitions for $[[h'']]$ and $[[h''']]$ (see in \cref{fig:sem}) to find the next unused name. Then we use either the \emph{shifted set} $[[H ⩲ h']]$ or the \emph{conditional shift operator} $[[h [H ⩲ h'] ]]$ as defined in \cref{fig:sem} to replace all names or just specific one with fresh unused names.
 We extend  \emph{conditional shift} $\smallbullet\ottshname{[}[[H ⩲ h']]\ottshname{]}$ to arbitrary values, terms, and typing contexts in the obvious way (keeping in mind that $[[H' ⟨ v2 ❟ v1 ⟩]]$ binds the names in $[[H']]$).
 
 Rules \rref*{\COpenAmpar} and \rref*{\CCloseAmpar} dictate how and when a closed ampar (a value) is converted to an open ampar (a focusing component) and vice-versa, and they make use of the shifting strategy we've just introduced. With \rref*{\COpenAmpar}, the hole names bound by the ampar gets renamed to fresh ones, and the left-hand side gets attached to the focusing component $[[H⩲h' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩]]$ while the right-hand side (containing destinations) is substituted in the body of the $\ottkw{onR}_{\ottkw{\ltimes} }$ statement (which becomes the new term under focus). The rule \rref*{\CCloseAmpar} triggers when the body of a $\ottkw{onR}_{\ottkw{\ltimes} }$ statement has reduced to a value. In that case, we can close the ampar, by popping the focusing component from the stack $[[C]]$ and merging back with $[[v2]]$ to form a closed ampar again.
@@ -1390,7 +1392,7 @@ First, \destcalculus{} doesn't have recursion, this would have obscured the pres
 
 Secondly, ampars are not managed linearly in \destcalculus{}; only destinations are. That is to say that an ampar can be wrapped in an exponential, e.g. $[[ˢᴇ ων {h} ˢ⟨ ༼ˢ0 ˢ:: +h༽ ❟ -h ⟩]]$ (representing a difference list $0 \ottsctor{::} \holesq$ that can be used non-linearly), and then used twice, each time in a different way:
 
-\begin{minipage}{0.45\linewidth}\codehere{[[
+\begin{minipage}{0.50\linewidth}\codehere{[[
 ༼ˢᴇ ων {h} ˢ⟨ ˢ0 ˢ:: +h ❟ -h ⟩༽ ►case ¹ν ᴇ ων x ⟼⮒
 ‥‥let x1 ≔ x append ˢ1 in⮒
 ‥‥let x2 ≔ x append ˢ2 in⮒
@@ -1421,7 +1423,7 @@ Now that ampars are managed linearly, we can change the allocation and renaming 
 \begin{itemize}
   \item the hole name for a new ampar is chosen fresh right from the start (this corresponds to a new heap allocation);
   \item adding a new hollow constructor still require freshness for its hole names (this corresponds to a new heap allocation too);
-  \item $\ottkw{onR}_{\ottkw{\ltimes} }$ping over an ampar and filling destinations or composing two ampars using $\triangleleft\mycirc$ no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
+  \item Using $\ottkw{onR}_{\ottkw{\ltimes} }$ over an ampar and filling destinations or composing two ampars using $\triangleleft\mycirc$ no longer require any renaming: we have the guarantee that the all the names involved are globally fresh, and can only be used once, so we can do in-place memory updates.
 \end{itemize}
 
 \destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$ is in fact very close to the implementation described in~\cite{bagrel_destination-passing_2024}. Our claim of efficiency is thus based on the results published in the latter and also \cite{lorenzen_searchtree_2024,bour_tmc_2021}, as an hypothetical implementation of \destcalculus{} would mostly resort to the same memory operations -- that is, in-place updates in functional settings.
