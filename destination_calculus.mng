@@ -1432,6 +1432,14 @@ Now that ampars are managed linearly, we can change the allocation and renaming 
 
 \destcalculus{} extended with $[[Token]]$s and $[[allocIP]]$ is in fact very close to the implementation described in~\cite{bagrel_destination-passing_2024}. Our claim of efficiency is thus based on the results published in the latter and also \cite{lorenzen_searchtree_2024,bour_tmc_2021}, as an hypothetical implementation of \destcalculus{} would mostly resort to the same memory operations -- that is, in-place updates in functional settings.
 
+\paragraph{From purely linked structures to more efficient memory forms}
+
+In \destcalculus{} we only have binary product in sum types. However, it's very straightforward to extend the language and implement destination-based building for n-ary sums of n-ary products, with constructors for each variant having multiple fields directly, instead of each field needing an extra indirection as in the binary sum of products $[[① ⨁ (S ⨂ (T ⨂ U))]]$. This is, in fact, already implemented in \cite{bagrel_destination-passing_2024} without any issues. However, it's probably better for field's values to still be represented by pointers.
+
+Indeed, composition of incomplete structures relies on the idea that destinations pointing to holes of a structure $[[v]]$ will still be valid if $[[v]]$ get assigned to a field $[[f]]$ of a bigger structure $[[v']]$. That's true indeed if just the address of $[[v]]$ is written to $[[v']].[[f]]$. However, if $[[v]]$ is moved into $[[v']]$ completly (i.e. if $[[f]]$ is an in-place/unpacked field), then the pointers representing destinations of $[[v]]$ are now invalid.
+
+Our early experiments around DPS support for unpacked fields seem to indicate that we would need two classes of destinations, one supporting composition (for indirected fields) and one disallowing it (for unpacked fields).
+
 \section{Related work}\label{sec:related-work}
 
 \subsection{Destination-passing style for efficient memory management}\label{ssec:shaikhha-dps}
@@ -1490,11 +1498,9 @@ Rust uses a system of lifetimes to ensure that borrows don't live longer than wh
 
 Rust lifetimes are symbolic. Borrows and moves generate constraints on the symbolic lifetimes. For instance, that a the lifetime of a reference is larger than the lifetime of any structure the reference is stored in. Without such a constraint, Rust would have similar problems to those of \cref{sec:scope-escape-dests}. The borrow checker then checks that the constraints are solvable.
 
-A superficial difference between Rust and \destcalculus{} is that Rust has weak inequality constraints $\alpha\leqslant\beta$, whereas the constraints which appear in \destcalculus{} are of the form $\alpha=\beta+1$ (as embodied, for instance by \rref{\CTyTerm\CSep\CFillComp}).
+The major difference between Rust and \destcalculus{} is in the treatment of objects with heterogenous ages/lifetimes. In Rust, lifetime constraints are weak inequalities $\alpha\leqslant\beta$, so objects of heterogenous lifetimes can be stored together as long as they all fulfil the constraint; and the lifetime of an object is the smallest lifetime of its parts. The downside of that approach is that we only know, locally, a lower bound for the actual lifetime of a given object.
 
-The more substantial difference is that \destcalculus{} has concrete numerical ages, as opposed to Rust's symbolic lifetimes. This is because our ages are fully explicit, in particular when storing a destination in a structure, its age is recorded with the modality $\ottstype{!}_{[[m]]}$. Rust on the contrary is very implicit about lifetimes, and must reconstruct them with a more complex inference process.
-
-In other words, ages are a much simplified version of lifetimes rendered possible by relying on copious annotations rather than inference.
+In \destcalculus{}, on the other hand, ages constraints are of the form $\alpha=\beta+1$ (as embodied, for instance by \rref{\CTyTerm\CSep\CFillComp}), so only objects of a very specific age can be stored in a given destination. As no finite age coercion can happen, we also always know the exact age of an object and that age evolves purely deterministically when we go from or into a more nested scope. Unlike Rust, heterogenous ages in a structure must be explicitly indicated in \destcalculus{} through modality $\ottstype{!}_{[[m]]}$, but in exchange we get a much simpler scope-control system that integrates very well in a modular fashion throughout the type system.
 
 \subsection{Oxidizing OCaml}
 
@@ -1502,9 +1508,9 @@ In other words, ages are a much simplified version of lifetimes rendered possibl
 
 Like our multiplicities, there are two modes for affinity \verb|once| and \verb|many|, though in~\cite{lorenzen_oxidizing_2024}, \verb|once| supports weakening (as the name ``affinity'' suggests), whereas \destcalculus{}'s $[[¹]]$ multiplicity is properly linear (proper linearity is important for destination lest we end up reading uninitialized memory).
 
-Locality tracks scope. There are two locality modes, \verb|local| (doesn't escape the current scope) and \verb|global| (can escape the current scope). The authors present their locality mode as a drastic simplification of Rust's lifetime system, which nevertheless fits their need. It's even more of a simplification than ages (see \cref{ssec:rust-lifetimes}).
+Locality tracks scope. There are two locality modes, \verb|local| (doesn't escape the current scope) and \verb|global| (can escape the current scope). The authors present their locality mode as a drastic simplification of Rust's lifetime system, which nevertheless fits their need.
 
-However it would be a bit too weak for us. The observation is that if destinations from two nested scopes are given the same mode, then we can't safely do anything with them, as it's enough to reproduce the counterexamples of \cref{sec:scope-escape-dests}. So in order to type the breadth-first traversal example of \cref{sec:bft}, where destinations are stored in a structure, we need at least $[[ν]]$, $[[↑]]$, and $[[∞]]$, plus at least one mode for the rest of the scopes scopes. If we wanted to type exactly the breadth-first traversal example, this would presumably suffice. But having 4 different modes isn't really a simplification. In fact it turns out that such systems with finitely many ages are incredibly easy to get wrong, and it was in fact much simpler to design a system with infinitely many ages.
+However, such a simplified system would be a bit too weak for us to ensure scope control of destinations. The observation is that if destinations from two nested scopes are given the same mode, then we can't safely do anything with them, as it's enough to reproduce the counterexamples of \cref{sec:scope-escape-dests}. So in order to type the breadth-first traversal example of \cref{sec:bft}, where destinations are stored in a structure, we need at least $[[ν]]$ (for current scope), $[[↑]]$ (for previous scope exactly), plus at least one extra mode for the rest of the scopes (for which destinations are not safe to use). But having 3 different modes, with such additional limitations, isn't really a simplification. In fact it turns out that such systems with finitely many ages are incredibly easy to get wrong, and it was in fact much simpler to design a system with infinitely many ages.
 
 \section{Conclusion and future work}\label{sec:conclusion}
 
