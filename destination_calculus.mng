@@ -1028,9 +1028,13 @@ $\setlength{\arraycolsep}{0.6ex}\newlength\myskip\setlength{\myskip}{2.38ex}\!\b
              &|\,& [[Inr v]] \grammsep [[ᴇ m v]] \grammsep [[( v1 , v2 )]] \\
 \end{array}$
 
-\bigskip\bigskip\bigskip
-\hrule
 \bigskip\bigskip
+\hrule
+\bigskip
+
+\begin{minipage}{\linewidth}\small\textit{Typing values as terms:}\end{minipage}
+
+\smallskip
 
 \[\bgroup\SetPrefix{\CTyTerm\CSep}
   \drule{Ty-term-Val}\egroup
