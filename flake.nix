@@ -72,6 +72,11 @@
                 amscls
                 amsfonts
                 amsmath
+                bclogo
+                # for bclogo
+                mdframed
+                zref
+                needspace
                 # supplies binhex:
                 kastrup
                 # supplies balance:
