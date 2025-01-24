@@ -1467,7 +1467,7 @@ to ask the compiler to perform the translation. The compiler will then throw an 
 
 This has been available in OCaml since version 4.14. This is the one example we know of of destinations built in a production-grade compiler. Our \destcalculus{} makes it possible to express the result tail-modulo-constructor in a typed language. It can be used to write programs directly in that style,  or it could serve as a typed target language for and automatic transformation. On the flip-side, tail modulo constructor is too weak to handle our difference lists or breadth-first traversal examples.
 
-\subsection{A functional representation of data structures with a hole}\label{ssec:minamide}
+\subsection{A functional representation of data structures with a hole}\label{ssec:minamide}\label{ssec:ampar-motivation}
 
 The idea of using linear types as a foundation of a functional calculus in which incomplete data structures can exists and be composed as first class values dates back to~\cite{minamide_functional_1998}. Our system is strongly inspired by theirs. In~\cite{minamide_functional_1998}, a first-class structure with a hole is called a \emph{hole abstraction}. Hole abstractions are a special kind of linear functions that we can only compose, but we can't pattern-match on the result (or pass it to an arbitrary function); nor can we pattern match on the argument, the \emph{hole variable}, which is a name for the hole in the structure: hole variables can only be used directly as argument of constructors, or of hole abstractions. The type of hole abstractions, $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear function type $\ottstype{[[T]] \multimap [[S]]}$.
 
