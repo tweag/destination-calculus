@@ -491,7 +491,7 @@ Destinations always exist within the context of a structure with holes. A destin
 
 To tie this up, we need a way to introduce and to eliminate structures with holes. Structures with holes are introduced with $[[alloc]]$ which creates a value of type $[[T ⧔ ⌊ T ⌋ ¹ν]]$. $[[alloc]]$ is a bit like the identity function: it is a hole (of type $[[T]]$) that needs a value of type $[[T]]$ to be a complete value of type $[[T]]$. Memory-wise, it is an uninitialized block large enough to host a value of type $[[T]]$, and a destination pointing to it. Conversely, structures with holes are eliminated with\footnote{As the name suggest, there is a more general elimination $\ottkw{from}_{\ottkw{\ltimes} }$. It will be discussed in~\cref{sec:syntax-type-system}.} $\ottkw{from}_{\ottkw{\ltimes} }' : [[S⧔① ¹ν → S]]$: if all the destinations have been consumed and only unit remains on the right side, then $[[S]]$ no longer has holes and thus is just a normal, complete structure.
 
-Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus{} doesn't have primitive constructor forms, constructors in \destcalculus{} are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly.
+Equipped with these, we can, for instance, derive traditional constructors from piecemeal filling. In fact, \destcalculus{} doesn't have primitive constructor forms, constructors in \destcalculus{} are syntactic sugar. We show here the definition of $[[Inl]]$ and $[[(,)]]$, but the other constructors are derived similarly. Operator $\patu$, present in second example, is used to chain operations returning unit type $[[①]]$.
 
 \codehere{\newoperator
 {[[Inl]]}{[[T ¹ν → T ⨁ U]]}
@@ -502,7 +502,7 @@ Equipped with these, we can, for instance, derive traditional constructors from 
 
 
 \paragraph{Memory safety and purity}
-At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language? The answer is that it wouldn't be if we'd allow unrestricted use of destination. Instead \destcalculus{} uses a linear type system to ensure that:
+At this point, the reader may be forgiven for feeling distressed at all the talk of mutations and uninitialized memory. How is it consistent with our claim to be building a pure and memory-safe language? The answer is that it wouldn't be if we'd allow unrestricted use of destinations. Instead \destcalculus{} uses a linear type system to ensure that:
 
 \begin{itemize}
 \item destinations are written at least once, preventing examples like:
@@ -556,7 +556,7 @@ is quadratic in \destcalculus{}. The usual solution to this is difference lists.
 
 However, each concatenation allocates a closure. If we're building a difference list from singletons and composition, there's roughly one composition per cons cell, so iterated composition effectively performs two traversals of the list. In \destcalculus{}, we can do better by representing a difference list as a list with a hole. A singleton difference list is $[[x]] \ottsctor{::} \holesq$. Concatenation is filling the hole with another difference list, using operator $\mathop{\triangleleft\mycirc}$. The details are on the left of~\cref{fig:impl-dlist-queue}. The \destcalculus{} encoding for difference lists makes no superfluous traversal: concatenation is just an $O(1)$ in-place update.
 
-\sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive \destcalculus{}}\label{fig:impl-dlist-queue}}{t}{0.51}{
+\sidebysidecodefig{\caption{Difference list and queue implementation in equirecursive \destcalculus{}}\label{fig:impl-dlist-queue}}{t}{0.48}{
 \newtype{[[DList T]]}{[[(List T) ⧔ ⌊ List T ⌋ ¹ν]]}
 \newoperatorb
   {\ottkw{append}}{[[DList T ¹ν → T ¹ν → DList T]]}
@@ -602,6 +602,7 @@ Using the fact that (incomplete) lists in \destcalculus{} can be extended by the
 For that, we define in \cref{fig:impl-map-tr} a helper function $\ottkw{map'}$, with signature $[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]$, that uses destination-filling primitives to extend the incomplete list represented by destination $[[⌊ List U ⌋ ¹ν]]$ as it processes nodes of the input $[[List T]]$. To go from $\ottkw{map'}$ to the usual $\ottkw{map}~\pmb{:}~[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]$, we just need to create an initial destination $[[⌊ List U ⌋ ¹ν]]$ using $[[alloc]]$, then call $\ottkw{map'}$ on that root destination, and get the completed structure using $\ottkw{from}_{\ottkw{\ltimes} }'$.
 
 \begin{codefig}{\caption{Tail-recursive map function on lists}\label{fig:impl-map-tr}}
+\newtype{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
 \newoperatorb
   {\ottkw{map'}}{[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]}
   {[[map' f l dl]]}{\!\!\!\begin{array}[t]{l}[[
@@ -625,7 +626,7 @@ To see why, let's consider the type $[[⌊ ⌊ T⌋ ¹ν⌋ ¹ν]]$: the type of
 Should we count $[[d]]$ as linearly used here? The alternatives don't seem promising:
 \vspace{-0.04cm}\begin{itemize}
 \item If we count this as a non-linear use of $[[d]]$, then $[[dd ◀ d]]$ is rejected since destinations (represented here by $[[d]]$) can only be used linearly. This choice is fairly limiting, as it would prevent us from storing destinations in structures with holes, as we do, crucially, in \cref{sec:bft}. Nonetheless, that's the option chosen in \cite{bagrel_destination-passing_2024}.
-\item If we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; d ◀ v]]$ so that $[[d]]$ is both stored for later use \emph{and} used immediately (resulting in the corresponding hole being potentially written to twice), which is unsound, as discussed in \cref{ssec:build-up-vocab}.
+\item If we do not count this use of $[[d]]$ at all, we can write $[[dd ◀ d ; d ◀ v]]$ so that $[[d]]$ is both stored for later use \emph{and} filled immediately (resulting in the corresponding hole being potentially written to twice), which is unsound, as discussed in \cref{ssec:build-up-vocab}.
 \end{itemize}\vspace{-0.04cm}
 So linear use it is. But it creates a problem: there's no way, within our linear type system, to distinguish between ``a destination has been used on the left of a triangle so its corresponding hole has been filled'' and ``a destination has been stored and its hole still exists at the moment''. This oversight may allow us to read uninitialized memory!
 
@@ -667,11 +668,11 @@ As a more full-fledged example, which uses the full expressive power of \destcal
 Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
 \end{quote}
 
-This example cannot be implemented using \citet{minamide_functional_1998}'s system where structures with holes are represented as linear functions. Destinations as first-class values are very much required. Indeed, breadth-first traversal implies that the order in which the structure must be populated (left-to-right, top-to-bottom) is not the same as the structural order of a functional binary tree, that is, building the leaves first and going up to the root. This isn't very natural in functional programming so it requires fancy workarounds~\cite{okasaki_bfs_2000,jones_gibbons_linearbfs_93,gibbons_phases_2023}.
+This isn't a very natural problem in functional programming, as breadth-first traversal implies that the order in which the structure must be built (left-to-right, top-to-bottom) is not the same as the structural order of a functional tree --- building the leaves first and going up to the root. So it usually requires fancy functional workarounds~\cite{okasaki_bfs_2000,jones_gibbons_linearbfs_93,gibbons_phases_2023}.
 
-On the other hand, first-class destination passing lets us use the familiar imperative algorithm for breadth-first traversal where a queue drives the processing order. When the element $(\textit{input subtree}, \textit{destination to output subtree})$ at the front of the queue has been processed, the children nodes and destinations are enqueued to be processed later.
+It's very tempting to implement this example in an efficient imperative-like fashion, where a queue drives the processing order, thanks to the power of destinations. For that, \citet{minamide_functional_1998}'s system where structures with holes are represented as linear functions is not enough. Destinations as first-class values are very much required.
 
-\Cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$, defined in the obvious way. We also assume some encoding of the type $[[Nat]]$ of natural number. $[[Queue T]]$ is the efficient queue type from \cref{ssec:efficient-queue}.
+\Cref{fig:impl-bfs} presents the \destcalculus{} implementation of the breadth-first tree traversal. The core idea is that we hold a queue of pairs, storing each input subtree with (a destination to) its corresponding output subtree. When the element $[[ˢ(tree, dtree)]]$ at the front of the queue has been processed, the children nodes of $[[tree]]$ and children destinations of $[[dtree]]$ are enqueued to be processed later. There, $[[Tree T]]$ is defined unsurprisingly as $[[Tree T]]\btriangleq [[① ⨁ (T ⨂ ((Tree T) ⨂ (Tree T)))]]$; we refer to the constructors of $[[Tree T]]$ as $\ottsctor{Nil}$ and $\ottsctor{Node}$, defined in the obvious way. We also assume some encoding of the type $[[Nat]]$ of natural number. $[[Queue T]]$ is the efficient queue type from \cref{ssec:efficient-queue}.
 
 We implement the actual breadth-first relabeling $\ottkw{relabelDPS}$ as an instance of a more general breadth-first traversal function $\ottkw{mapAccumBFS}$, which applies any state-passing style transformation of labels in breadth-first order.
 
@@ -842,8 +843,8 @@ $[[ω]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
 \hfill
 \begin{tabular}{|c||c|c|}\hline
 $[[·]]$        & $[[¹]]$ & $[[ω]]$ \\\hhline{|=#=|=|}
-$[[¹]]$        & $[[¹]]$ & $[[∞]]$ \\\hline
-$[[ω]]$        & $[[∞]]$ & $[[∞]]$ \\\hline
+$[[¹]]$        & $[[¹]]$ & $[[ω]]$ \\\hline
+$[[ω]]$        & $[[ω]]$ & $[[ω]]$ \\\hline
 \end{tabular}
 \hfill
 \vrule width 0.5pt % Vertical rule of 1pt width
@@ -896,9 +897,9 @@ $[[(p a) + (p' a')]] \btriangleq [[(p + p') (a + a')]]$
 \caption{Terms, types and modes of \destcalculus{}}\label{fig:grammar}\label{fig:sterm}\label{fig:mul-age-tables}
 \end{figure}
 
-\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ n]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}.
+\destcalculus{} is a simply typed $\lambda$-calculus with unit ($[[①]]$), product ($\ottstype{\otimes}$) and sum ($\ottstype{\oplus}$) types. Its most salient features are the destination $[[⌊ T ⌋ m]]$ and ampar $[[S ⧔ T]]$ types which we've introduced in \cref{sec:working-with-dests,sec:scope-escape-dests,sec:bft}.
 
-In order for the type system to ensure that destinations are sound, \destcalculus{} need both to enforce the linearity of destination but also to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}. To that effect, \destcalculus{} tracks the \emph{age} of destinations, that is how many nested scope have been open between the current expression and the scope from which a destination originates. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. For instance, we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then wil will say that the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separates the definition and use site of $[[x1]]$.
+In order for the type system to ensure that destinations are sound, \destcalculus{} need both to enforce the linearity of destination but also to prevent destinations from escaping their scope, as discussed in \cref{sec:scope-escape-dests}. To that effect, \destcalculus{} tracks the \emph{age} of destinations, that is how many nested scope have been open between the current expression and the scope from which a destination originates. We'll see in \cref{ssec:ty-term-val} that scopes are introduced by $[[t ►map x ⟼ t']]$. For instance, we have a term $[[t1 ►map x1 ⟼ t2 ►map x2 ⟼ t3 ►map x3 ⟼ x1]]$, then wil will say that the innermost occurrence of $[[x1]]$ has age $[[↑]]^{\ottsmodee{2}}$ because two nested $\ottkw{onR}_{\ottkw{\ltimes} }$ separate the definition and use site of $[[x1]]$.
 
 A natural idea, to track ages, is to introduce a modality $\ottstype{\uparrow}[[T]]$ to mean ``a $[[T]]$ in the previous scope''. Let's explore why this isn't quite going to work for us, hence why we need something more general.
 
@@ -945,14 +946,14 @@ The precise algebraic structure that we'll be needing on modes is both a commuta
 Our mode semiring is, as promised, the product of a multiplicity semiring, to track linearity, and an age semiring, to prevent scope escape. The multiplicity semiring has elements $[[¹]]$ (linear) and $[[ω]]$ (unrestricted), it's the same semiring as in~\cite{qtt_2018} or~\cite{bernardy_linear_2018}. It's mostly unsurprising, the key is that that $[[¹+¹]]=[[ω]]$ will enforce that a linear variable can only be used once, the full description of the multiplicity semiring is given in~\cref{fig:mul-age-tables}.
 
 Ages are more interesting. We write ages as $[[↑^ka]]$ (with $[[ka]]$ a natural number), for ``defined $[[ka]]$ scopes ago''.
-We also have an age $[[∞]]$ for variables that don't originate from a $[[t ►map x ⟼ t']]$ i.e. that aren't destinations, and can be freely used in and returned by any scope. The main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑^0]]$  (``now'') for the age of destination that originate from the current scope; and $[[↑]] \btriangleq [[↑^1]]$.
+We also have an age $[[∞]]$ for variables that don't originate from a $[[t ►map x ⟼ t']]$ i.e. that aren't destinations, and can be freely used in and returned by any scope. The main role of age $[[∞]]$ is thus to act as a guarantee that a value doesn't contain destinations. Finally, we will write $[[ν]] \btriangleq [[↑^0]]$  (``now'') for the age of destinations that originate from the current scope; and $[[↑]] \btriangleq [[↑^1]]$.
 
 The operations or order aren't the usual ones on natural numbers though. It is crucial that \destcalculus{} tracks the precise age of variables. Variables from $2$ scopes ago cannot be used as if they were from $1$ scope ago, or vice-versa. The ordering reflects this with finite ages being arranged in a flat order, with $[[∞]]$ being bigger than all of them. Multiplication of ages will reflect nesting of scope, as such, (finite) ages are multiplied by adding their numerical exponents $[[↑^ka · ↑^ja]] = [[↑^ka + ja]]$. In the typing rules, the most common form of scope nesting is opening a scope, which is represented by multiplying by $[[↑]]$ (that is, adding $1$ to the ages seen as a natural numbers). Finally $\ottsmode{+}$ is used to share a variable between two subterms, it's given by the least upper bound (for the age order above). The intuition here, is still precise age tracking: a variable must be at the same age in both subterms, or it can be $[[∞]]$, and assume whichever age it needs, including different ones in different subterms.
 
 Bindings in the context are annotated by a mode. The insight of~\cite{ghica_bounded_2014}, is that mode addition and multiplication by a mode (aka \emph{scaling}) lift to contexts pointwise, we have all the tools we need to define a modal type system, including a sub-structural one like linear logic.
 
 The operations and preorders on mode, contexts, etc. are presented in~\cref{fig:mul-age-tables}.
-We will usually omit mode annotations when the mode is the unit element $[[¹ν]]$ of the semiring.
+We will usually omit mode annotations when the mode is the multiplicative unit $[[¹ν]]$ of the semiring.
 
 \subsection{Typing rules}\label{ssec:ty-term-val}
 
@@ -990,7 +991,7 @@ Pattern-matching with rules \rref*{\CTyTerm\CSep\CApp}, \rref*{\CTyTerm\CSep\CPa
 
 \paragraph{Rules for scoping}
 
-As destinations always exist in the context of a structure with holes, and must stay in that context, we need a formal notion of \emph{scope}. Scopes are created by \rref*{\CTyTerm\CSep\CMap}, as destinations are only ever accessed through $\ottkw{onR}_{\ottkw{\ltimes} }$. More precisely, $[[t ►map x ⟼ t']]$ creates a new scope which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (now), and the ages of the existing bindings in $[[P2]]$ are multiplied by $[[↑]]$ (in other terms, we add $1$ to ages seen as a numbers). That is represented by $[[t']]$ typing in $[[¹↑·P2,{ x : ¹ν T }]]$ while the parent term $[[t ►map x ⟼ t']]$ types in unscaled contexts $[[P1+P2]]$. This difference of age between $[[x]]$ --- introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$ to bind the right-hand side of the ampar, containing destinations --- and $[[P2]]$ let us see what originates from older scopes, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing filling primitives to avoid pitfalls of \cref{sec:scope-escape-dests}.
+As destinations always exist in the context of a structure with holes, and must stay in that context, we need a formal notion of \emph{scope}. Scopes are created by \rref*{\CTyTerm\CSep\CMap}, as destinations are only ever accessed through $\ottkw{onR}_{\ottkw{\ltimes} }$. More precisely, $[[t ►map x ⟼ t']]$ creates a new scope which spans over $[[t']]$. In that scope, $[[x]]$ has age $[[ν]]$ (now), and the ages of the existing bindings in $[[P2]]$ are multiplied by $[[↑]]$ (in other terms, we add $1$ to ages seen as a numbers). That is represented by $[[t']]$ typing in $[[¹↑·P2,{ x : ¹ν T }]]$ while the parent term $[[t ►map x ⟼ t']]$ types in unscaled contexts $[[P1+P2]]$. This difference of age between $[[x]]$ --- introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$ to bind the right-hand side of the ampar, containing destinations --- and $[[P2]]$ let us see what originates from older scopes, and this information is propagated throughout the typing of $[[t']]$. Specifically, distinguishing the age of destinations is crucial when typing filling primitives to avoid the pitfalls of \cref{sec:scope-escape-dests}.
 
 \Cref{fig:scope-rules} illustrates scopes introduced by $\ottkw{onR}_{\ottkw{\ltimes} }$, and how the typing rules for $\ottkw{onR}_{\ottkw{\ltimes} }$ and $\blacktriangleleft$ interact.
 
@@ -1012,7 +1013,7 @@ The remaining operators $[[⨞]][[()]], [[⨞]][[Inl]], [[⨞]][[Inr]], [[⨞]]\
 
 \section{Operational semantics}\label{sec:ectxs-sem}
 
-Before we define the operational semantics of \destcalculus{} we need to introduce a few more concepts. We'll need commands $[[ C[t] ]]$, they're described in \cref{ssec:ty-ectxs-cmd}; and we'll need values, described in \cref{fig:grammar-val}. Indeed, the terms of \destcalculus{} lack any way to represent destinations or holes, or really any kind of value (for instance $[[Inl ()]]$ has been, so far, just syntactic sugar for a term $[[from⧔' (alloc ►map d ⟼ …)]]$). It's a peculiarity of \destcalculus{} that values only exist during the reduction, in this aspect our operational semantics resembles a denotational semantics. We sometimes call values \emph{runtime values} to emphasize this aspect. In order to express type safety with respect to our operational semantics, we'll need to extend the type system to cover commands and values, but these new typing rules are better thought of as technical device for the proofs than as part of the type system proper.
+Before we define the operational semantics of \destcalculus{} we need to introduce a few more concepts. We'll need commands $[[ C[t] ]]$, they're described in \cref{ssec:ty-ectxs-cmd}; and we'll need runtime values (we'll often just say \emph{values}), described in \cref{fig:grammar-val}. Indeed, the terms of \destcalculus{} lack any way to represent destinations or holes, or really any kind of value (for instance $[[Inl ()]]$ has been, so far, just syntactic sugar for a term $[[from⧔' (alloc ►map d ⟼ …)]]$). It's a peculiarity of \destcalculus{} that values (in particular, data constructors) only exist during the reduction; usually they are part of the term syntax of functional languages. We also extend the type system to cover commands and values, so as to be able to state and prove type safety theorems.
 
 \subsection{Runtime values and new typing context forms}\label{ssec:runtime-values}
 
@@ -1134,21 +1135,22 @@ Furthermore, in \rref*{\CTyVal\CSep\CAmpar}, the holes $[[-⁻¹D3]]$ and the co
 
 Rule \rref*{\CTyVal\CSep\CHole} indicates that a hole must have mode $[[¹ν]]$ in typing context to be well-typed; in particular mode coercion is not allowed here, and neither is weakening. Only when a hole is behind an exponential, that mode can change to some arbitrary mode $[[n]]$. The mode of a hole constrains which values can be written to it, e.g. in $[[{ + h : T n } ⫦ ᴇ n +h : !n T]]$, only a value with mode $[[n]]$ (more precisely, a value typed in a context of the form $[[n · G]]$) can be written to $[[+h]]$.
 
-Surprisingly, in \rref*{\CTyVal\CSep\CDest}, we see that a destination can be typed with any mode $[[m]]$ which $[[¹ν]]$ is a subtype of. We did this to mimic the rule \rref*{\CTyTerm\CSep\CVar} and make the general modal substitution lemma expressible for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode coercion is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{\CTyVal\CSep\CDest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no coercion can take place.
+Surprisingly, in \rref*{\CTyVal\CSep\CDest}, we see that a destination can be typed with any mode $[[m]]$ coercible to $[[¹ν]]$. We did this to mimic the rule \rref*{\CTyTerm\CSep\CVar} and make the general modal substitution lemma expressible for \destcalculus{}\footnote{Generally, in modal systems, if $[[{ x : m T},P ⊢ u : U]]$ and $[[D ⊢ v : T]]$ then $[[m·D,P ⊢ u[x ≔ v] : U]]$~\cite{bernardy_modality_2020}.\\We have $[[{ x : ω∞ ⌊ T ⌋ n} ⊢ () : ①]]$ and $[[{ -h : ¹ν ⌊ T ⌋ n} ⊢ -h : ⌊ T ⌋ n]]$ so $[[ω∞·({ -h : ¹ν ⌊ T ⌋ n}) ⊢ ()[x ≔ -h] : ①]]$ should be valid.}. We formally proved however that throughout a well-typed closed program, $[[m]]$ will never be of multiplicity $[[ω]]$ or age $[[∞]]$ --- a destination is always linear and of finite age --- so mode coercion is never actually used; and we used this result during the formal proof of the substitution lemma to make it quite easier. The other mode $[[n]]$, appearing in \rref*{\CTyVal\CSep\CDest}, is not the mode of the destination binding; instead it is part of the type $[[⌊ T ⌋ n]]$ and corresponds to the mode of values that we can write to the corresponding $[[+h]]$; so for it no coercion can take place.
 
 \paragraph{Other salient points}
 We don't distinguish values with holes from fully-defined values at the syntactic level: instead types prevent holes from being read. In particular, while values are typed in contexts $[[G]]$ allowing both destination and hole bindings, when using a value as a term in \rref*{\CTyTerm\CSep\CVal}, it's only allowed to have free destinations, but no free holes.
 
-Notice, also, that values can't have free variables, since contexts $[[G]]$ only contain hole and destination bindings, no variable binding. That values are closed is a standard feature of denotational semantics or abstract machine semantics. This is true even for function values (\rref*{\CTyVal\CSep\CFun}), which, also is prevented from containing free holes. Since a function's body is unevaluated, it's unclear what it'd mean for a function to contain holes; at the very least it'd complicate our system a lot, and we are unaware of any benefit supporting free holes in function could bring.
+Notice, also, that values can't have free variables, since contexts $[[G]]$ only contain hole and destination bindings, no variable binding. That values are closed is a standard feature of denotational semantics or abstract machine semantics. This is true even for function values (\rref*{\CTyVal\CSep\CFun}), which, also is prevented from containing free holes. Since a function's body is unevaluated, it's unclear what it'd mean for a function to contain holes; at the very least it'd complicate our system a lot, and we are unaware of any benefit supporting free holes in functions could bring.
 
-One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ as the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
+One might wonder how we can represent a curried function $[[ˢλ x ¹ν ⟼ ˢλ y ¹ν ⟼ x concat y]]$ at the value level, as the inner abstraction captures the free variable $[[x]]$. The answer is that such a function, at value level, is encoded as $[[ᵛλ x ¹ν ⟼ from⧔' (alloc ►map d ⟼ d ⨞ ( λ y ¹ν ⟼ x concat y))]]$, where the inner closure is not yet in value form. As the form $[[d ⨞ ( λ y ¹ν ⟼ x concat y)]]$ is part of term syntax, it's allowed to have free variable $[[x]]$.
 
 \subsection{Evaluation contexts and commands}\label{ssec:ectxs}\label{ssec:ty-ectxs-cmd}
 
-The semantics of \destcalculus{} is given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$, and an (extended) term $[[t]]$ under focus. We call such a pair $[[ C[t] ]]$ a \emph{command}, borrowing the terminology from~\cite{herbelin_curien_2000}. We use the notation usually reserved for one-hole contexts because it makes most reduction rules familiar, but it's important to keep in mind that $[[ C[t] ]]$ is formally a pair, which won't always have a clear corresponding term.
+The semantics of \destcalculus{} is given using small-step reductions on a pair $[[ C[t] ]]$ of an evaluation context $[[C]]$, and an (extended) term $[[t]]$ under focus. We call such a pair $[[ C[t] ]]$ a \emph{command}, borrowing the terminology from~\cite{herbelin_curien_2000}.
 
 The grammar of evaluation contexts is given in~\cref{fig:grammar-ty-ectxs}. An evaluation context $[[C]]$ is the composition of an arbitrary number of focusing components $[[c]]$. We chose to represent evaluation contexts syntactically, taking inspiration from \cite{felleisen_calculi_1987} and subsequent~\cite{danvy_refocusing_2004,biernacka_syntactic_2007}. The intuition behind that choice is that destination filling actually require a very tame notion of state. So tame, in fact, that we can simply represent writing to a hole by a mere substitution in the evaluation context, instead of using more heavy store semantics. With this choice, focusing and defocusing steps are made explicit in the semantics, resulting in a verbose but simpler proof. It is also easier to derive an abstract machine for the language, should one want to do that.
 
+Consequently, $[[ C[t] ]]$ is formally a pair (although we use the notation usually reserved for one-hole contexts, to make rules look more familiar). It's important to keep in mind that won't always have a corresponding term (for instance, when $[[ C]]$ contains open ampar focusing components).
 
 \begin{ottfig}[p]{\caption{Evaluation contexts and their typing rules}\label{fig:grammar-ty-ectxs}}{\setlength{\arraycolsep}{1ex}
 \hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\codehere{\hspace*{-0.3cm}\begin{minipage}{\linewidth}
@@ -1410,7 +1412,7 @@ It may seem counter-intuitive at first, but this program is valid and safe in \d
 
 However, this is a long way from the efficient implementation promised in \cref{sec:working-with-dests}. Copy-on-write can be optimized using fully-in-place functional programming ~\cite{lorenzen_fp_2023}, where, thanks to reference counting, we don't need to perform a copy when the difference list isn't aliased.
 
-An alternative is to refine the linear type system further in order to guarantee that ampars are unique and avoid copy-on-write altogether. We held back from doing that in formalization of \destcalculus{} as it obfuscates the presentation of the system without adding much to the understanding of the latter.
+An alternative is to refine the linear type system further in order to guarantee that ampars are unique and avoid copy-on-write altogether. We held back from doing that in the formalization of \destcalculus{} as it obfuscates the presentation of the system without adding much to the understanding of the latter.
 
 To make ampars linear, we follow a recipe proposed by~\cite{spiwack_linearly_2022} and introduce a new type $[[Token]]$, together with primitives $\ottkw{dup}$ and $\ottkw{drop}$. We also switch $[[alloc]]$ for $[[allocIP]]$:% :
 
@@ -1453,7 +1455,7 @@ This is the most comprehensive evidence to date of the benefits of destination-p
 
 The main difference between their work and ours is that their language is solely an intermediate language: it would be unsound to program in it manually. We, on the other hand, are proposing a type system to make it sound for the programmer to program directly with destinations.
 
-We see these two aspects as complementing each other: good compiler optimizations are important to alleviate the burden from the programmer and allowing high-level abstraction; having the possibility to use destinations in code affords the programmer more control would they need it.
+We see these two aspects as complementing each other: good compiler optimizations are important to alleviate the burden from the programmer and allow high-level abstraction; having the possibility to use destinations in code affords the programmer more control, should they need it.
 
 \subsection{Tail modulo constructor}\label{ssec:tmc}
 
@@ -1465,11 +1467,11 @@ let[@tail_mod_cons] rec map =
 \end{verbatim}
 to ask the compiler to perform the translation. The compiler will then throw an error if it can't. This way, contrary to the optimizations in~\cite{shaikhha_destination-passing_2017}, it is entirely predictable.
 
-This has been available in OCaml since version 4.14. This is the one example we know of of destinations built in a production-grade compiler. Our \destcalculus{} makes it possible to express the result tail-modulo-constructor in a typed language. It can be used to write programs directly in that style,  or it could serve as a typed target language for and automatic transformation. On the flip-side, tail modulo constructor is too weak to handle our difference lists or breadth-first traversal examples.
+This has been available in OCaml since version 4.14. This is the one example we know of of destinations built in a production-grade compiler. Our \destcalculus{} makes it possible to express the result tail-modulo-constructor in a typed language. It can be used to write programs directly in that style,  or it could serve as a typed target language for an automatic transformation. On the flip-side, tail modulo constructor is too weak to handle our difference lists or breadth-first traversal examples.
 
 \subsection{A functional representation of data structures with a hole}\label{ssec:minamide}\label{ssec:ampar-motivation}
 
-The idea of using linear types as a foundation of a functional calculus in which incomplete data structures can exists and be composed as first class values dates back to~\cite{minamide_functional_1998}. Our system is strongly inspired by theirs. In~\cite{minamide_functional_1998}, a first-class structure with a hole is called a \emph{hole abstraction}. Hole abstractions are a special kind of linear functions that we can only compose, but we can't pattern-match on the result (or pass it to an arbitrary function); nor can we pattern match on the argument, the \emph{hole variable}, which is a name for the hole in the structure: hole variables can only be used directly as argument of constructors, or of hole abstractions. The type of hole abstractions, $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear function type $\ottstype{[[T]] \multimap [[S]]}$.
+The idea of using linear types as a foundation of a functional calculus in which incomplete data structures can exist and be composed as first class values dates back to~\cite{minamide_functional_1998}. Our system is strongly inspired by theirs. In~\cite{minamide_functional_1998}, a first-class structure with a hole is called a \emph{hole abstraction}. Hole abstractions are a special kind of linear functions that we can only compose, but we can't pattern-match on the result (or pass it to an arbitrary function); nor can we pattern match on the argument, the \emph{hole variable}, which is a name for the hole in the structure: hole variables can only be used directly as argument of constructors, or of hole abstractions. The type of hole abstractions, $\ottstype{([[T]], [[S]]) hfun}$ is thus a weak form of linear function type $\ottstype{[[T]] \multimap [[S]]}$.
 
 In~\cite{minamide_functional_1998}, it's only ever possible to represent structures with a single hole. But this is a rather superficial restriction. The author doesn't comment on this, but we believe that this restriction only exists for convenience of the exposition: the language is lowered to a language without function abstraction and where composition is performed by combinators. While it's easy to write a combinator for single-argument-function composition, it's cumbersome to write combinators for functions with multiple arguments. But having multiple-hole data structures wouldn't have changed their system in any profound way.
 
@@ -1479,7 +1481,7 @@ In \destcalculus{} $[[S ⧔ T]]$ is a weak form of $\ottstype{[[S]]\mathop{\parr
 
 The key difference is that destinations which are representations of holes as first-class values values, which~\cite{minamide_functional_1998} doesn't have. This means that using~\cite{minamide_functional_1998}~--~or the more recent but similarly expressive system from~\cite{lorenzen_searchtree_2024}~--~one can implement the examples with difference lists and queues from~\cref{ssec:efficient-queue}, but they can't do our breadth-first traversal example from~\cref{sec:bft}, since storing destinations in a data structure is the essential ingredient of this example.
 
-This ability to store destination does come at a cost though: the system needs this additional notion of ages to ensure that destinations are used soundly. On the other hand, our system is strictly more general, in that the system from~\cite{minamide_functional_1998} can be embedded in \destcalculus{}, and if one stays in this fragment, we're never confronted with ages. Ages only show up when writing programs that go beyond Minamide's system.
+This ability to store destinations does come at a cost though: the system needs this additional notion of ages to ensure that destinations are used soundly. On the other hand, our system is strictly more general, in that the system from~\cite{minamide_functional_1998} can be embedded in \destcalculus{}, and if one stays in this fragment, we're never confronted with ages. Ages only show up when writing programs that go beyond Minamide's system.
 
 \subsection{Destination-passing style programming: a Haskell implementation}\label{ssec:dps-haskell}
 
@@ -1527,7 +1529,7 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 \section*{Data-Availability Statement}
 
-We intend to submit the machine-verified proof described in \cref{sec:formal-proof} for artifact evaluation. It's a formalization of the \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms. The preliminary version is available at \url{https://doi.org/10.5281/zenodo.13933661}, together with the build instructions.
+We submitted the machine-verified proof described in \cref{sec:formal-proof} for artifact evaluation. It's a formalization of \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms. The preliminary, anonymous version is available at \url{https://doi.org/10.5281/zenodo.13933661}, together with the build instructions.
 
 \clearpage{}
 
