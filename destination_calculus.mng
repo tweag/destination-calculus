@@ -1,5 +1,5 @@
 % -*- latex -*-
-\documentclass[acmsmall, screen]{acmart}
+\documentclass[acmsmall, screen, review, anonymous]{acmart}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{amsthm}
@@ -1527,11 +1527,7 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 \section*{Data-Availability Statement}
 
-We have submitted for artifact evaluation the formalization of the \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms.
-
-The main reproducible results are the machine-verified proofs of type-safety \cref{thm:preservation,thm:progress} for \destcalculus{}.
-
-The preliminary, anonymous version was available at \url{https://doi.org/10.5281/zenodo.13933661}. The new, non-anonymous version at \url{https://doi.org/10.5281/zenodo.14534423} supersede it, although the Coq files haven't changed.
+We intend to submit the machine-verified proof described in \cref{sec:formal-proof} for artifact evaluation. It's a formalization of the \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms. The preliminary version is available at \url{https://doi.org/10.5281/zenodo.13933661}, together with the build instructions.
 
 \clearpage{}
 
