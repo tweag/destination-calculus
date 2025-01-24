@@ -107,7 +107,7 @@ m·P1 + P2 ⊢ t ►case m ᴇ n x ⟼ u : U
 {{ [[P2]] # [[{ x : ¹ν T }]] }} [[:DisjointP2x]]
 P1 ⊢ t : U ⧔ T [[:Tyt]]
 ¹↑·P2 + { x : ¹ν T } ⊢ t' : T' [[:Tytp]]
--------------------------------- :: Map {{ com \CMap }}
+-------------------------------- :: UpdA {{ com \CUpdA }}
 P1 + P2 ⊢ t ►map x ⟼ t' : U ⧔ T'
 
 P ⊢ u : U [[:Tyu]]
@@ -119,7 +119,7 @@ P ⊢ t : U ⧔ (! ¹∞ T) [[:Tyt]]
 P ⊢ from⧔ t : U ⨂ (! ¹∞ T)
 
 {{ DisposableOnly [[P]] }} [[:DisposP]]
--------------------- :: Alloc {{ com \CAlloc }}
+-------------------- :: NewA {{ com \CNewA }}
 P ⊢ alloc : T ⧔ ⌊ T ⌋ ¹ν
 
 {{ IsValid [[n]] }} [[:Validn]]
@@ -289,7 +289,7 @@ D1 ⊣ C ∘ (⬜ ►case m ᴇ m' x ⟼ u) : ! m' T ↣ U0
 {{ ValidOnly [[D2]] }} [[:ValidOnlyD2]]
 D1 + D2 ⊣ C : U ⧔ T' ↣ U0 [[:TyC]]
 ¹↑·D2 + { x : ¹ν T } ⊢ t' : T' [[:Tytp]]
--------------------------------- :: Map {{ com \CMap }}
+-------------------------------- :: UpdA {{ com \CUpdA }}
 D1 ⊣ C ∘ (⬜ ►map x ⟼ t') : (U ⧔ T) ↣ U0
 
 D ⊣ C : (U ⧔ ①) ↣ U0 [[:TyC]]
@@ -466,17 +466,17 @@ C[t ►case m ᴇ n x ⟼ u] ⟶ (C ∘ (⬜ ►case m ᴇ n x ⟼ u))[t]
 C[ᴇ n v' ►case m ᴇ n x ⟼ u] ⟶ C[u[x ≔ v'] ]
 
 {{ NotVal [[t]] }} [[:NotValt]]
------------------------ :: Map_Focus {{ com \CMap\CFocus }}
+----------------------- :: UpdA_Focus {{ com \CUpdA\CFocus }}
 C[t ►map x ⟼ t'] ⟶ (C ∘ (⬜ ►map x ⟼ t'))[t]
 
------------------------ :: Map_Unfocus {{ com \CMap\CUnfocus }}
+----------------------- :: UpdA_Unfocus {{ com \CUpdA\CUnfocus }}
 (C ∘ (⬜ ►map x ⟼ t'))[v] ⟶ C[v ►map x ⟼ t']
 
 {{ [[h''']] = [[max(H ∪ hnames(C)) + 1]] }} [[:hpMaxC]]
----------------------------------- :: OpenAmpar {{ com \COpenAmpar }}
+---------------------------------- :: Ampar_Open {{ com \CAmpar\CSep\COpen }}
 C[ H ⟨ v2 ❟ v1 ⟩ ►map x ⟼ t'] ⟶ (C ∘ (H⩲h''' ᵒᵖ⟨ v2[H⩲h'''] ❟ ⬜⟩))[ t'[x ≔ v1[H⩲h'''] ] ]
 
----------------------------------- :: CloseAmpar {{ com \CCloseAmpar }}
+---------------------------------- :: Ampar_Close {{ com \CAmpar\CSep\CClose }}
 (C ∘ H ᵒᵖ⟨ v2 ❟ ⬜⟩)[v1] ⟶ C[ H ⟨ v2 ❟ v1 ⟩ ]
 
 {{ NotVal [[u]] }} [[:NotValu]]
@@ -499,7 +499,7 @@ C[from⧔ t] ⟶ (C ∘ (from⧔ ⬜))[t]
 -------------------------------------- :: FromA_Red {{ com \CFromA\CRed }}
 C[from⧔ {} ⟨ v2 ❟ ᴇ ¹∞ v1 ⟩] ⟶ C[(v2, ᴇ ¹∞ v1)]
 
--------------------------------------- :: Alloc_Red {{ com \CAlloc\CRed }}
+-------------------------------------- :: NewA_Red {{ com \CNewA\CRed }}
 C[alloc] ⟶ C[{1} ⟨ +1 ❟ -1 ⟩]
 
 {{ NotVal [[t]] }} [[:NotValt]]

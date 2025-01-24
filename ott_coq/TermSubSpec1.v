@@ -243,15 +243,15 @@ Proof.
           rewrite stimes_distrib_on_union. rewrite union_swap_2_3_l3. rewrite stimes_is_action.
           apply IHTyt2 with (Tv' := Tv'); trivial.
           apply LinOnly_times_linone_forward. apply LinOnly_mode_plus_backward with (m1 := m1). assumption. apply FinAgeOnly_times_linone_forward. apply FinAgeOnly_mode_plus_backward with (m1 := m1). assumption. apply IsValid_times_iff; split. constructor. apply IsValid_plus_backward with (m1 := m1). assumption. crush. apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. apply DestOnly_Disjoint_singleton_var; crush. apply Disjoint_union_l_iff; split. Disjoint_singleton_using DisjointPtx. apply Disjoint_singletons_iff; injection; intros ->; congruence. rewrite union_swap_2_3_l3. rewrite stimes_distrib_on_union. rewrite stimes_singleton_var. rewrite mode_times_commutative. reflexivity. }
-        apply Ty_term_Map with (2 := Tytsub1) (3 := Tytsub2); trivial. { apply Disjoint_union_l_iff; split. crush. apply DestOnly_Disjoint_singleton_var; crush. }
+        apply Ty_term_UpdA with (2 := Tytsub1) (3 := Tytsub2); trivial. { apply Disjoint_union_l_iff; split. crush. apply DestOnly_Disjoint_singleton_var; crush. }
       * rewrite union_swap_2_3_l3.
         assert (Pt1 ᴳ+ m1 ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : U ⧔ T) as Tytsub1. {
           apply IHTyt1 with (Tv' := Tv'); trivial. crush. crush. crush. }
         destruct (HNamesFacts.eq_dec x x'); subst.
-        + apply Ty_term_Map with (2 := Tytsub1) (3 := Tyt2); trivial.
+        + apply Ty_term_UpdA with (2 := Tytsub1) (3 := Tyt2); trivial.
         + assert (¹↑ ᴳ· P2 ᴳ+ ᴳ{ x : ¹ν ‗ T} ⊢ t' ᵗ[ x' ≔ v'] : T') as Tytsub2.
           { replace (t' ᵗ[ x' ≔ v']) with t'. assumption. symmetry. apply term_sub_nIn_no_effect with (2 := Tyt2). apply nIn_union_iff; split. apply nIn_stimes_iff. assumption. apply nIn_iff_Disjoint_singleton with (n := (ˣ x')) (binding := ₓ m1 ‗ Tv'). apply Disjoint_singletons_iff. injection. intros ->. congruence. }
-          apply Ty_term_Map with (2 := Tytsub1) (3 := Tytsub2); trivial.
+          apply Ty_term_UpdA with (2 := Tytsub1) (3 := Tytsub2); trivial.
       * assert (x <> x'). { symmetry. apply Disjoint_union_l_iff in DisjointP2x. rewrite Disjoint_singletons_iff in DisjointP2x. crush. }
         destruct (HNamesFacts.eq_dec x x'); subst; try congruence. clear n.
         rewrite <- union_associative.
@@ -260,13 +260,13 @@ Proof.
           rewrite stimes_distrib_on_union. rewrite union_swap_2_3_l3. rewrite stimes_is_action.
           apply IHTyt2 with (Tv' := Tv'); trivial.
           apply LinOnly_times_linone_forward. assumption. apply FinAgeOnly_times_linone_forward. assumption. apply IsValid_times_iff; split. constructor. assumption. crush. apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. apply DestOnly_Disjoint_singleton_var; crush. apply Disjoint_union_l_iff; split. Disjoint_singleton_using DisjointPtx. apply Disjoint_singletons_iff; injection; intros ->; congruence. rewrite union_swap_2_3_l3. rewrite stimes_distrib_on_union. rewrite stimes_singleton_var. rewrite mode_times_commutative. reflexivity. }
-        apply Ty_term_Map with (2 := Tytsub1) (3 := Tytsub2); trivial. { apply Disjoint_union_l_iff; split. crush. apply DestOnly_Disjoint_singleton_var; crush. }
+        apply Ty_term_UpdA with (2 := Tytsub1) (3 := Tytsub2); trivial. { apply Disjoint_union_l_iff; split. crush. apply DestOnly_Disjoint_singleton_var; crush. }
     - assert (Pt ᴳ+ m' ᴳ· Dv' ⊢ u ᵗ[ x' ≔ v'] : U) as Tytsub. { apply IHTyt with (Tv' := Tv'); trivial. }
       apply Ty_term_ToA with (1 := Tytsub); trivial.
     - assert (Pt ᴳ+ m' ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : U ⧔ ! ¹∞ ⁔ T) as Tytsub. { apply IHTyt with (Tv' := Tv'); trivial. }
       apply Ty_term_FromA with (1 := Tytsub); trivial.
     - assert (DisposableOnly (Pt ᴳ+ m' ᴳ· Dv')). { apply DisposableOnly_sub with (x' := x') (Tv' := Tv'); trivial. }
-      apply Ty_term_Alloc; trivial.
+      apply Ty_term_NewA; trivial.
     - assert (Pt ᴳ+ m' ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : ⌊ ① ⌋ n) as Tytsub. { apply IHTyt with (Tv' := Tv'); trivial. }
       apply Ty_term_FillU with (2 := Tytsub); trivial.
     - assert (Pt ᴳ+ m' ᴳ· Dv' ⊢ t ᵗ[ x' ≔ v'] : ⌊ T1 ⨁ T2 ⌋ n) as Tytsub. { apply IHTyt with (Tv' := Tv'); trivial. }

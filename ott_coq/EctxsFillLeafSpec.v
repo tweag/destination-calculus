@@ -139,7 +139,7 @@ Proof.
       constructor 7 with (8 := Tyu); first last.
       rewrite stimes_distrib_on_union, stimes_is_action, union_swap_2_3_l3 in TyC.
       apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.
-    * (* Ty-ectxs-Map *)
+    * (* Ty-ectxs-UpdA *)
       constructor 8 with (6 := Tytp); first last.
       rewrite union_swap_2_3_l3 in TyC.
       apply IHC with (5 := TyC); first last. all: trivial. all: supercrush.

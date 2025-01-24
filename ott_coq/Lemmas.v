@@ -2677,7 +2677,7 @@ Proof.
   - unfold ctx_singleton in mapstoG. rewrite singleton_MapsTo_iff in mapstoG. apply eq_sigT_fst in mapstoG; subst. inversion contra.
   - unfold ctx_singleton in mapstoG. rewrite singleton_MapsTo_iff in mapstoG. apply eq_sigT_fst in mapstoG; subst. inversion contra.
   - unfold ctx_empty in mapstoG. simpl in mapstoG. congruence.
-  - unfold DestOnly in H. unfold NoVar in contra. specialize (H nam b mapstoG). destruct nam. { inversion H. } { inversion contra. }
+  - unfold DestOnly in DestOnlyD. unfold NoVar in contra. specialize (DestOnlyD nam b mapstoG). destruct nam. { inversion DestOnlyD. } { inversion contra. }
   - unfold NoVar in IHTy. specialize (IHTy nam b mapstoG). congruence.
   - unfold NoVar in IHTy. specialize (IHTy nam b mapstoG). congruence.
   - assert (In nam (G1 ᴳ+ G2)). { apply In_iff_exists_Some; exists b; tauto. }
@@ -3097,9 +3097,9 @@ Proof.
     + cbn.
       constructor.
       * assumption.
+      * hauto l: on use: DestOnly_cshift_iff.
       * erewrite <- cshift_singleton_var_eq, <- cshift_distrib_on_union.
         auto.
-      * hauto l: on use: DestOnly_cshift_iff.
     + cbn.
       constructor. auto.
     + cbn.
@@ -3139,10 +3139,10 @@ Proof.
     rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_singleton_var_eq with (x := x2) (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
     * apply Ty_term_PatE with (T := T); trivial. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial.
     rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
-    * apply Ty_term_Map with (T := T). rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial. rewrite <- cshift_distrib_on_stimes. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
+    * apply Ty_term_UpdA with (T := T). rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). apply Disjoint_cshift_iff; assumption. eapply Ty_term_cshift; trivial. rewrite <- cshift_distrib_on_stimes. rewrite <- cshift_singleton_var_eq with (H := H) (h' := h'). rewrite <- cshift_distrib_on_union. eapply Ty_term_cshift; trivial.
     * apply Ty_term_ToA. eapply Ty_term_cshift; trivial.
     * apply Ty_term_FromA. eapply Ty_term_cshift; trivial.
-    * apply Ty_term_Alloc. apply DisposableOnly_cshift_iff. assumption.
+    * apply Ty_term_NewA. apply DisposableOnly_cshift_iff. assumption.
     * apply Ty_term_FillU with (n := n); trivial. eapply Ty_term_cshift; trivial.
     * apply Ty_term_FillL with (n := n) (T2 := T2); trivial. eapply Ty_term_cshift; trivial.
     * apply Ty_term_FillR with (n := n) (T1 := T1); trivial. eapply Ty_term_cshift; trivial.
@@ -3758,7 +3758,7 @@ Proof.
   - subst. rewrite hminus_inv_distrib_on_union in Tyv. rewrite hminus_inv_singleton in Tyv.
     assert (ᴳ{} = D4 ᴳ+ (ᴳ-⁻¹ D13 ᴳ+ ᴳ{+ h : T ‗ n})). { dependent destruction Tyv. unfold ctx_singleton, singleton, union, hminus_inv, merge_with, merge; cbn. apply ext_eq'. cbn. rewrite x. reflexivity. }
     apply eq_sym in H. rewrite union_empty_iff in H. rewrite union_empty_iff in H. destruct H as (_ & _ & contra). apply singleton_eq_empty_contra in contra. exfalso; assumption. { crush. }
-  - dependent destruction Tyv. rewrite DestOnly_union_iff in H. rewrite hminus_inv_distrib_on_union in H. rewrite DestOnly_union_iff in H. destruct H as (_ & _ & contra). rewrite hminus_inv_singleton in contra. apply DestOnly_singleton_hole_contra in contra. contradiction. { crush. }
+  - dependent destruction Tyv. rewrite DestOnly_union_iff in DestOnlyD. rewrite hminus_inv_distrib_on_union in DestOnlyD. rewrite DestOnly_union_iff in DestOnlyD. destruct DestOnlyD as (_ & _ & contra). rewrite hminus_inv_singleton in contra. apply DestOnly_singleton_hole_contra in contra. contradiction. { crush. }
   - dependent destruction Tyv. apply Ty_val_Left. apply IHv; trivial.
   - dependent destruction Tyv. apply Ty_val_Right. apply IHv; trivial.
   - dependent destruction Tyv.

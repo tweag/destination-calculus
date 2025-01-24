@@ -29,7 +29,7 @@ Proof.
   - apply Disjoint_singletons_iff. sfirstorder.
   - apply Ty_term_FromA.
     replace P with (P ᴳ+ ᴳ{}). 2:{ crush. }
-    apply Ty_term_Map with (T := ①).
+    apply Ty_term_UpdA with (T := ①).
     + apply Disjoint_empty_l.
     + assumption.
     + rewrite stimes_empty_eq, union_commutative. apply Ty_term_PatU.
@@ -52,9 +52,9 @@ Proof.
   unfold sterm_Unit.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := P).
-  apply Ty_term_Map with (T := ⌊①⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊①⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   apply Ty_term_FillU with (n := ¹ν); trivial. constructor.
   apply Ty_term_Var with (P := mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil) ᴳ· P).
   apply DisposableOnly_stimes. cbn. constructor. assumption.
@@ -67,9 +67,9 @@ Proof.
   unfold sterm_Fun.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := P2).
-  apply Ty_term_Map with (T := ⌊T ⁔ m → U⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊T ⁔ m → U⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillF with (T := T) (U := U); trivial.
@@ -83,9 +83,9 @@ Proof.
   unfold sterm_Left.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := P2).
-  apply Ty_term_Map with (T := ⌊T1 ⨁ T2⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊T1 ⨁ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillLeaf with (T := T1); trivial.
@@ -100,9 +100,9 @@ Proof.
   unfold sterm_Right.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := P2).
-  apply Ty_term_Map with (T := ⌊T1 ⨁ T2⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊T1 ⨁ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (¹↑) with (mode_times' ((¹↑ :: nil) ++ (¹ν :: nil) ++ nil)). 2:{ cbn. reflexivity. }
   apply Ty_term_FillLeaf with (T := T2); trivial.
@@ -117,11 +117,11 @@ Proof.
   unfold sterm_Exp.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := m ᴳ· P2).
-  apply Ty_term_Map with (T := ⌊! m ⁔ T⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊! m ⁔ T⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial.
     unfold UserDefined in *. intros x. specialize (UserDefinedP2 x). unfold stimes. rewrite In_map_iff. assumption.
     lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   rewrite union_commutative.
   rewrite stimes_is_action.
   replace (¹↑ · m) with (mode_times' ((¹↑ :: nil) ++ (m :: nil) ++ nil)). 2:{ cbn. rewrite mode_times_linnu_r_eq. reflexivity. }
@@ -140,9 +140,9 @@ Proof.
   unfold sterm_Prod.
   apply Ty_term_sterm_FromA'.
   rewrite union_empty_l_eq with (G := P21 ᴳ+ P22).
-  apply Ty_term_Map with (T := ⌊T1 ⨂ T2⌋ ¹ν).
+  apply Ty_term_UpdA with (T := ⌊T1 ⨂ T2⌋ ¹ν).
   { apply UserDefined_Disjoint; trivial. lia. }
-  apply Ty_term_Alloc. apply DisposableOnly_empty.
+  apply Ty_term_NewA. apply DisposableOnly_empty.
   rewrite union_commutative.
   replace (ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}) with (¹ν ᴳ· ᴳ{ 0 : ¹ν ‗ ⌊ T1 ⨂ T2 ⌋ ¹ν}). 2:{ rewrite stimes_linnu_eq. reflexivity. }
   apply Ty_term_PatP with (T1 := ⌊ T1 ⌋ ¹ν) (T2 := ⌊ T2 ⌋ ¹ν).

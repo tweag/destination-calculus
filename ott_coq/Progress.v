@@ -66,7 +66,7 @@ Proof.
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : ! n ⁔ T ‗ ¹ν}) (h := h) (T := ! n ⁔ T); tauto. }
       { exists C, (u ᵗ[x ≔ v']). constructor. }
     * exists (C ∘ ⬜►caseᵉ m ᴇ n ⁔ x ⟼ u), t. constructor; tauto.
-  - rename Tyt into TyMap, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
+  - rename Tyt into TyUpdA, t0 into t, Tyt0 into Tyt, P1 into D1, P2 into D2. destruct (NotVal_dec t).
     * destruct e; subst. rename x0 into v. inversion Tyt; subst. inversion Tyv; subst. { exfalso. apply Ty_val_Hole_DestOnly_contra with (D := ᴳ{+ h : U ⧔ T ‗ ¹ν}) (h := h) (T := U ⧔ T); tauto. }
       rename D2 into D', D0 into D2. assert (LinOnly (P ᴳ+ (D1 ᴳ+ D2))) as LinOnlyPuD1uD2. { crush. } rewrite (nDisposable_in_LinOnly P (D1 ᴳ+ D2) DisposP LinOnlyPuD1uD2) in *.
       exists (C ∘ hnamesᴳ(D3) ᴴ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1) ᵒᵖ⟨ v2 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1)] ❟⬜⟩), (t' ᵗ[x ≔ v1 ᵛ[hnamesᴳ( D3) ⩲ (maxᴴ(hnamesᴳ( D3) ∪ hnames©(C)) + 1)]]). constructor; tauto.
