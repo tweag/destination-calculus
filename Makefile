@@ -46,7 +46,7 @@ destination_calculus_ott.tex: grammar.ott rules_mod.ott
 # copy of this repository at the right commit with git worktree and
 # use `make` there.
 %.diff.tex: compare-to/%.tex %.tex
-	latexdiff --exclude-textcmd="section,subsection,caption" --exclude-safecmd="improvement,critical,unsure,bgroup,SetPrefix,egroup,ottdefnTyXXval,CTyVal,CSep" --add-to-config "FLOATENV=ottfig[\w\d*@]*,FLOATENV=codefig[\w\d*@]*" $^ > $@
+	latexdiff --exclude-textcmd="section,subsection,caption" --exclude-safecmd="improvement,critical,unsure,bgroup,SetPrefix,egroup,ottdefnTyXXval,CTyVal,CSep" --add-to-config "FLOATENV=ottfig[\w\d*@]*,FLOATENV=codefig[\w\d*@]*" --math-markup=whole $^ > $@
 
 %.pdf %.bbl : %.tex destination_calculus_ott.tex $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES)
 	latexmk $<
