@@ -530,7 +530,7 @@ At this point, the reader may be forgiven for feeling distressed at all the talk
   where $\ottkw{ambiguous1}$ would return $[[false]]$ and $\ottkw{ambiguous2}$ would return $[[true]]$ due to evaluation order, even though let-expansion should be valid in a pure language.
 \end{itemize}
 
-\subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
+\subsection{Tail-recursive map}\label{ssec:map-tr}
 
 Now that we have an intuition of how destinations work, let's see how they can be used to build usual data structures. For this section, we suppose that \destcalculus{} has equirecursive types and a fixed-point operator. These aren't part of the formal system of \cref{sec:syntax-type-system} but don't add any complication.
 
@@ -548,12 +548,46 @@ We define lists as a fixpoint, as usual: $[[List T]] \btriangleqrec [[① ⨁ (T
   {[[d ⨞ (::)]]}{[[d ⨞Inr ⨞(,)]]}
 }
 
-Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constructors from filling operators:
+Just like we did in~\cref{ssec:build-up-vocab} we can recover traditional constructors from filling operators, e.g.:
 
 \codehere{\newoperator
 {\ottsctor{(::)}}{[[T ⨂ (List T) ¹ν → List T]]}
 {[[x ˢ:: xs]]}{\!\!\!\begin{array}[t]{l}[[from⧔' ((alloc @ (List T) ⧔ ⌊ List T ⌋ ¹ν) ►map d ⟼⮒
 ‥‥‥‥‥‥༼(d ⨞ (::)) ►case ¹ν (dx, dxs) ⟼ dx ◀ x ; dxs ◀ xs༽)]]\end{array}}}
+
+\paragraph{A tail-recursive map function}
+
+List being ubiquitous in functional programming, the fact that the most natural way to write a map function on lists isn't tail recursive (hence consumes unbounded stack space), is unpleasant. Map can be made tail-recursive in two passes: first build the result list in reverse, then reverse it.
+
+Destinations let us avoid this two-pass process, as they let us extend the tail of the result list directly.
+We give a complete implementation in \cref{fig:impl-map-tr}.
+
+The main function is $\ottkw{map'}$, it has type
+$$
+[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]
+$$
+That is, instead of returning a resulting list, it takes a destination as an input and fills it with the result. At each recursive call, $\ottkw{map'}$ creates a new cons cell to fill the destination, the tail of the cons cell is a new destination on which $\ottkw{map'}$ is called (tail) recursively. This is really the same algorithm that you could write to implement map on a mutable list in an imperative language. Nevertheless \destcalculus{} is a pure language with only immutable types.
+
+To obtain the regular $\ottkw{map}$ function, all is left to do is to call $[[alloc]]$ to create an initial destination, and $\ottkw{from}_{\ottkw{\ltimes} }'$, much like when we make constructors out of filling operators, like $\ottsctor{(::)}$ above.
+
+\begin{codefig}{\caption{Tail-recursive map function on lists}\label{fig:impl-map-tr}}
+\newtype{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
+\newoperatorb
+  {\ottkw{map'}}{[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]}
+  {[[map' f l dl]]}{\!\!\!\begin{array}[t]{l}[[
+l ►case ¹ν {⮒
+‥‥ˢ[] ⟼ dl⨞[],⮒
+‥‥x ˢ:: xs ⟼ (dl⨞(::)) ►case ¹ν⮒
+‥‥‥‥(dx, dxs) ⟼ dx ◀ f x ; map' f xs dxs}]]\end{array}}
+\newoperator
+  {\ottkw{map}}{[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]}
+  {[[map f l]]}{[[from⧔' ((alloc @ (List U) ⧔ ⌊ List U ⌋ ¹ν) ►map dl ⟼ map' f l dl)]]}
+\end{codefig}
+
+\subsection{Functional queues, with destinations}\label{ssec:efficient-queue}
+
+Implementations for a tail-recursive map are present in most previous work, from~\cite{minamide_functional_1998}, to recent work~\cite{bour_tmc_2021,leijen_trmc_2023,bagrel_destination-passing_2024}. Tail-recursive map doesn't need the full power of \destcalculus{}'s first-class destinations: it just needs a notion of structure with a (single) hole. In \cref{sec:bft}, we will build an example which fully uses first-class destinations, but first, we will need some more material.
+
 \paragraph{Difference lists}
 \newcommand{\lstcat}{\mathop{+\!+}}
 Just like in any language, iterated concatenation of lists
@@ -600,28 +634,6 @@ In an immutable functional language, a queue can be implemented as a pair of lis
 For their simple implementation, Hood-Melville queues are surprisingly efficient: the cost of the reverse operation is $O(1)$ amortized for a single-threaded use of the queue. Still, it would be better to get rid of this full traversal of the back list. Taking a step back, this $[[back]]$ list that has to be reversed before it is accessed is really merely a representation of a list that can be extended from the back. And we already know an efficient implementation for this: difference lists.
 
 So we can give an improved version of the simple functional queue using destinations. This implementation is presented on the right-hand side of~\cref{fig:impl-dlist-queue}. Note that contrary to an imperative programming language, we can't implement the queue as a single difference list: as mentioned earlier, our type system prevents us from reading the front elements of difference lists. Just like for the simple functional queue, we need a pair of one list that we can read from, and one that we can extend. Nevertheless this implementation of queues is both pure, as guaranteed by the \destcalculus{} type system, and nearly as efficient as what an imperative programming language would afford.
-
-\subsection{Tail-recursive map function on lists}\label{ssec:map-tr}
-
-Using the fact that (incomplete) lists in \destcalculus{} can be extended by their end in $O(1)$, instead of $O(n)$ in other languages, we can also write a map function on lists that is tail recursive and run in a single pass (no reverse operation is needed compared to usual functional languages).
-
-For that, we define in \cref{fig:impl-map-tr} a helper function $\ottkw{map'}$, with signature $[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]$, that uses destination-filling primitives to extend the incomplete list represented by destination $[[⌊ List U ⌋ ¹ν]]$ as it processes nodes of the input $[[List T]]$. To go from $\ottkw{map'}$ to the usual $\ottkw{map}~\pmb{:}~[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]$, we just need to create an initial destination $[[⌊ List U ⌋ ¹ν]]$ using $[[alloc]]$, then call $\ottkw{map'}$ on that root destination, and get the completed structure using $\ottkw{from}_{\ottkw{\ltimes} }'$.
-
-\begin{codefig}{\caption{Tail-recursive map function on lists}\label{fig:impl-map-tr}}
-\newtype{[[List T]]}{[[① ⨁ (T ⨂ (List T))]]}
-\newoperatorb
-  {\ottkw{map'}}{[[(T ¹ν → U) ω∞ → List T ¹ν → ⌊ List U ⌋ ¹ν ¹ν → ①]]}
-  {[[map' f l dl]]}{\!\!\!\begin{array}[t]{l}[[
-l ►case ¹ν {⮒
-‥‥ˢ[] ⟼ dl⨞[],⮒
-‥‥x ˢ:: xs ⟼ (dl⨞(::)) ►case ¹ν⮒
-‥‥‥‥(dx, dxs) ⟼ dx ◀ f x ; map' f xs dxs}]]\end{array}}
-\newoperator
-  {\ottkw{map}}{[[(T ¹ν → U) ω∞ → List T ¹ν → List U]]}
-  {[[map f l]]}{[[from⧔' ((alloc @ (List U) ⧔ ⌊ List U ⌋ ¹ν) ►map dl ⟼ map' f l dl)]]}
-\end{codefig}
-
-Similar implementations for tail-recursive, DPS variants of common list functions are present in most related works, starting from~\cite{minamide_functional_1998}, and including \cite{bour_tmc_2021,leijen_trmc_2023,bagrel_destination-passing_2024}. In such examples we don't need the full power of \destcalculus{}: second-class destinations would suffice, and we don't need support for incomplete structures with multiple holes either.
 
 \section{Scope escape of destinations}\label{sec:scope-escape-dests}
 
