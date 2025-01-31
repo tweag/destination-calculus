@@ -129,8 +129,8 @@ term, t, u :: 'term_' ::= {{ com Term }}
   | true :: S :: SugarTrue {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{true} }}
   | false :: S :: SugarFalse {{ coq (term_Val val_Unit) }} {{ tex \ottsctor{false} }}
   | succ t :: S :: SugarSucc {{ coq (term_Succ [[t]]) }} {{ tex \ottkw{succ}~[[t]] }}
-  | fillWithInlCtor t :: S :: SugarFillWithInlCtor {{ coq (term_Val val_Unit) }} {{ tex \ottkw{fillWithInlCtor}~[[t]] }}
-  | fillWithPairCtor t :: S :: SugarFillWithPairCtor {{ coq (term_Val val_Unit) }} {{ tex \ottkw{fillWithPairCtor}~[[t]] }}
+  | fillWithInl t :: S :: SugarFillWithInl {{ coq (term_Val val_Unit) }} {{ tex \ottkw{fillWithInl}~[[t]] }}
+  | fillWithPair t :: S :: SugarFillWithPair {{ coq (term_Val val_Unit) }} {{ tex \ottkw{fillWithPair}~[[t]] }}
   | t ⨞ [] :: S :: SugarFillEmpty {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{[]} }}
   | t ⨞ (::) :: S :: SugarFillCons {{ coq (term_Val val_Unit) }} {{ tex [[t]]\triangleleft\ottsctor{(::)} }}
   | t append t' :: S :: SugarSnoc {{ coq (term_Val val_Unit) }} {{ tex [[t]]~\ottkw{append}~[[t']] }}
