@@ -1,3 +1,5 @@
+We tried to generate a latexdiff for the article, but after several hours, we couldn't succeed, probably due to some OTT macros conflicting with the tool. We apologize for that and instead, we provide the plain git diff for our main latex file, as well as a detailed changelog below:
+
 - We clarified the goal of λd as soon as line 70 in introduction, as well as in related work section about Bagrel2024, as required by the meta-review.
 - We added a section on tail-recursive map on lists that is made possible by destinations (see new section 2.2), as required by the meta-review.
 - Section 3 "Scope escape of destinations" (section 3) introduced a great deal of new notations, so we added some introductory words about them, as pointed out by reviewer B.
