@@ -1213,7 +1213,7 @@ All typing rules for evaluation contexts can be derived systematically from the 
 \begin{itemize}
   \item the typing context $[[m·D1,D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \rref*{\CTyTerm\CSep\CPatP};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \rref*{\CTyTerm\CSep\CPatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{\CTyTerm\CSep\CPatP} (the term $[[t]]$ is located where the focus $[]$ is in \rref*{\CTyEctxs\CSep\COpenAmpar}).
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{\CTyTerm\CSep\CPatP} (the term $[[t]]$ is located where the focus $[[ ⬜]]$ is in \rref*{\CTyEctxs\CSep\COpenAmpar}).
 \end{itemize}
 
 We think of the typing rule for an evaluation context as a rotation of the typing rule for the associated term, where the typing contexts of one subterm and the conclusion are swapped, and the typing contexts of the other potential subterms are kept unchanged (with the difference that typing contexts for evaluation contexts are of shape $[[D]]$ instead of $[[P]]$).
