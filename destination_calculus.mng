@@ -1,5 +1,5 @@
 % -*- latex -*-
-\documentclass[acmsmall, screen, review, anonymous]{acmart}
+\documentclass[acmsmall, screen]{acmart}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{amsthm}
@@ -408,7 +408,7 @@
 
 
 \begin{abstract}
-  Destination passing ---aka. out parameters--- is taking a parameter to fill rather than returning a result from a function. Due to its apparent imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure functional calculus with destinations at its core. Our calculus subsumes all the similar systems, and can be used to reason about their correctness or extension. In addition, our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to manage both linearity and scopes. Type safety of our core calculus was proved formally with the Coq proof assistant.
+  Destination passing ---aka. out parameters--- is taking a parameter to fill rather than returning a result from a function. Due to its apparently imperative nature, destination passing has struggled to find its way to pure functional programming. In this paper, we present a pure functional calculus with destinations at its core. Our calculus subsumes all the similar systems, and can be used to reason about their correctness or extension. In addition, our calculus can express programs that were previously not known to be expressible in a pure language. This is guaranteed by a modal type system where modes are used to manage both linearity and scopes. Type safety of our core calculus was proved formally with the Coq proof assistant.
 \end{abstract}
 
 \maketitle
@@ -421,11 +421,11 @@
 
 In destination-passing style, a function doesn't return a value: it takes as an argument a location where the output of the function ought to be written. A function of type $[[T → U]]$ would, in destination-passing style, have type $[[T → ⌊ U ⌋ ¹ν → ①]]$ instead, where $[[⌊U⌋ ¹ν]]$ denotes a destination for value of type $[[U]]$. This style is common in system programming, where destinations $[[⌊ U ⌋ ¹ν]]$ are more commonly known as “out parameters” (in C, $[[⌊ U ⌋ ¹ν]]$ would typically be a pointer of type $\ottstype{U*}$).
 
-The reason why system programs rely on destinations so much is that using destinations can save calls to the memory allocator. If a function returns a $[[U]]$, it has to allocate the space for a $[[U]]$. But with destinations, the caller is responsible for finding space for a $[[U]]$. The caller may simply ask for the space to the memory allocator, in which case we've saved nothing; but it can also reuse the space of an existing $[[U]]$ which it doesn't need anymore, or space in an array, or even space in a region of memory that the allocator doesn't have access to, like a memory-mapped file.
+The reason why system programs rely on destinations so much is that using destinations can save calls to the memory allocator. If a function returns a $[[U]]$, it has to allocate the space for a $[[U]]$. But with destinations, the caller is responsible for finding space for a $[[U]]$. The caller may simply ask the memory allocator for the space, in which case we've saved nothing; but it can also reuse the space of an existing $[[U]]$ that it doesn't need anymore, or space in an array, or even space in a region of memory that the allocator doesn't have access to, like a memory-mapped file.
 
 This does all sound quite imperative, but we argue that the same considerations are relevant for functional programming, albeit to a lesser extent. In fact~\citet{shaikhha_destination-passing_2017} has demonstrated that using destination passing in the intermediate language of a functional array-programming language allowed for significant optimizations. Where destinations truly shine in functional programming, however, is that they increase the expressiveness of the language; destinations as first-class values allow for meaningfully new programs to be written, as first explored in~\cite{bagrel_destination-passing_2024}.
 
-The trouble, of course, is that destinations are imperative; we wouldn't want to sacrifice the immutability of our linked data structures (later on abbreviated \emph{structures}) for the sake of the more situational destinations. The goal here is to extend functional programming just enough to be able to build immutable structures by destination passing without endangering purity and memory safety. This is already what~\citet{bagrel_destination-passing_2024} does, using a linear type system to restrict mutation. Destinations become write-once-only references into a structure with holes. In that we follow their leads, but we refine the type system further to allow for even more programs (see \cref{sec:scope-escape-dests}).
+The trouble, of course, is that destinations are imperative; we wouldn't want to sacrifice the immutability of our linked data structures (later on abbreviated \emph{structures}) for the sake of the more situational destinations. The goal here is to extend functional programming just enough to be able to build immutable structures by destination passing without endangering purity and memory safety. This is already what~\cite{bagrel_destination-passing_2024} introduces, using a linear type system to restrict mutation. Destinations become write-once-only references into a structure with holes. Here we follow these leads, but we refine the type system further to allow for even more programs (see \cref{sec:scope-escape-dests}).
 
 There are two key elements to the expressiveness of destination passing:
 \begin{itemize}
@@ -660,7 +660,7 @@ When the building scope of $[[v]] \pmb{:} [[Bool]]$ is parent to the one of $[[v
 [[⟶]] & $\{ \}$ &|& [[ true ]]
 \end{array}}
 
-However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program:
+However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program, as we demonstrate in the next example below.
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d) @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () })]] \\
 [[⟶]] & [[ { vd ≔ +hd } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ◀ d)  @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]] \\
@@ -676,7 +676,7 @@ This isn't the direction we want to take: we really want to be able to store des
 
 \section{Breadth-first tree traversal}\label{sec:bft}
 
-As a full-fledged example, which uses the full expressive power of \destcalculus{}, we borrow and improve on an example from~\citet{bagrel_destination-passing_2024}, breadth-first tree relabeling:
+As a full-fledged example, which uses the full expressive power of \destcalculus{}, we borrow and improve on an example from~\cite{bagrel_destination-passing_2024}, breadth-first tree relabeling:
 % \begin{quote}
 \emph{``
 Given a tree, create a new one of the same shape, but with the values at the nodes replaced by the numbers $1\ldots|T|$ in breadth-first order.
@@ -739,7 +739,7 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 
 \smallskip
 
-\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\codehere{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
+\hspace*{-0.05\linewidth}\begin{minipage}{1.2\linewidth}\codehere{\setlength{\arraycolsep}{0.6ex}\!\begin{array}{rrl}
 [[t]], [[u]] &\grammdef& [[x]] \grammsep [[t' t]] \grammsep [[t ; t']] \\
              &|\,& [[ t ►case m { Inl x1 ⟼ u1 , Inr x2 ⟼ u2 } ]] \grammsep [[t ►case m ( x1 , x2 ) ⟼ u]] \grammsep [[t ►case m ᴇ n x ⟼ u]] \\
              &|\,& [[t ►map x ⟼ t']] \grammsep [[ to⧔ t ]] \grammsep [[ from⧔ t ]] \grammsep [[ alloc ]] \\
@@ -752,7 +752,7 @@ mapAccumBFS (ˢλ st ω∞ ⟼ ˢλ un ¹ν ⟼ un ; ˢ(ˢᴇ ω∞ (succ st), s
 
 \smallskip
 
-\hspace*{-0.05\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.46}{
+\hspace*{-0.05\linewidth}\begin{minipage}{1.2\linewidth}\sidebysidecodehere{t}{0.395}{
 [[ˢInl t]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ Inl ◀ t)
@@ -768,7 +768,7 @@ from⧔' (alloc ►map d ⟼⮒
 [[ˢλ x m ⟼ u]] \btriangleq \!\!\!\begin{array}[t]{l}[[
 from⧔' (alloc ►map d ⟼⮒
 ‥‥‥‥‥‥d ⨞ ( λ x m ⟼ u ))
-]]\end{array}
+]]\end{array}\hspace*{-0.4cm}
 }{
 [[from⧔' t]] \btriangleq \\
 \myspace{1}\!\!\!\begin{array}[t]{l}[[
@@ -954,7 +954,7 @@ The syntax of \destcalculus{} terms is presented in~\cref{fig:grammar}, includin
 
 \subsection{Modes and the age semiring}\label{ssec:age-control}
 
-The precise algebraic structure that we'll be needing on modes is both a commutative additive semigroup $\ottsmode{+}$ and a multiplicative monoid $(\ottsmode{[[·]]}\,, \ottsmode{1})$, with the usual distributivity law $[[n·(m1+m2)]] = [[n·m1 + n·m2]]$. In addition we require a partial order $⥶$, such that $\ottsmode{+}$ and $\ottsmode{[[·]]}$ are order-preserving. In other words, we'll be dealing with ordered semirings\footnote{There terminology dispute where some prefer to use the term ``semiring'' when the additive semigroup has a zero. This terminology is arguably more popular, but leaves no term for the version without a zero. We'll follow the convention, in this article, that semirings with a zero are called ``rigs''.}. In the rest of the article, we'll just say ``semiring''. In practice, all our semirings will be commutative, and we won't be paying attention to the order of factors in mode multiplication.
+The precise algebraic structure that we'll be needing on modes is both a commutative additive semigroup $\ottsmode{+}$ and a multiplicative monoid $(\ottsmode{[[·]]}\,, \ottsmode{1})$, with the usual distributivity law $[[n·(m1+m2)]] = [[n·m1 + n·m2]]$. In addition we require a partial order $⥶$, such that $\ottsmode{+}$ and $\ottsmode{[[·]]}$ are order-preserving. In other words, we'll be dealing with ordered semirings\footnote{This literature is complicated by disputed terminology, where some prefer to use the term ``semiring'' when the additive semigroup has a zero. This terminology is arguably more popular, but leaves no term for the version without a zero. We'll follow the convention, in this article, that semirings with a zero are called ``rigs''.}. In the rest of the article, we'll just say ``semiring''. In practice, all our semirings will be commutative, and we won't be paying attention to the order of factors in mode multiplication.
 
 Our mode semiring is, as promised, the product of a multiplicity semiring, to track linearity, and an age semiring, to prevent scope escape. The multiplicity semiring has elements $[[¹]]$ (linear) and $[[ω]]$ (unrestricted), it's the same semiring as in~\cite{qtt_2018} or~\cite{bernardy_linear_2018}. It's mostly unsurprising, the key is that that $[[¹+¹]]=[[ω]]$ will enforce that a linear variable can only be used once, the full description of the multiplicity semiring is given in~\cref{fig:mul-age-tables}.
 
@@ -1140,7 +1140,7 @@ Destinations and holes are two faces of the same coin, as seen in~\cref{ssec:bui
 
 We extend our previous context operations $+$ and $\cdot$ to act on the new binding forms, as described in \cref{fig:grammar-val}. Context addition is still very partial; for instance, $[[({ + h : T n }) + ({ - h : m ⌊ T ⌋ n' })]]$ is not defined, as $[[h]]$ is present on both sides but with different binding forms.
 
-One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system (\cref{fig:ty-val}) maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref*{\CTyVal\CSep\CAmpar}.
+One of the main goals of \destcalculus{} is to ensure that a hole value is never read. The type system maintains this invariant by simply not allowing any hole bindings in the context when typing terms (see \cref{fig:grammar-val} for the different type of contexts used in the typing judgment). In fact, the only place where holes are introduced, is the left-hand side $[[v2]]$ in an ampar $[[H ⟨ v2 ❟ v1 ⟩]]$, in \rref*{\CTyVal\CSep\CAmpar}.
 
 Specifically, holes come from the operator $\ottshname{\destminus^{\scriptscriptstyle\text{-}1} }$, which represents the matching hole bindings for a set of destination bindings. It's a partial, pointwise operation on typing contexts $[[D]]$, as defined in \cref{fig:grammar-val}.
 Note that $[[-⁻¹D]]$ is undefined if any destination binding in $[[D]]$ has a mode other than $[[¹ν]]$.
@@ -1213,7 +1213,7 @@ All typing rules for evaluation contexts can be derived systematically from the 
 \begin{itemize}
   \item the typing context $[[m·D1,D2]]$ in the premise for $[[C]]$ corresponds to $[[m·P1 + P2]]$ in the conclusion of \rref*{\CTyTerm\CSep\CPatP};
   \item the typing context $[[D2,{ x1 : m T1 },{ x2 : m T2 }]]$ in the premise for term $[[u]]$ corresponds to the typing context $[[P2,{ x1 : m T1 },{ x2 : m T2 }]]$ for the same term in \rref*{\CTyTerm\CSep\CPatP};
-  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{\CTyTerm\CSep\CPatP} (the term $[[t]]$ is located where the focus $[[ ⬜]]$ is in \rref*{\CTyEctxs\CSep\COpenAmpar}).
+  \item the typing context $[[D1]]$ in the conclusion for $[[C ∘ (⬜ ►case m (x1 , x2) ⟼ u) ]]$ corresponds to the typing context $[[P1]]$ in the premise for $[[t]]$ in \rref*{\CTyTerm\CSep\CPatP} (the term $[[t]]$ is located where the focus $[[ ⬜]]$ is in \rref*{\CTyEctxs\CSep\CPatP}).
 \end{itemize}
 
 We think of the typing rule for an evaluation context as a rotation of the typing rule for the associated term, where the typing contexts of one subterm and the conclusion are swapped, and the typing contexts of the other potential subterms are kept unchanged (with the difference that typing contexts for evaluation contexts are of shape $[[D]]$ instead of $[[P]]$).
@@ -1267,6 +1267,23 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
 
 \begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
 
+\hspace*{-0.1\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.50}{\begin{minipage}{\linewidth}
+\bgroup\SetPrefix{\CTyCmd}
+\ottdefnTy{}\egroup
+\end{minipage}}{\begin{minipage}{\linewidth}
+\hspace*{0.5cm}\begin{minipage}{\linewidth}\small\textit{Name set shift and conditional name shift:}\end{minipage}
+
+\bigskip\bigskip
+
+\hspace*{0.5cm}$\!\begin{array}{rcl}
+[[H ⩲ h']] &\btriangleq& \{ [[h+h']]~|~[[h]]\in [[H]] \}\\
+[[h [H ⩲ h'] ]] &\btriangleq& \left\{\begin{array}{ll}[[h+h']] & \text{if}~[[h]]\in[[H]]\\[[h]] & \text{otherwise}\end{array}\right.\end{array}$
+\end{minipage}}\end{minipage}
+
+\bigskip
+\hrule
+\bigskip
+
 \begin{minipage}{\linewidth}\small\textit{Special substitution for open ampars:}\end{minipage}
 
 \smallskip
@@ -1275,23 +1292,6 @@ Rules are triggered in a purely deterministic fashion; once a subterm is a value
   [[ (C ∘ {h} ⨆ H ᵒᵖ⟨ v2 ❟ ⬜ ⟩) [h ≔ H' v'] ]] &=& [[C ∘ H ⨆ H' ᵒᵖ⟨ v2[ h ≔ H' v' ] ❟ ⬜ ⟩ ]] &\\
   [[ (C ∘ c) [h ≔ H' v'] ]] &=& [[ C[h ≔ H' v'] ∘ c ]]&\text{if $[[h]] \notin [[c]]$}
 \end{array}$\hfill\phantom{.}
-
-\bigskip
-\hrule
-\bigskip
-
-\hspace*{-0.1\linewidth}\begin{minipage}{\linewidth}\sidebysidecodehere{t}{0.48}{\begin{minipage}{\linewidth}
-\begin{minipage}{\linewidth}\small\textit{Name set shift and conditional name shift:}\end{minipage}
-
-\bigskip\bigskip
-
-$\!\begin{array}{rcl}
-[[H ⩲ h']] &\btriangleq& \{ [[h+h']]~|~[[h]]\in [[H]] \}\\
-[[h [H ⩲ h'] ]] &\btriangleq& \left\{\begin{array}{ll}[[h+h']] & \text{if}~[[h]]\in[[H]]\\[[h]] & \text{otherwise}\end{array}\right.\end{array}$
-\end{minipage}}{\hspace*{0.5cm}\begin{minipage}{1.135\linewidth}
-\bgroup\SetPrefix{\CTyCmd}
-\ottdefnTy{}\egroup
-\end{minipage}}\end{minipage}
 
 \bigskip
 \hrule
@@ -1499,11 +1499,11 @@ The ability to manipulate destinations, and in particular, store them, does come
 
 \subsection{Destination-passing style programming: a Haskell implementation}\label{ssec:dps-haskell}
 
-\citet{bagrel_destination-passing_2024} proposes a system much like ours: it has a destination type, and a \emph{par}-like construct (that they call $\ottstype{Incomplete}$), where only the right-hand side can be modified; together these elements give extra expressiveness to the language compared to~\cite{minamide_functional_1998}.
+The system introduced in \cite{bagrel_destination-passing_2024} is very similar to \destcalculus{}: it has a destination type, and a \emph{par}-like construct (called $\ottstype{Incomplete}$), where only the right-hand side can be modified; together these elements give extra expressiveness to the language compared to~\cite{minamide_functional_1998}.
 
-In their system, $[[d ◀ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in a breadth-first search algorithm like in~\cref{sec:bft}, they have to build the queue using normal constructors, and cannot use destination-filling primitives. Therefore both normal constructors and DPS primitives must coexist in their work, while in \destcalculus{}, only DPS primitives are required to bootstrap the system, as we later derive normal constructors from them. In exchange, they don't need a system of ages to make their system safe; just linearity is enough.
+In that system, $[[d ◀ t]]$ requires $[[t]]$ to be unrestricted, while in \destcalculus{}, $[[t]]$ can be linear. The consequence is that in~\cite{bagrel_destination-passing_2024}, destinations can be stored in data structures but not in data structures with holes; so in a breadth-first search algorithm like in~\cref{sec:bft}, the queue has to be built using normal constructors, and cannot use destination-filling primitives. Therefore both normal constructors and DPS primitives must coexist, while in \destcalculus{}, only DPS primitives are required to bootstrap the system, as we later derive normal constructors from them. In exchange, just linearity is enough to make \cite{bagrel_destination-passing_2024} system safe.
 
-A more profound difference between their work and ours is that they describe a practical implementation of destination-passing style for an existing functional language, while we present a slightly more general theoretical framework that is meant to justify safety of DPS implementations (such as \cite{bagrel_destination-passing_2024} itself), so goals are quite different.
+A more profound difference is that this previous work describe a practical implementation of destination passing for an existing functional language, while here we present a more theoretical framework that is meant to justify safety of DPS implementations (such as \cite{bagrel_destination-passing_2024} itself).
 
 \subsection{Semi-axiomatic sequent calculus}\label{ssec:sax}
 
@@ -1515,7 +1515,7 @@ The cost of this elegance is that computations may try to pattern-match on a hol
 
 Rust uses a system of lifetimes (see e.g. \cite{pearce_lifetime_2021}) to ensure that borrows don't live longer than what they reference. It plays a similar role as our system of ages.
 
-Rust lifetimes are symbolic. Borrows and moves generate constraints (inequalities of the form $\alpha\leqslant\beta$) on the symbolic lifetimes. For instance, that a the lifetime of a reference is larger than the lifetime of any structure the reference is stored in. Without such constraints, Rust would have similar problems to those of \cref{sec:scope-escape-dests}. The borrow checker then checks that the constraints are solvable. This contrasts with \destcalculus{} where ages are set explicitly, with no analysis needed.
+Rust lifetimes are symbolic. Borrows and moves generate constraints (inequalities of the form $\alpha\leqslant\beta$) on the symbolic lifetimes. For instance, that the lifetime of a reference is larger than the lifetime of any structure the reference is stored in. Without such constraints, Rust would have similar problems to those of \cref{sec:scope-escape-dests}. The borrow checker then checks that the constraints are solvable. This contrasts with \destcalculus{} where ages are set explicitly, with no analysis needed.
 
 Another difference between the two systems is that \destcalculus{}'s ages (and modes in general) are relative. An explicit modality $\ottstype{!}_{[[¹↑^ka]]}$ must be used when a part has an age different than its parent, and means that the part is $[[ka]]$ scope older than the parent. On the other hand, Rust's lifetimes are absolute, the lifetime of a part is tracked independently of the lifetime of its parent.
 
@@ -1540,7 +1540,9 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 \section*{Data-Availability Statement}
 
-We submitted the machine-verified proof described in \cref{sec:formal-proof} for artifact evaluation. It's a formalization of \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms. The preliminary, anonymous version is available at \url{https://doi.org/10.5281/zenodo.13933661}, together with the build instructions.
+We have submitted for artifact evaluation the formalization of the \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms.
+The main reproducible results are the machine-verified proofs of type-safety \cref{thm:preservation,thm:progress} for \destcalculus{}.
+The preliminary, anonymous version was available at \url{https://doi.org/10.5281/zenodo.13933661}. The new, non-anonymous version at \url{https://doi.org/10.5281/zenodo.14534423} supersede it, although the Coq files haven't changed.
 
 \clearpage{}
 
