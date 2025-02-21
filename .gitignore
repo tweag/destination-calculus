@@ -408,4 +408,5 @@ Makefile.coq.conf
 .coqdeps.d
 rules_mod.ott
 no-editing-marks
+short-version
 temp.pdf

@@ -31,6 +31,7 @@ clean: Makefile.coq
 	rm -f destination_calculus*.pdf
 	rm -f destination_calculus.tar.gz
 	rm -f no-editing-marks
+	rm -f short-version
 	rm -f temp.pdf
 
 rules_mod.ott: patch_rules.py rules.ott
@@ -48,13 +49,16 @@ destination_calculus.pdf destination_calculus.bbl : destination_calculus.tex des
 submission:
 	$(MAKE) clean
 	touch no-editing-marks
-	$(MAKE) destination_calculus-supplementary.pdf destination_calculus-submission.pdf
-	rm no-editing-marks
+	touch short-version
+	$(MAKE) destination_calculus-submission.pdf
+	rm -f no-editing-marks
+	rm -f short-version
 
+# pdftk $< cat 1-$(MAIN_END_PAGE) output temp.pdf
+# pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
+# rm -f temp.pdf
 destination_calculus-submission.pdf: destination_calculus.pdf
-	pdftk $< cat 1-$(MAIN_END_PAGE) output temp.pdf
-	pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
-	rm -f temp.pdf
+	cp destination_calculus.pdf destination_calculus-submission.pdf
 
 destination_calculus-supplementary.pdf: destination_calculus.pdf
 	pdftk $< cat $(APPENDIX_FIRST_PAGE)-end output $@
@@ -63,7 +67,7 @@ nix::
 	nix develop --command make
 
 continuous::
-	ls destination_calculus.mng *.ott $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES) Makefile no-editing-marks | entr make
+	ls destination_calculus.mng *.ott $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES) Makefile no-editing-marks short-version | entr make
 
 continuous-nix:: nix
 	nix develop --command make continuous

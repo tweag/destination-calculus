@@ -17,6 +17,9 @@
 \usepackage[tikz]{bclogo}
 \citestyle{acmauthoryear}
 
+% Quand on va publier, il faudra supprimer les appendices à la main pour fournir une version propre de la tables des matière (pas utiliser mon script).
+% Une fois la camera ready envoyée, il faudra: passer le repo en public, mettre la version longue sur Arxiv, et mettre les liens pertinents sur le site de Tweag (page /research/).
+
 % For faulty code
 \usepackage[normalem]{ulem}
 \makeatletter
@@ -82,6 +85,11 @@
 \input{style.tikzstyles}
 % \setlength\textfloatsep{\baselineskip}
 % \setlength{\intextsep}{\baselineskip}
+
+\newcommand{\longshort}[2]{#1}
+\InputIfFileExists{short-version}{
+  \renewcommand{\longshort}[2]{##2}
+}
 
 %%%%%%%%%%%%%%%%% Editing marks %%%%%%%%%%%%%%%%%
 
@@ -1263,7 +1271,7 @@ Here the focus, unfocus, and reduction rules for \textsc{PatP}:
 \end{array}\]}
 \egroup\egroup
 
-Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused on again. As focusing and defocusing rules are entirely mechanical (they are just a matter of pushing and popping a focusing component on the stack), we only present the set of reduction rules for the system in~\cref{fig:sem}, but the whole system is included in the annex (\cref{fig:sem-full1,fig:sem-full2}).
+Rules are triggered in a purely deterministic fashion; once a subterm is a value, it cannot be focused on again. Focusing and defocusing rules are entirely mechanical ---they are just a matter of pushing or popping a focusing component on the stack--- so we only present the set of reduction rules for the system in~\cref{fig:sem}\longshort{, but the whole system is included in the annex (\cref{fig:sem-full1,fig:sem-full2})}{ (the rest of the system can be recovered very easily)}.
 
 \begin{ottfig}{\caption{Small-step semantics}\label{fig:sem}}
 
@@ -1549,6 +1557,8 @@ The preliminary, anonymous version was available at \url{https://doi.org/10.5281
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
 
+\longshort{
+
 \clearpage{}
 \appendix
 
@@ -1648,6 +1658,8 @@ FillLeaf-Red
 }
 \end{augmentwidth}\end{ottfig}
 \egroup
+
+}{}
 
 \end{document}
 
