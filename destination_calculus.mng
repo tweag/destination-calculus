@@ -323,19 +323,11 @@
 % Journal's boilerplate
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\setcopyright{acmlicensed}
-\copyrightyear{2025}
-\acmYear{2025}
-\acmDOI{XXXXXXX.XXXXXXX}
-
-
-%%
-%% These commands are for a JOURNAL article.
-\acmJournal{JACM}
-\acmVolume{XX}
-\acmNumber{XX}
-\acmArticle{XXX}
-\acmMonth{1}
+\setcopyright{cc}
+\setcctype{by}
+\acmJournal{PACMPL}
+\acmYear{2025} \acmVolume{9} \acmNumber{OOPSLA1} \acmArticle{89}
+\acmMonth{4} \acmPrice{}\acmDOI{10.1145/3720423}
 
 \begin{document}
 
@@ -343,9 +335,8 @@
 % TITLE SECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\acmJournal{PACMPL}
 \title{Destination Calculus}
-\subtitle{A Linear $\lambda-$calculus for Purely Functional Memory Writes}
+\subtitle{A Linear $\lambda-$Calculus for Purely Functional Memory Writes}
 
 \author{Thomas Bagrel}
 \orcid{0009-0008-8700-2741}
@@ -460,7 +451,13 @@ Let's introduce and get familiar with \destcalculus{}, our simply typed $\lambda
 
 \activespaces
 
-In its simplest form, destination passing, much like continuation passing, is using a location, received as an argument, to return a value. Instead of a linear function with signature $[[T ¹ν → U]]$, in \destcalculus{} you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination for type $[[U]]$”. For instance, here is a destination-passing version of the identity function:
+In its simplest form, destination passing, much like continuation passing, is using a location, received as an argument, to return a value. Instead of a linear function with signature $[[T ¹ν → U]]$, in \destcalculus{} you would have $[[T ¹ν → ⌊ U ⌋ ¹ν ¹ν → ①]]$, where $[[⌊ U ⌋ ¹ν]]$ is read “destination for type $[[U]]$”.
+
+\bigskip %TODO: for proper page break
+\bigskip
+\bigskip
+
+For instance, here is a destination-passing version of the identity function:
 
 \codehere{\newoperator
 {\ottkw{dId}}{[[T ¹ν → ⌊ T ⌋ ¹ν ¹ν → ①]]}
@@ -527,7 +524,7 @@ At this point, the reader may be forgiven for feeling distressed at all the talk
   {\ottkw{forget}}{[[T]]}
   {\ottkw{forget}}{[[from⧔' ((alloc @ T ⧔ ⌊ T ⌋ ¹ν) ►map d ⟼ ())]]}}
 
-  where reading the result of $\ottkw{forget}$ would result in reading the location pointed to by a destination that we never used, in other words, reading uninitialized memory;\\ % TODO: line break to ensure page break at convenient position
+  where reading the result of $\ottkw{forget}$ would result in reading the location pointed to by a destination that we never used, in other words, reading uninitialized memory;\\[1cm] % TODO: line break to ensure page break at convenient position
 
 \item destinations are written at most once, preventing examples like:
 
@@ -671,7 +668,7 @@ When the building scope of $[[v]] \pmb{:} [[Bool]]$ is parent to the one of $[[v
 \to & $\{ \}$ &|& [[ true ]]
 \end{array}}
 
-However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program, as we demonstrate in the next example below.
+However, when $[[vd]]$'s scope is parent to $[[v]]$'s, we can write a linearly typed yet unsound program, as we demonstrate in the following example.
 \codehere{\!\!\!\begin{array}{crcl}
        & $\{ \}$ &|& [[alloc' (ˢλ dd ¹ν ⟼ (alloc' (ˢλ d ¹ν ⟼ dd ◀ d) @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () })]] \\
 \to & [[ { vd ≔ +hd } ]] &|& [[(alloc' (ˢλ d ¹ν ⟼ -hd ◀ d)  @ Bool) ►case ¹ν { true ⟼ (), false ⟼ () } ; deref vd]] \\
