@@ -63,7 +63,7 @@
               inherit (pkgs.texlive)
                 scheme-basic
                 latexmk
-                acmart
+                # acmart
                 cleveref
                 xargs
                 todonotes
