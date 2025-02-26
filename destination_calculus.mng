@@ -323,11 +323,21 @@
 % Journal's boilerplate
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%% The following is specific to OOPSLA1 '25 and the paper
+%%% 'Destination Calculus: A Linear λ-Calculus for Purely Functional Memory Writes'
+%%% by Thomas Bagrel and Arnaud Spiwack.
+%%%
 \setcopyright{cc}
 \setcctype{by}
+\acmDOI{10.1145/3720423}
+\acmYear{2025}
 \acmJournal{PACMPL}
-\acmYear{2025} \acmVolume{9} \acmNumber{OOPSLA1} \acmArticle{89}
-\acmMonth{4} \acmPrice{}\acmDOI{10.1145/3720423}
+\acmVolume{9}
+\acmNumber{OOPSLA1}
+\acmArticle{89}
+\acmMonth{4}
+\received{2024-10-15}
+\received[accepted]{2025-02-18}
 
 \begin{document}
 
@@ -335,8 +345,7 @@
 % TITLE SECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{Destination Calculus}
-\subtitle{A Linear $\lambda-$Calculus for Purely Functional Memory Writes}
+\title[Destination Calculus]{Destination Calculus:\\ A Linear $\lambda-$Calculus for Purely Functional Memory Writes}
 
 \author{Thomas Bagrel}
 \orcid{0009-0008-8700-2741}
