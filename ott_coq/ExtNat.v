@@ -1,6 +1,9 @@
 Require Import Ott.ott_list_core.
 Require Import Arith.
 
+(* This file contains the definition of ext_nat, which models natural numbers extended with a supremum (Inf) *)
+(* ext_nat is used to represent ages in destination calculus *)
+
 Inductive ext_nat : Type :=
     | Fin : nat -> ext_nat
     | Inf : ext_nat.

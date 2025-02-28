@@ -18,6 +18,7 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Arith.
 Require Import Lia.
 
+(* This tactic add several hypotheses in the context about the typing context used in judgment TyC. This is used in all branches of the ectxs_fillCtor_spec' lemma *)
 Ltac asserts_fillCtor TyC D3 HDisjointCD3 :=
   match type of TyC with
   | (Ty_ectxs ?V ?W ?X ?Y) =>
@@ -35,6 +36,9 @@ Ltac asserts_fillCtor TyC D3 HDisjointCD3 :=
   | ?Z => fail 1 "TyC not of the right shape" Z
   end.
 
+(* This is the substitution lemma for evaluation contexts when we write a _value with holes only (no dests)_ v inside a hole +h that is somewhere inside evaluation context C. It is used for all reductions of destination-filling primitives that fill a dest with a hollow constructor, like ⨞Inl *)
+(* The mode of the hole can be any value n *)
+(* This lemma depends on Ty_val_fill, which is the general substitution lemma for a hole inside a _value with holes_ *)
 Lemma ectxs_fillCtor_spec' : forall (C : ectxs) (h : hname) (v : val) (D3: ctx) (U: type) (n : mode), IsValid n -> DestOnly D3 -> D3 # ᴳ{- h : ¹ν ⌊ U ⌋ n } ->
   hnames©(C) ## hnamesᴳ( D3) ->
   ValidOnly (ᴳ-⁻¹ D3) ->
@@ -48,16 +52,21 @@ Lemma ectxs_fillCtor_spec' : forall (C : ectxs) (h : hname) (v : val) (D3: ctx) 
   D1 ᴳ+ m0 ᴳ· (ᴳ- (n ᴳ· (ᴳ-⁻¹ D3))) ⊣ C ©️[ h ≔ hnamesᴳ( D3) ‗ v ] : T ↣ U0.
 Proof.
   intros * Validn DestOnlyD3 DisjointD3h HDisjointCD3 ValidOnlyhiD3 Tyv. induction C.
-  - intros * Validm0 DestOnlyD1 DisjointD1D3 DisjointD1h TyC.
+  - (* Case: empty evaluation context *)
+    (* We prove that there the empty evaluation context cannot type in a non-empty typing context containing at least +h *)
+    intros * Validm0 DestOnlyD1 DisjointD1D3 DisjointD1h TyC.
     dependent destruction TyC.
     exfalso.
     assert (ᴳ{}.(underlying) = (D1 ᴳ+ m0 ᴳ· ᴳ{- h : ¹ν ⌊ U ⌋ n }).(underlying) ). { unfold union, merge_with, merge, ctx_singleton.  simpl. apply x. } clear x.
     assert (ᴳ{} = (D1 ᴳ+ m0 ᴳ· ᴳ{- h : ¹ν ⌊ U ⌋ n })). { apply ext_eq. intros n'. rewrite H. reflexivity. }
     apply eq_sym in H0.
     apply union_empty_iff in H0. destruct H0 as (_ & contra). rewrite stimes_empty_iff in contra. assert (ᴳ{- h : ¹ν ⌊ U ⌋ n} (ʰ h) = None). { rewrite contra. simpl. reflexivity. } unfold ctx_singleton in H0. rewrite singleton_MapsTo_at_elt in H0. inversion H0.
-  - intros * Validm0 DestOnlyD1 DisjointD1D3 DisjointD1h TyC.
+  - (* Case: non-empty evaluation context *)
+    intros * Validm0 DestOnlyD1 DisjointD1D3 DisjointD1h TyC.
     destruct a; simpl; dependent destruction TyC.
+    (* We focus first on the non-trivial case: the one where the focusing component at the top of the stack is an open ampar component. Holes can only be on those focusing components. *)
     20:{ (* Ty-ectxs-OpenAmpar *)
+      (* The first tedious step is to reconcile the form of the typing context in the Ty-ectxs-OpenAmpar rule and the form of the typing context expected in typing rule of C in the premise of the lemma *)
       rename D3 into D6, D2 into D3, DestOnlyD3 into DestOnlyD6, ValidOnlyhiD3 into ValidOnlyhiD6, DisjointD3h into DisjointD6h, DisjointD2D3 into DisjointD4D3, HDisjointCD3 into HDisjointCD3D6, DisjointD1D3 into DisjointD1D6, U into T, U1 into U, ValidOnlyhiD0 into ValidOnlyhiD3, DisjointD1D2 into DisjointD0D4, DisjointD1D0 into DisjointD0D3, DestOnlyD2 into DestOnlyD4, DestOnlyD4 into DestOnlyD3.
       assert ((¹↑ ᴳ· D0 ᴳ+ D3).(underlying) = (D1 ᴳ+ m0 ᴳ· ᴳ{- h : ¹ν ⌊ T ⌋ n}).(underlying)). { unfold union, merge_with, merge, ctx_singleton. simpl. apply x. } clear x.
       assert ((¹↑ ᴳ· D0 ᴳ+ D3) = (D1 ᴳ+ m0 ᴳ· ᴳ{- h : ¹ν ⌊ T ⌋ n})). { apply ext_eq. intros n'. rewrite H. reflexivity. }
@@ -78,9 +87,12 @@ Proof.
       rewrite D10eq, singeq0, D0eq' in *.
       clear D1eq D1 D3eq D3 D10eq D10 singeq0 sing0 D0eq D0eq' D0 singeq'.
       assert (hnames©( C) ## hnamesᴳ( D6)). { simpl in HDisjointCD3D6. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD6). contradiction (HDisjointCD3D6 name). apply HNames.inter_spec. split. apply HNames.union_spec. right. assumption. assumption. }
+      (* Here we need to find where is h. *)
       destruct singeq as [(sing0peq & sing3eq) | (sing0peq & sing3eq)].
-      + apply stimes_inv_singleton_dest in sing0peq.
+      + (* h is on a focusing component deeper in the stack, not on this one *)
+        apply stimes_inv_singleton_dest in sing0peq.
         destruct sing0peq as (m1 & m1eq & sing0peq). rewrite m1eq, sing0peq, sing3eq in *. rewrite <- union_empty_r_eq in *. clear sing0peq sing0' sing3eq sing3.
+        (* We prove that because h is not part of this focusing component, then substitution is propagated to the tail of the stack *)
         assert (~In (ʰ h) D13). { rewrite nIn_iff_Disjoint_singleton with (n := ʰ h) (binding := ₋ ¹ν ⌊ T ⌋ n). crush. }
         apply nIn_impl_nHin in H2. rewrite <- HNames.mem_spec in H2. destruct (HNames.mem h hnamesᴳ( D13)). congruence.
         replace (¹↑ ᴳ· D10' ᴳ+ D13 ᴳ+ ¹↑ · m1 ᴳ· ᴳ- (n ᴳ· ᴳ-⁻¹ D6)) with (¹↑ ᴳ· (D10' ᴳ+ m1 ᴳ· ᴳ- (n ᴳ· ᴳ-⁻¹ D6)) ᴳ+ D13). 2:{ rewrite stimes_distrib_on_union. rewrite stimes_is_action. rewrite union_swap_2_3_l3. reflexivity. }
@@ -98,9 +110,12 @@ Proof.
         replace (ᴳ{- h : m1 ⌊ T ⌋ n}) with (m1 ᴳ· ᴳ{- h : ¹ν ⌊ T ⌋ n}) in *.
         2:{ rewrite stimes_singleton_dest. rewrite mode_times_linnu_l_eq. reflexivity. }
         replace (D10' ᴳ+ m1 ᴳ· ᴳ- (n ᴳ· ᴳ-⁻¹ D6) ᴳ+ D4) with (D10' ᴳ+ D4 ᴳ+ m1 ᴳ· ᴳ- (n ᴳ· ᴳ-⁻¹ D6)). 2:{ rewrite union_swap_2_3_l3. reflexivity. }
+        (* Contexts are cleaned enough so that we can now apply the induction hypothesis *)
         apply IHC with (m0 := m1).
         { crush. } { crush. } { crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } { apply Disjoint_union_l_iff; split. crush. apply Disjoint_commutative. crush. } rewrite union_swap_2_3_l3. assumption.
-      + apply stimes_empty_iff in sing0peq. rewrite sing0peq, sing3eq in *. clear sing0peq sing0' sing3eq sing3.
+      + (* h is on this focusing component, so it is here that substitution happens *)
+        (* We clean contexts, and simplify the subsitution expression given that h is part of the focusing component *)
+        apply stimes_empty_iff in sing0peq. rewrite sing0peq, sing3eq in *. clear sing0peq sing0' sing3eq sing3.
         replace (m0) with (¹ν) in *. 2:{ rewrite union_commutative in ValidOnlyhiD3. apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinNuOnlysingh). specialize (LinNuOnlysingh (ʰ h) (₋ m0 ⌊ T ⌋ n)). unfold ctx_singleton in LinNuOnlysingh. rewrite singleton_MapsTo_at_elt in LinNuOnlysingh. specialize (LinNuOnlysingh eq_refl). simpl in LinNuOnlysingh. inversion LinNuOnlysingh. reflexivity. }
         rewrite <- stimes_linnu_eq in *.
         assert (HNames.mem h hnamesᴳ( D13 ᴳ+ ᴳ{- h : ¹ν ⌊ T ⌋ n}) = true). { apply HNames.mem_spec. rewrite hnames_distrib_on_union. apply HNames.union_spec. right. rewrite hnames_singleton_dest. apply HNames.add_spec. left; reflexivity. }
@@ -116,8 +131,11 @@ Proof.
         rewrite stimes_empty_eq in *. rewrite <- union_empty_r_eq in *.
         rewrite <- union_associative.
         assert ((D10' ᴳ+ D4) # D6). { apply HDisjoint_to_Disjoint. crush. apply HSubset_preserves_HDisjoint with (H2 := hnames©( C)). apply (hnames_C_wk_hnames_G _ _ _ _ TyC). assumption. }
+        (* We apply typing rule for open ampar focusing component *)
         constructor 21 with (D1 := D10') (D3 := D13 ᴳ+ ᴳ- (n ᴳ· ᴳ-⁻¹ D6)) (U := U) (D2 := (D4)); swap 9 10.
         { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. apply ValidOnly_hminus_inv_union. crush. apply ValidOnly_hminus. crush. crush. crush. } { assumption. } { rewrite hnames_distrib_on_union in H0. rewrite hnames_distrib_on_union. rewrite hnames_hminus_eq. rewrite hnames_stimes_eq. rewrite hnames_hminus_inv_eq. rewrite <- hnames_distrib_on_union. intros name contra. apply HNames.inter_spec in contra. destruct contra as (InC & InD13). specialize (H0 name). contradiction H0. apply HNames.inter_spec. split. assumption. apply HNames.union_spec. rewrite hnames_distrib_on_union in InD13. apply HNames.union_spec in InD13. specialize (H1 name). rewrite HNames.inter_spec in H1. destruct InD13. left. assumption. assert (HNames.In name hnames©( C) /\ HNames.In name hnamesᴳ( D6)). { split; assumption. } congruence. }
+        (* Now we must prove that subsitution on v2 types in the right context *)
+        (* We put the contexts in the right form so that we can call lemma Ty_val_fill *)
         rewrite hminus_inv_distrib_on_union. repeat rewrite union_associative.
         rewrite hminus_inv_hminus_eq. rewrite union_empty_l_eq with (G := ᴳ-⁻¹ D6).
         apply Ty_val_fill with (T := T); trivial.
@@ -125,6 +143,7 @@ Proof.
         { apply ValidOnly_hminus_inv_wk_l in ValidOnlyhiD3. assumption. } { crush. } { crush. } { crush. } { crush. } { apply Disjoint_commutative. crush. } { crush. } { crush. } { crush. }
         { crush. } { apply ValidOnly_hminus. crush. crush. } { crush. }
     }
+    (* For all remaining cases (all the other focusing components), we just need to propage subsitution to the tail of the stack, using the induction hypothesis. *)
     all: asserts_fillCtor TyC D3 HDisjointCD3; rename TyCLinOnlyD into LinOnlyD, TyCFinAgeOnlyD into FinAgeOnlyD, TyCHSubsetDC into HSubsetDC, TyCDisjointDD3 into DisjointDD3.
     * (* Ty-ectxs-App1 *)
       constructor 2 with (7 := Tytp); first last.
@@ -204,6 +223,7 @@ Proof.
       all: supercrush.
 Qed.
 
+(* Slightly reordred and less general version of ectxs_fillCtor_spec' that is used in preservation proof *)
 Lemma ectxs_fillCtor_spec : forall (D1 D3: ctx) (h : hname) (C : ectxs) (n : mode) (T T' U0 : type) (v : val),
   IsValid n -> 
   DestOnly D1 ->

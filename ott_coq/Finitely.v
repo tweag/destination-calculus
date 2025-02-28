@@ -12,11 +12,8 @@ Require Import Coq.Logic.ClassicalEpsilon.
 
 Set Primitive Projections.
 
-(* Plan: we're making a cheap dependent map out of three component
-   maps. For extensibility purposes, we're not going to assume that
-   the type of names is the same in each variant.
-
-   I am a little worried about changing our minds about
+(* This file contains the definition of our map type T that is used to represent typing contexts of destination calculus. *)
+(* I (Arnaud Spiwack) am a little worried about changing our minds about
    details later. This is why I'm organising proofs in reference to a
    functional semantics. The interface to reprove will be smaller. *)
 
@@ -499,6 +496,17 @@ Proof.
   apply ext_eq'.
   apply functional_extensionality_dep.
   assumption.
+Qed.
+
+Lemma support_ext_eq : forall A B (f g:T A B) (l:list A), Fun.Support l f -> Fun.Support l g -> (forall x, List.In x l -> f x = g x) -> f = g.
+Proof.
+  intros * h_supp_f h_supp_g h.
+  apply ext_eq. intros x.
+  destruct (f x) eqn: h_x'.
+  - sfirstorder.
+  - destruct (g x) eqn: h_x''.
+    + sfirstorder.
+    + trivial.
 Qed.
 
 Definition In {A B} (x : A) (f : T A B) : Prop := Fun.In x f.
