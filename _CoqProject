@@ -11,6 +11,7 @@ ott_coq/Notations.v
 ott_coq/Lemmas.v
 ott_coq/TySterm.v
 ott_coq/Progress.v
+ott_coq/TyValFill.v
 ott_coq/EctxsFillLeafSpec.v
 ott_coq/EctxsFillCtorSpec.v
 ott_coq/EctxsFillCompSpec.v

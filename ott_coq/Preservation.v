@@ -24,6 +24,10 @@ Require Import Dest.EctxsFillCompSpec.
 Require Import Dest.TermSubSpec1.
 Require Import Dest.TermSubSpec2.
 
+(* This tactis applies the Ty_term_Val rule with no weakening (Ty_term_Val is a place where weakening can happen, and it's represented by the typing context P with DisposableOnly P in that rule. Here we set P = ᴳ{} and prove that indeed the empty context is disposable). *)
+Ltac term_Val_no_dispose D :=
+  assert (DisposableOnly ᴳ{}) as DisposEmpty by (exact DisposableOnly_empty); rewrite union_empty_l_eq with (G := D); apply Ty_term_Val with (P := ᴳ{}); trivial; [ apply Disjoint_empty_l | .. ].
+
 Ltac assert_LinOnly_FinAgeOnly_remove_Disposable G G' C T U0 P DisposP :=
   assert (LinOnly G /\ FinAgeOnly G) as (LinOnlyD & FinAgeOnlyD) by (apply (Ty_ectxs_LinOnly_FinAgeOnly (G) C T U0); tauto);
   assert (LinOnly (P ᴳ+ G')) as LinOnlyD' by (crush);
@@ -575,13 +579,13 @@ Proof.
         { assert (ᴳ{} ᴳ+ ᴳ- (n ᴳ· (ᴳ-⁻¹ (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}))) = (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n})) as e1.
             { rewrite <- union_empty_l_eq. rewrite hminus_inv_distrib_on_union. rewrite stimes_distrib_on_union. rewrite hminus_distrib_on_union. rewrite 2 hminus_inv_singleton. rewrite 2 stimes_singleton_hole. rewrite 2 hminus_singleton. rewrite * mode_times_linnu_l_eq. tauto. rewrite 2 hminus_inv_singleton; rewrite 2 stimes_singleton_hole. all: apply Disjoint_singletons_iff. injection. lia. injection. lia. }
           rewrite <- e1.
-          assert (hnamesᴳ( (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) = ᴴ{ h' + 1, h' + 2}) as e2. { rewrite hnames_distrib_on_union. rewrite 2 hnames_singleton_dest. apply hnames_singleton_union_eq. }
+          assert (hnamesᴳ( (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) = ᴴ{ h' + 1, h' + 2}) as e2. { rewrite hnames_distrib_on_union. rewrite 2 hnames_singleton_dest. apply hnames_singleton_hunion_eq. }
           rewrite <- e2.
           apply ectxs_fillCtor_spec with (D3 := (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ ¹ν} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ ¹ν}) ) (T := T1 ⨂ T2); swap 1 10.
           { rewrite hminus_inv_distrib_on_union. rewrite 2 hminus_inv_singleton. apply Ty_val_Prod. apply Ty_val_Hole. apply Ty_val_Hole. assumption. } { crush. }
           { apply DestOnly_union_iff. crush. } { crush. } { crush. }
           { apply Disjoint_union_l_iff. split; rewrite hpMaxCh; apply Disjoint_singletons_iff. { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } { apply different_than_gt_max. lia. apply HNames.add_spec. tauto. } }
-          { rewrite e2. rewrite hpMaxCh. rewrite <- hnames_singleton_union_eq. apply HDisjoint_union_iff; repeat split. apply HDisjoint_gt_max. lia. apply HDisjoint_gt_max. lia. }
+          { rewrite e2. rewrite hpMaxCh. rewrite <- hnames_singleton_hunion_eq. apply HDisjoint_hunion_iff; repeat split. apply HDisjoint_gt_max. lia. apply HDisjoint_gt_max. lia. }
           { apply ValidOnly_hminus_inv_union. rewrite hminus_inv_singleton; crush. rewrite hminus_inv_singleton; crush. apply Disjoint_singletons_iff. injection. lia. } { crush. } { crush. }
         }
       constructor 1 with (D := ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}) (T := ⌊ T1 ⌋ n ⨂ ⌊ T2 ⌋ n) (t := ᵥ₎ ᵛ(ᵛ- (h' + 1), ᵛ- (h' + 2))); swap 1 4. term_Val_no_dispose (ᴳ{- (h' + 1) : ¹ν ⌊ T1 ⌋ n} ᴳ+ ᴳ{- (h' + 2) : ¹ν ⌊ T2 ⌋ n}). apply Ty_val_Prod. apply Ty_val_Dest. apply IsSubtype_refl. apply Ty_val_Dest. { apply IsSubtype_refl. } { apply DestOnly_union_iff. crush. } { apply DestOnly_union_iff. crush. } { assert (hnames_ ((cons (h' + 1) nil) ++ (cons (h' + 2) nil) ++ nil) = ᴴ{ h' + 1, h' + 2}). cbn. reflexivity. assumption. } { apply ValidOnly_union_forward. crush. crush. apply Disjoint_singletons_iff. injection. lia. }

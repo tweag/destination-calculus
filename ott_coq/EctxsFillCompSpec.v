@@ -3,6 +3,7 @@ Require Import Ott.ott_list_core.
 Require Import Dest.destination_calculus_ott.
 Require Import Dest.Notations.
 Require Import Dest.Lemmas.
+Require Import Dest.TyValFill.
 Require Import Dest.ExtNat.
 Require Import Coq.Program.Equality.
 Require Import Dest.Finitely.
@@ -110,7 +111,7 @@ Proof.
         pose proof DisjointD1D6 as DisjointD1D6'. apply Disjoint_commutative in DisjointD1D6'.
         constructor 21 with (D1 := D10' ᴳ+ m1 ᴳ· D6) (D3 := D13) (U := U) (D2 := D4); swap 8 9; swap 9 10.
         { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite (hnames_ectxs_fill _ _ _ _ _ _ _ TyC).
-        apply HDisjoint_commutative. apply HDisjoint_union_iff; split.
+        apply HDisjoint_commutative. apply HDisjoint_hunion_iff; split.
         apply HDisjoint_commutative. apply HDisjoint_wk_remove. assumption.
         apply Disjoint_to_HDisjoint. crush.
         apply hnames_C_wk_hnames_G in TyC.
