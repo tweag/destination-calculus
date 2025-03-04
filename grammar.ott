@@ -812,6 +812,12 @@ Definition IsDest x : binding_type_of x -> Prop :=
   | name_DH h => fun b => match b with binding_Dest _  _  _ => True | _ => False end
   end.
 
+Definition IsHole x : binding_type_of x -> Prop :=
+  match x with
+  | name_Var _ => fun _ => False
+  | name_DH h => fun b => match b with binding_Hole _  _ => True | _ => False end
+  end.
+
 Definition IsVar x : binding_type_of x -> Prop :=
   match x with
   | name_Var _ => fun _ => True
@@ -894,6 +900,8 @@ Qed.
 Definition ctx_cshift (G : ctx) (H : hnames) (h' : hname) : ctx := ctx_shift (List.rev (shift_perm H h')) G.
 
 Definition DestOnly G : Prop := forall x b, G x = Some b -> IsDest x b.
+
+Definition HoleOnly G : Prop := forall x b, G x = Some b -> IsHole x b.
 
 Definition VarOnly G : Prop := forall x b, G x = Some b -> IsVar x b.
 

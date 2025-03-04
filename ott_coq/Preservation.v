@@ -33,6 +33,12 @@ Ltac assert_LinOnly_FinAgeOnly_remove_Disposable G G' C T U0 P DisposP :=
   assert (LinOnly (P ᴳ+ G')) as LinOnlyD' by (crush);
   rewrite (nDisposable_in_LinOnly P G' DisposP LinOnlyD') in *.
 
+(* This lemma proves that mode subtyping isn't used on destination singletons (when we have LinOnly and FinAgeOnly, which is always the case in practice during reduction). *)
+Lemma LinOnly_FinAgeOnly_no_derelict : forall (h : hname) (m0 m : mode) (T : type) (n : mode), LinOnly ᴳ{- h : m ⌊ T ⌋ n } -> FinAgeOnly ᴳ{- h : m ⌊ T ⌋ n } -> m0 ⥶ m -> m0 = m.
+Proof.
+  intros * LinOnlySing FinAgeOnlySing. unfold LinOnly in LinOnlySing. unfold FinAgeOnly in FinAgeOnlySing. intros sub. assert (ᴳ{- h : m ⌊ T ⌋ n} (ʰ h) = Some (₋ m ⌊ T ⌋ n)). { unfold ctx_singleton. rewrite singleton_MapsTo_at_elt. reflexivity. } specialize (LinOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). specialize (FinAgeOnlySing (ʰ h) (₋ m ⌊ T ⌋ n) H). simpl in *. inversion LinOnlySing. inversion FinAgeOnlySing. inversion sub; subst. congruence. inversion H2; inversion H3; subst; trivial; try congruence.
+Qed.
+
 Theorem Preservation : forall (C C' : ectxs) (t t' : term) (T : type), ⊢ C ʲ[t] : T /\
   C ʲ[t] ⟶ C' ʲ[t'] -> ⊢ C' ʲ[t'] : T.
 Proof.
@@ -218,7 +224,7 @@ Proof.
       assert (hnamesᴳ(D2) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1))).
               { apply shift_by_max_impl_HDisjoint; rewrite Nat.add_comm; unfold lt, plus; apply le_n_S. apply HSubset_impl_lt_max. apply HSubset_weaken_r. assumption. }
       assert (hnamesᴳ(D2) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])).
-              { unfold HDisjoint. rewrite total_cshift_eq; tauto. }
+              { unfold HDisjoint. rewrite cshift_total_eq; tauto. }
       assert (HNames.Subset hnamesᴳ(D11) hnames©(C)).
               { apply HSubset_union_backward in H. destruct H. apply HSubset_union_backward in H. tauto. }
       assert (HNames.Subset hnamesᴳ(D12) hnames©(C)).
@@ -234,11 +240,11 @@ Proof.
       assert (hnamesᴳ(D11) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1))).
               { apply shift_by_max_impl_HDisjoint. assumption. }
       assert (hnamesᴳ(D11) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])).
-              { rewrite total_cshift_eq; tauto. }
+              { rewrite cshift_total_eq; tauto. }
       assert (hnamesᴳ(D12) ## (hnamesᴳ(D13) ᴴ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1))).
               { apply shift_by_max_impl_HDisjoint. assumption. }
       assert (hnamesᴳ(D12) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])).
-              { rewrite total_cshift_eq; tauto. }
+              { rewrite cshift_total_eq; tauto. }
       assert ((D2 ᴳ+ D11) # (D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])) as DisjointD2uD11D13.
               { apply Disjoint_union_l_iff. split. apply HDisjoint_to_Disjoint. crush. assumption. apply HDisjoint_to_Disjoint. crush. assumption. }
       assert ((¹↑ ᴳ· (D2 ᴳ+ D11)) # (D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])).
@@ -288,9 +294,9 @@ Proof.
               rewrite union_associative.
               rewrite stimes_distrib_on_union. tauto. }
       assert (hnames©( C) ## hnamesᴳ( D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)])) as hnamesDisjoint.
-            { rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint with (h' := maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S. apply HSubset_impl_lt_max. apply HSubset_weaken_r. sfirstorder. assumption. }
+            { rewrite cshift_total_eq. apply shift_by_max_impl_HDisjoint with (h' := maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1); rewrite Nat.add_comm; unfold lt, plus; apply le_n_S. apply HSubset_impl_lt_max. apply HSubset_weaken_r. sfirstorder. assumption. }
       constructor 1 with (D := ¹↑ ᴳ· (D2 ᴳ+ D11 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)]) ᴳ+ D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)]) (T := T') (t := t' ᵗ[ x ≔ v1 ᵛ[hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)] ]); swap 3 4; rewrite D11Eq. { crush. } { crush. } { rewrite ctxEq. apply term_sub_spec_1 with (T' := T) (D2 := ¹↑ ᴳ· D2). all: crush. }
-      rewrite <- total_cshift_eq.
+      rewrite <- cshift_total_eq.
       constructor 21 with (D1 := D2 ᴳ+ D11) (D3 := D13 ᴳ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)]) (C := C) (v2 := v2 ᵛ[ hnamesᴳ( D13) ⩲ (maxᴴ(hnamesᴳ( D13) ∪ hnames©(C)) + 1)]) (T' := T') (U0 := U0) (U := U) (D2 :=
       D12); trivial.
         { rewrite Disjoint_union_l_iff. supercrush. } { apply HDisjoint_to_Disjoint. crush. crush. } { crush. } { crush. } { rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff; assumption. } { rewrite union_commutative in TyC. rewrite union_associative in TyC. tauto. }
@@ -667,7 +673,7 @@ Proof.
       assert (maxᴴ( hnamesᴳ( D3)) < h'') as total_cshift_cond.
         { rewrite hpMaxCh. rewrite Nat.add_comm; unfold lt, plus; apply le_n_S. apply HSubset_impl_lt_max. apply HSubset_weaken_l. sfirstorder. }
       assert ((ᴳ{- h : ¹ν ⌊ U ⌋ ¹ν} ᴳ+ ¹↑ ᴳ· (D1 ᴳ+ D2)) # (D3 ᴳ[ hnamesᴳ( D3) ⩲ h''])).
-        { apply Ty_ectxs_HDisjoint_to_Disjoint with (C := C) (T := T) (U0 := U0). assumption. rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption.
+        { apply Ty_ectxs_HDisjoint_to_Disjoint with (C := C) (T := T) (U0 := U0). assumption. rewrite cshift_total_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption.
         }
       assert (HNames.Subset hnamesᴳ( D2) hnames©( C)).
         { apply hnames_C_wk_hnames_G in TyC. apply HSubset_union_backward in TyC. destruct TyC as (_ & TyC). rewrite stimes_distrib_on_union in TyC. apply HSubset_union_backward in TyC. destruct TyC as (_ & TyC). apply HSubset_stimes_backward in TyC. assumption. }
@@ -677,9 +683,9 @@ Proof.
       assert (LinOnly D3) as LinOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & LinOnlyD3). apply LinNuOnly_wk_LinOnly in LinOnlyD3. assumption. }
       assert (FinAgeOnly D3) as FinAgeOnlyD3. { apply ValidOnly_hminus_inv_DestOnly_LinNuOnly in ValidOnlyhiD3. destruct ValidOnlyhiD3 as (_ & FinAgeOnlyD3). apply LinNuOnly_wk_FinAgeOnly in FinAgeOnlyD3. assumption. }
       assert ((¹↑ ᴳ· D1 ᴳ+ D3) ᴳ[ hnamesᴳ( D3) ⩲ h''] ⊣ C ©️[ h ≔ hnamesᴳ( D3) ᴴ⩲ h'' ‗ v2 ᵛ[ hnamesᴳ( D3) ⩲ h'']] : T ↣ U0). {
-        rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- total_cshift_eq.
+        rewrite cshift_distrib_on_union. rewrite cshift_by_Disjoint_eq. rewrite <- cshift_total_eq.
         apply ectxs_fillComp_spec with (D1 := ¹↑ ᴳ· D1) (D2 := D2) (D3 := D3 ᴳ[ hnamesᴳ( D3) ⩲ h'']) (T := T) (U := U).
-        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. crush. } { rewrite total_cshift_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption. } { rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption. }
+        { crush. } { crush. } { crush. } { crush. } { crush. } { crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. apply LinOnly_union_iff in LinOnlyD. destruct LinOnlyD as (_ & _ & Dis). crush. } { rewrite Disjoint_commutative. crush. } { rewrite cshift_total_eq. apply shift_by_max_impl_HDisjoint. assumption. assumption. } { rewrite <- cshift_distrib_on_hminus_inv. rewrite <- ValidOnly_cshift_iff. assumption. }
         { rewrite <- stimes_distrib_on_union. rewrite union_commutative. assumption. }
         { rewrite <- cshift_by_Disjoint_eq with (D := D2) (D' := D3) (h' := h''). rewrite <- cshift_distrib_on_hminus_inv. rewrite <- cshift_distrib_on_union. apply Ty_val_cshift. assumption. assumption. rewrite hpMaxCh. rewrite Nat.add_comm. rewrite Nat.lt_succ_r. apply HSubset_impl_lt_max. apply HSubset_weaken_r. apply HSubset_weaken_l. assumption. } { assumption. } { crush. } { rewrite hnames_stimes_eq. rewrite hpMaxCh. rewrite Nat.add_comm. rewrite Nat.lt_succ_r. apply HSubset_impl_lt_max. apply HSubset_weaken_r. apply HSubset_weaken_l. assumption. }
       }

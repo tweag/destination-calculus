@@ -18,6 +18,19 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Arith.
 Require Import Lia.
 
+Lemma LinOnly_FinAgeOnly_stimes_compatible_linnu_impl_eq : forall (D : ctx) (m : mode), ¹ν ⥶ m -> LinOnly (m ᴳ· D) -> FinAgeOnly (m ᴳ· D) -> m ᴳ· D = D.
+Proof.
+  intros * Subtypem LinOnlymD FinAgeOnlymD.
+  apply ext_eq. intros n.
+  destruct (D n) as [b|] eqn:mapsto; unfold stimes in *.
+  2:{ apply map_nMapsTo_iff. assumption. }
+  assert (map (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m)) D n = Some ((fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m)) n b)). { apply map_MapsTo_if. assumption. } rewrite H.
+  f_equal.
+  specialize (LinOnlymD n (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m) n b) H).
+  specialize (FinAgeOnlymD n (fsimple (fun t : Type => t -> t) (stimes_var m) (stimes_dh m) n b) H).
+  destruct n, b, m; try destruct m0; inversion LinOnlymD; inversion Subtypem; inversion FinAgeOnlymD; subst; simpl in *; try destruct p; try destruct p0; try destruct p1; try destruct m; try destruct a1; try destruct a0; try destruct n; try destruct n0; simpl in *; trivial; try inversion H1; try inversion H4; try inversion H5; try inversion H7; subst; try destruct p; try destruct p2; try destruct a2; try destruct m; try destruct a0; try inversion H2; try inversion H7; try inversion H8; subst; trivial; try congruence.
+Qed.
+
 Lemma term_sub_spec_1' :
   forall (Dv' : ctx) (Tv' : type) (x' : var) (v' : val),
   ValidOnly Dv' ->
