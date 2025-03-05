@@ -64,13 +64,13 @@ destination_calculus-supplementary.pdf: destination_calculus.pdf
 	pdftk $< cat $(APPENDIX_FIRST_PAGE)-end output $@
 
 nix::
-	nix develop --command make
+	nix --extra-experimental-features 'nix-command flakes' develop --command make -j
 
 continuous::
-	ls destination_calculus.mng *.ott $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES) Makefile no-editing-marks short-version | entr make
+	ls destination_calculus.mng *.ott $(PDF_ARXIV_DEPENDENCIES) $(PDF_OTHER_DEPENDENCIES) Makefile no-editing-marks short-version | entr make -j
 
 continuous-nix:: nix
-	nix develop --command make continuous
+	nix --extra-experimental-features 'nix-command flakes' develop --command make -j continuous
 
 ott_coq/destination_calculus_ott.v: grammar.ott rules.ott
 	ott $(OTT_OPTS) -o $@ $^
