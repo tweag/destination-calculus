@@ -1,3 +1,13 @@
+(* In this file, we prove a version of the of the
+   variable-substitution lemma for two simultaneous variables. This
+   case shows up when reducing case expression for pairs, we don't
+   need more than two simultaneous variables in the rest of the
+   proofs.
+
+   The proof is overall quite simple: in essence two applications of
+   the single-variable substitution lemma `term_sub_spec_1`. The rest
+   is relatively mindless (but noisy) context manipulations. *)
+
 Require Import List.
 Require Import Ott.ott_list_core.
 Require Import Dest.destination_calculus_ott.
