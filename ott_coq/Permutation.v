@@ -1,4 +1,18 @@
-(* (finite) permutations on `nat` only, for simplicity's sake. *)
+(* This file proves a handful simple lemmas about transpositions and
+   permutations. Specifically finite(ly supported) permutations, that
+   is invertible functions from `nat` to `nat`, which fix all but a
+   finite number of elements. These permutations can be decomposed in
+   a finite number of transpositions.
+
+   We use permutations to rename holes, inspired by nominal techniques
+   (as in Andrew Pitt's nominal sets). Our early attempts at renaming
+   weren't bijective, and the proofs were much harder. This is largely
+   because we use actual functions to represent contexts (see
+   `Finitely.v`, see also lemmas such as `pre_cshift_surjective` in
+   `Lemmas.v`).
+
+   There's nothing special about `nat` in this file, it was just
+   simpler to commit to a concrete type than to abstract over it.  *)
 
 Require Import Arith.
 Require Import List.

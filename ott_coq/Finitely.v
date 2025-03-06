@@ -1,3 +1,16 @@
+(* This file introduces a type of dependent finite-domain partial
+   functions. Basically, a dependent `MMAp`. This will serve as our
+   contexts (which need to be dependent because we have two kind of
+   binder names).
+
+   We first introduce, in the `Fun` module a type of dependent partial
+   functions (with decidable domain). And build our type `T` of finite
+   functions ontop of it. The interface we provide is comparable to
+   that of `MMap`, though tailored to the precise needs of our proots.
+
+   For the sake of expediency, we do everything up to `eq`, which does
+   mean introducing a few axioms. *)
+
 Require List.
 Require FMapList.
 Require MSetList.
