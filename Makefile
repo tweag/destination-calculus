@@ -12,6 +12,7 @@ all: destination_calculus.pdf
 #   mark left in the pdf.
 arxiv:
 	$(MAKE) clean
+	sed -i 's/\\documentclass\[acmsmall,screen\]{acmart}/\\documentclass\[acmsmall,screen,nonacm\]{acmart}/g' destination_calculus.mng; true
 	$(MAKE) destination_calculus.tar.gz
 
 destination_calculus.tar.gz: destination_calculus.tex destination_calculus_ott.tex destination_calculus.bbl $(PDF_ARXIV_DEPENDENCIES)
@@ -50,7 +51,9 @@ submission:
 	$(MAKE) clean
 	touch no-editing-marks
 	touch short-version
+	sed -i 's/\\documentclass\[acmsmall,screen,nonacm\]{acmart}/\\documentclass\[acmsmall,screen\]{acmart}/g' destination_calculus.mng; true
 	$(MAKE) destination_calculus-submission.pdf
+	sed -i 's/\\documentclass\[acmsmall,screen\]{acmart}/\\documentclass\[acmsmall,screen,nonacm\]{acmart}/g' destination_calculus.mng; true
 	rm -f no-editing-marks
 	rm -f short-version
 
