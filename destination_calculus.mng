@@ -350,7 +350,7 @@
 % TITLE SECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title[Destination Calculus]{Destination Calculus:\\ A Linear $\lambda-$Calculus for Purely Functional Memory Writes}
+\title[Destination Calculus\ldots]{Destination Calculus:\\ A Linear $\lambda$-Calculus for Purely Functional Memory Writes}
 
 \author{Thomas Bagrel}
 \orcid{0009-0008-8700-2741}
@@ -1394,7 +1394,7 @@ A command of the form $[[ ⬜[v] ]]$ cannot be reduced further, as it only conta
 
 \longshort{
 
-We've proved type preservation and progress theorems with the \href{https://coq.inria.fr/}{Coq proof assistant}. The artifact containing the machine-verified proofs is available at \url{https://doi.org/10.5281/zenodo.14982363}. One can check if a newer version is available using \url{https://doi.org/10.5281/zenodo.14534422} or \url{https://github.com/tweag/destination-calculus}.
+We've proved type preservation and progress theorems with the \href{https://coq.inria.fr/}{Coq proof assistant}. The artifact containing the machine-verified proofs is available at \url{https://doi.org/10.5281/zenodo.14982363}\\\cite{bagrel_proofs_2025}. One can check if a newer version is available using \url{https://doi.org/10.5281/zenodo.14534422} or \url{https://github.com/tweag/destination-calculus}.
 
 Turning to a proof assistant was a pragmatic choice: typing context handling in \destcalculus{} can be quite finicky, and it was hard, without computer assistance, to make sure that we hadn't made mistakes in our proofs. The version of \destcalculus{} that we've proved is written in Ott~\cite{sewell_ott_2007}, the same Ott file is used as a source for this article, making sure that we've proved the same system as we're presenting; though some visual simplification is applied by a script to produce the version in the article.
 
@@ -1574,7 +1574,7 @@ In fact, we plan to use this very strategy to design an API for destination pass
 
 We have submitted for artifact evaluation the formalization of the \destcalculus{} as described in \cref{sec:syntax-type-system,sec:ectxs-sem}, using the \href{https://coq.inria.fr/}{Coq proof assistant} with some classical axioms. The main reproducible results are the machine-verified proofs of type-safety \cref{thm:preservation,thm:progress} for \destcalculus{}.
 
-The version submitted with the article is available at \url{https://doi.org/10.5281/zenodo.14982363}. One can check if a newer version is available using \url{https://doi.org/10.5281/zenodo.14534422} or \url{https://github.com/tweag/destination-calculus}.
+The version submitted with the article is available at \url{https://doi.org/10.5281/zenodo.14982363}\\\cite{bagrel_proofs_2025}. One can check if a newer version is available using \url{https://doi.org/10.5281/zenodo.14534422} or \url{https://github.com/tweag/destination-calculus}.
 }
 
 \longshort{
@@ -1679,9 +1679,9 @@ FillLeaf-Red
 \end{augmentwidth}\end{ottfig}
 \egroup
 
-}{}
-
 \clearpage{}
+
+}{}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}{}
