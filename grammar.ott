@@ -660,16 +660,16 @@ Definition age_plus (a1 a2: age) : age :=
   end.
 Inductive AgeSubtype : age -> age -> Prop :=
   | AgeSubtypeProofEq : forall (a : age), AgeSubtype a a
-  | AgeSubtypeProofInf : forall (a2 : age), AgeSubtype Inf a2.
+  | AgeSubtypeProofInf : forall (a2 : age), AgeSubtype Inf a2
+  | AgeSubtypeProofAny : forall (a1 : age), AgeSubtype a1 Any.
+
 Theorem AgeSubtype_dec : forall (a1 a2: age), {AgeSubtype a1 a2} + {~(AgeSubtype a1 a2)}.
 Proof.
   intros a1 a2. destruct a1, a2.
+  all: try solve [left;constructor | right; inversion 1].
   - assert ({n = n0} + {n <> n0}) by apply Nat.eq_dec. destruct H.
     * rewrite e. left. exact (AgeSubtypeProofEq (Fin n0)).
     * right. intros contra. inversion contra. congruence.
-  - right. intros contra. inversion contra.
-  - left. exact (AgeSubtypeProofInf (Fin n)).
-  - left. exact (AgeSubtypeProofEq Inf).
 Defined.
 
 (******************************************************************************
@@ -735,8 +735,7 @@ Theorem IsFinAge_dec : forall (m : mode), {IsFinAge m} + {~IsFinAge m}.
 Proof.
   intros m. destruct m as [pa|].
   - destruct pa as [p a]. destruct a.
-    + left. exact (IsFinAgeProof p n).
-    + right. intros contra. inversion contra.
+    all: try solve [left;constructor | right; inversion 1].
   - right. intros contra. inversion contra.
 Qed.
 Definition IsLinNu (m : mode) : Prop := m = Some (Lin, Fin 0).
