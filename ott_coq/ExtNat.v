@@ -6,13 +6,16 @@ Require Import Arith.
 
 Inductive ext_nat : Type :=
     | Fin : nat -> ext_nat
-    | Inf : ext_nat.
+    | Inf : ext_nat
+    | Any : ext_nat.
 
 Definition ext_plus (m n : ext_nat) : ext_nat :=
   match m, n with
   | Inf, _ => Inf
   | _, Inf => Inf
   | Fin m', Fin n' => Fin (m' + n')
+  | Any, _ => Any
+  | _, Any => Any
   end.
 
 Definition ext_plus' (l : list ext_nat) : ext_nat :=
