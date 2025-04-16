@@ -557,10 +557,12 @@ Hint Rewrite IsLin_plus_backward' : propagate_down.
 
 Lemma nIsLin_mode_plus : forall b1 b2, ~IsLin (mode_plus b1 b2).
 Proof.
-  intros [[q1 [a1|]]|].
+  intros [[q1 [a1| |]]|].
+  2:{ cbn.  sauto q: on. }
   2:{ cbn.  sauto q: on. }
   2:{ cbn. sauto lq: on. }
-  intros [[q2 [a2|]]|]. all: cbn.
+  intros [[q2 [a2| |]]|]. all: cbn.
+  2:{ cbn. sauto lq: on. }
   2:{ cbn. sauto lq: on. }
   2:{ cbn. sauto lq: on. }
   cbn. unfold mul_plus.
@@ -666,12 +668,12 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?|]; destruct a2 as [?|].
+  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?| |] ; destruct a2 as [?| |].
   all: unfold mul_plus, age_plus. all: cbn.
   all: repeat match goal with
          |  |- context [if ?x then _ else _] => destruct x
          end.
-  (* 28 goals *)
+  (* 48 goals *)
   all: congruence.
 Qed.
 
@@ -680,13 +682,13 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|].
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [?| |]; destruct a2 as [?| |]; destruct a3 as [?| |].
   all: unfold mul_plus, age_plus. all: cbn.
   all: repeat match goal with
          |  |- context [if ?x then _ else _] => destruct x
          | H: context [if ?x then _ else _] |- _ => destruct x
          end.
-  (* 232 goals *)
+  (* 432 goals *)
   all: congruence.
 Qed.
 
@@ -695,7 +697,8 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|]. cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?|]; destruct a2 as [?|].
+  destruct p1 as [|]; destruct p2 as [|]; destruct a1 as [?| |] ; destruct a2 as [?| |].
+  (* 36 goals *)
   all: cbn.
   all: sfirstorder use: PeanoNat.Nat.add_comm.
 Qed.
@@ -705,7 +708,8 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|]. all: cbn.
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [?| |]; destruct a2 as [?| |]; destruct a3 as [?| |]. all: cbn.
+  (* 216 goals *)
   all: sfirstorder use: PeanoNat.Nat.add_assoc.
 Qed.
 Hint Rewrite mode_times_associative : canonalize.
@@ -714,7 +718,7 @@ Lemma mode_times_linnu_r_eq : forall (m : mode), m · ¹ν = m.
 Proof.
   intros [[p a]|]. all: cbn.
   2:{ trivial. }
-  destruct p as [|]; destruct a as [?|]. all: cbn.
+  destruct p as [|]; destruct a as [?| |]. all: cbn.
   all: hauto lq: on use: PeanoNat.Nat.add_0_r.
 Qed.
 Hint Rewrite mode_times_linnu_r_eq : canonalize.
@@ -723,7 +727,7 @@ Lemma mode_times_linnu_l_eq : forall (m : mode), ¹ν · m = m.
 Proof.
   intros [[p a]|]. all: cbn.
   2:{ trivial. }
-  destruct p as [|]; destruct a as [?|]. all: cbn.
+  destruct p as [|]; destruct a as [?| |]. all: cbn.
   all: hauto lq: on use: PeanoNat.Nat.add_0_l.
 Qed.
 Hint Rewrite mode_times_linnu_l_eq : canonalize.
@@ -733,7 +737,12 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|]; destruct a1 as [?|]; destruct a2 as [?|]; destruct a3 as [?|]. all: unfold mul_plus, mul_times, age_plus, age_times, ext_plus; repeat destruct age_eq_dec. all: trivial; try congruence; try reflexivity.
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [?| |]; destruct a2 as [?| |]; destruct a3 as [?| |]. all: unfold mul_plus, mul_times, age_plus, age_times, ext_plus ; repeat destruct age_eq_dec.
+  (* 592 goals *)
+  all: trivial; try congruence; try reflexivity.
+  all: try (injection e as [= e];rewrite Nat.add_cancel_l in *;congruence).
+  
+  all: rewrite <- ?Nat.add_cancel_l in *.
   all: exfalso; assert (n0 <> n1) as Hneq by (intros H; apply n2; rewrite H; constructor);
                   assert (n + n0 = n + n1) as Heq by (injection e; auto);
                   apply Hneq; rewrite Nat.add_cancel_l with (p := n) in Heq; assumption.

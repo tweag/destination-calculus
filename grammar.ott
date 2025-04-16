@@ -654,9 +654,12 @@ Defined.
 Definition age_times (a1 a2 : age) : age := ext_plus a1 a2.
 Definition age_times' (al: list age) : age := ext_plus' al.
 Definition age_plus (a1 a2: age) : age :=
-  match age_eq_dec a1 a2 with
-  | left _ => a1
-  | right _ => Inf
+  match a1, a2 with
+  | Inf, _ 
+  | _, Inf => Inf
+  | Fin a1, Fin a2 => match Nat.eq_dec a1 a2 with | left _ => Fin a1 | right _ => Inf end
+  | Any, a
+  | a, Any => a
   end.
 Inductive AgeSubtype : age -> age -> Prop :=
   | AgeSubtypeProofEq : forall (a : age), AgeSubtype a a
