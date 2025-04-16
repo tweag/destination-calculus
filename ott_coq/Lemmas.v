@@ -639,6 +639,11 @@ Qed.
 
 Lemma IsFinAge_plus_backward : forall (m1 m2 : mode), IsFinAge (mode_plus m1 m2) -> IsFinAge m1 /\ IsFinAge m2.
 Proof.
+  intros [[p1 [a1| |]]| ] [[p2 [a2| |]]| ].
+  all: try solve [inversion 1].
+
+  (* NOT TRUE *)
+  -----
   intros * IsFinAgem1m2. destruct m1, m2; simpl in *; try destruct p; try destruct p0; try destruct p1; try destruct a; try destruct a0; try destruct a1; simpl in *; try assumption; try inversion IsFinAgem1m2; try constructor; try constructor.
 Qed.
 Lemma IsFinAge_plus_backward' : forall (m1 m2 : mode), Basics.impl (IsFinAge (mode_plus m1 m2)) (IsFinAge m1 /\ IsFinAge m2).
