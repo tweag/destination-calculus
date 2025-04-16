@@ -14,8 +14,9 @@ Definition ext_plus (m n : ext_nat) : ext_nat :=
   | Inf, _ => Inf
   | _, Inf => Inf
   | Fin m', Fin n' => Fin (m' + n')
-  | Any, _ => Any
-  | _, Any => Any
+  | Any, (Fin 0)
+  | (Fin 0), Any => Any
+  | Any, _ | _, Any => Inf
   end.
 
 Definition ext_plus' (l : list ext_nat) : ext_nat :=
