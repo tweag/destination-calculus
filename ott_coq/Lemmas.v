@@ -715,8 +715,9 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [?| |]; destruct a2 as [?| |]; destruct a3 as [?| |]. all: cbn.
-  (* 216 goals *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [[|?]| |]; destruct a2 as [[|?]| |]; destruct a3 as [[|?]| |]. all: cbn.
+  (* 512 goals *)
+  all: rewrite ?Nat.add_0_r, ?Nat.add_succ_r.
   all: sfirstorder use: PeanoNat.Nat.add_assoc.
 Qed.
 Hint Rewrite mode_times_associative : canonalize.
@@ -744,11 +745,14 @@ Proof.
   intros [[p1 a1]|] [[p2 a2]|] [[p3 a3]|]. all: cbn.
   all: trivial.
   (* 1 goal left *)
-  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [?| |]; destruct a2 as [?| |]; destruct a3 as [?| |]. all: unfold mul_plus, mul_times, age_plus, age_times, ext_plus ; repeat destruct Nat.eq_dec.
-  (* 248 goals *)
+  destruct p1 as [|]; destruct p2 as [|]; destruct p3 as [|] ; destruct a1 as [[|?]| |]; destruct a2 as [[|?]| |]; destruct a3 as [[|?]| |].
+  (* 512 goals *)
+  all: unfold mul_plus, mul_times, age_plus, age_times, ext_plus ; repeat destruct Nat.eq_dec.
+  (* all: rewrite ?Nat.add_0_r, ?Nat.add_succ_r. *)
+  (* 672 goals *)
   all: try solve [trivial; congruence].
   all: try solve [rewrite Nat.add_cancel_l in *;congruence].
-  
+  ---
   all: rewrite <- ?Nat.add_cancel_l in *.
   all: exfalso; assert (n0 <> n1) as Hneq by (intros H; apply n2; rewrite H; constructor);
                   assert (n + n0 = n + n1) as Heq by (injection e; auto);
