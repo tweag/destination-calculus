@@ -11,12 +11,10 @@ Inductive ext_nat : Type :=
 
 Definition ext_plus (m n : ext_nat) : ext_nat :=
   match m, n with
+  | Any, _ | _, Any => Any
   | Inf, _ => Inf
   | _, Inf => Inf
   | Fin m', Fin n' => Fin (m' + n')
-  | Any, (Fin 0)
-  | (Fin 0), Any => Any
-  | Any, _ | _, Any => Inf
   end.
 
 Definition ext_plus' (l : list ext_nat) : ext_nat :=
